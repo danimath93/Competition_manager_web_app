@@ -1,0 +1,47 @@
+
+
+Programma Gare - Web App
+
+SCHERMATE PRINCIPALI 
+
+0 - Login
+
+ORGANIZZAZIONE SINGOLA GARA
+1 - Organizzazione
+	- Sezione per aggiunta/modifica atleti da parte dei singoli club (inizialmente gestione comune da superAdmin)
+	- Sezione documentazione gara da parte dell'organizzatore
+	- Sezione arbitri e giudici con livello e partecipazione
+	- Sezione creazione/modifica quaderni di gara
+		- Forme
+		- Combattimenti
+		- Vat
+		Per tutte le tipologie di gara
+		-- FONDAMENTALE: assegnazioni categorie ai singoli tavoli (variabile da impostare)
+		-- generatore automatico quaderni
+		-- sezione di modifica manuale (accorpamenti, esperti/esordienti, modifiche varie)
+				--- possibilità di stampare i fogli di gara per metterli al muro
+
+2 - Svolgimento Forme
+	- Sezione selezione tavolo
+	- Visualizzazione atleti, votazioni, gestione turni
+	- classifica
+	- Bottoni Start categoria, modifica (atleti extra o ritirati), Fine gara
+
+2 - svolgimento Combattimenti
+	- Sezione selezione tavolo
+	- Visualizzazione categoria corrente con info essenziali (atleti - tipo di round - dettagli categoria )
+		- Visualizzazione prossimo incontro 
+		- Selettore numero di incontro (per eventuali skip o cancellazioni)
+		- (Opzionale) Bottone per modale visualizzazione riepilogo generale categoria
+	- Classifica
+	- Eventuale gestione modifica per aggiunta atleti in gara --> Modifica categoria e modifica ordine incontri
+
+STORICO GARE E ARBITRAGGIO 
+Questa sezione dovra' salvare le gare e confrontare i dati per eventuali valutazioni di arbitraggio o atleti/club.
+- TODO
+
+PIPPE
+ - Ranking arbitri in base a esperienza e presenze e votazioni buone/cattive
+ - Stimatore tempi di gara secondo categoria quyen/combattimenti per ottimizzare l'andamento della gara
+ 
+ 
