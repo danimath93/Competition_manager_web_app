@@ -20,6 +20,7 @@ ORGANIZZAZIONE SINGOLA GARA
 		-- generatore automatico quaderni
 		-- sezione di modifica manuale (accorpamenti, esperti/esordienti, modifiche varie)
 				--- possibilità di stampare i fogli di gara per metterli al muro
+		-- possibilità di impostare variabili nella creazione del file (esempio: tempo e round di gara dei combattimenti)
 
 2 - Svolgimento Forme
 	- Sezione selezione tavolo
