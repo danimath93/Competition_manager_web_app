@@ -1,0 +1,16 @@
+# Dockerfile per sviluppo frontend React
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copia i file package.json e package-lock.json
+COPY package*.json ./
+
+# Installa le dipendenze
+RUN npm install
+
+# Espone la porta 3000 (default di React)
+EXPOSE 3000
+
+# Comando per avviare l'applicazione in modalità sviluppo
+CMD ["npm", "start"]
