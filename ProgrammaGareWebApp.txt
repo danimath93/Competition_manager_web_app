@@ -4,7 +4,7 @@ Programma Gare - Web App
 
 SCHERMATE PRINCIPALI 
 
-0 - Login
+0 - Login / Registrazione
 
 ORGANIZZAZIONE SINGOLA GARA
 1 - Organizzazione

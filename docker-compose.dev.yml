@@ -1,0 +1,82 @@
+services:
+  # Database PostgreSQL (stesso di produzione)
+  postgres:
+    image: postgres:15-alpine
+    container_name: martial_arts_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: martial_arts_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - martial_arts_dev_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d martial_arts_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Node.js (modalità sviluppo)
+  backend-dev:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: martial_arts_backend_dev
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_NAME=martial_arts_db
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_PORT=5432
+      - PORT=3050
+    ports:
+      - "3050:3050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - martial_arts_dev_network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+  # Frontend React (modalità sviluppo)
+  frontend-dev:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: martial_arts_frontend_dev
+    restart: unless-stopped
+    environment:
+      - REACT_APP_API_URL=http://localhost:3050
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_HOST=localhost
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-dev
+    networks:
+      - martial_arts_dev_network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_dev_data:
+    driver: local
+
+networks:
+  martial_arts_dev_network:
+    driver: bridge

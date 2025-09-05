@@ -1,0 +1,71 @@
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: martial_arts_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: martial_arts_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - martial_arts_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d martial_arts_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend Node.js
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: martial_arts_backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_NAME=martial_arts_db
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_PORT=5432
+      - PORT=3050
+    ports:
+      - "3050:3050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - martial_arts_network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: martial_arts_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - martial_arts_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  martial_arts_network:
+    driver: bridge
