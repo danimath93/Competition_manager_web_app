@@ -44,7 +44,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint non trovato' });
 });
 
@@ -62,7 +62,7 @@ const startServer = async () => {
     console.log('✅ Database connection established successfully.');
 
     // Sync database (create tables if they don't exist)
-    await sequelize.sync({ alter: true });
+    // await sequelize.sync({ alter: true });
     console.log('✅ Database synchronized successfully.');
 
     // Start server
