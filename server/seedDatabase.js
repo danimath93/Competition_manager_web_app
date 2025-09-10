@@ -6,6 +6,7 @@ const {
   Categoria, 
   IscrizioneAtleta,
   AssegnazioneGiudice,
+  UtentiLogin,
   sequelize 
 } = require('./models');
 
@@ -59,7 +60,7 @@ const seedData = async () => {
         clubId: 1
       },
       {
-        nome: 'Sofia',
+        nome: 'Sofia Giulia',
         cognome: 'Martini',
         dataNascita: '1998-07-22',
         codiceFiscale: 'MRTSIA98L62F205Z',
@@ -230,6 +231,20 @@ const seedData = async () => {
     ]);
     console.log('✅ Categorie create');
 
+// Seed Utenti
+    const utentiLogin = await UtentiLogin.bulkCreate([
+      {
+        nomeUtente: 'Accademia Nuovo Cielo',
+        email: 'segreteriaANC@gmail.com',
+        password: 'scurreggioni',
+      },
+      {
+        nomeUtente: 'Truong Son',
+        email: 'segreteriaTS@gmail.com',
+        password: 'formadibastone',
+      }
+    ]);
+
     console.log('🎉 Seed completato con successo!');
     console.log('');
     console.log('📊 Dati creati:');
@@ -238,6 +253,7 @@ const seedData = async () => {
     console.log(`   - ${giudici.length} Giudici`);
     console.log(`   - ${competizioni.length} Competizioni`);
     console.log(`   - ${categorie.length} Categorie`);
+    console.log(`   - ${utentiLogin.length} UtentiLogin`);
 
   } catch (error) {
     console.error('❌ Errore durante il seed:', error);

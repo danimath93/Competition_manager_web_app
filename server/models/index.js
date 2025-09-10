@@ -8,6 +8,7 @@ const Competizione = require('./Competizione');
 const Categoria = require('./Categoria');
 const IscrizioneAtleta = require('./IscrizioneAtleta');
 const AssegnazioneGiudice = require('./AssegnazioneGiudice');
+const UtentiLogin = require('./UtentiLogin');
 
 // Definisci le associazioni
 
@@ -130,5 +131,6 @@ module.exports = {
   Competizione,
   Categoria,
   IscrizioneAtleta,
-  AssegnazioneGiudice
+  AssegnazioneGiudice,
+  UtentiLogin
 };
