@@ -4,10 +4,12 @@ const router = express.Router();
 // Importa le routes
 const clubRoutes = require('./clubs');
 const competizioniRoutes = require('./competizioni');
+const loginUserRoutes = require('./loginUsers');
 
 // Configura le routes
 router.use('/clubs', clubRoutes);
 router.use('/competizioni', competizioniRoutes);
+router.use('/loginUsers', loginUserRoutes);
 
 // Route di test per verificare che l'API funzioni
 router.get('/', (req, res) => {
