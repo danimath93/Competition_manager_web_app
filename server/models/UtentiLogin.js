@@ -7,7 +7,7 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
     primaryKey: true,
     autoIncrement: true
   },
-  nomeUtente: {
+  username: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
@@ -29,7 +29,7 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
     }
   },
 }, {
-  tableName: 'utentiLogin',
+  tableName: 'utenti_login',
   timestamps: true
 });
 

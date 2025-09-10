@@ -234,12 +234,12 @@ const seedData = async () => {
 // Seed Utenti
     const utentiLogin = await UtentiLogin.bulkCreate([
       {
-        nomeUtente: 'Accademia Nuovo Cielo',
+        username: 'Accademia Nuovo Cielo',
         email: 'segreteriaANC@gmail.com',
         password: 'scurreggioni',
       },
       {
-        nomeUtente: 'Truong Son',
+        username: 'Truong Son',
         email: 'segreteriaTS@gmail.com',
         password: 'formadibastone',
       }
