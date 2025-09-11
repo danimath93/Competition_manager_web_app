@@ -4,78 +4,76 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
 import Login from './components/Login';
+import PermissionRoute from './components/PermissionRoute';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
+import { getDefaultRoute } from './utils/permissions';
 import './App.css';
-
-// Componente per proteggere le route
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        fontSize: '1.2rem',
-        color: '#dc3545'
-      }}>
-        Caricamento...
-      </div>
-    );
-  }
-  
-  return isAuthenticated ? children : <Navigate to="/login" />;
-};
 
 // Componente principale dell'app
 const AppContent = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
     return <Login />;
   }
 
+  // Ottiene la route di default basata sui permessi dell'utente
+  const userRole = user?.permissions || user?.role;
+  const defaultRoute = getDefaultRoute(userRole);
+
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={<Navigate to={defaultRoute} />} />
+        
+        {/* Dashboard - Accessibile a tutti gli utenti autenticati */}
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="dashboard">
             <Dashboard />
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
+        
+        {/* Competizioni - superAdmin, admin, user */}
         <Route path="/competitions" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="competitions">
             <Competitions />
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
+        
+        {/* Atleti - superAdmin, admin, user */}
         <Route path="/athletes" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="athletes">
             <div>Pagina Atleti (da implementare)</div>
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
+        
+        {/* Club - superAdmin, admin, user */}
         <Route path="/clubs" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="clubs">
             <div>Pagina Club (da implementare)</div>
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
+        
+        {/* Giudici - solo superAdmin, admin */}
         <Route path="/judges" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="judges">
             <div>Pagina Giudici (da implementare)</div>
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
+        
+        {/* Categorie - superAdmin, admin, table */}
         <Route path="/categories" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="categories">
             <div>Pagina Categorie (da implementare)</div>
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
+        
+        {/* Impostazioni - solo superAdmin, admin */}
         <Route path="/settings" element={
-          <ProtectedRoute>
+          <PermissionRoute requiredPermission="settings">
             <div>Pagina Impostazioni (da implementare)</div>
-          </ProtectedRoute>
+          </PermissionRoute>
         } />
       </Routes>
     </Layout>

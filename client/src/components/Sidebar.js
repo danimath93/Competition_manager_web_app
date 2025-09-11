@@ -10,20 +10,29 @@ import {
   FaCog 
 } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { hasPermission } from '../utils/permissions';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
 
-  const menuItems = [
-    { path: '/dashboard', icon: FaTachometerAlt, label: t('dashboard') },
-    { path: '/competitions', icon: FaTrophy, label: t('competitions') },
-    { path: '/athletes', icon: FaUsers, label: t('athletes') },
-    { path: '/clubs', icon: FaUniversity, label: t('clubs') },
-    { path: '/judges', icon: FaGavel, label: t('judges') },
-    { path: '/categories', icon: FaTags, label: t('categories') },
-    { path: '/settings', icon: FaCog, label: t('settings') },
+  const allMenuItems = [
+    { path: '/dashboard', icon: FaTachometerAlt, label: t('dashboard'), permission: 'dashboard' },
+    { path: '/competitions', icon: FaTrophy, label: t('competitions'), permission: 'competitions' },
+    { path: '/athletes', icon: FaUsers, label: t('athletes'), permission: 'athletes' },
+    { path: '/clubs', icon: FaUniversity, label: t('clubs'), permission: 'clubs' },
+    { path: '/judges', icon: FaGavel, label: t('judges'), permission: 'judges' },
+    { path: '/categories', icon: FaTags, label: t('categories'), permission: 'categories' },
+    { path: '/settings', icon: FaCog, label: t('settings'), permission: 'settings' },
   ];
+
+  // Filtra i menu items in base ai permessi dell'utente
+  const userRole = user?.permissions || user?.role;
+  const menuItems = allMenuItems.filter(item => 
+    hasPermission(userRole, item.permission)
+  );
 
   return (
     <>
