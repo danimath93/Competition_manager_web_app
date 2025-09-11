@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { suspendSession, clearAuthData } from '../utils/auth';
+import { loginUser } from '../api/auth';
 
 const AuthContext = createContext();
 
@@ -30,37 +31,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      // Login di test per lo sviluppo
-      if (username === 'admin' && password === 'password') {
-        const userData = {
-          id: 1,
-          username: 'admin',
-          name: 'Amministratore',
-          role: 'admin'
-        };
-        
-        setUser(userData);
-        setIsAuthenticated(true);
-        localStorage.setItem('token', 'demo-token');
-        localStorage.setItem('user', JSON.stringify(userData));
-        return { success: true };
-      }
-      
-      // Qui implementerai la chiamata API al server
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      // Call login function
+      const response = await loginUser(username, password);
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
+      if (response.user && response.token && response.token.length > 0) {
+        setUser(response.user);
         setIsAuthenticated(true);
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
         return { success: true };
       } else {
         return { success: false, error: 'Invalid credentials' };

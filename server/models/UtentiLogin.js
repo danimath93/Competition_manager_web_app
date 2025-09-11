@@ -10,6 +10,7 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
   username: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
     validate: {
       notEmpty: true
     }
@@ -17,6 +18,7 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
     validate: {
       notEmpty: true
     }
@@ -28,6 +30,21 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
       notEmpty: true
     }
   },
+  salt: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('E', 'D', 'S'), // E=Enabled, D=Disabled, S=Suspended
+    allowNull: false,
+    defaultValue: 'E'
+  },
+  permissions: {
+    // uso un array di testi per gestire i permessi
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: false,
+    defaultValue: []
+  }
 }, {
   tableName: 'utenti_login',
   timestamps: true

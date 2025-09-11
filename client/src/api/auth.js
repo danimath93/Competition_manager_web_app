@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from './axios';
 
 // Funzione per effettuare il login
 const loginUser = async (username, password) => {
