@@ -46,3 +46,9 @@ PIPPE
  - Stimatore tempi di gara secondo categoria quyen/combattimenti per ottimizzare l'andamento della gara
  
  
+11.09
+Ma pensare di associare uno stato delle permission all'utente che logga?
+Es: username admin ha le permission da admin quindi vede tutto
+	username club ha le permission "iscrizione" quindi può andare solo sulla pagina degli atleti per dire e modificare gli atleti
+	username tavolo he le permission "gara" quindi può solo entrare nella pagina "competizione" e modificare i quaderni della gara corrente
+Almeno mettiamo dei bei if sulle permission per vedere/nascondere e abilitare/disabilitare cose
