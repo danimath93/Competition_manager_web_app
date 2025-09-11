@@ -27,11 +27,16 @@ const translations = {
     
     // Login
     login: 'Accedi',
+    signIn: 'Accedi',
+    signInButton: 'Accedi',
+    signingIn: 'Accesso...',
     username: 'Nome utente',
     password: 'Password',
     loginButton: 'Accedi',
     register: 'Registrati',
+    registerNow: 'Registrati ora',
     noAccount: 'Non hai un account?',
+    forgotPassword: 'Password dimenticata?',
     userNotFound: 'Utente non trovato o credenziali errate',
     
     // Common
@@ -55,11 +60,16 @@ const translations = {
     
     // Login
     login: 'Login',
+    signIn: 'Sign In',
+    signInButton: 'Sign In',
+    signingIn: 'Signing in...',
     username: 'Username',
     password: 'Password',
     loginButton: 'Login',
     register: 'Register',
+    registerNow: 'Register now',
     noAccount: "Don't have an account?",
+    forgotPassword: 'Forgot password?',
     userNotFound: 'User not found or invalid credentials',
     
     // Common

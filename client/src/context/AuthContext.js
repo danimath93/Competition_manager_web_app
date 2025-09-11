@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { suspendSession, clearAuthData } from '../utils/auth';
 
 const AuthContext = createContext();
 
@@ -73,8 +74,13 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuthData();
+  };
+
+  const handleSuspendSession = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    suspendSession(); // Utilizza la funzione utility che include anche il redirect
   };
 
   const value = {
@@ -83,6 +89,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    suspendSession: handleSuspendSession,
   };
 
   return (

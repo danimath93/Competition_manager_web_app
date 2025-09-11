@@ -48,7 +48,7 @@ const Login = () => {
             alt="Logo" 
             className="login-logo"
           />
-          <h1 className="login-title">{t('login')}</h1>
+          <h1 className="login-title">{t('signIn')}</h1>
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">
@@ -71,9 +71,16 @@ const Login = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password" className="form-label">
-              {t('password')}
-            </label>
+            <div className="form-label-row">
+              <label htmlFor="password" className="form-label">
+                {t('password')}
+              </label>
+              <div className="forgot-password-link">
+                <a href="#" onClick={(e) => { e.preventDefault(); console.log('Reset password'); }}>
+                  {t('forgotPassword')}
+                </a>
+              </div>
+            </div>
             <div className="input-wrapper">
               <FaLock className="input-icon" />
               <input
@@ -101,7 +108,7 @@ const Login = () => {
             className="login-button"
             disabled={loading}
           >
-            {loading ? 'Accesso...' : t('loginButton')}
+            {loading ? t('signingIn') : t('signInButton')}
           </button>
 
           {error && (
@@ -112,16 +119,16 @@ const Login = () => {
         </form>
 
         <div className="login-footer">
-          <p className="register-text">
+          <span className="register-text">
             {t('noAccount')}
-          </p>
-          <button 
-            className="register-button"
-            onClick={handleRegisterClick}
-            disabled={loading}
-          >
-            {t('register')}
-          </button>
+            <a 
+              href="#" 
+              className="register-link"
+              onClick={(e) => { e.preventDefault(); handleRegisterClick(); }}
+            >
+              {t('registerNow')}
+            </a>
+          </span>
         </div>
       </div>
     </div>
