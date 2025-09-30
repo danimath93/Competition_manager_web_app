@@ -7,6 +7,7 @@ import Login from './components/Login';
 import PermissionRoute from './components/PermissionRoute';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
+import Athletes from './pages/Athletes';
 import { getDefaultRoute } from './utils/permissions';
 import './App.css';
 
@@ -44,7 +45,7 @@ const AppContent = () => {
         {/* Atleti - superAdmin, admin, user */}
         <Route path="/athletes" element={
           <PermissionRoute requiredPermission="athletes">
-            <div>Pagina Atleti (da implementare)</div>
+            <Athletes />
           </PermissionRoute>
         } />
         
