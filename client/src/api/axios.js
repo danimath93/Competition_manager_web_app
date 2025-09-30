@@ -12,7 +12,7 @@ const instance = axios.create({
 // Aggiungiamo il token a ogni richiesta
 instance.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (token) {
       if (isTokenExpired(token)) {
         console.log("Token scaduto");

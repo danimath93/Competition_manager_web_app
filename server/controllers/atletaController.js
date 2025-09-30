@@ -7,7 +7,7 @@ const getAllAtleti = async (req, res) => {
       include: [
         {
           model: Club,
-          as: 'Club di appartenenza'
+          as: 'club'
         }
       ],
       order: [['cognome', 'ASC']]
