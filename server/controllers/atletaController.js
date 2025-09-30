@@ -54,23 +54,8 @@ const getAtletiById = async (req, res) => {
 };*/
 
 // Crea una nuova competizione
-const createAtleta = async (req, res) => {
-  try {
-    const competizione = await Competizione.create(req.body);
-    res.status(201).json(competizione);
-  } catch (error) {
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({ 
-        error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
-      });
-    }
-    res.status(500).json({ 
-      error: 'Errore nella creazione della competizione',
-      details: error.message 
-    });
-  }
-};
+// const createAtleta = async (req, res) => {
+// };
 /*
 // Aggiorna una competizione
 const updateAtleta = async (req, res) => {
@@ -150,9 +135,9 @@ const getAtletiByStato = async (req, res) => {
 
 module.exports = {
   getAllAtleti,
-  getAtletiById,
-  createAtleta,
-  updateAtleta,
-  deleteAtleta,
-  getAtletiByStato
+  // getAtletiById,
+  //createAtleta,
+  // updateAtleta,
+  // deleteAtleta,
+  // getAtletiByStato
 };
