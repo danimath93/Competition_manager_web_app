@@ -1,18 +1,14 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { loadAllAthletes } from '../api/athletes';
 
 const Athletes = () => {
   const { t } = useLanguage();
 
-
   const searchAllAthletes = async () => {
     try {
-      const response = await fetch('/api/atleti');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-      console.log('Atleti:', data);
+      const data = await loadAllAthletes();
+      console.log('Atleti caricati:', data.athletes);
     } catch (error) {
       console.error('Errore nel recupero degli atleti:', error);
     }

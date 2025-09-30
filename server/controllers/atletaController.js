@@ -13,7 +13,7 @@ const getAllAtleti = async (req, res) => {
       order: [['cognome', 'ASC']]
       // ordinati anche per club
     });
-    res.json(atleti);
+    res.status(200).json({ message: 'Atleti recuperati con successo', athletes: atleti });
   } catch (error) {
     res.status(500).json({ 
       error: 'Errore nel recupero degli atleti',
