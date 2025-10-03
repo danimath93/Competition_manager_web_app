@@ -21,56 +21,40 @@ const getAllAtleti = async (req, res) => {
     });
   }
 };
-/*
-// Ottieni una competizione per ID
-const getAtletiById = async (req, res) => {
+
+// Crea un nuovo atleta
+const createAtleta = async (req, res) => {
   try {
-    const { id } = req.params;
-    const competizione = await Competizione.findByPk(id, {
-      include: [
-        {
-          model: Categoria,
-          as: 'categorie',
-          include: ['atleti', 'giudici']
-        },
-        {
-          model: Club,
-          as: 'organizzatore'
-        }
-      ]
-    });
-    
-    if (!competizione) {
-      return res.status(404).json({ error: 'Competizione non trovata' });
-    }
-    
-    res.json(competizione);
+    const newAtleta = await Atleta.create(req.body);
+    res.status(201).json({ message: 'Atleta creato con successo', athlete: newAtleta });
   } catch (error) {
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({
+        error: 'Dati non validi',
+        details: error.errors.map(e => e.message)
+      });
+    }
     res.status(500).json({ 
-      error: 'Errore nel recupero della competizione',
+      error: 'Errore nella creazione dell\'atleta',
       details: error.message 
     });
   }
-};*/
+};
 
-// Crea una nuova competizione
-// const createAtleta = async (req, res) => {
-// };
-/*
-// Aggiorna una competizione
+// Aggiorna un atleta
 const updateAtleta = async (req, res) => {
   try {
     const { id } = req.params;
-    const [updatedRowsCount] = await Competizione.update(req.body, {
+    const [updatedRowsCount] = await Atleta.update(req.body, {
       where: { id }
     });
     
     if (updatedRowsCount === 0) {
-      return res.status(404).json({ error: 'Competizione non trovata' });
+      return res.status(404).json({ error: 'Atleta non trovato' });
     }
-    
-    const updatedCompetizione = await Competizione.findByPk(id);
-    res.json(updatedCompetizione);
+
+    const updatedAtleta = await Atleta.findByPk(id);
+    res.json({ message: 'Atleta aggiornato con successo', athlete: updatedAtleta });
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({ 
@@ -85,59 +69,31 @@ const updateAtleta = async (req, res) => {
   }
 };
 
-// Elimina una competizione
+// Elimina un atleta
 const deleteAtleta = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedRowsCount = await Competizione.destroy({
+    const deletedRowsCount = await Atleta.destroy({
       where: { id }
     });
     
     if (deletedRowsCount === 0) {
-      return res.status(404).json({ error: 'Competizione non trovata' });
+      return res.status(404).json({ error: 'Atleta non trovato' });
     }
     
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ 
-      error: 'Errore nell\'eliminazione della competizione',
+      error: 'Errore nell\'eliminazione dell\'atleta',
       details: error.message 
     });
   }
 };
 
-// Ottieni competizioni per stato
-const getAtletiByStato = async (req, res) => {
-  try {
-    const { stato } = req.params;
-    const competizioni = await Competizione.findAll({
-      where: { stato },
-      include: [
-        {
-          model: Categoria,
-          as: 'categorie'
-        },
-        {
-          model: Club,
-          as: 'organizzatore'
-        }
-      ],
-      order: [['dataInizio', 'ASC']]
-    });
-    res.json(competizioni);
-  } catch (error) {
-    res.status(500).json({ 
-      error: 'Errore nel recupero delle competizioni',
-      details: error.message 
-    });
-  }
-};*/
-
 module.exports = {
   getAllAtleti,
   // getAtletiById,
-  //createAtleta,
-  // updateAtleta,
-  // deleteAtleta,
-  // getAtletiByStato
+  createAtleta,
+  updateAtleta,
+  deleteAtleta,
 };

@@ -23,7 +23,8 @@ const Atleta = sequelize.define('Atleta', {
   },
   dataNascita: {
     type: DataTypes.DATEONLY,
-    allowNull: false
+    allowNull: false,
+    field: 'data_nascita'
   },
   codiceFiscale: {
     type: DataTypes.STRING(16),
@@ -31,7 +32,8 @@ const Atleta = sequelize.define('Atleta', {
     unique: true,
     validate: {
       len: [16, 16]
-    }
+    },
+    field: 'codice_fiscale'
   },
   peso: {
     type: DataTypes.DECIMAL(5, 2),
@@ -68,7 +70,8 @@ const Atleta = sequelize.define('Atleta', {
     references: {
       model: 'clubs',
       key: 'id'
-    }
+    },
+    field: 'club_id'
   }
 }, {
   tableName: 'atleti',
