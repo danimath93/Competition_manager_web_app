@@ -12,36 +12,32 @@ import {
 import { Info, Edit, Delete } from '@mui/icons-material';
 //import { format } from 'date-fns';
 
-const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
+const ClubsTable = ({ clubs, onInfo, onEdit, onDelete }) => {
   return (
     <TableContainer component={Paper}>
       <Table>
         <TableHead>
           <TableRow>
             <TableCell>Nome</TableCell>
-            <TableCell>Cognome</TableCell>
-            <TableCell>Data di Nascita</TableCell>
-            <TableCell>Grado</TableCell>
+            <TableCell>Referente</TableCell>
+            <TableCell>Città</TableCell>
             <TableCell>Azioni</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {athletes.map((athlete) => (
-            <TableRow key={athlete.id}>
-              <TableCell>{athlete.nome}</TableCell>
-              <TableCell>{athlete.cognome}</TableCell>
+          {clubs.map((club) => (
+            <TableRow key={club.id}>
+              <TableCell>{club.nome}</TableCell>
+              <TableCell>{club.referente}</TableCell>
+              <TableCell>{club.citta}</TableCell>
               <TableCell>
-                {/* {format(new Date(athlete.data_nascita), 'dd/MM/yyyy')} */}
-              </TableCell>
-              <TableCell>{athlete.grado}</TableCell>
-              <TableCell>
-                <IconButton onClick={() => onInfo(athlete)}>
+                <IconButton onClick={() => onInfo(club)}>
                   <Info />
                 </IconButton>
-                <IconButton onClick={() => onEdit(athlete)}>
+                <IconButton onClick={() => onEdit(club)}>
                   <Edit />
                 </IconButton>
-                <IconButton onClick={() => onDelete(athlete.id)}>
+                <IconButton onClick={() => onDelete(club.id)}>
                   <Delete />
                 </IconButton>
               </TableCell>
@@ -53,4 +49,4 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
   );
 };
 
-export default AthletesTable;
+export default ClubsTable;

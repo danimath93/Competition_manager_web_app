@@ -14,60 +14,44 @@ const style = {
   p: 4,
 };
 
-const AthleteInfoModal = ({ open, onClose, athlete }) => {
-  if (!athlete) return null;
+const ClubInfoModal = ({ open, onClose, club }) => {
+  if (!club) return null;
 
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
         <Typography variant="h6" component="h2">
-          Dettagli Atleta
+          Dettagli Club
         </Typography>
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={6}>
             <Typography>
-              <strong>Nome:</strong> {athlete.nome}
+              <strong>Nome:</strong> {club.nome}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Cognome:</strong> {athlete.cognome}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography>
-              <strong>Data di Nascita:</strong>{' '}
-              {/*format(new Date(athlete.dataNascita), 'dd/MM/yyyy')*/}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography>
-              <strong>Luogo di Nascita:</strong> {athlete.luogoNascita}
+              <strong>Referente:</strong> {club.referente}
             </Typography>
           </Grid>
           <Grid item xs={12}>
             <Typography>
-              <strong>Codice Fiscale:</strong> {athlete.codiceFiscale}
+              <strong>Città:</strong> {club.citta}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography>
+              <strong>Indirizzo:</strong> {club.indirizzo}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Grado:</strong> {athlete.grado}
+              <strong>Email:</strong> {club.email}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Club:</strong> {athlete.club}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography>
-              <strong>Email:</strong> {athlete.email}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography>
-              <strong>Telefono:</strong> {athlete.telefono}
+              <strong>Telefono:</strong> {club.telefono}
             </Typography>
           </Grid>
         </Grid>
@@ -76,4 +60,4 @@ const AthleteInfoModal = ({ open, onClose, athlete }) => {
   );
 };
 
-export default AthleteInfoModal;
+export default ClubInfoModal;

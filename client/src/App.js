@@ -8,6 +8,8 @@ import PermissionRoute from './components/PermissionRoute';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
 import Athletes from './pages/Athletes';
+import Clubs from './pages/Clubs';
+import Judges from './pages/Judges';
 import { getDefaultRoute } from './utils/permissions';
 import './App.css';
 
@@ -52,14 +54,14 @@ const AppContent = () => {
         {/* Club - superAdmin, admin, user */}
         <Route path="/clubs" element={
           <PermissionRoute requiredPermission="clubs">
-            <div>Pagina Club (da implementare)</div>
+            <Clubs />
           </PermissionRoute>
         } />
         
         {/* Giudici - solo superAdmin, admin */}
         <Route path="/judges" element={
           <PermissionRoute requiredPermission="judges">
-            <div>Pagina Giudici (da implementare)</div>
+            <Judges />
           </PermissionRoute>
         } />
         

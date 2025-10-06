@@ -12,7 +12,7 @@ import {
 import { Info, Edit, Delete } from '@mui/icons-material';
 //import { format } from 'date-fns';
 
-const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
+const JudgesTable = ({ judges, onInfo, onEdit, onDelete }) => {
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -21,27 +21,27 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
             <TableCell>Nome</TableCell>
             <TableCell>Cognome</TableCell>
             <TableCell>Data di Nascita</TableCell>
-            <TableCell>Grado</TableCell>
+            <TableCell>Esperienza</TableCell>
             <TableCell>Azioni</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {athletes.map((athlete) => (
-            <TableRow key={athlete.id}>
-              <TableCell>{athlete.nome}</TableCell>
-              <TableCell>{athlete.cognome}</TableCell>
+          {judges.map((judge) => (
+            <TableRow key={judge.id}>
+              <TableCell>{judge.nome}</TableCell>
+              <TableCell>{judge.cognome}</TableCell>
               <TableCell>
-                {/* {format(new Date(athlete.data_nascita), 'dd/MM/yyyy')} */}
+                {/* {format(new Date(judge.data_nascita), 'dd/MM/yyyy')} */}
               </TableCell>
-              <TableCell>{athlete.grado}</TableCell>
+              <TableCell>{judge.livelloEsperienza}</TableCell>
               <TableCell>
-                <IconButton onClick={() => onInfo(athlete)}>
+                <IconButton onClick={() => onInfo(judge)}>
                   <Info />
                 </IconButton>
-                <IconButton onClick={() => onEdit(athlete)}>
+                <IconButton onClick={() => onEdit(judge)}>
                   <Edit />
                 </IconButton>
-                <IconButton onClick={() => onDelete(athlete.id)}>
+                <IconButton onClick={() => onDelete(judge.id)}>
                   <Delete />
                 </IconButton>
               </TableCell>
@@ -53,4 +53,4 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
   );
 };
 
-export default AthletesTable;
+export default JudgesTable;

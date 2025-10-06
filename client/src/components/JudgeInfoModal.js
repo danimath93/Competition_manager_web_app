@@ -14,60 +14,65 @@ const style = {
   p: 4,
 };
 
-const AthleteInfoModal = ({ open, onClose, athlete }) => {
-  if (!athlete) return null;
+const JudgeInfoModal = ({ open, onClose, judge }) => {
+  if (!judge) return null;
 
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
         <Typography variant="h6" component="h2">
-          Dettagli Atleta
+          Dettagli Giudice
         </Typography>
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={6}>
             <Typography>
-              <strong>Nome:</strong> {athlete.nome}
+              <strong>Nome:</strong> {judge.nome}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Cognome:</strong> {athlete.cognome}
+              <strong>Cognome:</strong> {judge.cognome}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+            <Grid item xs={6}>
             <Typography>
               <strong>Data di Nascita:</strong>{' '}
-              {/*format(new Date(athlete.dataNascita), 'dd/MM/yyyy')*/}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography>
-              <strong>Luogo di Nascita:</strong> {athlete.luogoNascita}
+                {/*format(new Date(judge.dataNascita), 'dd/MM/yyyy')*/}
             </Typography>
           </Grid>
           <Grid item xs={12}>
             <Typography>
-              <strong>Codice Fiscale:</strong> {athlete.codiceFiscale}
+              <strong>Codice Fiscale:</strong> {judge.codiceFiscale}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Grado:</strong> {athlete.grado}
+              <strong>Livello di Esperienza:</strong> {judge.livelloEsperienza}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Club:</strong> {athlete.club}
+              <strong>Specializzazione:</strong> {judge.specializzazione}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography>
+              <strong>Certificazioni:</strong> {judge.certificazioni}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Email:</strong> {athlete.email}
+              <strong>Telefono:</strong> {judge.telefono}
+            </Typography>
+          </Grid>          
+          <Grid item xs={6}>
+            <Typography>
+              <strong>Email:</strong> {judge.email}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Telefono:</strong> {athlete.telefono}
+              <strong>Club:</strong> {judge.club}
             </Typography>
           </Grid>
         </Grid>
@@ -76,4 +81,4 @@ const AthleteInfoModal = ({ open, onClose, athlete }) => {
   );
 };
 
-export default AthleteInfoModal;
+export default JudgeInfoModal;
