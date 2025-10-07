@@ -36,7 +36,7 @@ const Judges = () => {
       try {
         const judgesData = await loadAllJudges();
         setJudges(judgesData);
-        setFilteredJudges(judgesData.judges);
+        setFilteredJudges(judgesData);
 /* dipende se i giudici li mette l'admin oppure li inserice il club 
         if (user && user.isAdmin) {
           const clubsData = await loadAllClubs();
@@ -111,7 +111,7 @@ const Judges = () => {
         await createJudge(judgeData);
       }
       const judgesData = await loadAllJudges();
-      setJudges(judgesData.judges);
+      setJudges(judgesData);
     } catch (error) {
       console.error("Errore nel salvataggio del giudice:", error);
     } finally {
@@ -123,7 +123,7 @@ const Judges = () => {
     try {
       await deleteJudge(judgeId);
       const judgesData = await loadAllJudges();
-      setJudges(judgesData.judges);
+      setJudges(judgesData);
     } catch (error) {
       console.error("Errore nell'eliminazione del giudice:", error);
     }
@@ -211,7 +211,6 @@ const Judges = () => {
           onSubmit={handleSaveJudge}
           isEditMode={isEditMode}
           judge={selectedJudge}
-          //clubs={clubs} da capire come sopra
           user={user}
         />
       )}

@@ -6,7 +6,9 @@ import {
   TextField,
   Button,
   Grid,
+  Autocomplete
 } from '@mui/material';
+import { loadAllClubs } from '../api/clubs';
 
 const style = {
   position: 'absolute',
@@ -28,6 +30,9 @@ const JudgeModal = ({
   isEditMode,
 }) => {
   const [formData, setFormData] = React.useState({});
+  const [clubs, setClubs] = React.useState([]);
+  const [clubName, setClubName] = React.useState(judge?.club?.nome || '');
+  const [clubNames, setClubNames] = React.useState([]);
 
   React.useEffect(() => {
     if (isEditMode && judge) {
@@ -48,9 +53,30 @@ const JudgeModal = ({
     }
   }, [open, isEditMode, judge]);
 
+  React.useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        const clubsData = await loadAllClubs();
+        const clubNames = clubsData.map((club) => club.nome);
+        setClubs(clubsData);
+        setClubNames(clubNames);
+      } catch (error) {
+        console.error('Errore nel caricamento dei dati:', error);
+      }
+    };
+
+    fetchClubs();
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handleClubSelectChange = (value) => {
+    setClubName(value);
+    const selectedClub = clubs.find((club) => club.nome === value);
+    setFormData({ ...formData, clubId: selectedClub?.id || null, club: selectedClub || null });
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -156,14 +182,26 @@ const JudgeModal = ({
             />
           </Grid>
           <Grid item xs={12}>
-            <TextField
-              name="club"
-              label="Club"
-              value={formData.club?.nome || ''}
-              onChange={handleChange}
-              fullWidth
+            <Autocomplete
+              id="club-select"
+              value={clubName}
+              groupBy={(club) => club.charAt(0).toUpperCase()}
+              getOptionLabel={(club) => club}
+              onChange={(event, value) => handleClubSelectChange(value)}
+              isOptionEqualToValue={(option, value) => option === value}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  sx={{
+                    "& .MuiInputBase-root": { height: "50px" },
+                    "width": "300px",
+                  }}
+                  label="Club"
+                />
+              )}
+              options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
             />
-          </Grid>          
+          </Grid>
         </Grid>
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>

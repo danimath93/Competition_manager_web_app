@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Box, Typography, Grid } from '@mui/material';
-//import { format } from 'date-fns';
+import { format } from 'date-fns';
 
 const style = {
   position: 'absolute',
@@ -36,8 +36,7 @@ const JudgeInfoModal = ({ open, onClose, judge }) => {
           </Grid>
             <Grid item xs={6}>
             <Typography>
-              <strong>Data di Nascita:</strong>{' '}
-                {/*format(new Date(judge.dataNascita), 'dd/MM/yyyy')*/}
+              <strong>Data di Nascita:</strong> {format(new Date(judge.dataNascita), 'dd/MM/yyyy')}
             </Typography>
           </Grid>
           <Grid item xs={12}>

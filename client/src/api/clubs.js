@@ -10,9 +10,9 @@ export const loadAllClubs = async () => {
   }
 };
 // Funzione per creare un nuovo club
-export const createClub = async (ClubData) => {
+export const createClub = async (clubData) => {
   try {
-    const response = await axios.post('/club/', ClubData);
+    const response = await axios.post('/clubs/', clubData);
     return response.data;
   } catch (error) {
     console.error('Errore durante la creazione dell\'club:', error);
@@ -21,9 +21,9 @@ export const createClub = async (ClubData) => {
 };
 
 // Funzione per aggiornare un club esistente
-export const updateClub = async (ClubId, ClubData) => {
+export const updateClub = async (clubId, clubData) => {
   try {
-    const response = await axios.put(`/club/${ClubId}/`, ClubData);
+    const response = await axios.put(`/clubs/${clubId}/`, clubData);
     return response.data;
   } catch (error) {
     console.error('Errore durante l\'aggiornamento dell\'club:', error);
@@ -32,9 +32,9 @@ export const updateClub = async (ClubId, ClubData) => {
 };
 
 // Funzione per eliminare un club
-export const deleteClub = async (ClubId) => {
+export const deleteClub = async (clubId) => {
   try {
-    await axios.delete(`/club/${ClubId}/`);
+    await axios.delete(`/clubs/${clubId}/`);
   } catch (error) {
     console.error('Errore durante l\'eliminazione dell\'club:', error);
     throw error;

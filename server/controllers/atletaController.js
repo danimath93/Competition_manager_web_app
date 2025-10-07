@@ -13,7 +13,7 @@ const getAllAtleti = async (req, res) => {
       order: [['cognome', 'ASC']]
       // ordinati anche per club
     });
-    res.status(200).json({ message: 'Atleti recuperati con successo', athletes: atleti });
+    res.status(200).json(atleti);
   } catch (error) {
     res.status(500).json({ 
       error: 'Errore nel recupero degli atleti',
@@ -26,7 +26,7 @@ const getAllAtleti = async (req, res) => {
 const createAtleta = async (req, res) => {
   try {
     const newAtleta = await Atleta.create(req.body);
-    res.status(201).json({ message: 'Atleta creato con successo', athlete: newAtleta });
+    res.status(201).json(newAtleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({
@@ -54,7 +54,7 @@ const updateAtleta = async (req, res) => {
     }
 
     const updatedAtleta = await Atleta.findByPk(id);
-    res.json({ message: 'Atleta aggiornato con successo', athlete: updatedAtleta });
+    res.json(updatedAtleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({ 
@@ -63,7 +63,7 @@ const updateAtleta = async (req, res) => {
       });
     }
     res.status(500).json({ 
-      error: 'Errore nell\'aggiornamento della competizione',
+      error: 'Errore nell\'aggiornamento dell\'atleta',
       details: error.message 
     });
   }

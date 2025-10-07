@@ -33,7 +33,7 @@ const Clubs = () => {
       try {
         const clubsData = await loadAllClubs();
         setClubs(clubsData);
-        setFilteredClubs(clubsData.clubs);
+        setFilteredClubs(clubsData);
       } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
       }
@@ -100,7 +100,7 @@ const Clubs = () => {
         await createClub(clubData);
       }
       const clubsData = await loadAllClubs();
-      setClubs(clubsData.clubs);
+      setClubs(clubsData);
     } catch (error) {
       console.error("Errore nel salvataggio del club:", error);
     } finally {
@@ -112,7 +112,7 @@ const Clubs = () => {
     try {
       await deleteClub(clubId);
       const clubsData = await loadAllClubs();
-      setClubs(clubsData.clubs);
+      setClubs(clubsData);
     } catch (error) {
       console.error("Errore nell'eliminazione del club:", error);
     }

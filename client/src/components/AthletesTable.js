@@ -10,7 +10,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Info, Edit, Delete } from '@mui/icons-material';
-//import { format } from 'date-fns';
+import { format } from 'date-fns';
 
 const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
   return (
@@ -31,7 +31,7 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
               <TableCell>{athlete.nome}</TableCell>
               <TableCell>{athlete.cognome}</TableCell>
               <TableCell>
-                {/* {format(new Date(athlete.data_nascita), 'dd/MM/yyyy')} */}
+                {format(new Date(athlete.dataNascita), 'dd/MM/yyyy')}
               </TableCell>
               <TableCell>{athlete.grado}</TableCell>
               <TableCell>

@@ -40,7 +40,7 @@ const getJudgeById = async (req, res) => {
 const createJudge = async (req, res) => {
   try {
     const newjudge = await Giudice.create(req.body);
-    res.status(201).json({ message: 'Giudice creato con successo', judge: newjudge });
+    res.status(201).json(newjudge);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({ 
@@ -66,9 +66,9 @@ const updateJudge = async (req, res) => {
     if (updatedRowsCount === 0) {
       return res.status(404).json({ error: 'Giudice non trovato' });
     }
-    
-    const updatedJudge = await Judge.findByPk(id);
-    res.json({ message: 'Giudice aggiornato con successo', athlete: updatedJudge });
+
+    const updatedJudge = await Giudice.findByPk(id);
+    res.json(updatedJudge);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       return res.status(400).json({ 
@@ -97,9 +97,9 @@ const deleteJudge = async (req, res) => {
     
     res.status(204).send();
   } catch (error) {
-    res.status(500).json({ 
-      error: 'Errore nell\'eliminazione del club',
-      details: error.message 
+    res.status(500).json({
+      error: 'Errore nell\'eliminazione del giudice',
+      details: error.message
     });
   }
 };

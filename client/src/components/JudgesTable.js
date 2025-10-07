@@ -10,7 +10,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Info, Edit, Delete } from '@mui/icons-material';
-//import { format } from 'date-fns';
+import { format } from 'date-fns';
 
 const JudgesTable = ({ judges, onInfo, onEdit, onDelete }) => {
   return (
@@ -31,7 +31,7 @@ const JudgesTable = ({ judges, onInfo, onEdit, onDelete }) => {
               <TableCell>{judge.nome}</TableCell>
               <TableCell>{judge.cognome}</TableCell>
               <TableCell>
-                {/* {format(new Date(judge.data_nascita), 'dd/MM/yyyy')} */}
+                {format(new Date(judge.dataNascita), 'dd/MM/yyyy')}
               </TableCell>
               <TableCell>{judge.livelloEsperienza}</TableCell>
               <TableCell>

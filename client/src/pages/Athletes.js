@@ -38,8 +38,8 @@ const Athletes = () => {
     const fetchData = async () => {
       try {
         const athletesData = await loadAllAthletes();
-        setAthletes(athletesData.athletes);
-        setFilteredAthletes(athletesData.athletes);
+        setAthletes(athletesData);
+        setFilteredAthletes(athletesData);
 
         if (user && user.isAdmin) {
           const clubsData = await loadAllClubs();
@@ -114,7 +114,7 @@ const Athletes = () => {
         await createAthlete(athleteData);
       }
       const athletesData = await loadAllAthletes();
-      setAthletes(athletesData.athletes);
+      setAthletes(athletesData);
     } catch (error) {
       console.error("Errore nel salvataggio dell'atleta:", error);
     } finally {
@@ -126,7 +126,7 @@ const Athletes = () => {
     try {
       await deleteAthlete(athleteId);
       const athletesData = await loadAllAthletes();
-      setAthletes(athletesData.athletes);
+      setAthletes(athletesData);
     } catch (error) {
       console.error("Errore nell'eliminazione dell'atleta:", error);
     }
