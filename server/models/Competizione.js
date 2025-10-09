@@ -20,7 +20,8 @@ const Competizione = sequelize.define('Competizione', {
   },
   dataInizio: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: false,
+    field: 'data_inizio',
   },
   dataFine: {
     type: DataTypes.DATE,
@@ -31,7 +32,8 @@ const Competizione = sequelize.define('Competizione', {
           throw new Error('La data di fine deve essere successiva alla data di inizio');
         }
       }
-    }
+    },
+    field: 'data_fine'
   },
   luogo: {
     type: DataTypes.STRING,
@@ -45,7 +47,7 @@ const Competizione = sequelize.define('Competizione', {
     allowNull: true
   },
   tipologia: {
-    type: DataTypes.ENUM('Kata', 'Kumite', 'Mista'),
+    type: DataTypes.ENUM('Quyen mani nude', 'Quyen con armi', 'Quyen misti', 'Quyen a squadre', 'Combattimenti', 'Mista'),
     allowNull: false,
     defaultValue: 'Mista'
   },
@@ -64,18 +66,21 @@ const Competizione = sequelize.define('Competizione', {
     allowNull: true,
     validate: {
       min: 1
-    }
+    },
+    field: 'max_partecipanti'
   },
   quotaIscrizione: {
-    type: DataTypes.DECIMAL(8, 2),
+    type: DataTypes.JSON,
     allowNull: true,
     validate: {
       min: 0
-    }
+    },
+    field: 'quota_iscrizione'
   },
   dataScadenzaIscrizioni: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
+    field: 'data_scadenza_iscrizioni'
   },
   organizzatoreClubId: {
     type: DataTypes.INTEGER,
@@ -83,7 +88,8 @@ const Competizione = sequelize.define('Competizione', {
     references: {
       model: 'clubs',
       key: 'id'
-    }
+    },
+    field: 'organizzatore_club_id'
   }
 }, {
   tableName: 'competizioni',

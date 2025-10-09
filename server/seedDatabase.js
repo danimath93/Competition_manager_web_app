@@ -163,7 +163,7 @@ const seedData = async () => {
         dataFine: new Date('2024-07-21T17:00:00'),
         luogo: 'Centro Congressi - Roma',
         indirizzo: 'Via dei Congressi 50, Roma',
-        tipologia: 'Kata',
+        tipologia: 'Quyen mani nude',
         livello: 'Nazionale',
         stato: 'Aperta',
         maxPartecipanti: 150,
@@ -177,8 +177,8 @@ const seedData = async () => {
     // Seed Categorie
     const categorie = await Categoria.bulkCreate([
       {
-        nome: 'Kata Maschile Seniores',
-        descrizione: 'Categoria Kata per atleti maschi seniores',
+        nome: 'Quyen Maschile Seniores',
+        descrizione: 'Categoria Quyen per atleti maschi seniores',
         tipologia: 'Kata',
         genere: 'Maschile',
         etaMinima: 18,
@@ -238,7 +238,7 @@ const seedData = async () => {
         email: 'ashiokpower@gmail.com',
         password: '580d9331406ab2749644825c824dc689e13f4c7669b092784015e825dc099884', //psw: scurreggioniN.1
         status: 'E',
-        permissions: ['superAdmin'],
+        permissions: 'superAdmin',
         salt: 'de684853376e06375694'
       },
       {
@@ -246,7 +246,7 @@ const seedData = async () => {
         email: 'segreteriaANC@gmail.com',
         password: '89b230b40443cefaa94d4a523c678739884d6cc5aefb5390e27e5726569abbed', //psw: scurreggioni
         status: 'E',
-        permissions: ['admin'],
+        permissions: 'admin',
         salt: 'de684853376e06375694'
       },
       {
@@ -254,7 +254,7 @@ const seedData = async () => {
         email: 'segreteriaTS@gmail.com',
         password: '3b75d0f2f0dfdad678fa2e3e8e49e062f193a2432e6a53dc7ac718e209f6e615', //psw: formadibastone
         status: 'E',
-        permissions: ['user'],
+        permissions: 'user',
         salt: 'de684853376e06375694'
       },
       {
@@ -262,7 +262,7 @@ const seedData = async () => {
         email: 'tavolo1@gmail.com',
         password: '5048d49079ca14cb3f9ff9a9bba623a89c7713a1ecb4ffb10f712d2596682591', //psw: bastoneDagnogo21
         status: 'E',
-        permissions: ['table'],
+        permissions: 'tableUser',
         salt: 'de684853376e06375694'
       }
     ]);

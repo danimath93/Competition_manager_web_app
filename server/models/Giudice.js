@@ -23,7 +23,8 @@ const Giudice = sequelize.define('Giudice', {
   },
   dataNascita: {
     type: DataTypes.DATEONLY,
-    allowNull: false
+    allowNull: false,
+    fieldq: 'data_nascita'
   },
   codiceFiscale: {
     type: DataTypes.STRING(16),
@@ -31,12 +32,14 @@ const Giudice = sequelize.define('Giudice', {
     unique: true,
     validate: {
       len: [16, 16]
-    }
+    },
+    field: 'codice_fiscale'
   },
   livelloEsperienza: {
     type: DataTypes.ENUM('Aspirante', 'Regionale', 'Nazionale', 'Internazionale'),
     allowNull: false,
-    defaultValue: 'Aspirante'
+    defaultValue: 'Aspirante',
+    field: 'livello_esperienza'
   },
   specializzazione: {
     type: DataTypes.STRING,

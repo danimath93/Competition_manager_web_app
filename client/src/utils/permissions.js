@@ -22,11 +22,6 @@ export const getAccessiblePages = (userRole) => {
   return PERMISSIONS[userRole] || [];
 };
 
-// Verifica se l'utente può accedere a tutte le funzionalità (superAdmin/admin)
-export const isFullAccess = (userRole) => {
-  return userRole === 'superAdmin' || userRole === 'admin';
-};
-
 // Ottiene il primo percorso valido per l'utente (per redirect)
 export const getDefaultRoute = (userRole) => {
   const accessiblePages = getAccessiblePages(userRole);

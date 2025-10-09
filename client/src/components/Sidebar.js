@@ -29,7 +29,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   ];
 
   // Filtra i menu items in base ai permessi dell'utente
-  const userRole = user?.permissions || user?.role;
+  const userRole = user?.permissions;
   const menuItems = allMenuItems.filter(item => 
     hasPermission(userRole, item.permission)
   );

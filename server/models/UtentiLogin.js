@@ -41,9 +41,9 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
   },
   permissions: {
     // uso un array di testi per gestire i permessi
-    type: DataTypes.ARRAY(DataTypes.STRING),
+    type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: []
+    defaultValue: 'user'
   }
 }, {
   tableName: 'utenti_login',

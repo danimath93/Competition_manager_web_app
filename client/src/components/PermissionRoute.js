@@ -28,7 +28,7 @@ const PermissionRoute = ({ children, requiredPermission }) => {
   }
   
   // Se l'utente non ha i permessi per questa pagina, reindirizza alla home
-  const userRole = user?.permissions || user?.role;
+  const userRole = user?.permissions;
   if (!hasPermission(userRole, requiredPermission)) {
     const defaultRoute = getDefaultRoute(userRole);
     return <Navigate to={defaultRoute} replace />;
