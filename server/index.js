@@ -10,7 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 3050;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

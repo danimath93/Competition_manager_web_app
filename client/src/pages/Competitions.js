@@ -6,7 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { 
     loadAllCompetitions, 
-    loadUserCompetitions, 
+    createCompetition,
+    updateCompetition,
     deleteCompetition,
     getCompetitionDetails 
 } from '../api/competitions';
@@ -28,9 +29,9 @@ const Competitions = () => {
 
   const fetchCompetitions = async () => {
     try {
-      const data = user.permissions === 'admin' ? await loadAllCompetitions() : await loadUserCompetitions();
+      const data = await loadAllCompetitions();
       // Ordina le competizioni per data di inizio, dalla più recente alla più vecchia
-      const sortedData = data.sort((a, b) => new Date(b.data_inizio) - new Date(a.data_inizio));
+      const sortedData = data.sort((a, b) => new Date(b.dataInizio) - new Date(a.dataInizio));
       setCompetitions(sortedData);
     } catch (error) {
       console.error("Errore nel caricamento delle competizioni:", error);
@@ -69,9 +70,12 @@ const Competitions = () => {
     setCompetitionDetails(null);
   };
 
-  const handleSaveCompetition = async (competitionData) => {
-    // La logica di salvataggio (creazione/aggiornamento) sarà qui
-    // Per ora, chiudiamo il modale e aggiorniamo la lista
+  const handleSaveModifyCompetition = async (competitionData) => {
+    if (competitionData.id) {
+      await updateCompetition(competitionData.id, competitionData);
+    } else {
+        await createCompetition(competitionData);
+    }
     handleCloseModal();
     fetchCompetitions(); 
   };
@@ -97,7 +101,7 @@ const Competitions = () => {
         {t('competitions')}
       </Typography>
 
-      {user && user.isAdmin && (
+      {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
         <Box sx={{ mb: 2 }}>
           <Button
             variant="contained"
@@ -126,7 +130,7 @@ const Competitions = () => {
         <CompetitionModal
             open={isModalOpen}
             onClose={handleCloseModal}
-            onSubmit={handleSaveCompetition}
+            onSubmit={handleSaveModifyCompetition}
             isEditMode={isEditMode}
             competition={selectedCompetition}
         />

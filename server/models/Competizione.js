@@ -57,7 +57,7 @@ const Competizione = sequelize.define('Competizione', {
     defaultValue: 'Locale'
   },
   stato: {
-    type: DataTypes.ENUM('Pianificata', 'Aperta', 'In corso', 'Conclusa', 'Annullata'),
+    type: DataTypes.ENUM('Pianificata', 'Aperta', 'In preparazione', 'In corso', 'Conclusa', 'Annullata'),
     allowNull: false,
     defaultValue: 'Pianificata'
   },
@@ -90,6 +90,51 @@ const Competizione = sequelize.define('Competizione', {
       key: 'id'
     },
     field: 'organizzatore_club_id'
+  },
+  circolareGara: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true,
+    field: 'circolare_gara'
+  },
+  circolareGaraNome: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'circolare_gara_nome'
+  },
+  circolareGaraTipo: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'circolare_gara_tipo'
+  },
+  fileExtra1: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true,
+    field: 'file_extra_1'
+  },
+  fileExtra1Nome: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'file_extra_1_nome'
+  },
+  fileExtra1Tipo: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'file_extra_1_tipo'
+  },
+  fileExtra2: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true,
+    field: 'file_extra_2'
+  },
+  fileExtra2Nome: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'file_extra_2_nome'
+  },
+  fileExtra2Tipo: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'file_extra_2_tipo'
   }
 }, {
   tableName: 'competizioni',

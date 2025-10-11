@@ -42,7 +42,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
         </Box>
       </CardContent>
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
-        {user && user.permissions === 'admin' ? (
+        {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') ? (
           <>
             <Button
               variant="outlined"
