@@ -18,6 +18,7 @@ import {
   Delete as DeleteIcon 
 } from '@mui/icons-material';
 import { uploadCompetitionFiles, downloadCompetitionFile, deleteCompetitionFile } from '../api/competitions';
+import { CompetitionTipology, CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
 
 const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) => {
   const [formData, setFormData] = useState({
@@ -25,6 +26,11 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     dataInizio: '',
     dataFine: '',
     luogo: '',
+    indirizzo: '',
+    tipologia: CompetitionTipology.MIXED,
+    livello: CompetitionLevel.REGIONAL,
+    stato: CompetitionStatus.PLANNED,
+    dataScadenzaIscrizioni: '',
     descrizione: '',
   });
 
@@ -47,7 +53,12 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         nome: competition.nome || '',
         dataInizio: competition.dataInizio ? competition.dataInizio.split('T')[0] : '',
         dataFine: competition.dataFine ? competition.dataFine.split('T')[0] : '',
+        tipologia: competition.tipologia || '',
+        livello: competition.livello || '',
+        dataScadenzaIscrizioni: competition.dataScadenzaIscrizioni ? competition.dataScadenzaIscrizioni.split('T')[0] : '',
         luogo: competition.luogo || '',
+        indirizzo: competition.indirizzo || '',
+        stato: competition.stato || CompetitionStatus.PLANNED,
         descrizione: competition.descrizione || '',
       });
     } else {
@@ -55,7 +66,12 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         nome: '',
         dataInizio: '',
         dataFine: '',
+        tipologia: CompetitionTipology.MIXED,
+        livello: CompetitionLevel.REGIONAL,
+        stato: CompetitionStatus.PLANNED,
+        dataScadenzaIscrizioni: '',
         luogo: '',
+        indirizzo: '',
         descrizione: '',
       });
     }
@@ -180,7 +196,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
                 required
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={6}>  
               <TextField
                 name="dataInizio"
                 label="Data Inizio"
@@ -212,6 +228,58 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
                 onChange={handleChange}
                 fullWidth
                 required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="indirizzo"
+                label="Indirizzo"
+                value={formData.indirizzo}
+                onChange={handleChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="tipologia"
+                label="Tipologia"
+                value={formData.tipologia}
+                onChange={handleChange}
+                fullWidth
+                required
+                select
+                SelectProps={{ native: true }}
+              >
+                {Object.entries(CompetitionTipology).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="livello"
+                label="Livello"
+                value={formData.livello}
+                onChange={handleChange}
+                fullWidth
+                required
+                select
+                SelectProps={{ native: true }}
+              >
+                {Object.entries(CompetitionLevel).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="dataScadenzaIscrizioni"
+                label="Data Scadenza Iscrizioni"
+                type="date"
+                value={formData.dataScadenzaIscrizioni}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
               />
             </Grid>
             <Grid item xs={12}>

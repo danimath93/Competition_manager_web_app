@@ -11,12 +11,29 @@ import {
 import { Edit, Delete, Info, AppRegistration } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 
 const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails }) => {
   const { user } = useAuth();
 
-  const isUserRegistered = competition.isRegistered;
-  const isActive = new Date(competition.data_fine) >= new Date();
+  const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case CompetitionStatus.PLANNED:
+        return 'default';
+      case CompetitionStatus.IN_PREPARATION:
+        return 'info';
+      case CompetitionStatus.OPEN:
+        return 'primary';
+      case CompetitionStatus.ONGOING:
+        return 'warning';
+      case CompetitionStatus.COMPLETED:
+        return 'success';
+      case CompetitionStatus.CANCELLED:
+        return 'error';
+    }
+  }
 
   return (
     <Card sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -31,14 +48,10 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
           {competition.luogo}
         </Typography>
         <Box sx={{ mt: 1 }}>
-            {isActive ? (
-                <Chip label="Attiva" color="success" size="small" />
-            ) : (
-                <Chip label="Conclusa" color="default" size="small" />
-            )}
-            {isUserRegistered && (
-                <Chip label="Iscritto" color="primary" size="small" sx={{ ml: 1 }} />
-            )}
+          <Chip label={competition.stato} color={getStatusColor(competition.stato)} size="small" />
+          {competition.isRegistered && (
+            <Chip label="Iscritto" color="primary" size="small" sx={{ ml: 1 }} />
+          )}
         </Box>
       </CardContent>
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
@@ -78,9 +91,9 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
             variant="contained"
             startIcon={<AppRegistration />}
             onClick={() => onRegister(competition.id)}
-            disabled={!isActive && !isUserRegistered}
+            disabled={!isActive}
           >
-            {isUserRegistered ? 'Modifica Iscrizione' : 'Iscriviti'}
+            Iscrizione
           </Button>
         )}
       </CardActions>
