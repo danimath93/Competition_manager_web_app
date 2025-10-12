@@ -11,6 +11,17 @@ export const loadAllAthletes = async (filters) => {
   }
 };
 
+// Funzione per ottenere gli atleti di un club specifico
+export const loadAthletesByClub = async (clubId) => {
+  try {
+    const response = await axios.get(`/atleti/club/${clubId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento degli atleti del club:', error);
+    throw error;
+  }
+};
+
 // Funzione per creare un nuovo atleta
 export const createAthlete = async (athleteData) => {
   try {

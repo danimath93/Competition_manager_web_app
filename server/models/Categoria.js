@@ -93,6 +93,15 @@ const Categoria = sequelize.define('Categoria', {
       model: 'competizioni',
       key: 'id'
     }
+  },
+  configTipoCategoriaId: {
+    type: DataTypes.INTEGER,
+    allowNull: true, // Nullable per categorie esistenti
+    references: {
+      model: 'config_tipo_categorie',
+      key: 'id'
+    },
+    field: 'config_tipo_categoria_id'
   }
 }, {
   tableName: 'categorie',

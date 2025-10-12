@@ -15,9 +15,25 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
       key: 'id'
     }
   },
-  categoriaId: {
+  competizioneId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'competizioni',
+      key: 'id'
+    }
+  },
+  tipoCategoriaId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'config_tipo_categorie',
+      key: 'id'
+    }
+  },
+  categoriaId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
     references: {
       model: 'categorie',
       key: 'id'

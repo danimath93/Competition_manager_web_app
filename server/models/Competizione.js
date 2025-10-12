@@ -47,9 +47,30 @@ const Competizione = sequelize.define('Competizione', {
     allowNull: true
   },
   tipologia: {
-    type: DataTypes.ENUM('Quyen mani nude', 'Quyen con armi', 'Quyen misti', 'Quyen a squadre', 'Combattimenti', 'Mista'),
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
     allowNull: false,
-    defaultValue: 'Mista'
+    defaultValue: [],
+    validate: {
+      notEmpty: {
+        msg: 'Deve essere selezionata almeno una tipologia'
+      },
+      isArrayOfIntegers(value) {
+        if (!Array.isArray(value)) {
+          throw new Error('Tipologia deve essere un array');
+        }
+        if (value.length === 0) {
+          throw new Error('Deve essere selezionata almeno una tipologia');
+        }
+        if (!value.every(id => Number.isInteger(id) && id > 0)) {
+          throw new Error('Tutti gli ID delle tipologie devono essere numeri interi positivi');
+        }
+        // Verifica che non ci siano duplicati
+        if (new Set(value).size !== value.length) {
+          throw new Error('Non sono ammessi ID duplicati nelle tipologie');
+        }
+      }
+    },
+    comment: 'Array di ID che referenziano ConfigTipoCompetizione'
   },
   livello: {
     type: DataTypes.ENUM('Locale', 'Regionale', 'Nazionale', 'Internazionale'),
@@ -90,6 +111,19 @@ const Competizione = sequelize.define('Competizione', {
       key: 'id'
     },
     field: 'organizzatore_club_id'
+  },
+  maxCategorieAtleta: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 1
+    },
+    field: 'max_categorie_atleta'
+  },
+  clubIscritti: {
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
+    allowNull: true,
+    field: 'club_iscritti'
   },
   circolareGara: {
     type: DataTypes.BLOB('long'),

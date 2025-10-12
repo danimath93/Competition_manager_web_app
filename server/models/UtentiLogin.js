@@ -39,8 +39,16 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
     allowNull: false,
     defaultValue: 'E'
   },
+  clubId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'clubs',
+      key: 'id'
+    },
+    field: 'club_id'
+  },
   permissions: {
-    // uso un array di testi per gestire i permessi
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'user'

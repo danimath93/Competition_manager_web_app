@@ -139,37 +139,60 @@ const seedData = async () => {
     ]);
     console.log('✅ Giudici creati');
 
+    // Seed Configurazioni
+    const configTipiCompetizione = await sequelize.models.ConfigTipoCompetizione.bulkCreate([
+      { id:1, nome: 'Quyen mani nude', descrizione: 'Competizione di Quyen a mani nude' },
+      { id:2, nome: 'Quyen con armi', descrizione: 'Competizione di Quyen con armi tradizionali' },
+      { id:3, nome: 'Combattimenti', descrizione: 'Competizione di combattimenti tradizionali' },
+    ]);
+
+    const configTipiCategoria = await sequelize.models.ConfigTipoCategoria.bulkCreate([
+      { nome: 'Quyen programma', descrizione: 'Categoria per Quyen a mani nude o con armi', tipoCompetizioneId: 1 },
+      { nome: 'Quyen internazionale', descrizione: 'Categoria per Quyen secondo regolamenti internazionali', tipoCompetizioneId: 1 },
+      { nome: 'Quyen mani nude a squadre', descrizione: 'Categoria per Quyen a mani nude in squadre', tipoCompetizioneId: 1 },
+      { nome: 'Song luyen mani nude', descrizione: 'Categoria per Song Luyen a mani nude', tipoCompetizioneId: 1 },
+      { nome: 'Quyen con armi lunghe', descrizione: 'Categoria per Quyen con armi lunghe', tipoCompetizioneId: 2 },
+      { nome: 'Quyen con armi corte', descrizione: 'Categoria per Quyen con armi corte', tipoCompetizioneId: 2 },
+      { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 2 },
+      { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 2 },
+      { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 2 },
+      { nome: 'Combattimento normale', descrizione: 'Categoria per combattimenti normali', tipoCompetizioneId: 3 },
+      { nome: 'Combattimento vat', descrizione: 'Categoria per combattimenti di tipo vat', tipoCompetizioneId: 3 }
+    ]);
+
+    console.log('✅ Configurazioni create');
+
     // Seed Competizioni
     const competizioni = await Competizione.bulkCreate([
       {
         nome: 'Campionato Regionale Lombardia 2024',
         descrizione: 'Campionato regionale di karate per tutte le categorie',
-        dataInizio: new Date('2024-06-15T09:00:00'),
-        dataFine: new Date('2024-06-15T18:00:00'),
+        dataInizio: new Date('2025-12-01T09:00:00'),
+        dataFine: new Date('2025-12-10T18:00:00'),
         luogo: 'Palazzetto dello Sport - Milano',
         indirizzo: 'Via dello Sport 1, Milano',
-        tipologia: 'Mista',
+        tipologia: [1,2,3],
         livello: 'Regionale',
         stato: 'Pianificata',
         maxPartecipanti: 200,
         quotaIscrizione: 25.00,
-        dataScadenzaIscrizioni: new Date('2024-06-01T23:59:59'),
+        dataScadenzaIscrizioni: new Date('2025-11-20T23:59:59'),
         organizzatoreClubId: 1
       },
       {
         nome: 'Torneo Nazionale Kata 2024',
         descrizione: 'Torneo nazionale specializzato in Kata tradizionali',
-        dataInizio: new Date('2024-07-20T10:00:00'),
-        dataFine: new Date('2024-07-21T17:00:00'),
+        dataInizio: new Date('2025-11-15T10:00:00'),
+        dataFine: new Date('2025-11-18T17:00:00'),
         luogo: 'Centro Congressi - Roma',
         indirizzo: 'Via dei Congressi 50, Roma',
-        tipologia: 'Quyen mani nude',
+        tipologia: [1],
         livello: 'Nazionale',
         stato: 'Aperta',
         maxPartecipanti: 150,
         quotaIscrizione: 35.00,
-        dataScadenzaIscrizioni: new Date('2024-07-05T23:59:59'),
-        organizzatoreClubId: 3
+        dataScadenzaIscrizioni: new Date('2025-11-01T23:59:59'),
+        organizzatoreClubId: 2
       }
     ]);
     console.log('✅ Competizioni create');

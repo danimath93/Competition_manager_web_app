@@ -1,4 +1,4 @@
-const { Competizione, Categoria, Club } = require('../models');
+const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoCompetizione } = require('../models');
 
 // Ottieni tutte le competizioni
 const getAllCompetizioni = async (req, res) => {
@@ -20,10 +20,42 @@ const getAllCompetizioni = async (req, res) => {
       ],
       order: [['dataInizio', 'DESC']]
     });
+
     res.json(competizioni);
   } catch (error) {
     res.status(500).json({ 
       error: 'Errore nel recupero delle competizioni',
+      details: error.message 
+    });
+  }
+};
+
+// Ottieni le categorie di una competizione specifica
+const getTipoCategorieByCompetizione = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+    const competition = await Competizione.findByPk(competizioneId);
+    if (!competition) {
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Recupera i tipi di categoria associati alla competizione, guardando l'array tipologia e per ogni tipologia, aggiungo tutte le tipologie categoria associate
+    const competitionTipologies = await ConfigTipoCompetizione.findAll({
+      where: {
+        id: { [require('sequelize').Op.in]: competition.tipologia }
+      }
+    });
+
+    const categoryTipologies = await ConfigTipoCategoria.findAll({
+      where: {
+        tipoCompetizioneId: { [require('sequelize').Op.in]: competitionTipologies.map(t => t.id) }
+      },
+      order: [['nome', 'ASC']]
+    });
+    res.json(categoryTipologies);
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Errore nel recupero delle categorie',
       details: error.message 
     });
   }
@@ -54,7 +86,7 @@ const getCompetizioneById = async (req, res) => {
     if (!competizione) {
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
-    
+
     res.json(competizione);
   } catch (error) {
     res.status(500).json({ 
@@ -138,6 +170,9 @@ const getCompetizioniByStato = async (req, res) => {
     const { stato } = req.params;
     const competizioni = await Competizione.findAll({
       where: { stato },
+      attributes: { 
+        exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']
+      },
       include: [
         {
           model: Categoria,
@@ -150,10 +185,58 @@ const getCompetizioniByStato = async (req, res) => {
       ],
       order: [['dataInizio', 'ASC']]
     });
+
     res.json(competizioni);
   } catch (error) {
     res.status(500).json({ 
       error: 'Errore nel recupero delle competizioni',
+      details: error.message 
+    });
+  }
+};
+
+// Ottieni competizioni per tipologia
+const getCompetizioniByTipologia = async (req, res) => {
+  try {
+    const { tipologiaId } = req.params;
+    const tipologiaIdInt = parseInt(tipologiaId);
+    
+    if (isNaN(tipologiaIdInt)) {
+      return res.status(400).json({ error: 'ID tipologia non valido' });
+    }
+
+    // Verifica che la tipologia esista
+    const tipologiaEsiste = await ConfigTipoCompetizione.findByPk(tipologiaIdInt);
+    if (!tipologiaEsiste) {
+      return res.status(404).json({ error: 'Tipologia non trovata' });
+    }
+
+    const competizioni = await Competizione.findAll({
+      where: {
+        tipologia: {
+          [require('sequelize').Op.contains]: [tipologiaIdInt]
+        }
+      },
+      attributes: { 
+        exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']
+      },
+      include: [
+        {
+          model: Categoria,
+          as: 'categorie'
+        },
+        {
+          model: Club,
+          as: 'organizzatore'
+        }
+      ],
+      order: [['dataInizio', 'DESC']]
+    });
+
+    res.json(competizioni);
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Errore nel recupero delle competizioni per tipologia',
       details: error.message 
     });
   }
@@ -321,11 +404,13 @@ const deleteFile = async (req, res) => {
 
 module.exports = {
   getAllCompetizioni,
+  getTipoCategorieByCompetizione,
   getCompetizioneById,
   createCompetizione,
   updateCompetizione,
   deleteCompetizione,
   getCompetizioniByStato,
+  getCompetizioniByTipologia,
   uploadFiles,
   downloadFile,
   deleteFile

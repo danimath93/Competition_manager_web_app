@@ -35,7 +35,8 @@ const loginUser = async (req, res) => {
     const outUser = {
       username: user.username,
       email: user.email,
-      permissions: user.permissions
+      permissions: user.permissions,
+      clubId: user.clubId,
     };
 
     res.status(200).json({ message: 'Login effettuato con successo', user: outUser, token });

@@ -7,6 +7,7 @@ import Login from './components/Login';
 import PermissionRoute from './components/PermissionRoute';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
+import CompetitionRegistration from './pages/CompetitionRegistration';
 import Athletes from './pages/Athletes';
 import Clubs from './pages/Clubs';
 import Judges from './pages/Judges';
@@ -41,6 +42,13 @@ const AppContent = () => {
         <Route path="/competitions" element={
           <PermissionRoute requiredPermission="competitions">
             <Competitions />
+          </PermissionRoute>
+        } />
+        
+        {/* Registrazione Competizione - superAdmin, admin, user */}
+        <Route path="/competitions/:competitionId/register" element={
+          <PermissionRoute requiredPermission="competitions">
+            <CompetitionRegistration />
           </PermissionRoute>
         } />
         

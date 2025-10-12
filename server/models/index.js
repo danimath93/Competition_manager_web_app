@@ -9,6 +9,8 @@ const Categoria = require('./Categoria');
 const IscrizioneAtleta = require('./IscrizioneAtleta');
 const AssegnazioneGiudice = require('./AssegnazioneGiudice');
 const UtentiLogin = require('./UtentiLogin');
+const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
+const ConfigTipoCategoria = require('./ConfigTipoCategoria');
 
 // Definisci le associazioni
 
@@ -80,6 +82,24 @@ IscrizioneAtleta.belongsTo(Categoria, {
   as: 'categoria'
 });
 
+// Aggiunta associazione per Competizione
+IscrizioneAtleta.belongsTo(Competizione, {
+  foreignKey: 'competizioneId',
+  as: 'competizione'
+});
+Competizione.hasMany(IscrizioneAtleta, {
+  foreignKey: 'competizioneId',
+  as: 'iscrizioni'
+});
+IscrizioneAtleta.belongsTo(ConfigTipoCategoria, {
+  foreignKey: 'tipoCategoriaId',
+  as: 'tipoCategoria'
+});
+ConfigTipoCategoria.hasMany(IscrizioneAtleta, {
+  foreignKey: 'tipoCategoriaId',
+  as: 'iscrizioni'
+});
+
 Atleta.hasMany(IscrizioneAtleta, {
   foreignKey: 'atletaId',
   as: 'iscrizioni'
@@ -122,6 +142,28 @@ Categoria.hasMany(AssegnazioneGiudice, {
   as: 'assegnamenti'
 });
 
+// ConfigTipoCompetizione -> ConfigTipoCategoria (One-to-Many)
+ConfigTipoCompetizione.hasMany(ConfigTipoCategoria, {
+  foreignKey: 'tipoCompetizioneId',
+  as: 'tipiCategoria',
+  onDelete: 'CASCADE'
+});
+ConfigTipoCategoria.belongsTo(ConfigTipoCompetizione, {
+  foreignKey: 'tipoCompetizioneId',
+  as: 'tipoCompetizione'
+});
+
+// ConfigTipoCategoria -> Categoria (One-to-Many)
+ConfigTipoCategoria.hasMany(Categoria, {
+  foreignKey: 'configTipoCategoriaId',
+  as: 'categorie',
+  onDelete: 'SET NULL'
+});
+Categoria.belongsTo(ConfigTipoCategoria, {
+  foreignKey: 'configTipoCategoriaId',
+  as: 'configTipoCategoria'
+});
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,
@@ -132,5 +174,7 @@ module.exports = {
   Categoria,
   IscrizioneAtleta,
   AssegnazioneGiudice,
-  UtentiLogin
+  UtentiLogin,
+  ConfigTipoCompetizione,
+  ConfigTipoCategoria
 };

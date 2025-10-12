@@ -9,6 +9,12 @@ router.get('/', competizioneController.getAllCompetizioni);
 // GET /api/competizioni/stato/:stato - Ottieni competizioni per stato
 router.get('/stato/:stato', competizioneController.getCompetizioniByStato);
 
+// GET /api/competizioni/tipologia/:tipologiaId - Ottieni competizioni per tipologia
+router.get('/tipologia/:tipologiaId', competizioneController.getCompetizioniByTipologia);
+
+// GET /api/competizioni/:competizioneId/tipocategorie - Ottieni le categorie di una competizione
+router.get('/:competizioneId/tipocategorie', competizioneController.getTipoCategorieByCompetizione);
+
 // GET /api/competizioni/:id - Ottieni una competizione per ID
 router.get('/:id', competizioneController.getCompetizioneById);
 

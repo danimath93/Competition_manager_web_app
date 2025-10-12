@@ -22,6 +22,29 @@ const getAllAtleti = async (req, res) => {
   }
 };
 
+// Ottieni tutti gli atleti di un club specifico
+const getAtletiByClub = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+    const atleti = await Atleta.findAll({
+      where: { clubId },
+      include: [
+        {
+          model: Club,
+          as: 'club'
+        }
+      ],
+      order: [['cognome', 'ASC'], ['nome', 'ASC']]
+    });
+    res.status(200).json(atleti);
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Errore nel recupero degli atleti del club',
+      details: error.message 
+    });
+  }
+};
+
 // Crea un nuovo atleta
 const createAtleta = async (req, res) => {
   try {
@@ -92,6 +115,7 @@ const deleteAtleta = async (req, res) => {
 
 module.exports = {
   getAllAtleti,
+  getAtletiByClub,
   // getAtletiById,
   createAtleta,
   updateAtleta,

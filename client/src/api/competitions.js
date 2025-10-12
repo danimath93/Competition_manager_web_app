@@ -14,12 +14,34 @@ export const loadAllCompetitions = async () => {
 // Ottiene i dettagli di una competizione specifica (per admin)
 export const getCompetitionDetails = async (id) => {
     try {
-        const response = await axios.get(`/competizioni/${id}/details`);
+        const response = await axios.get(`/competizioni/${id}`);
         return response.data;
     } catch (error) {
         console.error('Errore nel caricamento dei dettagli della competizione:', error);
         throw error;
     }
+};
+
+// Ottiene le categorie di una competizione specifica
+export const loadCompetitionCategories = async (competitionId) => {
+  try {
+    const response = await axios.get(`/competizioni/${competitionId}/tipocategorie`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento delle categorie:', error);
+    throw error;
+  }
+};
+
+// Ottiene le competizioni filtrate per tipologia
+export const loadCompetitionsByTipologia = async (tipologiaId) => {
+  try {
+    const response = await axios.get(`/competizioni/tipologia/${tipologiaId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento delle competizioni per tipologia:', error);
+    throw error;
+  }
 };
 
 // Crea una nuova competizione

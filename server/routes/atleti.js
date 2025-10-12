@@ -5,6 +5,9 @@ const atletaController = require('../controllers/atletaController');
 // GET /api/atleti - Ottieni tutti gli atleti 
 router.get('/', atletaController.getAllAtleti);
 
+// GET /api/atleti/club/:clubId - Ottieni gli atleti di un club specifico
+router.get('/club/:clubId', atletaController.getAtletiByClub);
+
 // GET /api/atleti/:id - Ottieni una atleta per ID
 // router.get('/:id', atletaController.getAtletaById);
 

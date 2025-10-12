@@ -17,6 +17,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
   const { user } = useAuth();
 
   const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
+  const isClubRegistered = competition?.clubIscritti?.includes(user.clubId) || false;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -47,9 +48,10 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
         <Typography variant="body2">
           {competition.luogo}
         </Typography>
+        
         <Box sx={{ mt: 1 }}>
           <Chip label={competition.stato} color={getStatusColor(competition.stato)} size="small" />
-          {competition.isRegistered && (
+          {isClubRegistered && (
             <Chip label="Iscritto" color="primary" size="small" sx={{ ml: 1 }} />
           )}
         </Box>

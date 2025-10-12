@@ -7,6 +7,8 @@ const competizioniRoutes = require('./competizioni');
 const authRoutes = require('./auth');
 const atletiRoutes = require('./atleti');
 const giudiciRoutes = require('./giudici');
+const iscrizioniRoutes = require('./iscrizioni');
+const configRoutes = require('./config');
 
 // Configura le routes
 router.use('/clubs', clubRoutes);
@@ -14,6 +16,8 @@ router.use('/competizioni', competizioniRoutes);
 router.use('/auth', authRoutes);
 router.use('/atleti', atletiRoutes);
 router.use('/giudici', giudiciRoutes);
+router.use('/iscrizioni', iscrizioniRoutes);
+router.use('/config', configRoutes);
 
 // Route di test per verificare che l'API funzioni
 router.get('/', (req, res) => {

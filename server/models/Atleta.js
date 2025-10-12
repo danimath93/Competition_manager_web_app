@@ -37,7 +37,7 @@ const Atleta = sequelize.define('Atleta', {
   },
   peso: {
     type: DataTypes.DECIMAL(5, 2),
-    allowNull: false,
+    allowNull: true,
     validate: {
       min: 30.0,
       max: 200.0

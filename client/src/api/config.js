@@ -1,0 +1,45 @@
+import axios from './axios';
+
+// Funzione per ottenere tutti i tipi di competizione con le loro categorie
+export const loadCompetitionTypes = async () => {
+  try {
+    const response = await axios.get('/config/tipi-competizione');
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dei tipi di competizione:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere un tipo di competizione specifico
+export const loadCompetitionTypeById = async (id) => {
+  try {
+    const response = await axios.get(`/config/tipi-competizione/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento del tipo di competizione:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere le categorie di un tipo di competizione specifico
+export const loadCategoriesByCompetitionType = async (tipoCompetizioneId) => {
+  try {
+    const response = await axios.get(`/config/tipi-competizione/${tipoCompetizioneId}/categorie`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento delle categorie per tipo:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere tutti i tipi di categoria
+export const loadAllCategoryTypes = async () => {
+  try {
+    const response = await axios.get('/config/tipi-categoria');
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dei tipi di categoria:', error);
+    throw error;
+  }
+};
