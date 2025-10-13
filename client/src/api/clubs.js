@@ -9,6 +9,17 @@ export const loadAllClubs = async () => {
     throw error;
   }
 };
+
+export const loadClubByID = async (clubId) => {
+  try {
+    const response = await axios.get(`/clubs/${clubId}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel caricamento del club:', error);
+    throw error;
+  }
+};
+
 // Funzione per creare un nuovo club
 export const createClub = async (clubData) => {
   try {

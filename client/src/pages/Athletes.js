@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete } from '../api/athletes';
+import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
 import { loadAllClubs } from '../api/clubs';
 import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
@@ -37,11 +37,17 @@ const Athletes = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const athletesData = await loadAllAthletes();
-        setAthletes(athletesData);
-        setFilteredAthletes(athletesData);
-
-        if (user && user.isAdmin) {
+        if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
+          const athletesData = await loadAllAthletes();
+          setAthletes(athletesData);
+          setFilteredAthletes(athletesData);
+        } else {
+          const athletesData = await loadAthletesByClub(user.clubId);
+          setAthletes(athletesData);
+          setFilteredAthletes(athletesData);
+        }
+        
+        if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
           const clubsData = await loadAllClubs();
           setClubs(clubsData);
         }
@@ -70,13 +76,10 @@ const Athletes = () => {
         athlete.grado.toLowerCase().includes(filters.grade.toLowerCase())
       );
     }
-
-    if (user && user.isAdmin && filters.club) {
-      result = result.filter((athlete) => athlete.club_id === filters.club);
-    } else if (user && !user.isAdmin) {
-      result = result.filter((athlete) => athlete.club_id === user.club_id);
+    
+    if (filters.club) {
+      result = result.filter((athlete) => athlete.clubId === filters.club);
     }
-
 
     setFilteredAthletes(result);
   }, [filters, athletes, user]);
@@ -163,13 +166,13 @@ const Athletes = () => {
               onChange={handleFilterChange}
             />
           </Grid>
-          {user && user.isAdmin && (
+          {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth variant="outlined">
-                <InputLabel>Club</InputLabel>
+                <InputLabel>Filtra per Club</InputLabel>
                 <Select
                   name="club"
-                  label="Club"
+                  label="Filtra per Club"
                   value={filters.club}
                   onChange={handleFilterChange}
                 >

@@ -11,8 +11,11 @@ import {
 } from '@mui/material';
 import { Info, Edit, Delete } from '@mui/icons-material';
 import { format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
+
 
 const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
+  const { user } = useAuth();
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -22,6 +25,9 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
             <TableCell>Cognome</TableCell>
             <TableCell>Data di Nascita</TableCell>
             <TableCell>Grado</TableCell>
+            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+              <TableCell>Club</TableCell>
+            )}
             <TableCell>Azioni</TableCell>
           </TableRow>
         </TableHead>
@@ -34,6 +40,9 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
                 {format(new Date(athlete.dataNascita), 'dd/MM/yyyy')}
               </TableCell>
               <TableCell>{athlete.grado}</TableCell>
+              {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+                <TableCell>{athlete.club.nome}</TableCell>
+              )}
               <TableCell>
                 <IconButton onClick={() => onInfo(athlete)}>
                   <Info />
