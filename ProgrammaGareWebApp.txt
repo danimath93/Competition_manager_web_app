@@ -52,3 +52,10 @@ Es: username admin ha le permission da admin quindi vede tutto
 	username club ha le permission "iscrizione" quindi può andare solo sulla pagina degli atleti per dire e modificare gli atleti
 	username tavolo he le permission "gara" quindi può solo entrare nella pagina "competizione" e modificare i quaderni della gara corrente
 Almeno mettiamo dei bei if sulle permission per vedere/nascondere e abilitare/disabilitare cose
+
+14.10
+TO-DO
+- Utenza di club deve visualizzare solo i suoi atleti -> DONE
+- Filtro dei vari club nella sezione atleti con utente admin o superAdmin e no filtro con utenza di club -> DONE ma bruttissimoooo, perchè è così piccolo???
+- Pagina club con info di tutti i club per utente admin e superAdmin mentre visuale delle proprie INFO se utenza di club -> DONE a metà, la chiamata funziona quindi abbiamo già tutti i dati, manca da scegliere una interfaccia bella per vedere le cose, magari ne conosci qualcuna
+- Matchare array tipologia nella pagina competizioni sul pulsante modifica per admin e superAdmin -> CI STO IMPAZZENDOOOOOOOOOOO, riesco a convertirlo nella chiamata ma poi non riesco a farglielo visualizzare, mi sa chiederò all'AI D:

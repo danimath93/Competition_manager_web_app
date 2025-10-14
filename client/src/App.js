@@ -11,6 +11,7 @@ import CompetitionRegistration from './pages/CompetitionRegistration';
 import Athletes from './pages/Athletes';
 import Clubs from './pages/Clubs';
 import Judges from './pages/Judges';
+import InfoClubLogged from './pages/InfoClubLogged';
 import { getDefaultRoute } from './utils/permissions';
 import './App.css';
 
@@ -60,10 +61,12 @@ const AppContent = () => {
         } />
         
         {/* Club - superAdmin, admin, user */}
-        <Route path="/clubs" element={
+        <Route path="/clubs" element={ user && (user.permissions === 'admin' || user.permissions === 'superAdmin') ? (
           <PermissionRoute requiredPermission="clubs">
             <Clubs />
-          </PermissionRoute>
+          </PermissionRoute> ) : (
+            <InfoClubLogged />
+          )
         } />
         
         {/* Giudici - solo superAdmin, admin */}
