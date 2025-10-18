@@ -18,7 +18,8 @@ import {
   Delete as DeleteIcon 
 } from '@mui/icons-material';
 import { uploadCompetitionFiles, downloadCompetitionFile, deleteCompetitionFile } from '../api/competitions';
-import { CompetitionTipology, CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
+import { CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
+import CompetitionTypologySelector from './CompetitionTypologySelector';
 
 const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) => {
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     dataFine: '',
     luogo: '',
     indirizzo: '',
-    tipologia: CompetitionTipology.MIXED,
+    tipologia: [], // Ora è un array di ID
     livello: CompetitionLevel.REGIONAL,
     stato: CompetitionStatus.PLANNED,
     dataScadenzaIscrizioni: '',
@@ -53,7 +54,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         nome: competition.nome || '',
         dataInizio: competition.dataInizio ? competition.dataInizio.split('T')[0] : '',
         dataFine: competition.dataFine ? competition.dataFine.split('T')[0] : '',
-        tipologia: competition.tipologia || '',
+        tipologia: Array.isArray(competition.tipologia) ? competition.tipologia : [],
         livello: competition.livello || '',
         dataScadenzaIscrizioni: competition.dataScadenzaIscrizioni ? competition.dataScadenzaIscrizioni.split('T')[0] : '',
         luogo: competition.luogo || '',
@@ -66,7 +67,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         nome: '',
         dataInizio: '',
         dataFine: '',
-        tipologia: CompetitionTipology.MIXED,
+        tipologia: [],
         livello: CompetitionLevel.REGIONAL,
         stato: CompetitionStatus.PLANNED,
         dataScadenzaIscrizioni: '',
@@ -81,8 +82,23 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleTipologiaChange = (selectedIds) => {
+    setFormData({ ...formData, tipologia: selectedIds });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validazione: verifica che almeno una tipologia sia selezionata
+    if (!formData.tipologia || formData.tipologia.length === 0) {
+      setUploadStatus({
+        loading: false,
+        message: 'Seleziona almeno una tipologia di competizione',
+        error: true,
+      });
+      return;
+    }
+    
     onSubmit(formData);
   };
 
@@ -240,20 +256,12 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                name="tipologia"
-                label="Tipologia"
+              <CompetitionTypologySelector
                 value={formData.tipologia}
-                onChange={handleChange}
-                fullWidth
-                required
-                select
-                SelectProps={{ native: true }}
-              >
-                {Object.entries(CompetitionTipology).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </TextField>
+                onChange={handleTipologiaChange}
+                error={!formData.tipologia || formData.tipologia.length === 0}
+                helperText={!formData.tipologia || formData.tipologia.length === 0 ? 'Seleziona almeno una tipologia' : ''}
+              />
             </Grid>
             <Grid item xs={12}>
               <TextField

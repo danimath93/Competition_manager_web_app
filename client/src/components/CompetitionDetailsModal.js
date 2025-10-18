@@ -11,6 +11,7 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Chip,
 } from '@mui/material';
 import { format } from 'date-fns';
 
@@ -25,9 +26,28 @@ const CompetitionDetailsModal = ({ open, onClose, competitionDetails }) => {
           <Typography variant="h6">Informazioni Generali</Typography>
           <Typography><strong>Luogo:</strong> {competitionDetails.luogo}</Typography>
           <Typography>
-            <strong>Periodo:</strong> {format(new Date(competitionDetails.data_inizio), 'dd/MM/yyyy')} - {format(new Date(competitionDetails.data_fine), 'dd/MM/yyyy')}
+            <strong>Periodo:</strong> {format(new Date(competitionDetails.dataInizio), 'dd/MM/yyyy')} - {format(new Date(competitionDetails.dataFine), 'dd/MM/yyyy')}
           </Typography>
-          <Typography><strong>Descrizione:</strong> {competitionDetails.descrizione || 'N/A'}</Typography>
+          
+          {/* Mostra le tipologie multiple */}
+          {competitionDetails.tipologieDettagli && competitionDetails.tipologieDettagli.length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography component="span"><strong>Tipologie:</strong> </Typography>
+              <Box sx={{ display: 'inline-flex', flexWrap: 'wrap', gap: 0.5, ml: 1 }}>
+                {competitionDetails.tipologieDettagli.map((tipologia) => (
+                  <Chip
+                    key={tipologia.id}
+                    label={tipologia.nome}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                ))}
+              </Box>
+            </Box>
+          )}
+          
+          <Typography sx={{ mt: 1 }}><strong>Descrizione:</strong> {competitionDetails.descrizione || 'N/A'}</Typography>
         </Box>
         <Divider sx={{ my: 2 }} />
         <Box>
@@ -38,7 +58,7 @@ const CompetitionDetailsModal = ({ open, onClose, competitionDetails }) => {
                 <ListItem key={club.id}>
                   <ListItemText 
                     primary={club.nome} 
-                    secondary={`Numero atleti: ${club.numero_atleti_iscritti}`}
+                    secondary={`Numero atleti: ${club.numeroAtletiIscritti}`}
                   />
                 </ListItem>
               ))}
