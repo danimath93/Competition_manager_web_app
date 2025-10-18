@@ -4,7 +4,7 @@ const { IscrizioneAtleta, Atleta, Categoria, Club, Competizione, ConfigTipoCateg
 const getIscrizioniByCompetizione = async (req, res) => {
   try {
     const { competizioneId } = req.params;
-    
+
     const iscrizioni = await IscrizioneAtleta.findAll({
       include: [
         {
@@ -31,9 +31,9 @@ const getIscrizioniByCompetizione = async (req, res) => {
 
     res.status(200).json(iscrizioni);
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -67,9 +67,66 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
 
     res.status(200).json(iscrizioni);
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni del club',
-      details: error.message 
+      details: error.message
+    });
+  }
+};
+
+// Conferma l'iscrizione di un club per una competizione
+const confirmClubRegistration = async (req, res) => {
+  try {
+    const { competitionId, clubId } = req.body;
+
+    // Controllo i club iscritti alla competizione e aggiungo il club se non è già presente
+    const competizione = await Competizione.findByPk(competitionId);
+    let clubIscritti = competizione.clubIscritti || [];
+    if (!clubIscritti.includes(clubId)) {
+      competizione.clubIscritti = [];
+      await competizione.save();
+      // Faccio prima il reset per evitare errori Sequelize dato che non carica correttamente aggiungendo un solo id
+      clubIscritti.push(clubId);
+      competizione.clubIscritti = clubIscritti;
+      await competizione.save();
+    }
+    else {
+      return res.status(400).json({
+        error: 'Il club è già iscritto a questa competizione'
+      });
+    }
+
+    res.status(200).json({ message: 'Iscrizione del club confermata con successo' });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nella conferma dell\'iscrizione del club',
+      details: error.message
+    });
+  }
+};
+
+// Modifica l'iscrizione di un club per una competizione
+const editClubRegistration = async (req, res) => {
+  try {
+    const { competitionId, clubId } = req.body;
+    // Controllo i club iscritti alla competizione e rimuovo il club se è presente
+    const competizione = await Competizione.findByPk(competitionId);
+    let clubIscritti = competizione.clubIscritti || [];
+    if (clubIscritti.includes(clubId)) {
+      clubIscritti = clubIscritti.filter(id => id !== clubId);
+      competizione.clubIscritti = clubIscritti;
+      await competizione.save();
+    }
+    else {
+      return res.status(400).json({
+        error: 'Il club non è iscritto a questa competizione'
+      });
+    }
+    res.status(200).json({ message: 'Iscrizione del club modificata con successo' });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nella modifica dell\'iscrizione del club',
+      details: error.message
     });
   }
 };
@@ -78,20 +135,20 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
 const createIscrizione = async (req, res) => {
   try {
     const { atletaId, tipoCategoriaId, competizioneId } = req.body;
-    
+
     // Verifica se l'iscrizione esiste già
     const existingIscrizione = await IscrizioneAtleta.findOne({
       where: { atletaId, tipoCategoriaId, competizioneId }
     });
 
     if (existingIscrizione) {
-      return res.status(400).json({ 
-        error: 'L\'atleta è già iscritto a questa categoria' 
+      return res.status(400).json({
+        error: 'L\'atleta è già iscritto a questa categoria'
       });
     }
 
     const newIscrizione = await IscrizioneAtleta.create(req.body);
-    
+
     // Recupera l'iscrizione con tutti i dettagli
     const iscrizioneCompleta = await IscrizioneAtleta.findByPk(newIscrizione.id, {
       include: [
@@ -120,9 +177,9 @@ const createIscrizione = async (req, res) => {
         details: error.errors.map(e => e.message)
       });
     }
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nella creazione dell\'iscrizione',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -134,16 +191,16 @@ const deleteIscrizione = async (req, res) => {
     const deletedRowsCount = await IscrizioneAtleta.destroy({
       where: { id }
     });
-    
+
     if (deletedRowsCount === 0) {
       return res.status(404).json({ error: 'Iscrizione non trovata' });
     }
-    
+
     res.status(204).send();
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nell\'eliminazione dell\'iscrizione',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -152,21 +209,21 @@ const deleteIscrizione = async (req, res) => {
 const deleteIscrizioniAtleta = async (req, res) => {
   try {
     const { atletaId, competizioneId } = req.params;
-    
+
     const deletedRowsCount = await IscrizioneAtleta.destroy({
-      where: { 
+      where: {
         atletaId,
         competizioneId
       }
     });
-    
-    res.status(200).json({ 
-      message: `Eliminate ${deletedRowsCount} iscrizioni per l'atleta` 
+
+    res.status(200).json({
+      message: `Eliminate ${deletedRowsCount} iscrizioni per l'atleta`
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nell\'eliminazione delle iscrizioni dell\'atleta',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -174,6 +231,8 @@ const deleteIscrizioniAtleta = async (req, res) => {
 module.exports = {
   getIscrizioniByCompetizione,
   getIscrizioniByCompetitionAndClub,
+  confirmClubRegistration,
+  editClubRegistration,
   createIscrizione,
   deleteIscrizione,
   deleteIscrizioniAtleta

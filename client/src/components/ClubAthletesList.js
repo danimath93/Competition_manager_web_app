@@ -22,7 +22,7 @@ import { PersonAdd } from '@mui/icons-material';
 import { createRegistration } from '../api/registrations';
 import { loadCompetitionCategories } from '../api/competitions';
 
-const ClubAthletesList = ({ athletes, competitionId, onRegistrationSuccess }) => {
+const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistrationSuccess }) => {
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -134,7 +134,7 @@ const ClubAthletesList = ({ athletes, competitionId, onRegistrationSuccess }) =>
                 </Box>
               }
             />
-            <ListItemSecondaryAction>
+            {!isClubRegistered && (
               <Button
                 size="small"
                 variant="outlined"
@@ -143,7 +143,7 @@ const ClubAthletesList = ({ athletes, competitionId, onRegistrationSuccess }) =>
               >
                 Iscriviti
               </Button>
-            </ListItemSecondaryAction>
+            )}
           </ListItem>
         ))}
       </List>

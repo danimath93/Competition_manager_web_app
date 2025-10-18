@@ -122,6 +122,7 @@ const Competizione = sequelize.define('Competizione', {
   },
   clubIscritti: {
     type: DataTypes.ARRAY(DataTypes.INTEGER),
+    defaultValue: [],
     allowNull: true,
     field: 'club_iscritti'
   },

@@ -8,6 +8,12 @@ router.get('/competizione/:competizioneId', iscrizioneController.getIscrizioniBy
 // GET /api/iscrizioni/competizione/:competizioneId/club/:clubId - Ottieni le iscrizioni di un club per una competizione
 router.get('/competizione/:competizioneId/club/:clubId', iscrizioneController.getIscrizioniByCompetitionAndClub);
 
+// POST /api/iscrizioni/conferma - Conferma l'iscrizione di un club per una competizione
+router.post('/conferma', iscrizioneController.confirmClubRegistration);
+
+// POST /api/iscrizioni/modifica - Modifica l'iscrizione di un club per una competizione
+router.post('/modifica', iscrizioneController.editClubRegistration);
+
 // POST /api/iscrizioni - Crea una nuova iscrizione
 router.post('/', iscrizioneController.createIscrizione);
 

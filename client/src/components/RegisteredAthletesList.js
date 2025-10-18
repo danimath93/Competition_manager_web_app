@@ -36,7 +36,7 @@ import {
 import { createRegistration, deleteRegistration, deleteAthleteRegistrations } from '../api/registrations';
 import { loadCompetitionCategories } from '../api/competitions';
 
-const RegisteredAthleteCard = ({ athlete, registrations, onRegistrationChange }) => {
+const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onRegistrationChange }) => {
   const [expanded, setExpanded] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState(null); // 'athlete' o 'category'
@@ -203,22 +203,25 @@ const RegisteredAthleteCard = ({ athlete, registrations, onRegistrationChange })
         </CardContent>
 
         <CardActions>
-          <Button
-            size="small"
-            startIcon={<Add />}
-            onClick={handleAddCategory}
-          >
-            Aggiungi Categoria
-          </Button>
-          
-          <Button
-            size="small"
-            color="error"
-            startIcon={<PersonRemove />}
-            onClick={handleDeleteAthlete}
-          >
-            Rimuovi Atleta
-          </Button>
+          {!isClubRegistered && (
+            <Button
+              size="small"
+              startIcon={<Add />}
+              onClick={handleAddCategory}
+            >
+              Aggiungi Categoria
+            </Button>
+          )}
+          {!isClubRegistered && (
+            <Button
+              size="small"
+              color="error"
+              startIcon={<PersonRemove />}
+              onClick={handleDeleteAthlete}
+            >
+              Rimuovi Atleta
+            </Button>
+          )}
           
           <IconButton
             onClick={toggleExpanded}
@@ -266,15 +269,17 @@ const RegisteredAthleteCard = ({ athlete, registrations, onRegistrationChange })
                       <TableCell>
                         {new Date(registration.dataIscrizione).toLocaleDateString()}
                       </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteCategory(registration)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </TableCell>
+                      {!isClubRegistered && (
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteCategory(registration)}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -364,7 +369,7 @@ const RegisteredAthleteCard = ({ athlete, registrations, onRegistrationChange })
   );
 };
 
-const RegisteredAthletesList = ({ registrations, competitionId, onRegistrationChange }) => {
+const RegisteredAthletesList = ({ registrations, competitionId, isClubRegistered, onRegistrationChange }) => {
   // Raggruppa le iscrizioni per atleta
   const athleteGroups = registrations.reduce((groups, registration) => {
     const athlete = registration.atleta;
@@ -397,6 +402,7 @@ const RegisteredAthletesList = ({ registrations, competitionId, onRegistrationCh
           key={group.athlete.id}
           athlete={group.athlete}
           registrations={group.registrations}
+          isClubRegistered={isClubRegistered}
           onRegistrationChange={onRegistrationChange}
         />
       ))}

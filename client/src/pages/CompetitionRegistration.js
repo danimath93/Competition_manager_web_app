@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -15,9 +15,10 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
 import { loadAthletesByClub } from '../api/athletes';
-import { loadRegistrationsByCompetitionAndClub } from '../api/registrations';
+import { loadRegistrationsByCompetitionAndClub, confirmClubRegistration, editClubRegistration } from '../api/registrations';
 import ClubAthletesList from '../components/ClubAthletesList';
 import RegisteredAthletesList from '../components/RegisteredAthletesList';
+import { set } from 'date-fns';
 
 const CompetitionRegistration = () => {
   const { competitionId } = useParams();
@@ -28,6 +29,7 @@ const CompetitionRegistration = () => {
   const [competition, setCompetition] = useState(null);
   const [clubAthletes, setClubAthletes] = useState([]);
   const [registeredAthletes, setRegisteredAthletes] = useState([]);
+  const [isClubRegistered, setIsClubRegistered] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -72,6 +74,10 @@ const CompetitionRegistration = () => {
     }
   }, [competitionId, user]);
 
+  useEffect(() => {
+    setIsClubRegistered(checkClubRegistered());
+  }, [competition, user]);
+
   // Funzione per aggiornare la lista degli atleti iscritti
   const refreshRegistrations = async () => {
     try {
@@ -85,8 +91,45 @@ const CompetitionRegistration = () => {
     }
   };
 
+  const checkClubRegistered = () => {
+    if (competition && user?.clubId) {
+      if (competition?.clubIscritti?.includes(user.clubId)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleGoBack = () => {
     navigate('/competitions');
+  };
+
+  const handleConfirmRegistration = () => {
+    return async () => {
+      try {
+        await confirmClubRegistration(competitionId, user?.clubId);
+
+        const competitionData = await getCompetitionDetails(competitionId);
+        setCompetition(competitionData);
+      }
+      catch (err) {
+        console.error('Errore durante la conferma dell\'iscrizione:', err);
+        setError('Errore durante la conferma dell\'iscrizione');
+      }
+    };
+  };
+
+  const handleEditRegistration = () => {
+    return async () => {
+      try {
+        await editClubRegistration(competitionId, user.clubId);
+        const competitionData = await getCompetitionDetails(competitionId);
+        setCompetition(competitionData);
+      } catch (err) {
+        console.error('Errore durante la modifica dell\'iscrizione:', err);
+        setError('Errore durante la modifica dell\'iscrizione');
+      }
+    };
   };
 
   if (loading) {
@@ -139,6 +182,27 @@ const CompetitionRegistration = () => {
         )}
       </Box>
 
+      <Box sx={{ mb: 3 }}>
+        {!isClubRegistered && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleConfirmRegistration(false)}
+          >
+            Conferma iscrizione
+          </Button>
+        )}
+        {isClubRegistered && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleEditRegistration(true)}
+          >
+            Modifica iscrizione
+          </Button>
+        )}
+      </Box>
+
       {/* Layout a due colonne */}
       <Grid container spacing={3}>
         {/* Colonna sinistra - Atleti del club */}
@@ -150,6 +214,7 @@ const CompetitionRegistration = () => {
             <ClubAthletesList
               athletes={clubAthletes}
               competitionId={competitionId}
+              isClubRegistered={isClubRegistered}
               onRegistrationSuccess={refreshRegistrations}
             />
           </Paper>
@@ -164,6 +229,7 @@ const CompetitionRegistration = () => {
             <RegisteredAthletesList
               registrations={registeredAthletes}
               competitionId={competitionId}
+              isClubRegistered={isClubRegistered}
               onRegistrationChange={refreshRegistrations}
             />
           </Paper>

@@ -22,6 +22,28 @@ export const loadRegistrationsByCompetitionAndClub = async (competitionId, clubI
   }
 };
 
+// Funzione per confermare l'iscrizione di un club per una competizione
+export const confirmClubRegistration = async (competitionId, clubId) => {
+  try {
+    const response = await axios.post('/iscrizioni/conferma', { competitionId, clubId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la conferma dell\'iscrizione del club:', error);
+    throw error;
+  }
+};
+
+// Funzione per modificare l'iscrizione di un club per una competizione
+export const editClubRegistration = async (competitionId, clubId) => {
+  try {
+    const response = await axios.post('/iscrizioni/modifica', { competitionId, clubId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la modifica dell\'iscrizione del club:', error);
+    throw error;
+  }
+};
+
 // Funzione per creare una nuova iscrizione
 export const createRegistration = async (registrationData) => {
   try {
