@@ -14,41 +14,38 @@ const Categoria = sequelize.define('Categoria', {
       notEmpty: true
     }
   },
-  descrizione: {
-    type: DataTypes.TEXT,
-    allowNull: true
+  competizioneId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'competizioni',
+      key: 'id'
+    }
   },
-  tipologia: {
-    type: DataTypes.ENUM('Kata', 'Kumite'),
-    allowNull: false
+  tipoCategoriaId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'config_tipo_categorie',
+      key: 'id'
+    },
+    field: 'tipo_categoria_id'
   },
   genere: {
-    type: DataTypes.ENUM('Maschile', 'Femminile', 'Misto'),
+    type: DataTypes.ENUM('M', 'F', 'U'),
     allowNull: false,
-    defaultValue: 'Misto'
+    defaultValue: 'U'
   },
-  etaMinima: {
+  gruppoEtaId: {
     type: DataTypes.INTEGER,
-    allowNull: true,
-    validate: {
-      min: 5,
-      max: 100
-    }
+    allowNull: false,
+    references: {
+      model: 'config_gruppi_eta',
+      key: 'id'
+    },
+    field: 'gruppo_eta_id'
   },
-  etaMassima: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    validate: {
-      min: 5,
-      max: 100,
-      isGreaterThanMinAge(value) {
-        if (this.etaMinima && value <= this.etaMinima) {
-          throw new Error('L\'età massima deve essere maggiore dell\'età minima');
-        }
-      }
-    }
-  },
-  pesoMinimo: {
+  pesoMassimo: {
     type: DataTypes.DECIMAL(5, 2),
     allowNull: true,
     validate: {
@@ -56,21 +53,20 @@ const Categoria = sequelize.define('Categoria', {
       max: 200.0
     }
   },
-  pesoMassimo: {
-    type: DataTypes.DECIMAL(5, 2),
-    allowNull: true,
+  numeroTurni: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
     validate: {
-      min: 20.0,
-      max: 200.0,
-      isGreaterThanMinWeight(value) {
-        if (this.pesoMinimo && value <= this.pesoMinimo) {
-          throw new Error('Il peso massimo deve essere maggiore del peso minimo');
-        }
-      }
+      min: 1
     }
   },
-  gradoMinimo: {
-    type: DataTypes.STRING,
+  gradoCinturaId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: 'config_gradi_cinture',
+      key: 'id'
+    },
     allowNull: true,
     comment: 'Grado/cintura minimo richiesto'
   },
@@ -86,23 +82,10 @@ const Categoria = sequelize.define('Categoria', {
     allowNull: false,
     defaultValue: 'Aperta'
   },
-  competizioneId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'competizioni',
-      key: 'id'
-    }
+  descrizione: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
-  configTipoCategoriaId: {
-    type: DataTypes.INTEGER,
-    allowNull: true, // Nullable per categorie esistenti
-    references: {
-      model: 'config_tipo_categorie',
-      key: 'id'
-    },
-    field: 'config_tipo_categoria_id'
-  }
 }, {
   tableName: 'categorie',
   timestamps: true

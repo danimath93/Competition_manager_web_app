@@ -1,4 +1,4 @@
-const { IscrizioneAtleta, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione } = require('../models');
+const { IscrizioneAtleta, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigGradoCintura } = require('../models');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
 const getIscrizioniByCompetizione = async (req, res) => {
@@ -14,6 +14,10 @@ const getIscrizioniByCompetizione = async (req, res) => {
             {
               model: Club,
               as: 'club'
+            },
+            {
+              model: ConfigGradoCintura,
+              as: 'gradoCintura'
             }
           ]
         },
@@ -50,7 +54,13 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
         {
           model: Atleta,
           as: 'atleta',
-          where: { clubId }
+          where: { clubId },
+          include: [
+            {
+              model: ConfigGradoCintura,
+              as: 'gradoCintura'
+            }
+          ]
         },
         {
           model: ConfigTipoCategoria,
@@ -159,6 +169,10 @@ const createIscrizione = async (req, res) => {
             {
               model: Club,
               as: 'club'
+            },
+            {
+              model: ConfigGradoCintura,
+              as: 'gradoCintura'
             }
           ]
         },

@@ -48,9 +48,13 @@ const Atleta = sequelize.define('Atleta', {
     allowNull: true,
     comment: 'Categoria di peso (es: -60kg, -70kg, etc.)'
   },
-  grado: {
-    type: DataTypes.STRING,
+  gradoCinturaId: {
+    type: DataTypes.INTEGER,
     allowNull: true,
+    references: {
+      model: 'config_gradi_cinture',
+      key: 'id'
+    },
     comment: 'Grado/cintura dell\'atleta'
   },
   telefono: {
@@ -60,9 +64,6 @@ const Atleta = sequelize.define('Atleta', {
   email: {
     type: DataTypes.STRING,
     allowNull: true,
-    validate: {
-      isEmail: true
-    }
   },
   clubId: {
     type: DataTypes.INTEGER,

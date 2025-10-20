@@ -16,31 +16,83 @@ const seedData = async () => {
     await sequelize.sync({ force: true });
     console.log('🗄️  Database sincronizzato');
 
+    // Seed Configurazioni
+    const configTipiCompetizione = await sequelize.models.ConfigTipoCompetizione.bulkCreate([
+      { id: 1, nome: 'Quyen mani nude', descrizione: 'Competizione di Quyen a mani nude' },
+      { id: 2, nome: 'Quyen con armi', descrizione: 'Competizione di Quyen con armi tradizionali' },
+      { id: 3, nome: 'Combattimenti', descrizione: 'Competizione di combattimenti tradizionali' },
+    ]);
+
+    const configTipiCategoria = await sequelize.models.ConfigTipoCategoria.bulkCreate([
+      { nome: 'Quyen programma', descrizione: 'Categoria per Quyen a mani nude o con armi', tipoCompetizioneId: 1 },
+      { nome: 'Quyen internazionale', descrizione: 'Categoria per Quyen secondo regolamenti internazionali', tipoCompetizioneId: 1 },
+      { nome: 'Quyen mani nude a squadre', descrizione: 'Categoria per Quyen a mani nude in squadre', tipoCompetizioneId: 1 },
+      { nome: 'Song luyen mani nude', descrizione: 'Categoria per Song Luyen a mani nude', tipoCompetizioneId: 1 },
+      { nome: 'Quyen con armi lunghe', descrizione: 'Categoria per Quyen con armi lunghe', tipoCompetizioneId: 2 },
+      { nome: 'Quyen con armi corte', descrizione: 'Categoria per Quyen con armi corte', tipoCompetizioneId: 2 },
+      { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 2 },
+      { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 2 },
+      { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 2 },
+      { nome: 'Combattimento normale', descrizione: 'Categoria per combattimenti normali', tipoCompetizioneId: 3 },
+      { nome: 'Combattimento vat', descrizione: 'Categoria per combattimenti di tipo vat', tipoCompetizioneId: 3 }
+    ]);
+
+    const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([
+      { nome: 'Speranze', etaMinima: 6, etaMassima: 8, descrizione: 'Bambini dai 6 ai 8 anni', ordine: 1 },
+      { nome: 'Pulcini', etaMinima: 9, etaMassima: 11, descrizione: 'Bambini dagli 9 ai 11 anni', ordine: 2 },
+      { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, descrizione: 'Ragazzi dai 12 ai 14 anni', ordine: 3 },
+      { nome: 'Juniores', etaMinima: 15, etaMassima: 17, descrizione: 'Giovani dai 15 ai 17 anni', ordine: 4 },
+      { nome: 'Seniores', etaMinima: 18, etaMassima: 35, descrizione: 'Adulti dai 18 ai 35 anni', ordine: 5 },
+      { nome: 'Master', etaMinima: 36, etaMassima: 100, descrizione: 'Adulti oltre i 36 anni', ordine: 6 }
+    ]);
+
+    const configGradiCintura = await sequelize.models.ConfigGradoCintura.bulkCreate([
+      { nome: 'Cintura Bianca B', gruppo: 'Bambini', ordine: 1 },
+      { nome: 'I Striscia', gruppo: 'Bambini', ordine: 2 },
+      { nome: 'II Striscia', gruppo: 'Bambini', ordine: 3 },
+      { nome: 'III Striscia', gruppo: 'Bambini', ordine: 4 },
+      { nome: 'IV Striscia', gruppo: 'Bambini', ordine: 5 },
+      { nome: 'Cintura Bianca', gruppo: 'Adulti', ordine: 1 },
+      { nome: 'I Cap', gruppo: 'Adulti', ordine: 2 },
+      { nome: 'II Cap', gruppo: 'Adulti', ordine: 3 },
+      { nome: 'III Cap', gruppo: 'Adulti', ordine: 4 },
+      { nome: 'IV Cap', gruppo: 'Adulti', ordine: 5 },
+      { nome: 'V Cap', gruppo: 'Adulti', ordine: 6 },
+      { nome: 'Cintura Nera', gruppo: 'Cinture Nere', ordine: 1 },
+      { nome: 'I Dan', gruppo: 'Cinture Nere', ordine: 2 },
+      { nome: 'II Dan', gruppo: 'Cinture Nere', ordine: 3 },
+      { nome: 'III Dan', gruppo: 'Cinture Nere', ordine: 4 },
+      { nome: 'IV Dan', gruppo: 'Cinture Nere', ordine: 5 },
+      { nome: 'V Dan', gruppo: 'Cinture Nere', ordine: 6 }
+    ]);
+
+    console.log('✅ Configurazioni create');
+
     // Seed Clubs
     const clubs = await Club.bulkCreate([
       {
-        nome: 'Karate Club Milano',
-        referente: 'Mario Rossi',
-        citta: 'Milano',
-        indirizzo: 'Via Roma 123',
-        telefono: '02-1234567',
-        email: 'info@karateclubmilano.it'
+        nome: 'Accademia Nuovo Cielo',
+        referente: 'Valerio Verde',
+        citta: 'Settimo Torinese',
+        indirizzo: 'Via Col del Lis 1',
+        telefono: '',
+        email: ''
       },
       {
-        nome: 'Dojo Torino',
-        referente: 'Luigi Bianchi',
+        nome: 'Club Truong Son',
+        referente: 'Marilena Crivellaro',
         citta: 'Torino',
-        indirizzo: 'Corso Francia 456',
-        telefono: '011-9876543',
-        email: 'contact@dojotorino.it'
+        indirizzo: 'Via Massari 1',
+        telefono: '',
+        email: ''
       },
       {
-        nome: 'Samurai Roma',
-        referente: 'Giuseppe Verdi',
-        citta: 'Roma',
-        indirizzo: 'Via Nazionale 789',
-        telefono: '06-5555555',
-        email: 'info@samurairoma.it'
+        nome: 'Club Hoa Lu',
+        referente: 'Marco Bottosso',
+        citta: 'Volpiano',
+        indirizzo: 'Via Italia 1',
+        telefono: '',
+        email: ''
       }
     ]);
     console.log('✅ Club creati');
@@ -54,7 +106,7 @@ const seedData = async () => {
         codiceFiscale: 'FRRNDR95C15F205Y',
         peso: 68.5,
         categoria: '-70kg',
-        grado: 'Cintura Nera 2° Dan',
+        gradoCinturaId: 1,
         telefono: '333-1111111',
         email: 'andrea.ferrari@email.com',
         clubId: 1
@@ -66,7 +118,7 @@ const seedData = async () => {
         codiceFiscale: 'MRTSIA98L62F205Z',
         peso: 55.0,
         categoria: '-55kg',
-        grado: 'Cintura Nera 1° Dan',
+        gradoCinturaId: 2,
         telefono: '333-2222222',
         email: 'sofia.martini@email.com',
         clubId: 1
@@ -78,7 +130,7 @@ const seedData = async () => {
         codiceFiscale: 'RMNMRC92S08L219W',
         peso: 75.2,
         categoria: '-80kg',
-        grado: 'Cintura Nera 3° Dan',
+        gradoCinturaId: 3,
         telefono: '333-3333333',
         email: 'marco.romano@email.com',
         clubId: 2
@@ -90,7 +142,7 @@ const seedData = async () => {
         codiceFiscale: 'CNTGLI96E52H501X',
         peso: 60.0,
         categoria: '-60kg',
-        grado: 'Cintura Nera 2° Dan',
+        gradoCinturaId: 2,
         telefono: '333-4444444',
         email: 'giulia.conti@email.com',
         clubId: 3
@@ -139,56 +191,33 @@ const seedData = async () => {
     ]);
     console.log('✅ Giudici creati');
 
-    // Seed Configurazioni
-    const configTipiCompetizione = await sequelize.models.ConfigTipoCompetizione.bulkCreate([
-      { id:1, nome: 'Quyen mani nude', descrizione: 'Competizione di Quyen a mani nude' },
-      { id:2, nome: 'Quyen con armi', descrizione: 'Competizione di Quyen con armi tradizionali' },
-      { id:3, nome: 'Combattimenti', descrizione: 'Competizione di combattimenti tradizionali' },
-    ]);
-
-    const configTipiCategoria = await sequelize.models.ConfigTipoCategoria.bulkCreate([
-      { nome: 'Quyen programma', descrizione: 'Categoria per Quyen a mani nude o con armi', tipoCompetizioneId: 1 },
-      { nome: 'Quyen internazionale', descrizione: 'Categoria per Quyen secondo regolamenti internazionali', tipoCompetizioneId: 1 },
-      { nome: 'Quyen mani nude a squadre', descrizione: 'Categoria per Quyen a mani nude in squadre', tipoCompetizioneId: 1 },
-      { nome: 'Song luyen mani nude', descrizione: 'Categoria per Song Luyen a mani nude', tipoCompetizioneId: 1 },
-      { nome: 'Quyen con armi lunghe', descrizione: 'Categoria per Quyen con armi lunghe', tipoCompetizioneId: 2 },
-      { nome: 'Quyen con armi corte', descrizione: 'Categoria per Quyen con armi corte', tipoCompetizioneId: 2 },
-      { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 2 },
-      { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 2 },
-      { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 2 },
-      { nome: 'Combattimento normale', descrizione: 'Categoria per combattimenti normali', tipoCompetizioneId: 3 },
-      { nome: 'Combattimento vat', descrizione: 'Categoria per combattimenti di tipo vat', tipoCompetizioneId: 3 }
-    ]);
-
-    console.log('✅ Configurazioni create');
-
     // Seed Competizioni
     const competizioni = await Competizione.bulkCreate([
       {
-        nome: 'Campionato Regionale Lombardia 2024',
-        descrizione: 'Campionato regionale di karate per tutte le categorie',
-        dataInizio: new Date('2025-12-01T09:00:00'),
-        dataFine: new Date('2025-12-10T18:00:00'),
-        luogo: 'Palazzetto dello Sport - Milano',
-        indirizzo: 'Via dello Sport 1, Milano',
-        tipologia: [1,2,3],
+        nome: 'Campionato Regionale Piemonte 2025',
+        descrizione: 'Campionato regionale di quyen per bambini di tutte le età',
+        dataInizio: new Date('2025-12-13T09:00:00'),
+        dataFine: new Date('2025-12-14T18:00:00'),
+        luogo: 'Palazzetto dello Sport - Chivasso',
+        indirizzo: 'Via dello Sport 1, Chivasso',
+        tipologia: [1,2],
         livello: 'Regionale',
-        stato: 'Pianificata',
-        maxPartecipanti: 200,
-        quotaIscrizione: 25.00,
-        dataScadenzaIscrizioni: new Date('2025-11-20T23:59:59'),
+        stato: 'Aperta',
+        maxPartecipanti: 300,
+        quotaIscrizione: 15.00,
+        dataScadenzaIscrizioni: new Date('2025-12-05T23:59:59'),
         organizzatoreClubId: 1
       },
       {
-        nome: 'Torneo Nazionale Kata 2024',
-        descrizione: 'Torneo nazionale specializzato in Kata tradizionali',
+        nome: 'Torneo Nazionale Quyen Fiwuk 2025',
+        descrizione: 'Torneo nazionale per specialisti di quyen mani nude e con armi',
         dataInizio: new Date('2025-11-15T10:00:00'),
         dataFine: new Date('2025-11-18T17:00:00'),
         luogo: 'Centro Congressi - Roma',
         indirizzo: 'Via dei Congressi 50, Roma',
         tipologia: [1],
         livello: 'Nazionale',
-        stato: 'Aperta',
+        stato: 'Conclusa',
         maxPartecipanti: 150,
         quotaIscrizione: 35.00,
         dataScadenzaIscrizioni: new Date('2025-11-01T23:59:59'),
@@ -198,69 +227,17 @@ const seedData = async () => {
     console.log('✅ Competizioni create');
 
     // Seed Categorie
-    const categorie = await Categoria.bulkCreate([
-      {
-        nome: 'Quyen Maschile Seniores',
-        descrizione: 'Categoria Quyen per atleti maschi seniores',
-        tipologia: 'Kata',
-        genere: 'Maschile',
-        etaMinima: 18,
-        etaMassima: 35,
-        gradoMinimo: 'Cintura Nera 1° Dan',
-        maxPartecipanti: 32,
-        stato: 'Aperta',
-        competizioneId: 1
-      },
-      {
-        nome: 'Kata Femminile Seniores',
-        descrizione: 'Categoria Kata per atlete femmine seniores',
-        tipologia: 'Kata',
-        genere: 'Femminile',
-        etaMinima: 18,
-        etaMassima: 35,
-        gradoMinimo: 'Cintura Nera 1° Dan',
-        maxPartecipanti: 32,
-        stato: 'Aperta',
-        competizioneId: 1
-      },
-      {
-        nome: 'Kumite Maschile -70kg',
-        descrizione: 'Categoria Kumite maschile fino a 70kg',
-        tipologia: 'Kumite',
-        genere: 'Maschile',
-        etaMinima: 18,
-        etaMassima: 35,
-        pesoMinimo: 60.0,
-        pesoMassimo: 70.0,
-        gradoMinimo: 'Cintura Nera 1° Dan',
-        maxPartecipanti: 16,
-        stato: 'Aperta',
-        competizioneId: 1
-      },
-      {
-        nome: 'Kumite Femminile -55kg',
-        descrizione: 'Categoria Kumite femminile fino a 55kg',
-        tipologia: 'Kumite',
-        genere: 'Femminile',
-        etaMinima: 18,
-        etaMassima: 35,
-        pesoMinimo: 50.0,
-        pesoMassimo: 55.0,
-        gradoMinimo: 'Cintura Nera 1° Dan',
-        maxPartecipanti: 16,
-        stato: 'Aperta',
-        competizioneId: 1
-      }
-    ]);
+    const categorie = await Categoria.bulkCreate([]);
     console.log('✅ Categorie create');
 
-// Seed Utenti
+    // Seed Utenti
     const utentiLogin = await UtentiLogin.bulkCreate([
       {
         username: 'SuperAdmin',
         email: 'ashiokpower@gmail.com',
         password: '580d9331406ab2749644825c824dc689e13f4c7669b092784015e825dc099884', //psw: scurreggioniN.1
         status: 'E',
+        clubId: 1,
         permissions: 'superAdmin',
         salt: 'de684853376e06375694'
       },
@@ -269,7 +246,8 @@ const seedData = async () => {
         email: 'segreteriaANC@gmail.com',
         password: '89b230b40443cefaa94d4a523c678739884d6cc5aefb5390e27e5726569abbed', //psw: scurreggioni
         status: 'E',
-        permissions: 'admin',
+        clubId: 1,
+        permissions: 'user',
         salt: 'de684853376e06375694'
       },
       {
@@ -277,6 +255,7 @@ const seedData = async () => {
         email: 'segreteriaTS@gmail.com',
         password: '3b75d0f2f0dfdad678fa2e3e8e49e062f193a2432e6a53dc7ac718e209f6e615', //psw: formadibastone
         status: 'E',
+        clubId: 2,
         permissions: 'user',
         salt: 'de684853376e06375694'
       },

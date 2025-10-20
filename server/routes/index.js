@@ -9,6 +9,7 @@ const atletiRoutes = require('./atleti');
 const giudiciRoutes = require('./giudici');
 const iscrizioniRoutes = require('./iscrizioni');
 const configRoutes = require('./config');
+const categorieRoutes = require('./categorie');
 
 // Configura le routes
 router.use('/clubs', clubRoutes);
@@ -18,6 +19,7 @@ router.use('/atleti', atletiRoutes);
 router.use('/giudici', giudiciRoutes);
 router.use('/iscrizioni', iscrizioniRoutes);
 router.use('/config', configRoutes);
+router.use('/categorie', categorieRoutes);
 
 // Route di test per verificare che l'API funzioni
 router.get('/', (req, res) => {

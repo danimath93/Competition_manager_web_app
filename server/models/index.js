@@ -11,6 +11,8 @@ const AssegnazioneGiudice = require('./AssegnazioneGiudice');
 const UtentiLogin = require('./UtentiLogin');
 const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
 const ConfigTipoCategoria = require('./ConfigTipoCategoria');
+const ConfigGruppoEta = require('./ConfigGruppoEta');
+const ConfigGradoCintura = require('./ConfigGradoCintura');
 
 // Definisci le associazioni
 
@@ -164,6 +166,39 @@ Categoria.belongsTo(ConfigTipoCategoria, {
   as: 'configTipoCategoria'
 });
 
+// ConfigGruppoEta -> Categoria (One-to-Many)
+ConfigGruppoEta.hasMany(Categoria, {
+  foreignKey: 'gruppoEtaId',
+  as: 'categorie',
+  onDelete: 'RESTRICT'
+});
+Categoria.belongsTo(ConfigGruppoEta, {
+  foreignKey: 'gruppoEtaId',
+  as: 'gruppoEta'
+});
+
+// ConfigGradoCintura -> Categoria (One-to-Many)
+ConfigGradoCintura.hasMany(Categoria, {
+  foreignKey: 'gradoCinturaId',
+  as: 'categorie',
+  onDelete: 'RESTRICT'
+});
+Categoria.belongsTo(ConfigGradoCintura, {
+  foreignKey: 'gradoCinturaId',
+  as: 'gradoCintura'
+});
+
+// ConfigGradoCintura -> Atleta (One-to-Many)
+ConfigGradoCintura.hasMany(Atleta, {
+  foreignKey: 'gradoCinturaId',
+  as: 'atleti',
+  onDelete: 'RESTRICT'
+});
+Atleta.belongsTo(ConfigGradoCintura, {
+  foreignKey: 'gradoCinturaId',
+  as: 'gradoCintura'
+});
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,
@@ -176,5 +211,7 @@ module.exports = {
   AssegnazioneGiudice,
   UtentiLogin,
   ConfigTipoCompetizione,
-  ConfigTipoCategoria
+  ConfigTipoCategoria,
+  ConfigGruppoEta,
+  ConfigGradoCintura
 };

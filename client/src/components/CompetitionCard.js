@@ -4,11 +4,12 @@ import {
   CardContent,
   Typography,
   CardActions,
+  IconButton,
   Button,
   Box,
   Chip,
 } from '@mui/material';
-import { Edit, Delete, Info, AppRegistration } from '@mui/icons-material';
+import { Edit, Delete, Info, AppRegistration, Description } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
@@ -57,47 +58,53 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
         </Box>
       </CardContent>
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
-        {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') ? (
-          <>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Info />}
-              onClick={() => onDetails(competition)}
-              sx={{ mb: 1, width: '100%' }}
-            >
-              Dettagli
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<Edit />}
-              onClick={() => onEdit(competition)}
-              sx={{ mb: 1, width: '100%' }}
-            >
-              Modifica
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              size="small"
-              startIcon={<Delete />}
-              onClick={() => onDelete(competition.id)}
-              sx={{ width: '100%' }}
-            >
-              Elimina
-            </Button>
-          </>
-        ) : (
-          <Button
-            variant="contained"
-            startIcon={<AppRegistration />}
-            onClick={() => onRegister(competition.id)}
-            disabled={!isActive}
-          >
-            Iscrizione
-          </Button>
-        )}
+        <>
+          {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+            // Mostra i bottoni di modifica e cancellazione solo per admin e superAdmin, in un box orizzontale
+            <Box sx={{ display: 'flex', flexDirection: 'row', mb: 1 }}>
+              <IconButton
+                variant="outlined"
+                size="small"
+                onClick={() => onDetails(competition)}
+              >
+                <Info />
+              </IconButton>
+              <IconButton
+                variant="contained"
+                size="small"
+                onClick={() => onEdit(competition)}
+              >
+                <Edit />
+              </IconButton>
+              <IconButton
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => onDelete(competition.id)}
+              >
+                <Delete />
+              </IconButton>
+            </Box>
+          )}
+          {user && (user.permissions === 'admin' || user.permissions === 'superAdmin' || user.permissions === 'club') && (
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
+              <Button
+                variant="contained"
+                onClick={() => onRegister(competition.id)}
+                disabled={!isActive}
+              >
+                <AppRegistration />
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => onRegister(competition.id)}
+                disabled={!isActive}
+              >
+                <Description />
+              </Button>
+            </Box>
+          )}
+        </>
       </CardActions>
     </Card>
   );

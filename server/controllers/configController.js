@@ -1,4 +1,4 @@
-const { ConfigTipoCompetizione, ConfigTipoCategoria } = require('../models');
+const { ConfigTipoCompetizione, ConfigTipoCategoria, ConfigGruppoEta, ConfigGradoCintura } = require('../models');
 
 // Ottieni tutti i tipi di competizione
 const getAllTipiCompetizione = async (req, res) => {
@@ -104,9 +104,58 @@ const getAllTipiCategoria = async (req, res) => {
   }
 };
 
+// Ottieni tutti i gruppi età
+const getAllGruppiEta = async (req, res) => {
+  try {
+    const gruppiEta = await ConfigGruppoEta.findAll({
+      where: { attivo: true },
+      order: [['ordine', 'ASC'], ['etaMinima', 'ASC']]
+    });
+    res.json(gruppiEta);
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Errore nel recupero dei gruppi età',
+      details: error.message 
+    });
+  }
+};
+
+const getAllGradiCinture = async (req, res) => {
+  try {
+    const gradiCinture = await ConfigGradoCintura.findAll({
+      order: [['ordine', 'ASC']]
+    });
+    res.json(gradiCinture);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel recupero dei gradi/cinture',
+      details: error.message
+    });
+  }
+};
+
+const getGradoCinturaById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const gradoCintura = await ConfigGradoCintura.findByPk(id);
+    if (!gradoCintura) {
+      return res.status(404).json({ error: 'Grado/Cintura non trovato' });
+    }
+    res.json(gradoCintura);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel recupero del grado/cintura',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllTipiCompetizione,
   getTipoCompetizioneById,
   getCategorieByTipoCompetizione,
-  getAllTipiCategoria
+  getAllTipiCategoria,
+  getAllGruppiEta,
+  getAllGradiCinture,
+  getGradoCinturaById
 };

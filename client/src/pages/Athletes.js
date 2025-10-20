@@ -15,6 +15,7 @@ import { Add } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
 import { loadAllClubs } from '../api/clubs';
+import { loadBeltDegrees } from '../api/config';
 import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
 import AthleteInfoModal from '../components/AthleteInfoModal';
@@ -24,6 +25,7 @@ const Athletes = () => {
   const [athletes, setAthletes] = useState([]);
   const [filteredAthletes, setFilteredAthletes] = useState([]);
   const [clubs, setClubs] = useState([]);
+  const [beltDegrees, setBeltDegrees] = useState([]);
   const [filters, setFilters] = useState({
     name: '',
     grade: '',
@@ -46,6 +48,9 @@ const Athletes = () => {
           setAthletes(athletesData);
           setFilteredAthletes(athletesData);
         }
+
+        const beltDegreesData = await loadBeltDegrees();
+        setBeltDegrees(beltDegreesData);
         
         if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
           const clubsData = await loadAllClubs();

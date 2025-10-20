@@ -12,6 +12,7 @@ import Athletes from './pages/Athletes';
 import Clubs from './pages/Clubs';
 import Judges from './pages/Judges';
 import InfoClubLogged from './pages/InfoClubLogged';
+import Categories from './pages/Categories';
 import { getDefaultRoute } from './utils/permissions';
 import './App.css';
 
@@ -79,7 +80,7 @@ const AppContent = () => {
         {/* Categorie - superAdmin, admin, table */}
         <Route path="/categories" element={
           <PermissionRoute requiredPermission="categories">
-            <div>Pagina Categorie (da implementare)</div>
+            <Categories />
           </PermissionRoute>
         } />
         

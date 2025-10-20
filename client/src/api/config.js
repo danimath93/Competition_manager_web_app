@@ -43,3 +43,25 @@ export const loadAllCategoryTypes = async () => {
     throw error;
   }
 };
+
+// Funzione per ottenere tutti i gradi/cinture
+export const loadBeltDegrees = async () => {
+  try {
+    const response = await axios.get('/config/gradi-cinture');
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dei gradi/cinture:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere un grado/cintura specifico
+export const loadBeltDegreeById = async (id) => {
+  try {
+    const response = await axios.get(`/config/gradi-cinture/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento del grado/cintura:', error);
+    throw error;
+  }
+};

@@ -39,7 +39,7 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
               <TableCell>
                 {format(new Date(athlete.dataNascita), 'dd/MM/yyyy')}
               </TableCell>
-              <TableCell>{athlete.grado}</TableCell>
+              <TableCell>{athlete.gradoCintura ? athlete.gradoCintura.nome : 'N/A'}</TableCell>
               {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
                 <TableCell>{athlete.club.nome}</TableCell>
               )}

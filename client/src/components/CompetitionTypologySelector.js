@@ -56,9 +56,9 @@ const CompetitionTypologySelector = ({ value = [], onChange, error, helperText, 
   };
 
   return (
-    <FormControl fullWidth error={error}>
+    <FormControl error={error} fullWidth sx={{ mb:2 }}>
       <FormLabel component="legend" sx={{ mb: 1, fontSize: '0.875rem', color: error ? 'error.main' : 'text.primary' }}>
-        Tipologie Competizione *
+        Selezionare le tipologie di competizione: *
       </FormLabel>
       
       <Autocomplete
@@ -80,32 +80,30 @@ const CompetitionTypologySelector = ({ value = [], onChange, error, helperText, 
               checked={selected}
             />
             {option.nome}
-            {option.descrizione && (
-              <Box component="span" sx={{ ml: 1, fontSize: '0.75rem', color: 'text.secondary' }}>
-                - {option.descrizione}
-              </Box>
-            )}
           </li>
         )}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            placeholder={selectedTypes.length === 0 ? "Seleziona una o più tipologie" : ""}
-            error={error}
-          />
-        )}
-        renderTags={(value, getTagProps) =>
-          value.map((option, index) => (
-            <Chip
-              key={option.id}
-              label={option.nome}
-              {...getTagProps({ index })}
-              size="small"
-              color="primary"
-              variant="outlined"
+        fullWidth
+        renderTags={() => null} // niente chip
+        renderInput={(params) => {
+          const count = selectedTypes.length;
+          return (
+            <TextField
+              {...params}
+              fullWidth
+              placeholder={count === 0 ? "Seleziona una o più tipologie" : ""}
+              error={error}
+              InputProps={{
+                ...params.InputProps,
+                startAdornment:
+                  count > 0 ? (
+                    <Box sx={{ ml: 0.5, color: 'text.secondary', fontSize: 14 }}>
+                      {count} {count === 1 ? 'tipologia selezionata' : 'tipologie selezionate'}
+                    </Box>
+                  ) : null,
+              }}
             />
-          ))
-        }
+          );
+        }}
       />
       
       {helperText && (
