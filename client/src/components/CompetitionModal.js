@@ -323,9 +323,26 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
             rows={4}
           />
 
-          
-
           <Divider sx={{ my: 2 }} />
+
+          <Typography variant="h8">
+            Modifica lo stato della competizione:
+          </Typography>
+
+          <TextField
+            name="stato"
+            value={formData.stato}
+            onChange={handleChange}
+            sx={{ mt: 1 }}
+            fullWidth
+            required
+            select
+            SelectProps={{ native: true }}
+          >
+            {Object.entries(CompetitionStatus).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </TextField>
 
           <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
             Documenti

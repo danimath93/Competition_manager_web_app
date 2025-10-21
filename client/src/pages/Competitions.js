@@ -14,6 +14,7 @@ import {
 import CompetitionCard from '../components/CompetitionCard';
 import CompetitionModal from '../components/CompetitionModal';
 import CompetitionDetailsModal from '../components/CompetitionDetailsModal';
+import CompetitionOrganizerSelectorModal from '../components/CompetitionOrganizerSelectorModal';
 
 const Competitions = () => {
   const { t } = useLanguage();
@@ -24,6 +25,7 @@ const Competitions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editClubOrganizerModalOpen, setEditClubOrganizerModalOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionDetails, setCompetitionDetails] = useState(null);
 
@@ -62,6 +64,24 @@ const Competitions = () => {
         setIsDetailsModalOpen(true);
     } catch (error) {
         console.error("Errore nel caricamento dei dettagli:", error);
+    }
+  };
+
+  const handleOpenEditClubOrganizerModal = async (competition) => {
+    setSelectedCompetition(competition);
+    setEditClubOrganizerModalOpen(true);
+  };
+
+  const handleClubOrganizerSelected = (organizerId) => {
+    if (organizerId && selectedCompetition?.id) {
+      const updatedCompetition = {
+        ...selectedCompetition,
+        organizzatoreClubId: organizerId,
+      };
+      updateCompetition(selectedCompetition.id, updatedCompetition);
+      setSelectedCompetition(null);
+      setEditClubOrganizerModalOpen(false);
+      fetchCompetitions();
     }
   };
 
@@ -120,6 +140,7 @@ const Competitions = () => {
             competition={comp}
             onRegister={handleRegister}
             onEdit={handleOpenModal}
+            onEditClubOrganizer={() => handleOpenEditClubOrganizerModal(comp)}
             onDelete={handleDeleteCompetition}
             onDetails={handleOpenDetailsModal}
           />
@@ -144,6 +165,15 @@ const Competitions = () => {
         />
       )}
 
+      {editClubOrganizerModalOpen && (
+        <CompetitionOrganizerSelectorModal
+            open={editClubOrganizerModalOpen}
+            onClose={() => setEditClubOrganizerModalOpen(false)}
+            onSubmit={handleClubOrganizerSelected}
+            organizerId={selectedCompetition?.organizzatoreClubId}
+            competition={selectedCompetition} 
+        />
+      )}
     </Container>
   );
 };

@@ -9,12 +9,12 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import { Edit, Delete, Info, AppRegistration, Description } from '@mui/icons-material';
+import { Edit, Delete, Info, AppRegistration, Description, ManageAccounts } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 
-const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails }) => {
+const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onEditClubOrganizer }) => {
   const { user } = useAuth();
 
   const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
@@ -75,6 +75,14 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails 
                 onClick={() => onEdit(competition)}
               >
                 <Edit />
+              </IconButton>
+              <IconButton
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => onEditClubOrganizer(competition.id)}
+              >
+                <ManageAccounts />
               </IconButton>
               <IconButton
                 variant="contained"
