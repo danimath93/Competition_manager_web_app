@@ -36,6 +36,6 @@ export const CompetitionStatus = Object.freeze({
   IN_PREPARATION: 'In preparazione',
   OPEN: 'Aperta',
   ONGOING: 'In corso',
-  COMPLETED: 'Completata',
+  COMPLETED: 'Conclusa',
   CANCELLED: 'Annullata'
 });
