@@ -12,7 +12,8 @@ const UtentiLogin = require('./UtentiLogin');
 const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
 const ConfigTipoCategoria = require('./ConfigTipoCategoria');
 const ConfigGruppoEta = require('./ConfigGruppoEta');
-const ConfigGradoCintura = require('./ConfigGradoCintura');
+const ConfigTipoAtleta = require('./ConfigTipoAtleta');
+const ConfigEsperienza = require('./ConfigEsperienza');
 
 // Definisci le associazioni
 
@@ -166,37 +167,26 @@ Categoria.belongsTo(ConfigTipoCategoria, {
   as: 'configTipoCategoria'
 });
 
-// ConfigGruppoEta -> Categoria (One-to-Many)
-ConfigGruppoEta.hasMany(Categoria, {
-  foreignKey: 'gruppoEtaId',
-  as: 'categorie',
-  onDelete: 'RESTRICT'
-});
-Categoria.belongsTo(ConfigGruppoEta, {
-  foreignKey: 'gruppoEtaId',
-  as: 'gruppoEta'
-});
-
-// ConfigGradoCintura -> Categoria (One-to-Many)
-ConfigGradoCintura.hasMany(Categoria, {
-  foreignKey: 'gradoCinturaId',
-  as: 'categorie',
-  onDelete: 'RESTRICT'
-});
-Categoria.belongsTo(ConfigGradoCintura, {
-  foreignKey: 'gradoCinturaId',
-  as: 'gradoCintura'
-});
-
-// ConfigGradoCintura -> Atleta (One-to-Many)
-ConfigGradoCintura.hasMany(Atleta, {
-  foreignKey: 'gradoCinturaId',
+// ConfigTipoAtleta -> Atleta (One-to-Many)
+ConfigTipoAtleta.hasMany(Atleta, {
+  foreignKey: 'tipoAtletaId',
   as: 'atleti',
   onDelete: 'RESTRICT'
 });
-Atleta.belongsTo(ConfigGradoCintura, {
-  foreignKey: 'gradoCinturaId',
-  as: 'gradoCintura'
+Atleta.belongsTo(ConfigTipoAtleta, {
+  foreignKey: 'tipoAtletaId',
+  as: 'tipoAtleta'
+});
+
+// ConfigTipoAtleta -> ConfigEsperienza (One-to-Many)
+ConfigTipoAtleta.hasMany(ConfigEsperienza, {
+  foreignKey: 'idConfigTipoAtleta',
+  as: 'esperienze',
+  onDelete: 'CASCADE'
+});
+ConfigEsperienza.belongsTo(ConfigTipoAtleta, {
+  foreignKey: 'idConfigTipoAtleta',
+  as: 'tipoAtleta'
 });
 
 // Esporta tutti i modelli e la connessione
@@ -213,5 +203,6 @@ module.exports = {
   ConfigTipoCompetizione,
   ConfigTipoCategoria,
   ConfigGruppoEta,
-  ConfigGradoCintura
+  ConfigTipoAtleta,
+  ConfigEsperienza
 };

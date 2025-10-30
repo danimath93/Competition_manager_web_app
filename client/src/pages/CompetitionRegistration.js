@@ -4,7 +4,6 @@ import {
   Container,
   Typography,
   Box,
-  Grid,
   Button,
   Paper,
   Alert,
@@ -14,10 +13,11 @@ import { ArrowBack } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
-import { loadAthletesByClub } from '../api/athletes';
+import { loadAthletesByClub, createAthlete, updateAthlete } from '../api/athletes';
 import { loadRegistrationsByCompetitionAndClub, confirmClubRegistration, editClubRegistration } from '../api/registrations';
 import ClubAthletesList from '../components/ClubAthletesList';
 import RegisteredAthletesList from '../components/RegisteredAthletesList';
+import AthleteModal from '../components/AthleteModal';
 import { set } from 'date-fns';
 
 const CompetitionRegistration = () => {
@@ -32,6 +32,9 @@ const CompetitionRegistration = () => {
   const [isClubRegistered, setIsClubRegistered] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAthleteModalOpen, setIsAthleteModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedAthlete, setSelectedAthlete] = useState(null);
 
   // Carica i dati iniziali
   useEffect(() => {
@@ -91,6 +94,16 @@ const CompetitionRegistration = () => {
     }
   };
 
+  // Funzione per aggiornare la lista degli atleti del club
+  const refreshClubAthletes = async () => {
+    try {
+      const athletesData = await loadAthletesByClub(user.clubId);
+      setClubAthletes(athletesData);
+    } catch (err) {
+      console.error('Errore nel ricaricamento degli atleti:', err);
+    }
+  };
+
   const checkClubRegistered = () => {
     if (competition && user?.clubId) {
       if (competition?.clubIscritti?.includes(user.clubId)) {
@@ -102,6 +115,33 @@ const CompetitionRegistration = () => {
 
   const handleGoBack = () => {
     navigate('/competitions');
+  };
+
+  const handleOpenAthleteModal = (athlete = null) => {
+    setIsEditMode(!!athlete);
+    setSelectedAthlete(athlete);
+    setIsAthleteModalOpen(true);
+  };
+
+  const handleCloseAthleteModal = () => {
+    setIsAthleteModalOpen(false);
+    setSelectedAthlete(null);
+  };
+
+  const handleSaveAthlete = async (athleteData) => {
+    try {
+      if (isEditMode) {
+        await updateAthlete(athleteData.id, athleteData);
+      } else {
+        await createAthlete(athleteData);
+      }
+      await refreshClubAthletes();
+    } catch (error) {
+      console.error("Errore nel salvataggio dell'atleta:", error);
+      setError("Errore nel salvataggio dell'atleta");
+    } finally {
+      handleCloseAthleteModal();
+    }
   };
 
   const handleConfirmRegistration = () => {
@@ -160,13 +200,22 @@ const CompetitionRegistration = () => {
   }
 
   return (
-    <Container maxWidth="xl">
+    <Container 
+      maxWidth={false} 
+      sx={{ 
+        height: 'calc(100vh - 100px)', 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        px: 2
+      }}
+    >
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2, flexShrink: 0 }}>
         <Button
           startIcon={<ArrowBack />}
           onClick={handleGoBack}
-          sx={{ mb: 2 }}
+          sx={{ mb: 1 }}
         >
           Torna alle Competizioni
         </Button>
@@ -182,7 +231,7 @@ const CompetitionRegistration = () => {
         )}
       </Box>
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2, flexShrink: 0 }}>
         {!isClubRegistered && (
           <Button
             variant="contained"
@@ -203,38 +252,100 @@ const CompetitionRegistration = () => {
         )}
       </Box>
 
-      {/* Layout a due colonne */}
-      <Grid container spacing={3}>
+      {/* Layout a due colonne con flexbox */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          flexGrow: 1,
+          overflow: 'auto',
+          minHeight: 0
+        }}
+      >
         {/* Colonna sinistra - Atleti del club */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: 'fit-content' }}>
-            <Typography variant="h6" gutterBottom>
-              Atleti del Club
-            </Typography>
-            <ClubAthletesList
-              athletes={clubAthletes}
-              competitionId={competitionId}
-              isClubRegistered={isClubRegistered}
-              onRegistrationSuccess={refreshRegistrations}
-            />
+        <Box sx={{ 
+          minWidth: 400, 
+          flex: '0 0 400px',
+          display: 'flex', 
+          flexDirection: 'column'
+        }}>
+          <Paper sx={{ 
+            p: 2, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%',
+            overflow: 'hidden'
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              mb: 2,
+              flexShrink: 0
+            }}>
+              <Typography variant="h6">
+                Atleti del Club
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => handleOpenAthleteModal()}
+              >
+                +
+              </Button>
+            </Box>
+            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+              <ClubAthletesList
+                athletes={clubAthletes}
+                competitionId={competitionId}
+                isClubRegistered={isClubRegistered}
+                onRegistrationSuccess={refreshRegistrations}
+                onEditAthlete={handleOpenAthleteModal}
+              />
+            </Box>
           </Paper>
-        </Grid>
+        </Box>
 
         {/* Colonna destra - Atleti iscritti */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, height: 'fit-content' }}>
-            <Typography variant="h6" gutterBottom>
+        <Box sx={{ 
+          flexGrow: 1,
+          minWidth: 600,
+          display: 'flex', 
+          flexDirection: 'column'
+        }}>
+          <Paper sx={{ 
+            p: 2, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%',
+            overflow: 'hidden'
+          }}>
+            <Typography variant="h6" gutterBottom sx={{ flexShrink: 0 }}>
               Atleti Iscritti alla Gara
             </Typography>
-            <RegisteredAthletesList
-              registrations={registeredAthletes}
-              competitionId={competitionId}
-              isClubRegistered={isClubRegistered}
-              onRegistrationChange={refreshRegistrations}
-            />
+            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+              <RegisteredAthletesList
+                registrations={registeredAthletes}
+                competitionId={competitionId}
+                isClubRegistered={isClubRegistered}
+                onRegistrationChange={refreshRegistrations}
+              />
+            </Box>
           </Paper>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
+
+      {/* Modale per aggiungere/modificare atleta */}
+      {isAthleteModalOpen && (
+        <AthleteModal
+          open={isAthleteModalOpen}
+          onClose={handleCloseAthleteModal}
+          onSubmit={handleSaveAthlete}
+          isEditMode={isEditMode}
+          athlete={selectedAthlete}
+        />
+      )}
     </Container>
   );
 };

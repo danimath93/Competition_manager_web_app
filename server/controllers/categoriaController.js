@@ -1,111 +1,116 @@
-const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigGradoCintura } = require('../models');
+const { min } = require('date-fns');
+const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta } = require('../models');
 const { Op } = require('sequelize');
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
 exports.generateCategories = async (req, res) => {
   try {
     const { competizioneId } = req.params;
-    const { genere, gruppoEtaId, grado, tipoCategoriaId } = req.body;
 
     // Verifica che la competizione esista
-    const competizione = await Competizione.findByPk(competizioneId);
-    if (!competizione) {
+    const competition = await Competizione.findByPk(competizioneId);
+    if (!competition) {
       return res.status(404).json({ message: 'Competizione non trovata' });
     }
 
-    // Recupera gli atleti iscritti alla competizione
-    const iscrizioni = await IscrizioneAtleta.findAll({
+    // Recupera gli atleti iscritti alla competizione, con categorie non ancora assegnate
+    const registrations = await IscrizioneAtleta.findAll({
       where: { 
         competizioneId,
-        tipoCategoriaId,
-        categoriaId: null // Solo atleti non ancora assegnati a categorie
+        categoriaId: null
       },
       include: [{
         model: Atleta,
         as: 'atleta',
         attributes: ['id', 'nome', 'cognome', 'dataNascita', 'peso'],
         include: [{
-          model: ConfigGradoCintura,
-          as: 'gradoCintura'
+          model: ConfigTipoAtleta,
+          as: 'tipoAtleta'
         }]
       }]
     });
 
-    if (iscrizioni.length === 0) {
+    if (registrations.length === 0) {
       return res.status(400).json({ message: 'Nessun atleta iscritto trovato per questa tipologia' });
     }
 
-    // Recupera informazioni sul gruppo età
-    const gruppoEta = await ConfigGruppoEta.findByPk(gruppoEtaId);
-    if (!gruppoEta) {
-      return res.status(404).json({ message: 'Gruppo età non trovato' });
-    }
+    // Crea le categorie con eventuali preferenze di generazione
+    const createdCategories = {};
+    const today = new Date();
+    const tipoAtletaMap = {};
+    const tipiAtleta = await ConfigTipoAtleta.findAll();
+    const gruppiEta = await ConfigGruppoEta.findAll();
+    
+    // Mappa i tipi atleta per ID
+    tipiAtleta.forEach(tipo => {
+      tipoAtletaMap[tipo.id] = tipo;
+    });
 
-    // Organizza gli atleti in base ai criteri
-    const categorieGenerate = {};
-    const oggi = new Date();
-
-    iscrizioni.forEach(iscrizione => {
-      const atleta = iscrizione.atleta;
-      
-      // Calcola età
-      const dataNascita = new Date(atleta.dataNascita);
-      const eta = oggi.getFullYear() - dataNascita.getFullYear();
-      
-      // Verifica se l'atleta rientra nel gruppo età
-      if (eta < gruppoEta.etaMinima || eta > gruppoEta.etaMassima) {
-        return; // Salta questo atleta
-      }
+    registrations.forEach(registration => {
+      const athlete = registration.atleta;
+      const birthDate = new Date(athlete.dataNascita);
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const tipoAtleta = athlete.tipoAtleta;
 
       // Determina la chiave della categoria
-      let chiaveCategoria = gruppoEta.nome;
-      
-      // Aggiungi genere se richiesto
-      if (genere !== 'U') {
-        const genereAtleta = atleta.genere || 'U';
-        if (genereAtleta !== genere && genere !== 'U') {
-          return; // Salta se il genere non corrisponde
-        }
-        chiaveCategoria += `_${genere}`;
-      }
-      
-      // Aggiungi grado se specificato
-      if (grado && grado !== 'misto') {
-        if (atleta.grado !== grado) {
-          return; // Salta se il grado non corrisponde
-        }
-        chiaveCategoria += `_${grado}`;
-      }
+      let categoryKey = registration.tipoCategoriaId.toString();
 
+      // Aggiungi il gruppo di età alla chiave
+      let groupAge = null;
+      let athleteGroupAge = null;
+      gruppiEta.forEach(gruppo => {
+        if (age >= gruppo.etaMinima && age <= gruppo.etaMassima) {
+          groupAge = gruppo.id;
+          athleteGroupAge = gruppo;
+        }
+      });
+      categoryKey += `_age_${groupAge || 'open'}`;
+
+      // Aggiungi il genere alla chiave
+      let gender = athlete.sesso || 'U';
+      categoryKey += `_${gender}`;
+
+      // Aggiungi il tipo atleta alla chiave
+      let tipoAtletaNome = 'misto';
+      if (tipoAtleta) {
+        tipoAtletaNome = tipoAtleta.nome;
+        categoryKey += `_tipo_${tipoAtleta.id}`;
+      } else {
+        categoryKey += `_tipo_misto`;
+      }
+      
       // Inizializza la categoria se non esiste
-      if (!categorieGenerate[chiaveCategoria]) {
-        categorieGenerate[chiaveCategoria] = {
-          nome: chiaveCategoria,
+      if (!createdCategories[categoryKey]) {
+        createdCategories[categoryKey] = {
+          nome: `Cat ${registration.tipoCategoriaId} - ${athleteGroupAge ? athleteGroupAge.nome : 'Open'} - ${gender} - ${tipoAtletaNome}`,
           atleti: [],
-          genere: genere,
-          gruppoEtaId: gruppoEtaId,
-          grado: grado === 'misto' ? null : grado
+          genere: gender,
+          tipoAtletaId: tipoAtleta ? tipoAtleta.id : null,
+          tipoAtletaNome: tipoAtletaNome,
+          minAge: athleteGroupAge ? athleteGroupAge.etaMinima : null,
+          maxAge: athleteGroupAge ? athleteGroupAge.etaMassima : null,
+          tipoCategoriaId: registration.tipoCategoriaId
         };
       }
 
-      categorieGenerate[chiaveCategoria].atleti.push({
-        id: atleta.id,
-        nome: atleta.nome,
-        cognome: atleta.cognome,
-        dataNascita: atleta.dataNascita,
-        peso: atleta.peso,
-        grado: atleta.grado,
-        iscrizioneId: iscrizione.id
+      createdCategories[categoryKey].atleti.push({
+        id: athlete.id,
+        nome: athlete.nome,
+        cognome: athlete.cognome,
+        dataNascita: athlete.dataNascita,
+        peso: athlete.peso,
+        tipoAtleta: tipoAtleta ? tipoAtleta.nome : null,
+        iscrizioneId: registration.id
       });
     });
 
     // Converti in array
-    const risultato = Object.values(categorieGenerate);
+    const risultato = Object.values(createdCategories);
 
     res.json({
       message: 'Categorie generate con successo',
       categorie: risultato,
-      totaleAtleti: iscrizioni.length,
+      totaleAtleti: registrations.length,
       totaleCategorie: risultato.length
     });
 
@@ -213,8 +218,8 @@ exports.getCategoriesByCompetizione = async (req, res) => {
             as: 'atleta',
             attributes: ['id', 'nome', 'cognome', 'dataNascita', 'peso'],
             include: [{
-              model: ConfigGradoCintura,
-              as: 'gradoCintura'
+              model: ConfigTipoAtleta,
+              as: 'tipoAtleta'
             }]
           }]
         }

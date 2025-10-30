@@ -1,4 +1,4 @@
-const { ConfigTipoCompetizione, ConfigTipoCategoria, ConfigGruppoEta, ConfigGradoCintura } = require('../models');
+const { ConfigTipoCompetizione, ConfigTipoCategoria, ConfigGruppoEta, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
 
 // Ottieni tutti i tipi di competizione
 const getAllTipiCompetizione = async (req, res) => {
@@ -120,31 +120,111 @@ const getAllGruppiEta = async (req, res) => {
   }
 };
 
-const getAllGradiCinture = async (req, res) => {
+const getAllTipiAtleta = async (req, res) => {
   try {
-    const gradiCinture = await ConfigGradoCintura.findAll({
-      order: [['ordine', 'ASC']]
+    const tipiAtleta = await ConfigTipoAtleta.findAll({
+      include: [
+        {
+          model: ConfigEsperienza,
+          as: 'esperienze',
+          where: { attivo: true },
+          required: false
+        }
+      ],
+      order: [['id', 'ASC']]
     });
-    res.json(gradiCinture);
+    res.json(tipiAtleta);
   } catch (error) {
     res.status(500).json({
-      error: 'Errore nel recupero dei gradi/cinture',
+      error: 'Errore nel recupero dei tipi atleta',
       details: error.message
     });
   }
 };
 
-const getGradoCinturaById = async (req, res) => {
+const getTipoAtletaById = async (req, res) => {
   try {
     const { id } = req.params;
-    const gradoCintura = await ConfigGradoCintura.findByPk(id);
-    if (!gradoCintura) {
-      return res.status(404).json({ error: 'Grado/Cintura non trovato' });
+    const tipoAtleta = await ConfigTipoAtleta.findByPk(id, {
+      include: [
+        {
+          model: ConfigEsperienza,
+          as: 'esperienze',
+          where: { attivo: true },
+          required: false
+        }
+      ]
+    });
+    if (!tipoAtleta) {
+      return res.status(404).json({ error: 'Tipo atleta non trovato' });
     }
-    res.json(gradoCintura);
+    res.json(tipoAtleta);
   } catch (error) {
     res.status(500).json({
-      error: 'Errore nel recupero del grado/cintura',
+      error: 'Errore nel recupero del tipo atleta',
+      details: error.message
+    });
+  }
+};
+
+const getAllEsperienze = async (req, res) => {
+  try {
+    const esperienze = await ConfigEsperienza.findAll({
+      where: { attivo: true },
+      include: [
+        {
+          model: ConfigTipoAtleta,
+          as: 'tipoAtleta'
+        }
+      ],
+      order: [['idConfigTipoAtleta', 'ASC'], ['id', 'ASC']]
+    });
+    res.json(esperienze);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel recupero delle esperienze',
+      details: error.message
+    });
+  }
+};
+
+const getEsperienzaById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const esperienza = await ConfigEsperienza.findByPk(id, {
+      include: [
+        {
+          model: ConfigTipoAtleta,
+          as: 'tipoAtleta'
+        }
+      ]
+    });
+    if (!esperienza) {
+      return res.status(404).json({ error: 'Esperienza non trovata' });
+    }
+    res.json(esperienza);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel recupero dell\'esperienza',
+      details: error.message
+    });
+  }
+};
+
+const getEsperienzeByTipoAtleta = async (req, res) => {
+  try {
+    const { tipoAtletaId } = req.params;
+    const esperienze = await ConfigEsperienza.findAll({
+      where: { 
+        idConfigTipoAtleta: tipoAtletaId,
+        attivo: true 
+      },
+      order: [['id', 'ASC']]
+    });
+    res.json(esperienze);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel recupero delle esperienze per tipo atleta',
       details: error.message
     });
   }
@@ -156,6 +236,9 @@ module.exports = {
   getCategorieByTipoCompetizione,
   getAllTipiCategoria,
   getAllGruppiEta,
-  getAllGradiCinture,
-  getGradoCinturaById
+  getAllTipiAtleta,
+  getTipoAtletaById,
+  getAllEsperienze,
+  getEsperienzaById,
+  getEsperienzeByTipoAtleta
 };

@@ -44,24 +44,57 @@ export const loadAllCategoryTypes = async () => {
   }
 };
 
-// Funzione per ottenere tutti i gradi/cinture
-export const loadBeltDegrees = async () => {
+// Funzione per ottenere tutti i tipi atleta
+export const loadAthleteTypes = async () => {
   try {
-    const response = await axios.get('/config/gradi-cinture');
+    const response = await axios.get('/config/tipi-atleta');
     return response.data;
   } catch (error) {
-    console.error('Errore durante il caricamento dei gradi/cinture:', error);
+    console.error('Errore durante il caricamento dei tipi atleta:', error);
     throw error;
   }
 };
 
-// Funzione per ottenere un grado/cintura specifico
-export const loadBeltDegreeById = async (id) => {
+// Funzione per ottenere un tipo atleta specifico
+export const loadAthleteTypeById = async (id) => {
   try {
-    const response = await axios.get(`/config/gradi-cinture/${id}`);
+    const response = await axios.get(`/config/tipi-atleta/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Errore durante il caricamento del grado/cintura:', error);
+    console.error('Errore durante il caricamento del tipo atleta:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere tutte le esperienze
+export const loadExperiences = async () => {
+  try {
+    const response = await axios.get('/config/esperienze');
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento delle esperienze:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere un'esperienza specifica
+export const loadExperienceById = async (id) => {
+  try {
+    const response = await axios.get(`/config/esperienze/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dell\'esperienza:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere le esperienze per tipo atleta
+export const loadExperiencesByAthleteType = async (tipoAtletaId) => {
+  try {
+    const response = await axios.get(`/config/tipi-atleta/${tipoAtletaId}/esperienze`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento delle esperienze per tipo atleta:', error);
     throw error;
   }
 };

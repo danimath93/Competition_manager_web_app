@@ -182,7 +182,10 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
                 {athlete.nome} {athlete.cognome}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Età: {calculateAge(athlete.dataNascita)} anni • Peso: {athlete.peso} kg
+                Tesseramento: {athlete.tesseramento || 'N/A'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Età: {calculateAge(athlete.dataNascita)} anni • Livello: {athlete.livello}
               </Typography>
               {athlete.grado && (
                 <Chip 
@@ -234,17 +237,17 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
         {/* Dettagli delle categorie (espandibile) */}
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box sx={{ px: 2, pb: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Categorie Iscritte:
-            </Typography>
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Categoria</TableCell>
                     <TableCell>Tipologia</TableCell>
-                    <TableCell>Stato</TableCell>
-                    <TableCell>Data Iscrizione</TableCell>
+                    <TableCell>Esperienza</TableCell>
+                    <TableCell>Peso (kg)</TableCell>
+                    <TableCell>Quota (€)</TableCell>
+                    {/* <TableCell>Stato</TableCell> */}
+                    {/* <TableCell>Data Iscrizione</TableCell> */}
                     <TableCell align="center">Azioni</TableCell>
                   </TableRow>
                 </TableHead>
@@ -259,16 +262,19 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
                           color={getColorByTipoCompetizione(registration.tipoCategoria?.tipoCompetizione?.nome)}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell>{registration.esperienza || ''}</TableCell>
+                      <TableCell>{registration.peso || ''}</TableCell>
+                      <TableCell>{registration.quota || ''}</TableCell>
+                      {/* <TableCell>
                         <Chip 
                           label={registration.stato}
                           size="small"
                           color={registration.stato === 'Confermata' ? 'success' : 'warning'}
                         />
-                      </TableCell>
-                      <TableCell>
+                      </TableCell> */}
+                      {/* <TableCell>
                         {new Date(registration.dataIscrizione).toLocaleDateString()}
-                      </TableCell>
+                      </TableCell> */}
                       {!isClubRegistered && (
                         <TableCell align="center">
                           <IconButton
