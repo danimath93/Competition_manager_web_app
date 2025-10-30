@@ -26,17 +26,32 @@ const ClubInfoModal = ({ open, onClose, club }) => {
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={6}>
             <Typography>
-              <strong>Nome:</strong> {club.nome}
+              <strong>Denominazione:</strong> {club.denominazione}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Referente:</strong> {club.referente}
+              <strong>Codice Fiscale:</strong> {club.codiceFiscale}
             </Typography>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <Typography>
-              <strong>Città:</strong> {club.citta}
+              <strong>Partita IVA:</strong> {club.partitaIva}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography>
+              <strong>Legale Rappresentante:</strong> {club.legaleRappresentante}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography>
+              <strong>Direttore Tecnico:</strong> {club.direttoreTecnico}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography>
+              <strong>Recapito Telefonico:</strong> {club.recapitoTelefonico}
             </Typography>
           </Grid>
           <Grid item xs={12}>
@@ -44,14 +59,9 @@ const ClubInfoModal = ({ open, onClose, club }) => {
               <strong>Indirizzo:</strong> {club.indirizzo}
             </Typography>
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={12}>
             <Typography>
               <strong>Email:</strong> {club.email}
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography>
-              <strong>Telefono:</strong> {club.telefono}
             </Typography>
           </Grid>
         </Grid>

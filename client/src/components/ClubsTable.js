@@ -18,18 +18,26 @@ const ClubsTable = ({ clubs, onInfo, onEdit, onDelete }) => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Nome</TableCell>
-            <TableCell>Referente</TableCell>
-            <TableCell>Città</TableCell>
+            <TableCell>Denominazione</TableCell>
+            <TableCell>Codice Fiscale</TableCell>
+            <TableCell>Partita IVA</TableCell>
+            <TableCell>Legale Rappresentante</TableCell>
+            <TableCell>Direttore Tecnico</TableCell>
+            <TableCell>Recapito Telefonico</TableCell>
+            <TableCell>Email</TableCell>
             <TableCell>Azioni</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {clubs.map((club) => (
-            <TableRow key={club.id}>
-              <TableCell>{club.nome}</TableCell>
-              <TableCell>{club.referente}</TableCell>
-              <TableCell>{club.citta}</TableCell>
+            <TableRow key={club.id + '-' + club.codiceFiscale}>
+              <TableCell>{club.denominazione}</TableCell>
+              <TableCell>{club.codiceFiscale}</TableCell>
+              <TableCell>{club.partitaIva}</TableCell>
+              <TableCell>{club.legaleRappresentante}</TableCell>
+              <TableCell>{club.direttoreTecnico}</TableCell>
+              <TableCell>{club.recapitoTelefonico}</TableCell>
+              <TableCell>{club.email}</TableCell>
               <TableCell>
                 <IconButton onClick={() => onInfo(club)}>
                   <Info />

@@ -19,9 +19,11 @@ const Clubs = () => {
   const [filteredClubs, setFilteredClubs] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [filters, setFilters] = useState({
-    name: '',
-    referente: '',
-    citta: '',
+    denominazione: '',
+    codiceFiscale: '',
+    partitaIva: '',
+    legaleRappresentante: '',
+    direttoreTecnico: '',
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -45,25 +47,32 @@ const Clubs = () => {
   useEffect(() => {
     let result = clubs;
 
-    if (filters.name) {
+    if (filters.denominazione) {
       result = result.filter(
         (club) =>
-          club.nome.toLowerCase().includes(filters.name.toLowerCase())
+          club.denominazione?.toLowerCase().includes(filters.denominazione.toLowerCase())
       );
     }
-
-    if (filters.referente) {
+    if (filters.codiceFiscale) {
       result = result.filter((club) =>
-        club.referente.toLowerCase().includes(filters.referente.toLowerCase())
+        club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
       );
     }
-
-    if (filters.citta) {
+    if (filters.partitaIva) {
       result = result.filter((club) =>
-        club.citta.toLowerCase().includes(filters.citta.toLowerCase())
+        club.partitaIva?.toLowerCase().includes(filters.partitaIva.toLowerCase())
       );
     }
-
+    if (filters.legaleRappresentante) {
+      result = result.filter((club) =>
+        club.legaleRappresentante?.toLowerCase().includes(filters.legaleRappresentante.toLowerCase())
+      );
+    }
+    if (filters.direttoreTecnico) {
+      result = result.filter((club) =>
+        club.direttoreTecnico?.toLowerCase().includes(filters.direttoreTecnico.toLowerCase())
+      );
+    }
     setFilteredClubs(result);
   }, [filters, clubs, user]);
 
@@ -128,8 +137,8 @@ const Clubs = () => {
         <Grid container spacing={2}>
           <Grid item xs={12} sm={4}>
             <TextField
-              name="name"
-              label="Filtra per Nome"
+              name="denominazione"
+              label="Filtra per Denominazione"
               variant="outlined"
               fullWidth
               onChange={handleFilterChange}
@@ -137,8 +146,8 @@ const Clubs = () => {
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField
-              name="referente"
-              label="Filtra per Referente"
+              name="codiceFiscale"
+              label="Filtra per Codice Fiscale"
               variant="outlined"
               fullWidth
               onChange={handleFilterChange}
@@ -146,8 +155,26 @@ const Clubs = () => {
           </Grid>
           <Grid item xs={12} sm={4}>
             <TextField
-              name="citta"
-              label="Filtra per Città"
+              name="partitaIva"
+              label="Filtra per Partita IVA"
+              variant="outlined"
+              fullWidth
+              onChange={handleFilterChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="legaleRappresentante"
+              label="Filtra per Legale Rappresentante"
+              variant="outlined"
+              fullWidth
+              onChange={handleFilterChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="direttoreTecnico"
+              label="Filtra per Direttore Tecnico"
               variant="outlined"
               fullWidth
               onChange={handleFilterChange}

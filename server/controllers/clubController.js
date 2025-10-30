@@ -5,7 +5,7 @@ const getAllClubs = async (req, res) => {
   try {
     const clubs = await Club.findAll({
       include: ['atleti', 'giudici'],
-      order: [['nome', 'ASC']]
+  order: [['denominazione', 'ASC']]
     });
     res.json(clubs);
   } catch (error) {

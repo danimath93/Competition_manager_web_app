@@ -7,21 +7,22 @@ const Club = sequelize.define('Club', {
     primaryKey: true,
     autoIncrement: true
   },
-  nome: {
+  denominazione: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
       notEmpty: true
     }
   },
-  referente: {
+  codiceFiscale: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
     validate: {
       notEmpty: true
     }
   },
-  citta: {
+  partitaIva: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
@@ -32,7 +33,21 @@ const Club = sequelize.define('Club', {
     type: DataTypes.STRING,
     allowNull: true
   },
-  telefono: {
+  legaleRappresentante: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
+  },
+  direttoreTecnico: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
+  },
+  recapitoTelefonico: {
     type: DataTypes.STRING,
     allowNull: true
   },

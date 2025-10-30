@@ -34,11 +34,13 @@ const ClubModal = ({
       setFormData(club);
     } else {
       setFormData({
-        nome: '',
-        referente: '',
-        citta: '',
+        denominazione: '',
+        codiceFiscale: '',
+        partitaIva: '',
         indirizzo: '',
-        telefono: '',
+        legaleRappresentante: '',
+        direttoreTecnico: '',
+        recapitoTelefonico: '',
         email: '',
       });
     }
@@ -60,31 +62,31 @@ const ClubModal = ({
           {isEditMode ? 'Modifica Club' : 'Aggiungi Club'}
         </Typography>
         <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid item xs={6}>
-            <TextField
-              name="nome"
-              label="Nome"
-              value={formData.nome || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              name="referente"
-              label="Referente"
-              value={formData.referente || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-          </Grid>
           <Grid item xs={12}>
             <TextField
-              name="citta"
-              label="Citta"
-              value={formData.citta || ''}
+              name="denominazione"
+              label="Denominazione"
+              value={formData.denominazione || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              name="codiceFiscale"
+              label="Codice Fiscale"
+              value={formData.codiceFiscale || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              name="partitaIva"
+              label="Partita IVA"
+              value={formData.partitaIva || ''}
               onChange={handleChange}
               fullWidth
               required
@@ -99,16 +101,36 @@ const ClubModal = ({
               fullWidth
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <TextField
-              name="telefono"
-              label="Telefono"
-              value={formData.telefono || ''}
+              name="legaleRappresentante"
+              label="Legale Rappresentante"
+              value={formData.legaleRappresentante || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              name="direttoreTecnico"
+              label="Direttore Tecnico"
+              value={formData.direttoreTecnico || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              name="recapitoTelefonico"
+              label="Recapito Telefonico"
+              value={formData.recapitoTelefonico || ''}
               onChange={handleChange}
               fullWidth
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={6}>
             <TextField
               name="email"
               label="Email"

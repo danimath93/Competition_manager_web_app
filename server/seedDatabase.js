@@ -71,27 +71,33 @@ const seedData = async () => {
     // Seed Clubs
     const clubs = await Club.bulkCreate([
       {
-        nome: 'Accademia Nuovo Cielo',
-        referente: 'Valerio Verde',
-        citta: 'Settimo Torinese',
+        denominazione: 'Accademia Nuovo Cielo',
+        codiceFiscale: 'CFACCNCIELO01',
+        partitaIva: 'PIACCNCIELO01',
         indirizzo: 'Via Col del Lis 1',
-        telefono: '',
+        legaleRappresentante: 'Valerio Verde',
+        direttoreTecnico: 'Mario Rossi',
+        recapitoTelefonico: '',
         email: ''
       },
       {
-        nome: 'Club Truong Son',
-        referente: 'Marilena Crivellaro',
-        citta: 'Torino',
+        denominazione: 'Club Truong Son',
+        codiceFiscale: 'CFTRUONGSON02',
+        partitaIva: 'PITRUONGSON02',
         indirizzo: 'Via Massari 1',
-        telefono: '',
+        legaleRappresentante: 'Marilena Crivellaro',
+        direttoreTecnico: 'Giuseppe Bianchi',
+        recapitoTelefonico: '',
         email: ''
       },
       {
-        nome: 'Club Hoa Lu',
-        referente: 'Marco Bottosso',
-        citta: 'Volpiano',
+        denominazione: 'Club Hoa Lu',
+        codiceFiscale: 'CFHOALU03',
+        partitaIva: 'PIHOALU03',
         indirizzo: 'Via Italia 1',
-        telefono: '',
+        legaleRappresentante: 'Marco Bottosso',
+        direttoreTecnico: 'Luca Verdi',
+        recapitoTelefonico: '',
         email: ''
       }
     ]);
