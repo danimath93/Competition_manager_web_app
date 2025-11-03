@@ -16,13 +16,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
-import { PersonAdd } from '@mui/icons-material';
+import { PersonAdd, Edit } from '@mui/icons-material';
 import { createRegistration } from '../api/registrations';
 import { loadCompetitionCategories } from '../api/competitions';
 
-const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistrationSuccess }) => {
+const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistrationSuccess, onEditAthlete }) => {
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -113,37 +114,50 @@ const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistr
     <>
       <List>
         {athletes.map((athlete) => (
-          <ListItem key={athlete.id} divider>
+          <ListItem key={athlete.id} divider sx={{ alignItems: "flex-start", py: 2 }}>
             <ListItemText
               primary={`${athlete.nome} ${athlete.cognome}`}
-              secondary={
-                <Box>
-                  <Typography variant="body2" color="text.secondary">
-                    Età: {calculateAge(athlete.dataNascita)} anni
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Peso: {athlete.peso} kg
-                  </Typography>
-                  {athlete.grado && (
-                    <Chip 
-                      label={athlete.grado} 
-                      size="small" 
-                      sx={{ mt: 0.5 }}
-                    />
-                  )}
-                </Box>
-              }
+              // secondary={
+              //   <Box>
+              //     <Typography variant="body2" color="text.secondary">
+              //       Età: {calculateAge(athlete.dataNascita)} anni
+              //     </Typography>
+              //     <Typography variant="body2" color="text.secondary">
+              //       Peso: {athlete.peso} kg
+              //     </Typography>
+              //     {athlete.grado && (
+              //       <Chip 
+              //         label={athlete.grado} 
+              //         size="small" 
+              //         sx={{ mt: 0.5 }}
+              //       />
+              //     )}
+              //   </Box>
+              // }
             />
-            {!isClubRegistered && (
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<PersonAdd />}
-                onClick={() => handleRegisterAthlete(athlete)}
-              >
-                Iscriviti
-              </Button>
-            )}
+            <ListItemSecondaryAction>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <Button
+                  aria-label="edit"
+                  size="small"
+                  variant="outlined"
+                  sx={{p:0.5, minWidth: 20}}
+                  onClick={() => onEditAthlete(athlete)}
+                >
+                  <Edit />
+                </Button>
+                {!isClubRegistered && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    sx={{ p: 0.5, minWidth: 20 }}
+                    onClick={() => handleRegisterAthlete(athlete)}
+                  >
+                    <PersonAdd />
+                  </Button>
+                )}
+              </Box>
+            </ListItemSecondaryAction>
           </ListItem>
         ))}
       </List>

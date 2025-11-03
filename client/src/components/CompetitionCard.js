@@ -9,12 +9,12 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import { Edit, Delete, Info, AppRegistration, Description, ManageAccounts } from '@mui/icons-material';
+import { Edit, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 
-const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onEditClubOrganizer }) => {
+const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onEditClubOrganizer, onDocuments }) => {
   const { user } = useAuth();
 
   const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
@@ -49,7 +49,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
         <Typography variant="body2">
           {competition.luogo}
         </Typography>
-        
+
         <Box sx={{ mt: 1 }}>
           <Chip label={competition.stato} color={getStatusColor(competition.stato)} size="small" />
           {isClubRegistered && (
@@ -59,16 +59,9 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
       </CardContent>
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
         <>
-          {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
-            // Mostra i bottoni di modifica e cancellazione solo per admin e superAdmin, in un box orizzontale
-            <Box sx={{ display: 'flex', flexDirection: 'row', mb: 1 }}>
-              <IconButton
-                variant="outlined"
-                size="small"
-                onClick={() => onDetails(competition)}
-              >
-                <Info />
-              </IconButton>
+          <Box sx={{ display: 'flex', flexDirection: 'row', mb: 1 }}>
+            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin' || user.clubId === competition.organizzatoreClubId) && (
+              // Mostra il bottone modifica se club Organizzatore oppure Admin
               <IconButton
                 variant="contained"
                 size="small"
@@ -76,6 +69,9 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <Edit />
               </IconButton>
+            )}
+            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+              // Mostra il bottone selezione club Organizzatore solo se Admin
               <IconButton
                 variant="contained"
                 color="primary"
@@ -84,6 +80,9 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <ManageAccounts />
               </IconButton>
+            )}
+            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+              // Mostra il bottone eliminazione completa gara solo se Admin
               <IconButton
                 variant="contained"
                 color="error"
@@ -92,10 +91,10 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <Delete />
               </IconButton>
-            </Box>
-          )}
-          {user && (user.permissions === 'admin' || user.permissions === 'superAdmin' || user.permissions === 'club') && (
-            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
+            )}
+          </Box>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
+            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin' || user.permissions === 'club') && (
               <Button
                 variant="contained"
                 onClick={() => onRegister(competition.id)}
@@ -103,15 +102,21 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <AppRegistration />
               </Button>
-              <Button
-                variant="contained"
-                onClick={() => onRegister(competition.id)}
-                disabled={!isActive}
-              >
-                <Description />
-              </Button>
-            </Box>
-          )}
+            )}
+            <Button
+              variant="contained"
+              onClick={() => onDetails(competition)}
+            >
+              <InfoOutline />
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => onDocuments(competition)}
+              disabled={!isActive}
+            >
+              <Description />
+            </Button>
+          </Box>
         </>
       </CardActions>
     </Card>

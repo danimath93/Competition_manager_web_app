@@ -1,4 +1,4 @@
-const {Atleta, Club, ConfigGradoCintura } = require('../models');
+const {Atleta, Club, ConfigTipoAtleta } = require('../models');
 
 // Ottieni tutti gli atleti
 const getAllAtleti = async (req, res) => {
@@ -10,8 +10,8 @@ const getAllAtleti = async (req, res) => {
           as: 'club'
         },
         {
-          model: ConfigGradoCintura,
-          as: 'gradoCintura'
+          model: ConfigTipoAtleta,
+          as: 'tipoAtleta'
         }
       ],
       order: [['cognome', 'ASC']]
@@ -38,8 +38,8 @@ const getAtletiByClub = async (req, res) => {
           as: 'club'
         },
         {
-          model: ConfigGradoCintura,
-          as: 'gradoCintura'
+          model: ConfigTipoAtleta,
+          as: 'tipoAtleta'
         }
       ],
       order: [['cognome', 'ASC'], ['nome', 'ASC']]

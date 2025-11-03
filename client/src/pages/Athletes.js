@@ -15,7 +15,7 @@ import { Add } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
 import { loadAllClubs } from '../api/clubs';
-import { loadBeltDegrees } from '../api/config';
+import { loadAthleteTypes } from '../api/config';
 import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
 import AthleteInfoModal from '../components/AthleteInfoModal';
@@ -25,10 +25,10 @@ const Athletes = () => {
   const [athletes, setAthletes] = useState([]);
   const [filteredAthletes, setFilteredAthletes] = useState([]);
   const [clubs, setClubs] = useState([]);
-  const [beltDegrees, setBeltDegrees] = useState([]);
+  const [athleteTypes, setAthleteTypes] = useState([]);
   const [filters, setFilters] = useState({
     name: '',
-    grade: '',
+    type: '',
     club: '',
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,8 +49,8 @@ const Athletes = () => {
           setFilteredAthletes(athletesData);
         }
 
-        const beltDegreesData = await loadBeltDegrees();
-        setBeltDegrees(beltDegreesData);
+        const athleteTypesData = await loadAthleteTypes();
+        setAthleteTypes(athleteTypesData);
         
         if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
           const clubsData = await loadAllClubs();
@@ -76,9 +76,9 @@ const Athletes = () => {
       );
     }
 
-    if (filters.grade) {
-      result = result.filter((athlete) =>
-        athlete.grado.toLowerCase().includes(filters.grade.toLowerCase())
+    if (filters.type) {
+      result = result.filter((athlete) => 
+        athlete.tipoAtletaId === parseInt(filters.type)
       );
     }
     
@@ -163,13 +163,24 @@ const Athletes = () => {
             />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <TextField
-              name="grade"
-              label="Filtra per Grado"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel>Filtra per Tipo Atleta</InputLabel>
+              <Select
+                name="type"
+                label="Filtra per Tipo Atleta"
+                value={filters.type}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">
+                  <em>Tutti</em>
+                </MenuItem>
+                {athleteTypes.map((type) => (
+                  <MenuItem key={type.id} value={type.id}>
+                    {type.nome}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
             <Grid item xs={12} sm={4}>

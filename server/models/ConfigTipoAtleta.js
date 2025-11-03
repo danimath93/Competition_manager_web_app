@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const ConfigGradoCintura = sequelize.define('ConfigGradoCintura', {
+const ConfigTipoAtleta = sequelize.define('ConfigTipoAtleta', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -13,27 +13,26 @@ const ConfigGradoCintura = sequelize.define('ConfigGradoCintura', {
     unique: true,
     validate: {
       notEmpty: true
-    },
+    }
   },
-  gruppo: {
-    type: DataTypes.ENUM('Bambini', 'Adulti', 'Cinture Nere'),
-    allowNull: false,
-    unique: false,
-    validate: {
-      notEmpty: true
-    },
-  },
-  ordine: {
+  etaMinima: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    unique: false,
+    allowNull: true
+  },
+  etaMassima: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  descrizione: {
+    type: DataTypes.STRING,
+    allowNull: true,
     validate: {
       notEmpty: true
-    },
-  }
+    }
+  },
 }, {
-  tableName: 'config_gradi_cinture',
+  tableName: 'config_tipo_atleta',
   timestamps: false
 });
 
-module.exports = ConfigGradoCintura;
+module.exports = ConfigTipoAtleta;

@@ -17,10 +17,19 @@ router.get('/tipi-categoria', configController.getAllTipiCategoria);
 // GET /api/config/gruppi-eta - Ottieni tutti i gruppi età
 router.get('/gruppi-eta', configController.getAllGruppiEta);
 
-// GET /api/config/gradi-cinture - Ottieni tutti i gradi/cinture
-router.get('/gradi-cinture', configController.getAllGradiCinture);
+// GET /api/config/tipi-atleta - Ottieni tutti i tipi atleta
+router.get('/tipi-atleta', configController.getAllTipiAtleta);
 
-// GET /api/config/gradi-cinture/:id - Ottieni un grado/cintura specifico
-router.get('/gradi-cinture/:id', configController.getGradoCinturaById);
+// GET /api/config/tipi-atleta/:id - Ottieni un tipo atleta specifico
+router.get('/tipi-atleta/:id', configController.getTipoAtletaById);
+
+// GET /api/config/esperienze - Ottieni tutte le esperienze
+router.get('/esperienze', configController.getAllEsperienze);
+
+// GET /api/config/esperienze/:id - Ottieni una esperienza specifica
+router.get('/esperienze/:id', configController.getEsperienzaById);
+
+// GET /api/config/tipi-atleta/:tipoAtletaId/esperienze - Ottieni le esperienze per tipo atleta
+router.get('/tipi-atleta/:tipoAtletaId/esperienze', configController.getEsperienzeByTipoAtleta);
 
 module.exports = router;

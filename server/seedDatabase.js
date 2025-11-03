@@ -20,7 +20,8 @@ const seedData = async () => {
     const configTipiCompetizione = await sequelize.models.ConfigTipoCompetizione.bulkCreate([
       { id: 1, nome: 'Quyen mani nude', descrizione: 'Competizione di Quyen a mani nude' },
       { id: 2, nome: 'Quyen con armi', descrizione: 'Competizione di Quyen con armi tradizionali' },
-      { id: 3, nome: 'Combattimenti', descrizione: 'Competizione di combattimenti tradizionali' },
+      { id: 3, nome: 'Combattimenti', descrizione: 'Competizione di combattimenti marziali' },
+      { id: 4, nome: 'Attività complementari', descrizione: 'Attività ludiche o di esibizione' },
     ]);
 
     const configTipiCategoria = await sequelize.models.ConfigTipoCategoria.bulkCreate([
@@ -33,37 +34,40 @@ const seedData = async () => {
       { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 2 },
       { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 2 },
       { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 2 },
-      { nome: 'Combattimento normale', descrizione: 'Categoria per combattimenti normali', tipoCompetizioneId: 3 },
-      { nome: 'Combattimento vat', descrizione: 'Categoria per combattimenti di tipo vat', tipoCompetizioneId: 3 }
+      { nome: 'Light contact', descrizione: 'Categoria per combattimenti di light contact', tipoCompetizioneId: 3 },
+      { nome: 'Lotta tradizionale', descrizione: 'Categoria per combattimenti di lotta tradizionale vietnamita vat', tipoCompetizioneId: 3 },
+      { nome: 'Fighting ball', descrizione: 'Categoria per combattimenti fighting ball per bambini', tipoCompetizioneId: 3 },
+      { nome: 'Festa di Natale', descrizione: 'Categoria per attività ludiche per bambini', tipoCompetizioneId: 4 }
     ]);
 
     const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([
-      { nome: 'Speranze', etaMinima: 6, etaMassima: 8, descrizione: 'Bambini dai 6 ai 8 anni', ordine: 1 },
-      { nome: 'Pulcini', etaMinima: 9, etaMassima: 11, descrizione: 'Bambini dagli 9 ai 11 anni', ordine: 2 },
-      { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, descrizione: 'Ragazzi dai 12 ai 14 anni', ordine: 3 },
-      { nome: 'Juniores', etaMinima: 15, etaMassima: 17, descrizione: 'Giovani dai 15 ai 17 anni', ordine: 4 },
-      { nome: 'Seniores', etaMinima: 18, etaMassima: 35, descrizione: 'Adulti dai 18 ai 35 anni', ordine: 5 },
-      { nome: 'Master', etaMinima: 36, etaMassima: 100, descrizione: 'Adulti oltre i 36 anni', ordine: 6 }
+      { nome: 'Speranze', etaMinima: 6, etaMassima: 8, descrizione: 'Bambini dai 6 ai 8 anni', ordine: 1, attivo: true },
+      { nome: 'Pulcini', etaMinima: 9, etaMassima: 11, descrizione: 'Bambini dagli 9 ai 11 anni', ordine: 2, attivo: true },
+      { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, descrizione: 'Ragazzi dai 12 ai 14 anni', ordine: 3, attivo: true },
+      { nome: 'Juniores', etaMinima: 15, etaMassima: 17, descrizione: 'Giovani dai 15 ai 17 anni', ordine: 4, attivo: true },
+      { nome: 'Seniores', etaMinima: 18, etaMassima: 35, descrizione: 'Adulti dai 18 ai 35 anni', ordine: 5, attivo: true },
+      { nome: 'Master', etaMinima: 36, etaMassima: 100, descrizione: 'Adulti oltre i 36 anni', ordine: 6, attivo: true }
     ]);
 
-    const configGradiCintura = await sequelize.models.ConfigGradoCintura.bulkCreate([
-      { nome: 'Cintura Bianca B', gruppo: 'Bambini', ordine: 1 },
-      { nome: 'I Striscia', gruppo: 'Bambini', ordine: 2 },
-      { nome: 'II Striscia', gruppo: 'Bambini', ordine: 3 },
-      { nome: 'III Striscia', gruppo: 'Bambini', ordine: 4 },
-      { nome: 'IV Striscia', gruppo: 'Bambini', ordine: 5 },
-      { nome: 'Cintura Bianca', gruppo: 'Adulti', ordine: 1 },
-      { nome: 'I Cap', gruppo: 'Adulti', ordine: 2 },
-      { nome: 'II Cap', gruppo: 'Adulti', ordine: 3 },
-      { nome: 'III Cap', gruppo: 'Adulti', ordine: 4 },
-      { nome: 'IV Cap', gruppo: 'Adulti', ordine: 5 },
-      { nome: 'V Cap', gruppo: 'Adulti', ordine: 6 },
-      { nome: 'Cintura Nera', gruppo: 'Cinture Nere', ordine: 1 },
-      { nome: 'I Dan', gruppo: 'Cinture Nere', ordine: 2 },
-      { nome: 'II Dan', gruppo: 'Cinture Nere', ordine: 3 },
-      { nome: 'III Dan', gruppo: 'Cinture Nere', ordine: 4 },
-      { nome: 'IV Dan', gruppo: 'Cinture Nere', ordine: 5 },
-      { nome: 'V Dan', gruppo: 'Cinture Nere', ordine: 6 }
+    const configTipiAtleta = await sequelize.models.ConfigTipoAtleta.bulkCreate([
+      { id: 1, nome: 'Bambini', etaMinima: 5, etaMassima: 12, descrizione: 'Atleti bambini' },
+      { id: 2, nome: 'CB', etaMinima: 13, etaMassima: 99, descrizione: 'Atleti adulti cinture bianche' },
+      { id: 3, nome: 'CN', etaMinima: 13, etaMassima: 99, descrizione: 'Atleti adulti cinture nere' }
+    ]);
+
+    const configEsperienze = await sequelize.models.ConfigEsperienza.bulkCreate([
+      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', idConfigTipoAtleta: 1, tipiCompetizione: [3], attivo: true },
+      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', idConfigTipoAtleta: 1, tipiCompetizione: [3], attivo: true },
+      { nome: 'I livello', descrizione: 'Atleta iscritto a settembre dell\'anno corrente', idConfigTipoAtleta: 1, tipiCompetizione: [1,2], attivo: true },
+      { nome: 'II livello', descrizione: 'Atleta iscritto da 1 oppure 2 anni', idConfigTipoAtleta: 1, tipiCompetizione: [1, 2], attivo: true },
+      { nome: 'III livello', descrizione: 'Atleta iscritto da 3 o più anni', idConfigTipoAtleta: 1, tipiCompetizione: [1, 2], attivo: true },
+      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', idConfigTipoAtleta: 2, tipiCompetizione: [3], attivo: true },
+      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', idConfigTipoAtleta: 2, tipiCompetizione: [3], attivo: true },
+      { nome: 'I livello', descrizione: 'Atleta iscritto a settembre dell\'anno corrente', idConfigTipoAtleta: 2, tipiCompetizione: [1,2], attivo: true },
+      { nome: 'II livello', descrizione: 'Atleta iscritto da 1 oppure 2 anni', idConfigTipoAtleta: 2, tipiCompetizione: [1, 2], attivo: true },
+      { nome: 'III livello', descrizione: 'Atleta iscritto da 3 o più anni', idConfigTipoAtleta: 2, tipiCompetizione: [1, 2], attivo: true },
+      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', idConfigTipoAtleta: 3, tipiCompetizione: [3], attivo: true },
+      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', idConfigTipoAtleta: 3, tipiCompetizione: [3], attivo: true },
     ]);
 
     console.log('✅ Configurazioni create');
@@ -109,10 +113,10 @@ const seedData = async () => {
         nome: 'Andrea',
         cognome: 'Ferrari',
         dataNascita: '1995-03-15',
+        sesso: 'M',
         codiceFiscale: 'FRRNDR95C15F205Y',
         peso: 68.5,
-        categoria: '-70kg',
-        gradoCinturaId: 1,
+        tipoAtletaId: 3,
         telefono: '333-1111111',
         email: 'andrea.ferrari@email.com',
         clubId: 1
@@ -121,10 +125,10 @@ const seedData = async () => {
         nome: 'Sofia Giulia',
         cognome: 'Martini',
         dataNascita: '1998-07-22',
+        sesso: 'F',
         codiceFiscale: 'MRTSIA98L62F205Z',
         peso: 55.0,
-        categoria: '-55kg',
-        gradoCinturaId: 2,
+        tipoAtletaId: 3,
         telefono: '333-2222222',
         email: 'sofia.martini@email.com',
         clubId: 1
@@ -133,10 +137,10 @@ const seedData = async () => {
         nome: 'Marco',
         cognome: 'Romano',
         dataNascita: '1992-11-08',
+        sesso: 'M',
         codiceFiscale: 'RMNMRC92S08L219W',
         peso: 75.2,
-        categoria: '-80kg',
-        gradoCinturaId: 3,
+        tipoAtletaId: 3,
         telefono: '333-3333333',
         email: 'marco.romano@email.com',
         clubId: 2
@@ -145,10 +149,10 @@ const seedData = async () => {
         nome: 'Giulia',
         cognome: 'Conti',
         dataNascita: '1996-05-12',
+        sesso: 'F',
         codiceFiscale: 'CNTGLI96E52H501X',
         peso: 60.0,
-        categoria: '-60kg',
-        gradoCinturaId: 2,
+        tipoAtletaId: 3,
         telefono: '333-4444444',
         email: 'giulia.conti@email.com',
         clubId: 3

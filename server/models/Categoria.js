@@ -36,14 +36,19 @@ const Categoria = sequelize.define('Categoria', {
     allowNull: false,
     defaultValue: 'U'
   },
-  gruppoEtaId: {
+  etaMinima: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'config_gruppi_eta',
-      key: 'id'
-    },
-    field: 'gruppo_eta_id'
+    validate: {
+      min: 0
+    }
+  },
+  etaMassima: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 0
+    }
   },
   pesoMassimo: {
     type: DataTypes.DECIMAL(5, 2),
@@ -61,20 +66,11 @@ const Categoria = sequelize.define('Categoria', {
       min: 1
     }
   },
-  gradoCinturaId: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: 'config_gradi_cinture',
-      key: 'id'
-    },
-    allowNull: true,
-    comment: 'Grado/cintura minimo richiesto'
-  },
   maxPartecipanti: {
     type: DataTypes.INTEGER,
     allowNull: true,
     validate: {
-      min: 2
+      min: 1
     }
   },
   stato: {

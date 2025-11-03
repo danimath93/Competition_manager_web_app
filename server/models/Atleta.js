@@ -26,36 +26,39 @@ const Atleta = sequelize.define('Atleta', {
     allowNull: false,
     field: 'data_nascita'
   },
+  sesso: {
+    type: DataTypes.ENUM('M', 'F'),
+    allowNull: false
+  },
   codiceFiscale: {
     type: DataTypes.STRING(16),
-    allowNull: false,
+    allowNull: true,
     unique: true,
     validate: {
       len: [16, 16]
     },
     field: 'codice_fiscale'
   },
+  tesseramento: {
+    type: DataTypes.ENUM('FIWUK', 'ASI'),
+    allowNull: true,
+  },
   peso: {
     type: DataTypes.DECIMAL(5, 2),
     allowNull: true,
     validate: {
-      min: 30.0,
+      min: 20.0,
       max: 200.0
     }
   },
-  categoria: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    comment: 'Categoria di peso (es: -60kg, -70kg, etc.)'
-  },
-  gradoCinturaId: {
+  tipoAtletaId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'config_gradi_cinture',
+      model: 'config_tipo_atleta',
       key: 'id'
     },
-    comment: 'Grado/cintura dell\'atleta'
+    comment: 'livello generale dell\'atleta'
   },
   telefono: {
     type: DataTypes.STRING,

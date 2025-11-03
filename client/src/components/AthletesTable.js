@@ -24,7 +24,7 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
             <TableCell>Nome</TableCell>
             <TableCell>Cognome</TableCell>
             <TableCell>Data di Nascita</TableCell>
-            <TableCell>Grado</TableCell>
+            <TableCell>Tipo Atleta</TableCell>
             {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
               <TableCell>Club</TableCell>
             )}
@@ -39,7 +39,7 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
               <TableCell>
                 {format(new Date(athlete.dataNascita), 'dd/MM/yyyy')}
               </TableCell>
-              <TableCell>{athlete.gradoCintura ? athlete.gradoCintura.nome : 'N/A'}</TableCell>
+              <TableCell>{athlete.tipoAtleta ? athlete.tipoAtleta.nome : 'N/A'}</TableCell>
               {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
                 <TableCell>{athlete.club.nome}</TableCell>
               )}

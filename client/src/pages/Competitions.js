@@ -15,6 +15,7 @@ import CompetitionCard from '../components/CompetitionCard';
 import CompetitionModal from '../components/CompetitionModal';
 import CompetitionDetailsModal from '../components/CompetitionDetailsModal';
 import CompetitionOrganizerSelectorModal from '../components/CompetitionOrganizerSelectorModal';
+import CompetitionDocumentsModal from '../components/CompetitionDocumentsModal';
 
 const Competitions = () => {
   const { t } = useLanguage();
@@ -26,6 +27,7 @@ const Competitions = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editClubOrganizerModalOpen, setEditClubOrganizerModalOpen] = useState(false);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionDetails, setCompetitionDetails] = useState(null);
 
@@ -37,6 +39,25 @@ const Competitions = () => {
       setCompetitions(sortedData);
     } catch (error) {
       console.error("Errore nel caricamento delle competizioni:", error);
+    }
+  };
+
+  const reloadSelectedCompetitionData = async () => {
+    if (selectedCompetition?.id) {
+      try {
+        const updatedCompetition = await getCompetitionDetails(selectedCompetition.id);
+        setSelectedCompetition(updatedCompetition);
+
+        competitions.forEach((comp, index) => {
+          if (comp.id === updatedCompetition.id) {
+            const updatedCompetitions = [...competitions];
+            updatedCompetitions[index] = updatedCompetition;
+            setCompetitions(updatedCompetitions);
+          }
+        });
+      } catch (error) {
+        console.error("Errore nel ricaricamento dei dati della competizione:", error);
+      }
     }
   };
 
@@ -79,9 +100,9 @@ const Competitions = () => {
         organizzatoreClubId: organizerId,
       };
       updateCompetition(selectedCompetition.id, updatedCompetition);
+      reloadSelectedCompetitionData();
       setSelectedCompetition(null);
       setEditClubOrganizerModalOpen(false);
-      fetchCompetitions();
     }
   };
 
@@ -96,8 +117,8 @@ const Competitions = () => {
     } else {
         await createCompetition(competitionData);
     }
+    reloadSelectedCompetitionData();
     handleCloseModal();
-    fetchCompetitions(); 
   };
 
   const handleDeleteCompetition = async (id) => {
@@ -114,6 +135,21 @@ const Competitions = () => {
   const handleRegister = (competitionId) => {
     navigate(`/competitions/${competitionId}/register`);
   };
+
+  const handleOpenDocumentsModal = (competition) => {
+    setSelectedCompetition(competition);
+    setIsDocumentsModalOpen(true);
+  };
+
+  const handleCloseDocumentsModal = () => {
+    reloadSelectedCompetitionData();
+    setIsDocumentsModalOpen(false);
+    setSelectedCompetition(null);
+  };
+
+  const handleDocumentLoadedChanged = () => {
+    reloadSelectedCompetitionData();
+  }
 
   return (
     <Container>
@@ -143,6 +179,7 @@ const Competitions = () => {
             onEditClubOrganizer={() => handleOpenEditClubOrganizerModal(comp)}
             onDelete={handleDeleteCompetition}
             onDetails={handleOpenDetailsModal}
+            onDocuments={handleOpenDocumentsModal}
           />
         ))}
       </div>
@@ -172,6 +209,15 @@ const Competitions = () => {
             onSubmit={handleClubOrganizerSelected}
             organizerId={selectedCompetition?.organizzatoreClubId}
             competition={selectedCompetition} 
+        />
+      )}
+
+      {isDocumentsModalOpen && (
+        <CompetitionDocumentsModal
+            open={isDocumentsModalOpen}
+            onClose={handleCloseDocumentsModal}
+            onDocumentChange={handleDocumentLoadedChanged}
+            competition={selectedCompetition}
         />
       )}
     </Container>
