@@ -1,4 +1,4 @@
-const { IscrizioneAtleta, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta } = require('../models');
+const { IscrizioneAtleta, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
 const getIscrizioniByCompetizione = async (req, res) => {
@@ -25,6 +25,11 @@ const getIscrizioniByCompetizione = async (req, res) => {
           model: Categoria,
           as: 'categoria',
           where: { competizioneId }
+        },
+        {
+          model: ConfigEsperienza,
+          as: 'esperienza',
+          required: false
         }
       ],
       order: [
@@ -71,6 +76,11 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
               as: 'tipoCompetizione'
             }
           ]
+        },
+        {
+          model: ConfigEsperienza,
+          as: 'esperienza',
+          required: false
         }
       ]
     });
@@ -144,20 +154,38 @@ const editClubRegistration = async (req, res) => {
 // Crea una nuova iscrizione
 const createIscrizione = async (req, res) => {
   try {
-    const { atletaId, tipoCategoriaId, competizioneId } = req.body;
+    const { atletaId, tipoCategoriaId, competizioneId, idConfigEsperienza, peso } = req.body;
 
-    // Verifica se l'iscrizione esiste già
+    // Verifica se l'iscrizione esiste già per questo atleta, categoria e competizione
     const existingIscrizione = await IscrizioneAtleta.findOne({
       where: { atletaId, tipoCategoriaId, competizioneId }
     });
 
     if (existingIscrizione) {
-      return res.status(400).json({
-        error: 'L\'atleta è già iscritto a questa categoria'
+      return res.status(409).json({
+        error: 'L\'atleta è già iscritto a questa categoria per questa competizione'
       });
     }
 
-    const newIscrizione = await IscrizioneAtleta.create(req.body);
+    // Crea la nuova iscrizione
+    const iscrizioneData = {
+      atletaId,
+      tipoCategoriaId,
+      competizioneId,
+      stato: req.body.stato || 'Confermata',
+      note: req.body.note || null
+    };
+
+    // Aggiungi campi opzionali se presenti
+    if (idConfigEsperienza) {
+      iscrizioneData.idConfigEsperienza = idConfigEsperienza;
+    }
+    
+    if (peso) {
+      iscrizioneData.peso = parseFloat(peso);
+    }
+
+    const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
 
     // Recupera l'iscrizione con tutti i dettagli
     const iscrizioneCompleta = await IscrizioneAtleta.findByPk(newIscrizione.id, {

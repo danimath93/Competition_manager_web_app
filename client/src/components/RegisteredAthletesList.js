@@ -24,26 +24,26 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
+  Alert,
+  Tooltip
 } from '@mui/material';
 import {
   ExpandMore,
   ExpandLess,
   Add,
   Delete,
-  PersonRemove
+  PersonRemove,
+  Warning
 } from '@mui/icons-material';
 import { createRegistration, deleteRegistration, deleteAthleteRegistrations } from '../api/registrations';
-import { loadCompetitionCategories } from '../api/competitions';
+import CategorySelector from './CategorySelector';
 
-const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onRegistrationChange }) => {
+const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegistered, onRegistrationChange }) => {
   const [expanded, setExpanded] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState(null); // 'athlete' o 'category'
-  const [addCategoryDialogOpen, setAddCategoryDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState(null);
+  const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [availableCategories, setAvailableCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -72,6 +72,24 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
         return 'secondary';
       default:
         return 'default';
+    }
+  };
+
+  // Restituisce un colore in base allo stato dell'iscrizione
+  const getColorByStato = (stato) => {
+    switch (stato?.toLowerCase()) {
+      case 'confermata':
+        return '#4caf50'; // Verde
+      case 'in attesa':
+      case 'attesa':
+        return '#ff9800'; // Arancione
+      case 'rifiutata':
+      case 'annullata':
+        return '#f44336'; // Rosso
+      case 'in corso':
+        return '#2196f3'; // Blu
+      default:
+        return '#9e9e9e'; // Grigio
     }
   };
 
@@ -124,44 +142,29 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
 
   const handleAddCategory = async () => {
     setError(null);
-    setLoading(true);
-
-    try {
-      // Carica le categorie disponibili per la competizione
-      const categories = await loadCompetitionCategories(registrations[0]?.competizioneId);
-      setAvailableCategories(categories);
-    } catch (err) {
-      console.error('Errore nel caricamento delle categorie:', err);
-      setError('Errore nel caricamento delle categorie disponibili');
-      setAvailableCategories([]);
-    } finally {
-      setLoading(false);
-    }
-
-    setAddCategoryDialogOpen(true);
+    setIsCategorySelectorOpen(true);
   };
 
-  const handleAddCategoryDialogClose = () => {
-    setAddCategoryDialogOpen(false);
-    setSelectedCategory(null);
+  const handleCloseCategorySelector = () => {
+    setIsCategorySelectorOpen(false);
     setError(null);
   };
 
-  const handleConfirmRegistration = async () => {
-    if (!selectedCategory || !athlete) {
-      setError('Seleziona una categoria');
-      return;
-    }
+  const handleConfirmRegistration = async (registrationData) => {
     try {
       setLoading(true);
       setError(null);
+      
       await createRegistration({
         atletaId: athlete.id,
-        tipoCategoriaId: selectedCategory,
+        tipoCategoriaId: registrationData.tipoCategoriaId,
         competizioneId: registrations[0]?.competizioneId,
-        stato: 'Confermata'
+        stato: 'Confermata',
+        idConfigEsperienza: registrationData.idConfigEsperienza,
+        peso: registrationData.peso
       });
-      handleAddCategoryDialogClose();
+      
+      handleCloseCategorySelector();
       onRegistrationChange();
     } catch (error) {
       console.error('Errore nella registrazione:', error);
@@ -181,22 +184,37 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
               <Typography variant="h6">
                 {athlete.nome} {athlete.cognome}
               </Typography>
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <Typography variant="body2" color="text.secondary">
+                  Tesseramento: {athlete.tesseramento || 'N/A'}
+                </Typography>
+                {(!athlete.tesseramento) && (
+                  <Tooltip 
+                    title="In mancanza di tesseramento dell'atleta viene applicato un costo di 5 € per integrare una assicurazione FIWUK" 
+                    arrow
+                  >
+                    <Warning 
+                      sx={{ 
+                        fontSize: 16, 
+                        color: 'warning.main',
+                        cursor: 'help'
+                      }} 
+                    />
+                  </Tooltip>
+                )}
+              </Box>
               <Typography variant="body2" color="text.secondary">
-                Tesseramento: {athlete.tesseramento || 'N/A'}
+                Età: {calculateAge(athlete.dataNascita)} anni
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Età: {calculateAge(athlete.dataNascita)} anni • Livello: {athlete.livello}
-              </Typography>
-              {athlete.grado && (
-                <Chip 
-                  label={athlete.grado} 
-                  size="small" 
-                  sx={{ mt: 1 }}
-                />
-              )}
             </Box>
             <Box>
-              <Chip 
+              {athlete?.costoIscrizione && athlete?.costoIscrizione > 0 && (
+                <Chip 
+                  label={`Costo: €${athlete.costoIscrizione}`} 
+                  size="small"
+                />
+              )}
+              <Chip
                 label={`${registrations.length} ${registrations.length === 1 ? 'categoria' : 'categorie'}`}
                 color="primary"
                 variant="outlined"
@@ -245,8 +263,7 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
                     <TableCell>Tipologia</TableCell>
                     <TableCell>Esperienza</TableCell>
                     <TableCell>Peso (kg)</TableCell>
-                    <TableCell>Quota (€)</TableCell>
-                    {/* <TableCell>Stato</TableCell> */}
+                    <TableCell>Stato</TableCell>
                     {/* <TableCell>Data Iscrizione</TableCell> */}
                     <TableCell align="center">Azioni</TableCell>
                   </TableRow>
@@ -254,24 +271,30 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
                 <TableBody>
                   {registrations.map((registration) => (
                     <TableRow key={registration.id}>
-                      <TableCell>{registration.tipoCategoria?.nome || 'N/A'}</TableCell>
+                      <TableCell>{registration?.tipoCategoria?.nome || 'N/A'}</TableCell>
                       <TableCell>
                         <Chip 
-                          label={registration.tipoCategoria?.tipoCompetizione?.nome || 'N/A'}
+                          label={registration?.tipoCategoria?.tipoCompetizione?.nome || 'N/A'}
                           size="small"
-                          color={getColorByTipoCompetizione(registration.tipoCategoria?.tipoCompetizione?.nome)}
+                          color={getColorByTipoCompetizione(registration?.tipoCategoria?.tipoCompetizione?.nome)}
                         />
                       </TableCell>
-                      <TableCell>{registration.esperienza || ''}</TableCell>
-                      <TableCell>{registration.peso || ''}</TableCell>
-                      <TableCell>{registration.quota || ''}</TableCell>
-                      {/* <TableCell>
-                        <Chip 
-                          label={registration.stato}
-                          size="small"
-                          color={registration.stato === 'Confermata' ? 'success' : 'warning'}
-                        />
-                      </TableCell> */}
+                      <TableCell>{registration?.esperienza?.nome || ''}</TableCell>
+                      <TableCell>{registration?.peso || ''}</TableCell>
+                      <TableCell>
+                        <Tooltip title={registration.stato} arrow>
+                          <Box
+                            sx={{
+                              width: 16,
+                              height: 16,
+                              borderRadius: '50%',
+                              backgroundColor: getColorByStato(registration.stato),
+                              display: 'inline-block',
+                              cursor: 'help'
+                            }}
+                          />
+                        </Tooltip>
+                      </TableCell>
                       {/* <TableCell>
                         {new Date(registration.dataIscrizione).toLocaleDateString()}
                       </TableCell> */}
@@ -295,46 +318,15 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
         </Collapse>
       </Card>
 
-      {/* Dialog per la selezione della categoria */}
-      <Dialog open={addCategoryDialogOpen} onClose={handleAddCategoryDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Iscrivi {athlete?.nome} {athlete?.cognome}
-        </DialogTitle>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Categoria</InputLabel>
-            <Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              label="Categoria"
-            >
-              {availableCategories.map((category) => (
-                <MenuItem key={category.id} value={category.id}>
-                  {category.nome}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleAddCategoryDialogClose}>
-            Annulla
-          </Button>
-          <Button
-            onClick={handleConfirmRegistration}
-            variant="contained"
-            disabled={loading || !selectedCategory}
-          >
-            {loading ? 'Iscrizione...' : 'Conferma Iscrizione'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Nuovo CategorySelector */}
+      <CategorySelector
+        open={isCategorySelectorOpen}
+        onClose={handleCloseCategorySelector}
+        onConfirm={handleConfirmRegistration}
+        athlete={athlete}
+        competition={competition}
+        title="Aggiungi Categoria"
+      />
       
       {/* Dialog di conferma eliminazione */}
       <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>
@@ -375,7 +367,7 @@ const RegisteredAthleteCard = ({ athlete, registrations, isClubRegistered, onReg
   );
 };
 
-const RegisteredAthletesList = ({ registrations, competitionId, isClubRegistered, onRegistrationChange }) => {
+const RegisteredAthletesList = ({ registrations, competition, isClubRegistered, onRegistrationChange }) => {
   // Raggruppa le iscrizioni per atleta
   const athleteGroups = registrations.reduce((groups, registration) => {
     const athlete = registration.atleta;
@@ -407,6 +399,7 @@ const RegisteredAthletesList = ({ registrations, competitionId, isClubRegistered
         <RegisteredAthleteCard
           key={group.athlete.id}
           athlete={group.athlete}
+          competition={competition}
           registrations={group.registrations}
           isClubRegistered={isClubRegistered}
           onRegistrationChange={onRegistrationChange}

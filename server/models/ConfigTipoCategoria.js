@@ -27,6 +27,17 @@ const ConfigTipoCategoria = sequelize.define('ConfigTipoCategoria', {
     },
     field: 'tipo_competizione_id'
   },
+  idConfigTipiAtleti: {
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
+    allowNull: true,
+    field: 'id_config_tipi_atleti'
+  },
+  obbligoPeso: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'obbligo_peso'
+  },
   attivo: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

@@ -14,6 +14,9 @@ router.get('/tipi-competizione/:tipoCompetizioneId/categorie', configController.
 // GET /api/config/tipi-categoria - Ottieni tutti i tipi di categoria
 router.get('/tipi-categoria', configController.getAllTipiCategoria);
 
+// GET /api/config/tipi-categoria/:id - Ottieni un tipo categoria specifico
+router.get('/tipi-categoria/:id', configController.getTipoCategoriaById);
+
 // GET /api/config/gruppi-eta - Ottieni tutti i gruppi età
 router.get('/gruppi-eta', configController.getAllGruppiEta);
 

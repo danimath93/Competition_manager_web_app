@@ -104,6 +104,32 @@ const getAllTipiCategoria = async (req, res) => {
   }
 };
 
+// Ottieni un tipo categoria specifico
+const getTipoCategoriaById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tipoCategoria = await ConfigTipoCategoria.findByPk(id, {
+      include: [
+        {
+          model: ConfigTipoCompetizione,
+          as: 'tipoCompetizione'
+        }
+      ]
+    });
+
+    if (!tipoCategoria) {
+      return res.status(404).json({ error: 'Tipo categoria non trovato' });
+    }
+
+    res.json(tipoCategoria);
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Errore nel recupero del tipo categoria',
+      details: error.message 
+    });
+  }
+};
+
 // Ottieni tutti i gruppi età
 const getAllGruppiEta = async (req, res) => {
   try {
@@ -235,6 +261,7 @@ module.exports = {
   getTipoCompetizioneById,
   getCategorieByTipoCompetizione,
   getAllTipiCategoria,
+  getTipoCategoriaById,
   getAllGruppiEta,
   getAllTipiAtleta,
   getTipoAtletaById,

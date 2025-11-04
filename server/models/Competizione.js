@@ -46,15 +46,22 @@ const Competizione = sequelize.define('Competizione', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  tipiCompetizione: {
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
+    allowNull: false,
+    defaultValue: [],
+    field: 'tipi_competizione'
+  },
   categorieAtleti: {
     type: DataTypes.ARRAY(DataTypes.JSONB),
     allowNull: false,
     defaultValue: [],
     validate: {
       notEmpty: {
-        msg: 'Deve essere selezionata almeno una tipologia'
+        msg: 'Deve essere selezionata almeno una categoria valida'
       },
     },
+    field: 'categorie_atleti',
     comment: 'Struttura per gestire le categorie/esperienze ammesse alla competizione, per ogni tipologia di atleta'
   },
   livello: {

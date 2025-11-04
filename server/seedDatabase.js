@@ -25,19 +25,19 @@ const seedData = async () => {
     ]);
 
     const configTipiCategoria = await sequelize.models.ConfigTipoCategoria.bulkCreate([
-      { nome: 'Quyen programma', descrizione: 'Categoria per Quyen a mani nude o con armi', tipoCompetizioneId: 1 },
-      { nome: 'Quyen internazionale', descrizione: 'Categoria per Quyen secondo regolamenti internazionali', tipoCompetizioneId: 1 },
-      { nome: 'Quyen mani nude a squadre', descrizione: 'Categoria per Quyen a mani nude in squadre', tipoCompetizioneId: 1 },
-      { nome: 'Song luyen mani nude', descrizione: 'Categoria per Song Luyen a mani nude', tipoCompetizioneId: 1 },
-      { nome: 'Quyen con armi lunghe', descrizione: 'Categoria per Quyen con armi lunghe', tipoCompetizioneId: 2 },
-      { nome: 'Quyen con armi corte', descrizione: 'Categoria per Quyen con armi corte', tipoCompetizioneId: 2 },
-      { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 2 },
-      { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 2 },
-      { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 2 },
-      { nome: 'Light contact', descrizione: 'Categoria per combattimenti di light contact', tipoCompetizioneId: 3 },
-      { nome: 'Lotta tradizionale', descrizione: 'Categoria per combattimenti di lotta tradizionale vietnamita vat', tipoCompetizioneId: 3 },
-      { nome: 'Fighting ball', descrizione: 'Categoria per combattimenti fighting ball per bambini', tipoCompetizioneId: 3 },
-      { nome: 'Festa di Natale', descrizione: 'Categoria per attività ludiche per bambini', tipoCompetizioneId: 4 }
+      { nome: 'Quyen programma', descrizione: 'Categoria per Quyen a mani nude o con armi', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Quyen internazionale', descrizione: 'Categoria per Quyen secondo regolamenti internazionali', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Quyen mani nude a squadre', descrizione: 'Categoria per Quyen a mani nude in squadre', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Song luyen mani nude', descrizione: 'Categoria per Song Luyen a mani nude', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Quyen con armi lunghe', descrizione: 'Categoria per Quyen con armi lunghe', tipoCompetizioneId: 2, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Quyen con armi corte', descrizione: 'Categoria per Quyen con armi corte', tipoCompetizioneId: 2, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 2, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 2, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 2, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
+      { nome: 'Light contact', descrizione: 'Categoria per combattimenti di light contact', tipoCompetizioneId: 3, idConfigTipiAtleti: [1,2,3], obbligoPeso: true },
+      { nome: 'Lotta tradizionale', descrizione: 'Categoria per combattimenti di lotta tradizionale vietnamita vat', tipoCompetizioneId: 3, idConfigTipiAtleti: [2,3], obbligoPeso: false },
+      { nome: 'Fighting ball', descrizione: 'Categoria per combattimenti fighting ball per bambini', tipoCompetizioneId: 3, idConfigTipiAtleti: [1], obbligoPeso: true },
+      { nome: 'Festa di Natale', descrizione: 'Categoria per attività ludiche per bambini', tipoCompetizioneId: 4, idConfigTipiAtleti: [1], obbligoPeso: false }
     ]);
 
     const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([

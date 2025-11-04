@@ -39,20 +39,8 @@ const getTipoCategorieByCompetizione = async (req, res) => {
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
-    // Recupera i tipi di categoria associati alla competizione, guardando l'array tipologia e per ogni tipologia, aggiungo tutte le tipologie categoria associate
-    const competitionTipologies = await ConfigTipoCompetizione.findAll({
-      where: {
-        id: { [require('sequelize').Op.in]: competition.tipologia }
-      }
-    });
+    // TODO: Da rimuovere in futuro: supporto legacy per tipologie di competizione salvate come array di interi
 
-    const categoryTipologies = await ConfigTipoCategoria.findAll({
-      where: {
-        tipoCompetizioneId: { [require('sequelize').Op.in]: competitionTipologies.map(t => t.id) }
-      },
-      order: [['nome', 'ASC']]
-    });
-    res.json(categoryTipologies);
   } catch (error) {
     res.status(500).json({ 
       error: 'Errore nel recupero delle categorie',
