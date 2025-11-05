@@ -44,6 +44,17 @@ export const loadAllCategoryTypes = async () => {
   }
 };
 
+// Funzione per ottenere un tipo categoria specifico
+export const loadCategoryTypeById = async (id) => {
+  try {
+    const response = await axios.get(`/config/tipi-categoria/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento del tipo categoria:', error);
+    throw error;
+  }
+};
+
 // Funzione per ottenere tutti i tipi atleta
 export const loadAthleteTypes = async () => {
   try {

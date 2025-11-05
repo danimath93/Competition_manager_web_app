@@ -11,7 +11,7 @@ import {
   Divider,
 } from '@mui/material';
 import { CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
-import CompetitionTypologySelector from './CompetitionTypologySelector';
+import CompetitionCategoryManager from './CompetitionCategoryManager';
 
 const style = {
   position: 'absolute',
@@ -44,7 +44,8 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         nome: competition.nome || '',
         dataInizio: competition.dataInizio ? competition.dataInizio.split('T')[0] : '',
         dataFine: competition.dataFine ? competition.dataFine.split('T')[0] : '',
-        tipologia: Array.isArray(competition.tipologia) ? competition.tipologia : [],
+        tipiCompetizione: competition.tipiCompetizione || [],
+        categorieAtleti: competition.categorieAtleti || [],
         livello: competition.livello || '',
         dataScadenzaIscrizioni: competition.dataScadenzaIscrizioni ? competition.dataScadenzaIscrizioni.split('T')[0] : '',
         luogo: competition.luogo || '',
@@ -57,7 +58,8 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         nome: '',
         dataInizio: '',
         dataFine: '',
-        tipologia: [],
+        tipiCompetizione: [],
+        categorieAtleti: [],
         livello: CompetitionLevel.REGIONAL,
         stato: CompetitionStatus.PLANNED,
         dataScadenzaIscrizioni: '',
@@ -72,16 +74,30 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleTipologiaChange = (selectedIds) => {
-    setFormData({ ...formData, tipologia: selectedIds });
+  const handleCategoriesChange = (categoriesData) => {
+    setFormData({ 
+      ...formData, 
+      categorieAtleti: categoriesData.categorieAtleti,
+      tipiCompetizione: categoriesData.tipiCompetizione || []
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validazione: verifica che almeno una tipologia sia selezionata
-    if (!formData.tipologia || formData.tipologia.length === 0) {
-      alert('Seleziona almeno una tipologia di competizione');
+    // Validazione: verifica che almeno una categoria atleta sia configurata
+    if (!formData.categorieAtleti || formData.categorieAtleti.length === 0) {
+      alert('Configura almeno una categoria per gli atleti');
+      return;
+    }
+    
+    // Validazione: verifica che ogni tipo atleta abbia almeno una categoria
+    const hasInvalidConfig = formData.categorieAtleti.some(ca => 
+      !ca.categorie || ca.categorie.length === 0
+    );
+    
+    if (hasInvalidConfig) {
+      alert('Ogni tipo di atleta deve avere almeno una categoria configurata');
       return;
     }
     
@@ -177,12 +193,17 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
             fullWidth
           />
           <Divider sx={{ my: 2 }} />
-          <CompetitionTypologySelector
-            value={formData.tipologia}
-            onChange={handleTipologiaChange}
-            error={!formData.tipologia || formData.tipologia.length === 0}
-            helperText={!formData.tipologia || formData.tipologia.length === 0 ? 'Seleziona almeno una tipologia' : ''}
+          <CompetitionCategoryManager
+            value={{ 
+              categorieAtleti: formData.categorieAtleti,
+              tipiCompetizione: formData.tipiCompetizione 
+            }}
+            onChange={handleCategoriesChange}
+            error={!formData.categorieAtleti || formData.categorieAtleti.length === 0}
+            helperText={!formData.categorieAtleti || formData.categorieAtleti.length === 0 ? 'Configura almeno una categoria per gli atleti' : ''}
+            isEditMode={isEditMode}
           />
+          <Divider sx={{ my: 2 }} />
           <TextField
             name="descrizione"
             label="Descrizione"

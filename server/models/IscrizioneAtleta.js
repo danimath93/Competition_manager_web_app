@@ -13,7 +13,8 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
     references: {
       model: 'atleti',
       key: 'id'
-    }
+    },
+    field: 'atleta_id'
   },
   competizioneId: {
     type: DataTypes.INTEGER,
@@ -21,7 +22,8 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
     references: {
       model: 'competizioni',
       key: 'id'
-    }
+    },
+    field: 'competizione_id'
   },
   tipoCategoriaId: {
     type: DataTypes.INTEGER,
@@ -29,7 +31,8 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
     references: {
       model: 'config_tipo_categorie',
       key: 'id'
-    }
+    },
+    field: 'tipo_categoria_id'
   },
   categoriaId: {
     type: DataTypes.INTEGER,
@@ -37,6 +40,24 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
     references: {
       model: 'categorie',
       key: 'id'
+    },
+    field: 'categoria_id'
+  },
+  idConfigEsperienza: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'config_esperienza',
+      key: 'id'
+    },
+    field: 'id_config_esperienza'
+  },
+  peso: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true,
+    validate: {
+      min: 20.0,
+      max: 200.0
     }
   },
   dataIscrizione: {
@@ -59,7 +80,7 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
   indexes: [
     {
       unique: true,
-      fields: ['atletaId', 'categoriaId']
+      fields: ['atletaId', 'tipoCategoriaId', 'competizioneId']
     }
   ]
 });

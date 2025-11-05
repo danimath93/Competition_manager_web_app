@@ -17,11 +17,13 @@ const ConfigTipoAtleta = sequelize.define('ConfigTipoAtleta', {
   },
   etaMinima: {
     type: DataTypes.INTEGER,
-    allowNull: true
+    allowNull: true,
+    field: 'eta_minima'
   },
   etaMassima: {
     type: DataTypes.INTEGER,
-    allowNull: true
+    allowNull: true,
+    field: 'eta_massima'
   },
   descrizione: {
     type: DataTypes.STRING,

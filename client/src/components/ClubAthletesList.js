@@ -21,13 +21,11 @@ import {
 } from '@mui/material';
 import { PersonAdd, Edit } from '@mui/icons-material';
 import { createRegistration } from '../api/registrations';
-import { loadCompetitionCategories } from '../api/competitions';
+import CategorySelector from './CategorySelector';
 
-const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistrationSuccess, onEditAthlete }) => {
+const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrationSuccess, onEditAthlete }) => {
   const [selectedAthlete, setSelectedAthlete] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [availableCategories, setAvailableCategories] = useState([]);
+  const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -35,50 +33,32 @@ const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistr
   const handleRegisterAthlete = async (athlete) => {
     setSelectedAthlete(athlete);
     setError(null);
-    setLoading(true);
-
-    try {
-      // Carica le categorie disponibili per la competizione
-      const categories = await loadCompetitionCategories(competitionId);
-      setAvailableCategories(categories);
-    } catch (err) {
-      console.error('Errore nel caricamento delle categorie:', err);
-      setError('Errore nel caricamento delle categorie disponibili');
-      setAvailableCategories([]);
-    } finally {
-      setLoading(false);
-    }
-
-    setIsDialogOpen(true);
+    setIsCategorySelectorOpen(true);
   };
 
   // Funzione per chiudere il dialog
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
+  const handleCloseCategorySelector = () => {
+    setIsCategorySelectorOpen(false);
     setSelectedAthlete(null);
-    setSelectedCategory('');
     setError(null);
   };
 
   // Funzione per confermare l'iscrizione
-  const handleConfirmRegistration = async () => {
-    if (!selectedCategory || !selectedAthlete) {
-      setError('Seleziona una categoria');
-      return;
-    }
-
+  const handleConfirmRegistration = async (registrationData) => {
     try {
       setLoading(true);
       setError(null);
 
       await createRegistration({
         atletaId: selectedAthlete.id,
-        tipoCategoriaId: selectedCategory,
-        competizioneId: competitionId,
-        stato: 'Confermata'
+        tipoCategoriaId: registrationData.tipoCategoriaId,
+        competizioneId: competition.id,
+        stato: 'Confermata',
+        idConfigEsperienza: registrationData.idConfigEsperienza,
+        peso: registrationData.peso
       });
 
-      handleCloseDialog();
+      handleCloseCategorySelector();
       onRegistrationSuccess();
     } catch (err) {
       console.error('Errore nell\'iscrizione:', err);
@@ -162,46 +142,15 @@ const ClubAthletesList = ({ athletes, competitionId, isClubRegistered, onRegistr
         ))}
       </List>
 
-      {/* Dialog per la selezione della categoria */}
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Iscrivi {selectedAthlete?.nome} {selectedAthlete?.cognome}
-        </DialogTitle>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Categoria</InputLabel>
-            <Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              label="Categoria"
-            >
-              {availableCategories.map((category) => (
-                <MenuItem key={category.id} value={category.id}>
-                  {category.nome}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>
-            Annulla
-          </Button>
-          <Button
-            onClick={handleConfirmRegistration}
-            variant="contained"
-            disabled={loading || !selectedCategory}
-          >
-            {loading ? 'Iscrizione...' : 'Conferma Iscrizione'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Nuovo CategorySelector */}
+      <CategorySelector
+        open={isCategorySelectorOpen}
+        onClose={handleCloseCategorySelector}
+        onConfirm={handleConfirmRegistration}
+        athlete={selectedAthlete}
+        competition={competition}
+        title="Iscrivi Atleta"
+      />
     </>
   );
 };

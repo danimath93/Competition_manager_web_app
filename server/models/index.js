@@ -103,6 +103,16 @@ ConfigTipoCategoria.hasMany(IscrizioneAtleta, {
   as: 'iscrizioni'
 });
 
+// IscrizioneAtleta -> ConfigEsperienza
+IscrizioneAtleta.belongsTo(ConfigEsperienza, {
+  foreignKey: 'idConfigEsperienza',
+  as: 'esperienza'
+});
+ConfigEsperienza.hasMany(IscrizioneAtleta, {
+  foreignKey: 'idConfigEsperienza',
+  as: 'iscrizioni'
+});
+
 Atleta.hasMany(IscrizioneAtleta, {
   foreignKey: 'atletaId',
   as: 'iscrizioni'

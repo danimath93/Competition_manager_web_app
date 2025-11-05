@@ -16,7 +16,12 @@ const ConfigEsperienza = sequelize.define('ConfigEsperienza', {
   },
   idConfigTipoAtleta: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    field: 'id_config_tipo_atleta',
+    references: {
+      model: 'config_tipo_atleta',
+      key: 'id'
+    }
   },
   descrizione: {
     type: DataTypes.TEXT,
@@ -30,7 +35,8 @@ const ConfigEsperienza = sequelize.define('ConfigEsperienza', {
   tipiCompetizione: {
     type: DataTypes.JSON,
     allowNull: true,
-    defaultValue: []
+    defaultValue: [],
+    field: 'tipi_competizione'
   }
 }, {
   tableName: 'config_esperienza',

@@ -298,7 +298,7 @@ const CompetitionRegistration = () => {
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
               <ClubAthletesList
                 athletes={clubAthletes}
-                competitionId={competitionId}
+                competition={competition}
                 isClubRegistered={isClubRegistered}
                 onRegistrationSuccess={refreshRegistrations}
                 onEditAthlete={handleOpenAthleteModal}
@@ -327,7 +327,7 @@ const CompetitionRegistration = () => {
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
               <RegisteredAthletesList
                 registrations={registeredAthletes}
-                competitionId={competitionId}
+                competition={competition}
                 isClubRegistered={isClubRegistered}
                 onRegistrationChange={refreshRegistrations}
               />
