@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
@@ -13,6 +14,7 @@ const Login = () => {
   
   const { login } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,8 +37,7 @@ const Login = () => {
   };
 
   const handleRegisterClick = () => {
-    // Qui puoi implementare la navigazione alla pagina di registrazione
-    console.log('Redirect to register page');
+    navigate('/register');
   };
 
   return (

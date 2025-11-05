@@ -2,6 +2,7 @@ const { UtentiLogin } = require('../models');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { permission } = require('process');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -60,7 +61,7 @@ const logoutUser = async (req, res) => {
   }
 };
 
-const registerUser = async (req, res) => {
+/*const registerUser = async (req, res) => {
   try {
     const { username, password, email, region } = req.body;
     const newUser = await UtentiLogin.create({ username, password, email, region });
@@ -71,8 +72,42 @@ const registerUser = async (req, res) => {
       details: error.message
     });
   }
+};*/
+const registerUser = async (req, res) => {
+  console.log("[registerUser] INIZIO", req.body);
+  try {
+    const { username, email, password, clubId } = req.body;
+    console.log("[registerUser] Ricevuti:", { username, email, clubId });
+    // Genera salt casuale
+    const salt = crypto.randomBytes(10).toString('hex');
+    console.log("[registerUser] Salt generato:", salt);
+    // Hash della password come nel login
+    const hashedPassword = crypto.createHash('sha256').update(password + '.' + username + '.' + salt, 'utf8').digest('hex');
+    console.log("[registerUser] Password hashata");
+    // Genera token di conferma
+    const confirmationToken = crypto.randomBytes(32).toString('hex');
+    console.log("[registerUser] Token conferma generato");
+    // Crea utente con status 'S' (sospeso)
+    const newUser = await UtentiLogin.create({
+      username,
+      email,
+      password: hashedPassword,
+      salt,
+      clubId,
+      status: 'S',
+      permissions: 'user',
+      confirmationToken
+    });
+    console.log("[registerUser] Utente creato:", newUser?.id);
+    // Invia email di conferma (disabilitato per test)
+    // await sendConfirmationEmail(email, confirmationToken);
+    res.json({ success: true });
+    console.log("[registerUser] RISPOSTA inviata");
+  } catch (error) {
+    console.error("[registerUser] ERRORE:", error);
+    res.status(500).json({ success: false, message: 'Errore registrazione utente', error });
+  }
 };
-
 module.exports = {
   loginUser,
   logoutUser,

@@ -1,6 +1,12 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-
+import {
+  Button,
+  Box,
+} from '@mui/material';
+import { Add } from '@mui/icons-material';
+//import { sendConfirmationEmail } from '../api/email';
+import { sendConfirmationEmail } from '../api/auth';
 const Dashboard = () => {
   const { t } = useLanguage();
 
@@ -18,6 +24,15 @@ const Dashboard = () => {
         <p>Benvenuto nella dashboard del Gestore Gare!</p>
         <p>Qui puoi visualizzare un riepilogo delle attività principali.</p>
       </div>
+      <Box sx={{ mb: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => sendConfirmationEmail('ixion95@gmail.com', 'TEST')}
+        >
+          Manda email
+        </Button>
+      </Box>
     </div>
   );
 };

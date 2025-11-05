@@ -1,4 +1,5 @@
 const { Club } = require('../models');
+const { Op } = require('sequelize');
 
 // Ottieni tutti i club
 const getAllClubs = async (req, res) => {
@@ -110,10 +111,31 @@ const deleteClub = async (req, res) => {
   }
 };
 
+const checkClubExists = async (req, res) => {
+  try {
+    const { codiceFiscale, partitaIva } = req.body; 
+    const club = await Club.findOne({
+      where: {
+        [Op.or]: [  
+          { codiceFiscale },
+          { partitaIva }
+        ]
+      }
+    });
+    res.json({ exists: !!club });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Errore durante la verifica del club',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllClubs,
   getClubById,
   createClub,
   updateClub,
-  deleteClub
+  deleteClub,
+  checkClubExists
 };

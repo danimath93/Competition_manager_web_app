@@ -43,10 +43,18 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Route pubblica per il check club (diretta)
+const { checkClubExists } = require('./controllers/clubController');
+app.post('/api/clubs/check', checkClubExists);
+const { createClub } = require('./controllers/clubController');
+app.post('/api/clubs', createClub);
+const { registerUser } = require('./controllers/authController');
+app.post('/api/auth/register', registerUser);
+
 // Route di autenticazione (senza middleware auth)
 app.use('/api/auth', require('./routes/auth'));
 
-// Applica il middleware di autenticazione a tutte le altre API routes
+// Applica il middleware di autenticazione a tutte le altre API routes  
 app.use('/api', authenticateToken, apiRoutes);
 
 // 404 handler

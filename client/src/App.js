@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
 import Login from './components/Login';
+import Register from './components/Register';
 import PermissionRoute from './components/PermissionRoute';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
@@ -21,7 +22,12 @@ const AppContent = () => {
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
-    return <Login />;
+    return (
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
+    );
   }
 
   // Ottiene la route di default basata sui permessi dell'utente

@@ -17,4 +17,7 @@ router.put('/:id', clubController.updateClub);
 // DELETE /api/clubs/:id - Elimina un club
 router.delete('/:id', clubController.deleteClub);
 
+// POST /api/clubs/check - Verifica se un club esiste già
+router.post('/check', clubController.checkClubExists);
+
 module.exports = router;

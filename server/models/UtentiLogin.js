@@ -52,6 +52,11 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
     type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'user'
+  },
+  confirmationToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'confirmation_token'
   }
 }, {
   tableName: 'utenti_login',

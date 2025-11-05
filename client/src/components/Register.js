@@ -1,0 +1,225 @@
+import React, { useState } from 'react';
+import { FaUser, FaLock, FaEnvelope, FaBuilding } from 'react-icons/fa';
+import './Login.css';
+import { checkClubExists,createClub } from '../api/clubs';
+import { registerUser } from '../api/auth';
+
+const Register = () => {
+  // Sezione 1: credenziali utente
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Sezione 2: dati club
+  const [denominazione, setDenominazione] = useState('');
+  const [codiceFiscale, setCodiceFiscale] = useState('');
+  const [partitaIva, setPartitaIva] = useState('');
+  const [indirizzo, setIndirizzo] = useState('');
+  const [legaleRappresentante, setLegaleRappresentante] = useState('');
+  const [direttoreTecnico, setDirettoreTecnico] = useState('');
+  const [recapitoTelefonico, setRecapitoTelefonico] = useState('');
+  const [clubEmail, setClubEmail] = useState('');
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Funzione di redirect già presente
+  const handleRegisterSuccess = () => {
+    // Implementa qui la logica di redirect dopo la registrazione
+    // Ad esempio: window.location.href = '/login';
+  };
+
+  const validateFields = () => {
+    if (!username.trim() || !email.trim() || !password.trim()) return false;
+    if (!denominazione.trim() || !codiceFiscale.trim() || !partitaIva.trim() || !legaleRappresentante.trim() || !direttoreTecnico.trim() || !email.trim()) return false;
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    if (!validateFields()) {
+      setError('Compila tutti i campi obbligatori.');
+      setLoading(false);
+      return;
+    }
+
+    // 1. Check club esistente
+    
+    try {
+      const clubCheckRes = await checkClubExists(codiceFiscale, partitaIva);
+      /*fetch('/api/clubs/check', {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codiceFiscale, partitaIva })
+      });*/ 
+      //const clubCheck = await clubCheckRes.json();
+      if (clubCheckRes.exists) {
+        setError('Il club è già stato registrato.');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError('Errore nella verifica del club.');
+      setLoading(false);
+      return;
+    }
+
+    // 2. Crea club
+    let clubId;
+    try {
+      const clubRes = await createClub({
+        denominazione,
+        codiceFiscale,
+        partitaIva,
+        indirizzo,
+        legaleRappresentante,
+        direttoreTecnico,
+        recapitoTelefonico,
+        email: clubEmail
+      });
+      /*fetch('/api/clubs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          denominazione,
+          codiceFiscale,
+          partitaIva,
+          indirizzo,
+          legaleRappresentante,
+          direttoreTecnico,
+          recapitoTelefonico,
+          email: clubEmail
+        })
+      });*/
+      //const clubData = await clubRes.json();
+      clubId = clubRes.id;
+    } catch (err) {
+      setError('Errore nella creazione del club.');
+      setLoading(false);
+      return;
+    }
+
+    // 3. Crea utente
+    try {
+      const userRes = await registerUser({
+        username,
+        email,
+        password,
+        clubId
+      });
+      /*fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          clubId
+        })
+      });
+      const userData = await userRes.json();*/
+      console.log(userRes);
+      if (userRes.success) {
+        setSuccess('Registrazione avvenuta! Controlla la tua email per confermare l’account.');
+        setLoading(false);
+        handleRegisterSuccess();
+      } else {
+        setError(userRes.message || 'Errore nella registrazione utente.');
+        setLoading(false);
+      }
+    } catch (err) {
+      setError('Errore nella registrazione utente.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-header">
+          <img src="/logo_ufficiale.png" alt="Logo" className="login-logo" />
+          <h1 className="login-title">Registrazione nuovo utente</h1>
+        </div>
+        <form onSubmit={handleSubmit} className="login-form">
+          <h2 className="section-title">Credenziali di accesso</h2>
+          <div className="form-group">
+            <label htmlFor="username" className="form-label">Username*</label>
+            <div className="input-wrapper">
+              <FaUser className="input-icon" />
+              <input type="text" id="username" value={username} onChange={e => setUsername(e.target.value)} className="form-input" disabled={loading} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email*</label>
+            <div className="input-wrapper">
+              <FaEnvelope className="input-icon" />
+              <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} className="form-input" disabled={loading} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password*</label>
+            <div className="input-wrapper">
+              <FaLock className="input-icon" />
+              <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={e => setPassword(e.target.value)} className="form-input" disabled={loading} />
+              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} disabled={loading}>
+                {showPassword ? 'Nascondi' : 'Mostra'}
+              </button>
+            </div>
+          </div>
+
+          <h2 className="section-title">Dati Club</h2>
+          <div className="form-group">
+            <label htmlFor="denominazione" className="form-label">Denominazione*</label>
+            <div className="input-wrapper">
+              <FaBuilding className="input-icon" />
+              <input type="text" id="denominazione" value={denominazione} onChange={e => setDenominazione(e.target.value)} className="form-input" disabled={loading} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="codiceFiscale" className="form-label">Codice Fiscale*</label>
+            <input type="text" id="codiceFiscale" value={codiceFiscale} onChange={e => setCodiceFiscale(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="partitaIva" className="form-label">Partita IVA*</label>
+            <input type="text" id="partitaIva" value={partitaIva} onChange={e => setPartitaIva(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="indirizzo" className="form-label">Indirizzo</label>
+            <input type="text" id="indirizzo" value={indirizzo} onChange={e => setIndirizzo(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="legaleRappresentante" className="form-label">Legale Rappresentante*</label>
+            <input type="text" id="legaleRappresentante" value={legaleRappresentante} onChange={e => setLegaleRappresentante(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="direttoreTecnico" className="form-label">Direttore Tecnico*</label>
+            <input type="text" id="direttoreTecnico" value={direttoreTecnico} onChange={e => setDirettoreTecnico(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="recapitoTelefonico" className="form-label">Recapito Telefonico</label>
+            <input type="text" id="recapitoTelefonico" value={recapitoTelefonico} onChange={e => setRecapitoTelefonico(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="clubEmail" className="form-label">Email Club*</label>
+            <input type="email" id="clubEmail" value={clubEmail} onChange={e => setClubEmail(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Registrazione in corso...' : 'Registrati'}
+          </button>
+
+          {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Register;
