@@ -33,6 +33,28 @@ const registerUser = async (userData) => {
   }
 };
 
+// Funzione per richiedere il reset password
+const requestPasswordReset = async (email) => {
+  try {
+    const response = await axios.post('/auth/request-password-reset/', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Errore richiesta reset password:', error);
+    throw error;
+  }
+};
+
+// Funzione per confermare il reset password
+const resetPassword = async (token, password) => {
+  try {
+    const response = await axios.post('/auth/reset-password/', { token, password });
+    return response.data;
+  } catch (error) {
+    console.error('Errore reset password:', error);
+    throw error;
+  }
+};
+
 const sendConfirmationEmail = async (to, token) => {
   try {
     const response = await axios.post('/auth/sendConfirmationEmail/', { to, token });
@@ -53,4 +75,4 @@ const confirmUser = async (token) => {
   }
 };
 
-export { loginUser, logoutUser, registerUser, sendConfirmationEmail, confirmUser };
+export { loginUser, logoutUser, registerUser, sendConfirmationEmail, confirmUser, requestPasswordReset, resetPassword };

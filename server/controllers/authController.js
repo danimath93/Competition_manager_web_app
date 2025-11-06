@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../models');
-const sendConfirmationEmail = require('../utils/sendConfirmationEmail');
+const { sendConfirmationEmail, sendResetPasswordEmail } = require('../utils/sendConfirmationEmail');
 const { checkClubExistsHelper } = require('./clubController');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -146,9 +146,56 @@ const confirmUser = async (req, res) => {
   }
 };
 
+// Richiesta reset password
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email obbligatoria' });
+    }
+    const user = await UtentiLogin.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Utente non esistente.' });
+    }
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    await user.save();
+    // Invio email
+    await sendResetPasswordEmail(email, resetToken);
+    return res.json({ success: true, message: 'Controlla la tua email per il reset della password.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Errore richiesta reset password', error });
+  }
+};
+
+// Conferma reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: 'Token e nuova password obbligatori.' });
+    }
+    const user = await UtentiLogin.findOne({ where: { resetPasswordToken: token } });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Token non valido o utente non trovato.' });
+    }
+    const salt = crypto.randomBytes(10).toString('hex');
+    const hashedPassword = crypto.createHash('sha256').update(password + '.' + user.username + '.' + salt, 'utf8').digest('hex');
+    user.password = hashedPassword;
+    user.salt = salt;
+    user.resetPasswordToken = null; // invalida il token
+    await user.save();
+    return res.json({ success: true, message: 'Password aggiornata correttamente.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Errore nel reset della password', error });
+  }
+};
+
 module.exports = {
   loginUser,
   logoutUser,
   registerUser,
   confirmUser,
+  requestPasswordReset,
+  resetPassword,
 };

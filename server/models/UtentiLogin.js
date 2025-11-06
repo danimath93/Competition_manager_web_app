@@ -57,6 +57,11 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'confirmation_token'
+  },
+  resetPasswordToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'reset_password_token'
   }
 }, {
   tableName: 'utenti_login',

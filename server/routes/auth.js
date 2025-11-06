@@ -13,5 +13,7 @@ router.post('/logout', authController.logoutUser);
 router.post('/register', authController.registerUser);
 
 router.get('/confirm', authController.confirmUser);
+router.post('/request-password-reset', authController.requestPasswordReset);
+router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;

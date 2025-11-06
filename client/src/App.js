@@ -5,6 +5,8 @@ import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Register from './components/Register';
+import RequestPasswordReset from './components/RequestPasswordReset';
+import ResetPasswordConfirm from './components/ResetPasswordConfirm';
 import PermissionRoute from './components/PermissionRoute';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
@@ -24,7 +26,9 @@ const AppContent = () => {
   if (!isAuthenticated) {
     return (
       <Routes>
-        <Route path="/register" element={<Register />} />
+              <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<RequestPasswordReset />} />
+          <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
         <Route path="*" element={<Login />} />
       </Routes>
     );

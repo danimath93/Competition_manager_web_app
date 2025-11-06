@@ -40,6 +40,10 @@ const Login = () => {
     navigate('/register');
   };
 
+  const handleResetPWClick = () => {
+    navigate('/reset-password');
+  };
+
   return (
     <div className="login-container">
       <div className="login-card">
@@ -77,7 +81,7 @@ const Login = () => {
                 {t('password')}
               </label>
               <div className="forgot-password-link">
-                <a href="#" onClick={(e) => { e.preventDefault(); console.log('Reset password'); }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); handleResetPWClick(); }}>
                   {t('forgotPassword')}
                 </a>
               </div>
