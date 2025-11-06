@@ -1,12 +1,9 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import {
-  Button,
-  Box,
-} from '@mui/material';
+import { Button, Box } from '@mui/material';
 import { Add } from '@mui/icons-material';
-//import { sendConfirmationEmail } from '../api/email';
 import { sendConfirmationEmail } from '../api/auth';
+
 const Dashboard = () => {
   const { t } = useLanguage();
 

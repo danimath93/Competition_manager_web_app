@@ -111,18 +111,25 @@ const deleteClub = async (req, res) => {
   }
 };
 
+// Helper function per verificare se un club esiste (per uso interno)
+const checkClubExistsHelper = async ({ codiceFiscale, partitaIva }) => {
+  const club = await Club.findOne({
+    where: {
+      [Op.or]: [  
+        { codiceFiscale },
+        { partitaIva }
+      ]
+    }
+  });
+  return !!club;
+};
+
+// Endpoint API per verificare se un club esiste
 const checkClubExists = async (req, res) => {
   try {
     const { codiceFiscale, partitaIva } = req.body; 
-    const club = await Club.findOne({
-      where: {
-        [Op.or]: [  
-          { codiceFiscale },
-          { partitaIva }
-        ]
-      }
-    });
-    res.json({ exists: !!club });
+    const exists = await checkClubExistsHelper({ codiceFiscale, partitaIva });
+    res.json({ exists });
   } catch (error) {
     res.status(500).json({ 
       error: 'Errore durante la verifica del club',
@@ -137,5 +144,6 @@ module.exports = {
   createClub,
   updateClub,
   deleteClub,
-  checkClubExists
+  checkClubExists,
+  checkClubExistsHelper
 };

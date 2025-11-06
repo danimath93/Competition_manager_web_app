@@ -1,21 +1,25 @@
 const nodemailer = require('nodemailer');
-const emailConfig = require('../config/email');
 
 const transporter = nodemailer.createTransport({
-  host: emailConfig.host,
-  port: emailConfig.port,
-  secure: emailConfig.secure,
-  auth: emailConfig.auth
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: { user: process.env.GUSER || null, pass: process.env.GPASS || null },
 });
 
 async function sendConfirmationEmail(to, token) {
+  if (process.env.GUSER == null || process.env.GPASS == null) {
+    throw new Error('Email credentials GUSER and GPASS are not set in environment variables .env');
+  }
+
   const confirmUrl = `https://tuosito.it/api/users/confirm?token=${token}`;
   const mailOptions = {
-    from: emailConfig.from,
+    from: process.env.GUSER || null,
     to,
-    subject: 'Conferma la tua registrazione',
-    html: `<p>Grazie per la registrazione!<br>Per confermare il tuo account clicca sul link:<br><a href="${confirmUrl}">${confirmUrl}</a></p>`
+    subject: 'Gestore Gare Viet Vo Dao - Conferma la tua registrazione',
+    html: `<p>Grazie per la registrazione!<br>Per favore conferma il tuo indirizzo email cliccando sul seguente link:<br><a href="${confirmUrl}">${confirmUrl}</a></p>`
   };
+
   await transporter.sendMail(mailOptions);
 }
 

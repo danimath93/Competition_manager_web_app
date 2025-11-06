@@ -44,49 +44,15 @@ const Register = () => {
     setLoading(true);
 
     if (!validateFields()) {
-      setError('Compila tutti i campi obbligatori.');
+      setError('Compila tutti i campi obbligatori per continuare.');
       setLoading(false);
       return;
     }
 
-    // 1. Check club esistente
-    
     try {
-      const clubCheckRes = await checkClubExists(codiceFiscale, partitaIva);
-      /*fetch('/api/clubs/check', {
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codiceFiscale, partitaIva })
-      });*/ 
-      //const clubCheck = await clubCheckRes.json();
-      if (clubCheckRes.exists) {
-        setError('Il club è già stato registrato.');
-        setLoading(false);
-        return;
-      }
-    } catch (err) {
-      setError('Errore nella verifica del club.');
-      setLoading(false);
-      return;
-    }
-
-    // 2. Crea club
-    let clubId;
-    try {
-      const clubRes = await createClub({
-        denominazione,
-        codiceFiscale,
-        partitaIva,
-        indirizzo,
-        legaleRappresentante,
-        direttoreTecnico,
-        recapitoTelefonico,
-        email: clubEmail
-      });
-      /*fetch('/api/clubs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const sendData = {
+        user: { username, email, password },
+        club: {
           denominazione,
           codiceFiscale,
           partitaIva,
@@ -95,47 +61,22 @@ const Register = () => {
           direttoreTecnico,
           recapitoTelefonico,
           email: clubEmail
-        })
-      });*/
-      //const clubData = await clubRes.json();
-      clubId = clubRes.id;
-    } catch (err) {
-      setError('Errore nella creazione del club.');
-      setLoading(false);
-      return;
-    }
+        }
+      };
 
-    // 3. Crea utente
-    try {
-      const userRes = await registerUser({
-        username,
-        email,
-        password,
-        clubId
-      });
-      /*fetch('/api/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-          clubId
-        })
-      });
-      const userData = await userRes.json();*/
-      console.log(userRes);
-      if (userRes.success) {
+      const response = await registerUser(sendData);
+      if (response.success) {
         setSuccess('Registrazione avvenuta! Controlla la tua email per confermare l’account.');
         setLoading(false);
         handleRegisterSuccess();
       } else {
-        setError(userRes.message || 'Errore nella registrazione utente.');
+        setError(response.message || 'Errore nella registrazione utente.');
         setLoading(false);
       }
     } catch (err) {
-      setError('Errore nella registrazione utente.');
+      setError('Errore durante la registrazione. Controlla i dati inseriti e riprova.');
       setLoading(false);
+      return;
     }
   };
 

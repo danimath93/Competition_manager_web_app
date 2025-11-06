@@ -35,7 +35,7 @@ const registerUser = async (userData) => {
 
 const sendConfirmationEmail = async (to, token) => {
   try {
-    const response = await axios.post('/../../server/utils/sendConfirmationEmail/', { to, token });  
+    const response = await axios.post('/auth/sendConfirmationEmail/', { to, token });
     return response.data;
   } catch (error) {
     console.error('Errore durante l\'invio dell\'email di conferma:', error);
