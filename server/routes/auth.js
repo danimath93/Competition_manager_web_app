@@ -12,4 +12,6 @@ router.post('/logout', authController.logoutUser);
 // POST /api/registerUsers - Register user
 router.post('/register', authController.registerUser);
 
+router.get('/confirm', authController.confirmUser);
+
 module.exports = router;

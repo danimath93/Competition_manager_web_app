@@ -121,8 +121,34 @@ const registerUser = async (req, res) => {
   }
 };
 
+const confirmUser = async (req, res) => {
+  console.log('[confirmUser] INIZIO', req.query);
+  try {
+    const { token } = req.query;
+    if (!token) {
+      console.error('[confirmUser] Nessun token fornito');
+      return res.status(400).json({ error: 'Token di accesso richiesto', message: 'Nessun token fornito' });
+    }
+    console.log('[confirmUser] Token ricevuto:', token);
+    const user = await UtentiLogin.findOne({ where: { confirmationToken: token } });
+    if (!user) {
+      console.error('[confirmUser] Token non valido o utente non trovato');
+      return res.status(400).json({ error: 'Token non valido o utente non trovato' });
+    }
+    user.status = 'E';
+    user.confirmationToken = null;
+    await user.save();
+    console.log('[confirmUser] Account confermato per utente:', user.username);
+    res.send('Account confermato! Ora puoi accedere.');
+  } catch (error) {
+    console.error('[confirmUser] ERRORE:', error);
+    res.status(500).send('Errore nella conferma account');
+  }
+};
+
 module.exports = {
   loginUser,
   logoutUser,
   registerUser,
+  confirmUser,
 };

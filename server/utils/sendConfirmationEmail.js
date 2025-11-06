@@ -11,8 +11,8 @@ async function sendConfirmationEmail(to, token) {
   if (process.env.GUSER == null || process.env.GPASS == null) {
     throw new Error('Email credentials GUSER and GPASS are not set in environment variables .env');
   }
-
-  const confirmUrl = `https://tuosito.it/api/users/confirm?token=${token}`;
+  console.log('Invio email di conferma a:', to);
+  const confirmUrl = `http://localhost:3050/api/auth/confirm?token=${token}`;
   const mailOptions = {
     from: process.env.GUSER || null,
     to,
