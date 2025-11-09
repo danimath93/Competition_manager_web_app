@@ -68,7 +68,7 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
   stato: {
     type: DataTypes.ENUM('Confermata', 'In attesa', 'Annullata'),
     allowNull: false,
-    defaultValue: 'Confermata'
+    defaultValue: 'In attesa'
   },
   note: {
     type: DataTypes.TEXT,

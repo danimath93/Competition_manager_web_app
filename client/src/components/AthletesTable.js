@@ -41,7 +41,7 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
               </TableCell>
               <TableCell>{athlete.tipoAtleta ? athlete.tipoAtleta.nome : 'N/A'}</TableCell>
               {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
-                <TableCell>{athlete.club.nome}</TableCell>
+                <TableCell>{athlete.club.denominazione}</TableCell>
               )}
               <TableCell>
                 <IconButton onClick={() => onInfo(athlete)}>

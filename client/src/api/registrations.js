@@ -12,34 +12,12 @@ export const loadRegistrationsByCompetition = async (competitionId) => {
 };
 
 // Funzione per ottenere le iscrizioni di un club per una competizione specifica
-export const loadRegistrationsByCompetitionAndClub = async (competitionId, clubId) => {
+export const loadAthleteRegistrationsByCompetitionAndClub = async (competitionId, clubId) => {
   try {
     const response = await axios.get(`/iscrizioni/competizione/${competitionId}/club/${clubId}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante il caricamento delle iscrizioni del club:', error);
-    throw error;
-  }
-};
-
-// Funzione per confermare l'iscrizione di un club per una competizione
-export const confirmClubRegistration = async (competitionId, clubId) => {
-  try {
-    const response = await axios.post('/iscrizioni/conferma', { competitionId, clubId });
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante la conferma dell\'iscrizione del club:', error);
-    throw error;
-  }
-};
-
-// Funzione per modificare l'iscrizione di un club per una competizione
-export const editClubRegistration = async (competitionId, clubId) => {
-  try {
-    const response = await axios.post('/iscrizioni/modifica', { competitionId, clubId });
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante la modifica dell\'iscrizione del club:', error);
     throw error;
   }
 };
@@ -72,6 +50,87 @@ export const deleteAthleteRegistrations = async (athleteId, competitionId) => {
     return response.data;
   } catch (error) {
     console.error('Errore durante l\'eliminazione delle iscrizioni dell\'atleta:', error);
+    throw error;
+  }
+};
+
+// ============ ISCRIZIONI CLUB ============
+
+// Funzione per creare o recuperare l'iscrizione di un club a una competizione
+export const createOrGetClubRegistration = async (clubId, competizioneId) => {
+  try {
+    const response = await axios.post('/iscrizioni/club-iscrizione', { clubId, competizioneId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la gestione dell\'iscrizione del club:', error);
+    throw error;
+  }
+};
+
+// Funzione per ottenere l'iscrizione di un club a una competizione
+export const getClubRegistration = async (clubId, competizioneId) => {
+  try {
+    const response = await axios.get(`/iscrizioni/club-iscrizione/${clubId}/${competizioneId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il recupero dell\'iscrizione del club:', error);
+    throw error;
+  }
+};
+
+// Funzione per caricare i documenti dell'iscrizione del club
+export const uploadClubRegistrationDocuments = async (clubId, competizioneId, certificatiMedici, autorizzazioni) => {
+  try {
+    const formData = new FormData();
+    formData.append('clubId', clubId);
+    formData.append('competizioneId', competizioneId);
+    formData.append('certificatiMedici', certificatiMedici);
+    formData.append('autorizzazioni', autorizzazioni);
+
+    const response = await axios.post('/iscrizioni/club-iscrizione/documenti', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dei documenti:', error);
+    throw error;
+  }
+};
+
+// Funzione per confermare l'iscrizione del club (dopo l'upload dei documenti)
+export const confirmClubRegistrationFinal = async (clubId, competizioneId) => {
+  try {
+    const response = await axios.post('/iscrizioni/club-iscrizione/conferma', { clubId, competizioneId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la conferma dell\'iscrizione del club:', error);
+    throw error;
+  }
+};
+
+// Funzione per scaricare un documento dell'iscrizione del club
+export const downloadClubRegistrationDocument = async (clubId, competizioneId, tipoDocumento) => {
+  try {
+    const response = await axios.get(
+      `/iscrizioni/club-iscrizione/${clubId}/${competizioneId}/documento/${tipoDocumento}`,
+      { responseType: 'blob' }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il download del documento:', error);
+    throw error;
+  }
+};
+
+// Funzione per modificare l'iscrizione del club
+export const editClubRegistration = async (clubId, competizioneId) => {
+  try {
+    const response = await axios.post('/iscrizioni/club-iscrizione/modifica', { clubId, competizioneId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la modifica dell\'iscrizione del club:', error);
     throw error;
   }
 };

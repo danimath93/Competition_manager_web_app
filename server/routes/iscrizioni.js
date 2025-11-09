@@ -1,18 +1,31 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const iscrizioneController = require('../controllers/iscrizioneController');
+
+// Configurazione multer per upload file in memoria
+const storage = multer.memoryStorage();
+const uploadDocumenti = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo file PDF sono accettati'), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limite
+  }
+});
+
+// ============ ISCRIZIONI ATLETI ============
 
 // GET /api/iscrizioni/competizione/:competizioneId - Ottieni tutte le iscrizioni di una competizione
 router.get('/competizione/:competizioneId', iscrizioneController.getIscrizioniByCompetizione);
 
 // GET /api/iscrizioni/competizione/:competizioneId/club/:clubId - Ottieni le iscrizioni di un club per una competizione
 router.get('/competizione/:competizioneId/club/:clubId', iscrizioneController.getIscrizioniByCompetitionAndClub);
-
-// POST /api/iscrizioni/conferma - Conferma l'iscrizione di un club per una competizione
-router.post('/conferma', iscrizioneController.confirmClubRegistration);
-
-// POST /api/iscrizioni/modifica - Modifica l'iscrizione di un club per una competizione
-router.post('/modifica', iscrizioneController.editClubRegistration);
 
 // POST /api/iscrizioni - Crea una nuova iscrizione
 router.post('/', iscrizioneController.createIscrizione);
@@ -22,5 +35,33 @@ router.delete('/:id', iscrizioneController.deleteIscrizione);
 
 // DELETE /api/iscrizioni/atleta/:atletaId/competizione/:competizioneId - Elimina tutte le iscrizioni di un atleta per una competizione
 router.delete('/atleta/:atletaId/competizione/:competizioneId', iscrizioneController.deleteIscrizioniAtleta);
+
+// ============ ISCRIZIONI CLUB ============
+
+// POST /api/iscrizioni/club-iscrizione - Crea o recupera l'iscrizione di un club a una competizione
+router.post('/club-iscrizione', iscrizioneController.createOrGetIscrizioneClub);
+
+// GET /api/iscrizioni/club-iscrizione/:clubId/:competizioneId - Ottieni l'iscrizione di un club a una competizione
+router.get('/club-iscrizione/:clubId/:competizioneId', iscrizioneController.getIscrizioneClub);
+
+// POST /api/iscrizioni/club-iscrizione/documenti - Upload documenti per l'iscrizione del club
+router.post(
+  '/club-iscrizione/documenti',
+  uploadDocumenti.fields([
+    { name: 'certificatiMedici', maxCount: 1 },
+    { name: 'autorizzazioni', maxCount: 1 }
+  ]),
+  iscrizioneController.uploadDocumentiIscrizioneClub
+);
+
+// POST /api/iscrizioni/club-iscrizione/conferma - Conferma l'iscrizione del club (dopo upload documenti)
+router.post('/club-iscrizione/conferma', iscrizioneController.confermaIscrizioneClub);
+
+// GET /api/iscrizioni/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento - Download documento
+router.get('/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento', iscrizioneController.downloadDocumentoIscrizioneClub);
+
+// POST /api/iscrizioni/club-iscrizione/modifica - Modfica l'iscrizione del club
+router.post('/club-iscrizione/modifica', iscrizioneController.modificaIscrizioneClub);
+
 
 module.exports = router;

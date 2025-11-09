@@ -42,7 +42,7 @@ const AthleteModal = ({
   const { user } = useAuth();
   const [formData, setFormData] = React.useState({});
   const [clubs, setClubs] = React.useState([]);
-  const [clubName, setClubName] = React.useState(athlete?.club?.nome || '');
+  const [clubName, setClubName] = React.useState(athlete?.club?.denominazione || '');
   const [clubNames, setClubNames] = React.useState([]);
   const [athleteTypes, setAthleteTypes] = React.useState([]);
 
@@ -53,7 +53,7 @@ const AthleteModal = ({
       let club = null;
       if (user && (user?.clubId)) {
         club = clubs.find((c) => c.id === user.clubId) || null;
-        setClubName(club?.nome || '');
+        setClubName(club?.denominazione || '');
       }
 
       setFormData({
@@ -79,7 +79,7 @@ const AthleteModal = ({
       const fetchClubs = async () => {
         try {
           const clubsData = await loadAllClubs();
-          const clubNames = clubsData.map((club) => club.nome);
+          const clubNames = clubsData.map((club) => club.denominazione);
           setClubs(clubsData);
           setClubNames(clubNames);
         } catch (error) {
@@ -106,7 +106,7 @@ const AthleteModal = ({
 
   const handleClubSelectChange = (value) => {
     setClubName(value);
-    const selectedClub = clubs.find((club) => club.nome === value);
+    const selectedClub = clubs.find((club) => club.denominazione === value);
     setFormData({ ...formData, clubId: selectedClub?.id || null, club: selectedClub || null });
   }
 

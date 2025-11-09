@@ -26,12 +26,12 @@ const CompetitionOrganizerSelectorModal = ({ open, onClose, onSubmit, organizerI
     const fetchClubs = async () => {
       try {
         const clubsData = await loadAllClubs();
-        const clubNames = clubsData.map((club) => club.nome);
+        const clubNames = clubsData.map((club) => club.denominazione);
         setClubs(clubsData);
         setClubNames(clubNames);
         if (organizerId && clubsData.length > 0) {
           const selectedClub = clubsData.find((club) => club.id === organizerId);
-          setClubName(selectedClub ? selectedClub.nome : '');
+          setClubName(selectedClub ? selectedClub.denominazione : '');
           setSelectedClubOrganizer(organizerId);
         }
       } catch (error) {
@@ -48,7 +48,7 @@ const CompetitionOrganizerSelectorModal = ({ open, onClose, onSubmit, organizerI
 
   const handleClubSelectChange = (value) => {
     setClubName(value);
-    const selectedClub = clubs.find((club) => club.nome === value);
+    const selectedClub = clubs.find((club) => club.denominazione === value);
     setSelectedClubOrganizer(selectedClub ? selectedClub.id : null);
   }
 

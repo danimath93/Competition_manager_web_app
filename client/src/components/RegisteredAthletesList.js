@@ -159,7 +159,7 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
         atletaId: athlete.id,
         tipoCategoriaId: registrationData.tipoCategoriaId,
         competizioneId: registrations[0]?.competizioneId,
-        stato: 'Confermata',
+        stato: 'In attesa',
         idConfigEsperienza: registrationData.idConfigEsperienza,
         peso: registrationData.peso
       });
@@ -190,7 +190,7 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
                 </Typography>
                 {(!athlete.tesseramento) && (
                   <Tooltip 
-                    title="In mancanza di tesseramento dell'atleta viene applicato un costo di 5 € per integrare una assicurazione FIWUK" 
+                    title="In mancanza di tesseramento dell'atleta viene applicato un costo di 5 € per integrare l'assicurazione FIWUK" 
                     arrow
                   >
                     <Warning 
@@ -333,7 +333,7 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
         <DialogTitle>
           {deleteType === 'athlete' 
             ? `Rimuovi ${athlete.nome} ${athlete.cognome} dalla competizione?`
-            : `Rimuovi iscrizione alla categoria ${selectedRegistration?.categoria?.nome}?`
+            : `Rimuovi iscrizione alla categoria ${selectedRegistration?.tipoCategoria?.nome}?`
           }
         </DialogTitle>
         <DialogContent>

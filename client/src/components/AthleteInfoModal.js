@@ -56,7 +56,7 @@ const AthleteInfoModal = ({ open, onClose, athlete }) => {
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>Club:</strong> {athlete?.club?.nome || 'N/A'}
+              <strong>Club:</strong> {athlete?.club?.denominazione || 'N/A'}
             </Typography>
           </Grid>
           <Grid item xs={6}>

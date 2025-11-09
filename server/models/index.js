@@ -7,6 +7,7 @@ const Giudice = require('./Giudice');
 const Competizione = require('./Competizione');
 const Categoria = require('./Categoria');
 const IscrizioneAtleta = require('./IscrizioneAtleta');
+const IscrizioneClub = require('./IscrizioneClub');
 const AssegnazioneGiudice = require('./AssegnazioneGiudice');
 const UtentiLogin = require('./UtentiLogin');
 const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
@@ -199,6 +200,39 @@ ConfigEsperienza.belongsTo(ConfigTipoAtleta, {
   as: 'tipoAtleta'
 });
 
+// Club -> Competizioni (Many-to-Many attraverso IscrizioneClub)
+Club.belongsToMany(Competizione, {
+  through: IscrizioneClub,
+  foreignKey: 'clubId',
+  otherKey: 'competizioneId',
+  as: 'competizioniIscritte'
+});
+Competizione.belongsToMany(Club, {
+  through: IscrizioneClub,
+  foreignKey: 'competizioneId',
+  otherKey: 'clubId',
+  as: 'clubsIscritti'
+});
+
+// Associazioni dirette per IscrizioneClub
+IscrizioneClub.belongsTo(Club, {
+  foreignKey: 'clubId',
+  as: 'club'
+});
+IscrizioneClub.belongsTo(Competizione, {
+  foreignKey: 'competizioneId',
+  as: 'competizione'
+});
+
+Club.hasMany(IscrizioneClub, {
+  foreignKey: 'clubId',
+  as: 'iscrizioniCompetizioni'
+});
+Competizione.hasMany(IscrizioneClub, {
+  foreignKey: 'competizioneId',
+  as: 'iscrizioniClub'
+});
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,
@@ -208,6 +242,7 @@ module.exports = {
   Competizione,
   Categoria,
   IscrizioneAtleta,
+  IscrizioneClub,
   AssegnazioneGiudice,
   UtentiLogin,
   ConfigTipoCompetizione,

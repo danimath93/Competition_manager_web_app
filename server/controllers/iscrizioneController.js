@@ -1,4 +1,4 @@
-const { IscrizioneAtleta, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
+const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
 const getIscrizioniByCompetizione = async (req, res) => {
@@ -94,63 +94,6 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
   }
 };
 
-// Conferma l'iscrizione di un club per una competizione
-const confirmClubRegistration = async (req, res) => {
-  try {
-    const { competitionId, clubId } = req.body;
-
-    // Controllo i club iscritti alla competizione e aggiungo il club se non è già presente
-    const competizione = await Competizione.findByPk(competitionId);
-    let clubIscritti = competizione.clubIscritti || [];
-    if (!clubIscritti.includes(clubId)) {
-      competizione.clubIscritti = [];
-      await competizione.save();
-      // Faccio prima il reset per evitare errori Sequelize dato che non carica correttamente aggiungendo un solo id
-      clubIscritti.push(clubId);
-      competizione.clubIscritti = clubIscritti;
-      await competizione.save();
-    }
-    else {
-      return res.status(400).json({
-        error: 'Il club è già iscritto a questa competizione'
-      });
-    }
-
-    res.status(200).json({ message: 'Iscrizione del club confermata con successo' });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Errore nella conferma dell\'iscrizione del club',
-      details: error.message
-    });
-  }
-};
-
-// Modifica l'iscrizione di un club per una competizione
-const editClubRegistration = async (req, res) => {
-  try {
-    const { competitionId, clubId } = req.body;
-    // Controllo i club iscritti alla competizione e rimuovo il club se è presente
-    const competizione = await Competizione.findByPk(competitionId);
-    let clubIscritti = competizione.clubIscritti || [];
-    if (clubIscritti.includes(clubId)) {
-      clubIscritti = clubIscritti.filter(id => id !== clubId);
-      competizione.clubIscritti = clubIscritti;
-      await competizione.save();
-    }
-    else {
-      return res.status(400).json({
-        error: 'Il club non è iscritto a questa competizione'
-      });
-    }
-    res.status(200).json({ message: 'Iscrizione del club modificata con successo' });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Errore nella modifica dell\'iscrizione del club',
-      details: error.message
-    });
-  }
-};
-
 // Crea una nuova iscrizione
 const createIscrizione = async (req, res) => {
   try {
@@ -172,7 +115,7 @@ const createIscrizione = async (req, res) => {
       atletaId,
       tipoCategoriaId,
       competizioneId,
-      stato: req.body.stato || 'Confermata',
+      stato: req.body.stato || 'In attesa',
       note: req.body.note || null
     };
 
@@ -270,12 +213,290 @@ const deleteIscrizioniAtleta = async (req, res) => {
   }
 };
 
+// ============ ISCRIZIONI CLUB ============
+
+// Crea o recupera l'iscrizione di un club a una competizione
+const createOrGetIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.body;
+
+    // Verifica se esiste già un'iscrizione
+    let iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId },
+      include: [
+        {
+          model: Club,
+          as: 'club'
+        },
+        {
+          model: Competizione,
+          as: 'competizione'
+        }
+      ]
+    });
+
+    // Se non esiste, creala
+    if (!iscrizioneClub) {
+      iscrizioneClub = await IscrizioneClub.create({
+        clubId,
+        competizioneId,
+        stato: 'In attesa'
+      });
+
+      // Recupera l'iscrizione con tutti i dettagli
+      iscrizioneClub = await IscrizioneClub.findByPk(iscrizioneClub.id, {
+        include: [
+          {
+            model: Club,
+            as: 'club'
+          },
+          {
+            model: Competizione,
+            as: 'competizione'
+          }
+        ]
+      });
+    }
+
+    res.status(200).json(iscrizioneClub);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nella gestione dell\'iscrizione del club',
+      details: error.message
+    });
+  }
+};
+
+// Ottieni l'iscrizione di un club a una competizione
+const getIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.params;
+
+    const iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId },
+      include: [
+        {
+          model: Club,
+          as: 'club'
+        },
+        {
+          model: Competizione,
+          as: 'competizione'
+        }
+      ]
+    });
+
+    if (!iscrizioneClub) {
+      return res.status(404).json({ error: 'Iscrizione del club non trovata' });
+    }
+
+    res.status(200).json(iscrizioneClub);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel recupero dell\'iscrizione del club',
+      details: error.message
+    });
+  }
+};
+
+// Upload dei documenti per l'iscrizione del club
+const uploadDocumentiIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.body;
+    const files = req.files;
+
+    // Verifica che l'iscrizione esista
+    const iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId }
+    });
+
+    if (!iscrizioneClub) {
+      return res.status(404).json({ error: 'Iscrizione del club non trovata' });
+    }
+
+    // Verifica che entrambi i file siano presenti
+    if (!files || !files.certificatiMedici || !files.autorizzazioni) {
+      return res.status(400).json({
+        error: 'Entrambi i documenti (certificati medici e autorizzazioni) sono obbligatori'
+      });
+    }
+
+    const certificatiMedici = files.certificatiMedici[0];
+    const autorizzazioni = files.autorizzazioni[0];
+
+    // Verifica che siano PDF
+    if (certificatiMedici.mimetype !== 'application/pdf') {
+      return res.status(400).json({
+        error: 'I certificati medici devono essere in formato PDF'
+      });
+    }
+
+    if (autorizzazioni.mimetype !== 'application/pdf') {
+      return res.status(400).json({
+        error: 'Le autorizzazioni devono essere in formato PDF'
+      });
+    }
+
+    // Salva i file nel database
+    iscrizioneClub.certificatiMedici = certificatiMedici.buffer;
+    iscrizioneClub.certificatiMediciNome = certificatiMedici.originalname;
+    iscrizioneClub.certificatiMediciTipo = certificatiMedici.mimetype;
+    iscrizioneClub.autorizzazioni = autorizzazioni.buffer;
+    iscrizioneClub.autorizzazioniNome = autorizzazioni.originalname;
+    iscrizioneClub.autorizzazioniTipo = autorizzazioni.mimetype;
+
+    await iscrizioneClub.save();
+
+    res.status(200).json({
+      message: 'Documenti caricati con successo',
+      iscrizioneClub: {
+        id: iscrizioneClub.id,
+        certificatiMediciNome: iscrizioneClub.certificatiMediciNome,
+        autorizzazioniNome: iscrizioneClub.autorizzazioniNome
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel caricamento dei documenti',
+      details: error.message
+    });
+  }
+};
+
+// Conferma l'iscrizione del club (dopo l'upload dei documenti)
+const confermaIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.body;
+
+    // Verifica che l'iscrizione esista
+    const iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId }
+    });
+
+    if (!iscrizioneClub) {
+      return res.status(404).json({ error: 'Iscrizione del club non trovata' });
+    }
+
+    // Verifica che i documenti siano stati caricati
+    if (!iscrizioneClub.certificatiMedici || !iscrizioneClub.autorizzazioni) {
+      return res.status(400).json({
+        error: 'È necessario caricare entrambi i documenti prima di confermare l\'iscrizione'
+      });
+    }
+
+    // Aggiorna lo stato dell'iscrizione
+    iscrizioneClub.stato = 'Confermata';
+    iscrizioneClub.dataConferma = new Date();
+    await iscrizioneClub.save();
+
+    // Aggiorna lo stato di tutte le iscrizioni atleti del club per questa competizione
+    await IscrizioneAtleta.update(
+      { stato: 'Confermata' },
+      {
+        where: {
+          competizioneId,
+          atletaId: {
+            [require('sequelize').Op.in]: require('sequelize').literal(
+              `(SELECT id FROM atleti WHERE club_id = ${clubId})`
+            )
+          }
+        }
+      }
+    );
+
+    res.status(200).json({
+      message: 'Iscrizione confermata con successo',
+      iscrizioneClub
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nella conferma dell\'iscrizione',
+      details: error.message
+    });
+  }
+};
+
+// Download di un documento dell'iscrizione club
+const downloadDocumentoIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId, tipoDocumento } = req.params;
+
+    const iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId }
+    });
+
+    if (!iscrizioneClub) {
+      return res.status(404).json({ error: 'Iscrizione del club non trovata' });
+    }
+
+    let fileBuffer, fileName, fileType;
+
+    if (tipoDocumento === 'certificatiMedici') {
+      fileBuffer = iscrizioneClub.certificatiMedici;
+      fileName = iscrizioneClub.certificatiMediciNome;
+      fileType = iscrizioneClub.certificatiMediciTipo;
+    } else if (tipoDocumento === 'autorizzazioni') {
+      fileBuffer = iscrizioneClub.autorizzazioni;
+      fileName = iscrizioneClub.autorizzazioniNome;
+      fileType = iscrizioneClub.autorizzazioniTipo;
+    } else {
+      return res.status(400).json({ error: 'Tipo di documento non valido' });
+    }
+
+    if (!fileBuffer) {
+      return res.status(404).json({ error: 'Documento non trovato' });
+    }
+
+    res.setHeader('Content-Type', fileType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(fileBuffer);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel download del documento',
+      details: error.message
+    });
+  }
+};
+
+// Modifica l'iscrizione del club, dopo la creazione iniziale
+const modificaIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.body;
+    // Verifica che l'iscrizione esista
+    const iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId }
+    });
+
+    if (!iscrizioneClub) {
+      return res.status(404).json({ error: 'Iscrizione del club non trovata' });
+    }
+
+    // Aggiorna lo stato dell'iscrizione
+    iscrizioneClub.stato = "In attesa";
+    await iscrizioneClub.save();
+
+    res.status(200).json({
+      message: 'Iscrizione modificata con successo',
+      iscrizioneClub
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nella modifica dell\'iscrizione',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getIscrizioniByCompetizione,
   getIscrizioniByCompetitionAndClub,
-  confirmClubRegistration,
-  editClubRegistration,
   createIscrizione,
   deleteIscrizione,
-  deleteIscrizioniAtleta
+  deleteIscrizioniAtleta,
+  createOrGetIscrizioneClub,
+  getIscrizioneClub,
+  uploadDocumentiIscrizioneClub,
+  confermaIscrizioneClub,
+  downloadDocumentoIscrizioneClub,
+  modificaIscrizioneClub
 };

@@ -197,7 +197,7 @@ const Athletes = () => {
                   </MenuItem>
                   {clubs.map((club) => (
                     <MenuItem key={club.id} value={club.id}>
-                      {club.nome}
+                      {club.denominazione}
                     </MenuItem>
                   ))}
                 </Select>

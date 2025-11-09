@@ -53,7 +53,7 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
         atletaId: selectedAthlete.id,
         tipoCategoriaId: registrationData.tipoCategoriaId,
         competizioneId: competition.id,
-        stato: 'Confermata',
+        stato: 'In attesa',
         idConfigEsperienza: registrationData.idConfigEsperienza,
         peso: registrationData.peso
       });

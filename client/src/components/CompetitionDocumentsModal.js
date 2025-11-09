@@ -10,21 +10,21 @@ import {
   IconButton,
   Alert,
 } from '@mui/material';
-import { 
-  CloudUpload as UploadIcon, 
-  Download as DownloadIcon, 
-  Delete as DeleteIcon 
+import {
+  CloudUpload as UploadIcon,
+  Download as DownloadIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { 
-  uploadCompetitionFiles, 
-  downloadCompetitionFile, 
-  deleteCompetitionFile 
+import {
+  uploadCompetitionFiles,
+  downloadCompetitionFile,
+  deleteCompetitionFile
 } from '../api/competitions';
 
 const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competition }) => {
   const { user } = useAuth();
-  
+
   const [files, setFiles] = useState({
     circolareGara: null,
     fileExtra1: null,
@@ -40,15 +40,15 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
   // Verifica se l'utente può modificare i documenti
   const canEdit = () => {
     if (!user || !competition) return false;
-    
+
     // Admin e SuperAdmin possono sempre modificare
     if (user.permissions === 'admin' || user.permissions === 'superAdmin') {
       return true;
     }
-    
+
     // TODO: Aggiungere controllo per organizzatore della gara
     // return user.clubId === competition.organizzatoreClubId;
-    
+
     return false;
   };
 
@@ -103,10 +103,10 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         error: false
       });
       setFiles({ circolareGara: null, fileExtra1: null, fileExtra2: null });
-      
+
       // Reset dei file input
       document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
-      
+
       setTimeout(() => {
         setUploadStatus({ loading: false, message: '', error: false });
       }, 2000);
@@ -149,7 +149,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         message: 'File eliminato con successo',
         error: false
       });
-      
+
       setTimeout(() => {
         setUploadStatus({ loading: false, message: '', error: false });
       }, 2000);
@@ -166,7 +166,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
 
   const getFileDisplayName = (fileType) => {
     if (!competition) return null;
-    
+
     switch (fileType) {
       case 'circolare': return competition.circolareGaraNome;
       case 'extra1': return competition.fileExtra1Nome;
@@ -185,51 +185,51 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
           <Typography variant="subtitle2" gutterBottom>
             {title}
           </Typography>
-          
-          {isEditable && (
-            <>
-              <input
-                accept={acceptedTypes}
-                type="file"
-                id={`${fileType}-upload`}
-                style={{ display: 'none' }}
-                onChange={(e) => handleFileChange(fileType, e)}
-              />
-              <label htmlFor={`${fileType}-upload`} style={{ marginLeft: "auto", cursor: 'pointer' }}>
-                <IconButton
-                  component="span"
-                  size="small"
-                  title="Carica file"
-                >
-                  <UploadIcon />
-                </IconButton>
-              </label>
-            </>
-          )}
-          
-          {existingFileName && (
-            <>
+
+          <div style={{ marginLeft: "auto", cursor: 'pointer' }}>
+            {existingFileName && (
               <IconButton
                 size="small"
+                style={{ marginLeft: "auto" }}
                 onClick={() => handleFileDownload(apiFileType)}
                 title="Download"
               >
                 <DownloadIcon />
               </IconButton>
-              {isEditable && (
-                <IconButton
-                  size="small"
-                  onClick={() => handleFileDelete(apiFileType)}
-                  title="Elimina"
-                  color="error"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              )}
-            </>
-          )}
+            )}
+            {isEditable && (
+              <>
+                <input
+                  accept={acceptedTypes}
+                  type="file"
+                  id={`${fileType}-upload`}
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleFileChange(fileType, e)}
+                />
+                <label htmlFor={`${fileType}-upload`}>
+                  <IconButton
+                    component="span"
+                    size="small"
+                    title="Carica file"
+                  >
+                    <UploadIcon />
+                  </IconButton>
+                </label>
+              </>
+            )}
+            {existingFileName && isEditable && (
+              <IconButton
+                size="small"
+                onClick={() => handleFileDelete(apiFileType)}
+                title="Elimina"
+                color="error"
+              >
+                <DeleteIcon />
+              </IconButton>
+            )}
+          </div>
         </Box>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           {!selectedFile && !existingFileName && (
             <Typography variant="body2" color="text.secondary">
@@ -261,7 +261,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
           </Typography>
         )}
       </DialogTitle>
-      
+
       <DialogContent>
         {/* Messaggio di stato upload */}
         {uploadStatus.message && (
@@ -313,7 +313,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
           </Button>
         )}
       </DialogContent>
-      
+
       <DialogActions>
         <Button onClick={onClose}>Chiudi</Button>
       </DialogActions>

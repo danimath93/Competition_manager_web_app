@@ -57,7 +57,7 @@ const CompetitionDetailsModal = ({ open, onClose, competitionDetails }) => {
               {competitionDetails.clubs.map((club) => (
                 <ListItem key={club.id}>
                   <ListItemText 
-                    primary={club.nome} 
+                    primary={club.denominazione} 
                     secondary={`Numero atleti: ${club.numeroAtletiIscritti}`}
                   />
                 </ListItem>

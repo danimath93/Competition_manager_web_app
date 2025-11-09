@@ -7,17 +7,25 @@ import {
   Button,
   Paper,
   Alert,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
 import { loadAthletesByClub, createAthlete, updateAthlete } from '../api/athletes';
-import { loadRegistrationsByCompetitionAndClub, confirmClubRegistration, editClubRegistration } from '../api/registrations';
+import { 
+  loadAthleteRegistrationsByCompetitionAndClub, 
+  createOrGetClubRegistration,
+  getClubRegistration,
+  uploadClubRegistrationDocuments,
+  confirmClubRegistrationFinal,
+  editClubRegistration,
+} from '../api/registrations';
 import ClubAthletesList from '../components/ClubAthletesList';
 import RegisteredAthletesList from '../components/RegisteredAthletesList';
 import AthleteModal from '../components/AthleteModal';
+import RegistrationDocumentsUploadModal from '../components/RegistrationDocumentsUploadModal';
 import { set } from 'date-fns';
 
 const CompetitionRegistration = () => {
@@ -30,11 +38,13 @@ const CompetitionRegistration = () => {
   const [clubAthletes, setClubAthletes] = useState([]);
   const [registeredAthletes, setRegisteredAthletes] = useState([]);
   const [isClubRegistered, setIsClubRegistered] = useState(false);
+  const [clubRegistration, setClubRegistration] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAthleteModalOpen, setIsAthleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
 
   // Carica i dati iniziali
   useEffect(() => {
@@ -58,11 +68,34 @@ const CompetitionRegistration = () => {
         setClubAthletes(athletesData);
 
         // Carica gli atleti già iscritti alla competizione per questo club
-        const registrationsData = await loadRegistrationsByCompetitionAndClub(
+        const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(
           competitionId,
           user.clubId
         );
         setRegisteredAthletes(registrationsData);
+
+        // Carica o crea l'iscrizione del club
+        try {
+          const clubRegData = await getClubRegistration(user.clubId, competitionId);
+          setClubRegistration(clubRegData);
+          setIsClubRegistered(clubRegData.stato === 'Confermata');
+        } catch (err) {
+          // L'iscrizione non esiste ancora - creala se ci sono atleti iscritti
+          if (registrationsData.length > 0) {
+            try {
+              const newClubReg = await createOrGetClubRegistration(user.clubId, competitionId);
+              setClubRegistration(newClubReg);
+              setIsClubRegistered(false);
+            } catch (createErr) {
+              console.error('Errore nella creazione iscrizione club:', createErr);
+              setClubRegistration(null);
+              setIsClubRegistered(false);
+            }
+          } else {
+            setClubRegistration(null);
+            setIsClubRegistered(false);
+          }
+        }
 
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
@@ -78,13 +111,15 @@ const CompetitionRegistration = () => {
   }, [competitionId, user]);
 
   useEffect(() => {
-    setIsClubRegistered(checkClubRegistered());
-  }, [competition, user]);
+    if (clubRegistration) {
+      setIsClubRegistered(clubRegistration.stato === 'Confermata');
+    }
+  }, [clubRegistration]);
 
   // Funzione per aggiornare la lista degli atleti iscritti
   const refreshRegistrations = async () => {
     try {
-      const registrationsData = await loadRegistrationsByCompetitionAndClub(
+      const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(
         competitionId,
         user.clubId
       );
@@ -104,13 +139,61 @@ const CompetitionRegistration = () => {
     }
   };
 
-  const checkClubRegistered = () => {
-    if (competition && user?.clubId) {
-      if (competition?.clubIscritti?.includes(user.clubId)) {
-        return true;
-      }
+  // Funzione per aggiornare lo stato dell'iscrizione del club
+  const refreshClubRegistration = async () => {
+    try {
+      const clubRegData = await getClubRegistration(user.clubId, competitionId);
+      setClubRegistration(clubRegData);
+      setIsClubRegistered(clubRegData.stato === 'Confermata');
+    } catch (err) {
+      console.error('Errore nel ricaricamento dell\'iscrizione del club:', err);
     }
-    return false;
+  };
+
+  const handleOpenDocumentsModal = async () => {
+    try {
+      // Crea o recupera l'iscrizione del club
+      const clubRegData = await createOrGetClubRegistration(user.clubId, competitionId);
+      setClubRegistration(clubRegData);
+      setIsDocumentsModalOpen(true);
+    } catch (err) {
+      console.error('Errore durante l\'apertura del modal documenti:', err);
+    }
+  };
+
+  const handleCloseDocumentsModal = () => {
+    refreshClubRegistration();
+    setIsDocumentsModalOpen(false);
+  };
+
+  const handleConfirmRegistration = async () => {
+    try {
+      setLoading(true);
+      
+      // Conferma iscrizione
+      await confirmClubRegistrationFinal(user.clubId, competitionId);
+
+      // Ricarica i dati
+      const clubRegData = await getClubRegistration(user.clubId, competitionId);
+      setClubRegistration(clubRegData);
+      
+      await refreshRegistrations();
+
+      setError(null);
+    } catch (err) {
+      console.error('Errore durante la conferma dell\'iscrizione:', err);
+      setError('Errore durante la conferma dell\'iscrizione: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const areDocumentsUploaded = () => {
+    return clubRegistration?.certificatiMediciNome && clubRegistration?.autorizzazioniNome;
+  };
+
+  const canConfirmRegistration = () => {
+    return registeredAthletes.length > 0 && areDocumentsUploaded() && !isClubRegistered;
   };
 
   const handleGoBack = () => {
@@ -144,27 +227,20 @@ const CompetitionRegistration = () => {
     }
   };
 
-  const handleConfirmRegistration = () => {
-    return async () => {
-      try {
-        await confirmClubRegistration(competitionId, user?.clubId);
-
-        const competitionData = await getCompetitionDetails(competitionId);
-        setCompetition(competitionData);
-      }
-      catch (err) {
-        console.error('Errore durante la conferma dell\'iscrizione:', err);
-        setError('Errore durante la conferma dell\'iscrizione');
-      }
-    };
-  };
-
   const handleEditRegistration = () => {
     return async () => {
       try {
         await editClubRegistration(competitionId, user.clubId);
         const competitionData = await getCompetitionDetails(competitionId);
         setCompetition(competitionData);
+        
+        // Ricarica anche l'iscrizione del club
+        try {
+          const clubRegData = await getClubRegistration(user.clubId, competitionId);
+          setClubRegistration(clubRegData);
+        } catch (err) {
+          setClubRegistration(null);
+        }
       } catch (err) {
         console.error('Errore durante la modifica dell\'iscrizione:', err);
         setError('Errore durante la modifica dell\'iscrizione');
@@ -232,23 +308,10 @@ const CompetitionRegistration = () => {
       </Box>
 
       <Box sx={{ mb: 2, flexShrink: 0 }}>
-        {!isClubRegistered && (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleConfirmRegistration(false)}
-          >
-            Conferma iscrizione
-          </Button>
-        )}
-        {isClubRegistered && (
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleEditRegistration(true)}
-          >
-            Modifica iscrizione
-          </Button>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         )}
       </Box>
 
@@ -336,16 +399,100 @@ const CompetitionRegistration = () => {
         </Box>
       </Box>
 
+      {/* Bottoni in basso a destra */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          alignItems: 'center',
+          gap: 2,
+          mt: 2,
+          pt: 2,
+          borderTop: '1px solid #e0e0e0',
+          flexShrink: 0
+        }}
+      >
+        {/* Stato "In attesa" - mostra bottone documenti */}
+        {clubRegistration?.stato === 'In attesa' && (
+          <>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              onClick={handleOpenDocumentsModal}
+            >
+              {areDocumentsUploaded() ? 'Modifica Documenti' : 'Carica Documenti'}
+            </Button>
+            
+            {areDocumentsUploaded() && (
+              <Alert severity="success" sx={{ mb: 0 }}>
+                ✓ Documenti caricati
+              </Alert>
+            )}
+          </>
+        )}
+
+        {/* Bottone conferma iscrizione - visibile solo se documenti caricati e atleti iscritti */}
+        {!isClubRegistered && (
+          <>
+            {registeredAthletes.length === 0 && (
+              <Alert severity="info" sx={{ mb: 0 }}>
+                Aggiungi almeno un atleta per poter confermare l'iscrizione
+              </Alert>
+            )}
+            
+            {registeredAthletes.length > 0 && !areDocumentsUploaded() && (
+              <Alert severity="warning" sx={{ mb: 0 }}>
+                Carica i documenti obbligatori per confermare l'iscrizione
+              </Alert>
+            )}
+
+            <Button
+              variant="contained"
+              color="success"
+              size="large"
+              onClick={handleConfirmRegistration}
+              disabled={!canConfirmRegistration()}
+            >
+              Conferma Iscrizione
+            </Button>
+          </>
+        )}
+
+        {/* Iscrizione confermata */}
+        {isClubRegistered && (
+          <Box display="flex" alignItems="center" gap={2}>
+            <Alert severity="success" sx={{ mb: 0 }}>
+              Iscrizione confermata il {clubRegistration?.dataConferma ? new Date(clubRegistration.dataConferma).toLocaleDateString() : ''}
+            </Alert>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="large"
+              onClick={handleEditRegistration()}
+            >
+              Modifica Iscrizione
+            </Button>
+          </Box>
+        )}
+      </Box>
+
       {/* Modale per aggiungere/modificare atleta */}
       {isAthleteModalOpen && (
         <AthleteModal
           open={isAthleteModalOpen}
-          onClose={handleCloseAthleteModal}
           onSubmit={handleSaveAthlete}
           isEditMode={isEditMode}
           athlete={selectedAthlete}
         />
       )}
+
+      {/* Modale per upload documenti */}
+      <RegistrationDocumentsUploadModal
+        open={isDocumentsModalOpen}
+        onClose={handleCloseDocumentsModal}
+        clubRegistration={clubRegistration}
+      />
     </Container>
   );
 };

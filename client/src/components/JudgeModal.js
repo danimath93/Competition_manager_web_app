@@ -31,7 +31,7 @@ const JudgeModal = ({
 }) => {
   const [formData, setFormData] = React.useState({});
   const [clubs, setClubs] = React.useState([]);
-  const [clubName, setClubName] = React.useState(judge?.club?.nome || '');
+  const [clubName, setClubName] = React.useState(judge?.club?.denominazione || '');
   const [clubNames, setClubNames] = React.useState([]);
 
   React.useEffect(() => {
@@ -52,12 +52,12 @@ const JudgeModal = ({
       });
     }
   }, [open, isEditMode, judge]);
-
+ 
   React.useEffect(() => {
     const fetchClubs = async () => {
       try {
         const clubsData = await loadAllClubs();
-        const clubNames = clubsData.map((club) => club.nome);
+        const clubNames = clubsData.map((club) => club.denominazione);
         setClubs(clubsData);
         setClubNames(clubNames);
       } catch (error) {
@@ -74,7 +74,7 @@ const JudgeModal = ({
 
   const handleClubSelectChange = (value) => {
     setClubName(value);
-    const selectedClub = clubs.find((club) => club.nome === value);
+    const selectedClub = clubs.find((club) => club.denominazione === value);
     setFormData({ ...formData, clubId: selectedClub?.id || null, club: selectedClub || null });
   }
 

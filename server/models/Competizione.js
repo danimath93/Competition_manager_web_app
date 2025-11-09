@@ -112,12 +112,6 @@ const Competizione = sequelize.define('Competizione', {
     },
     field: 'max_categorie_atleta'
   },
-  clubIscritti: {
-    type: DataTypes.ARRAY(DataTypes.INTEGER),
-    defaultValue: [],
-    allowNull: true,
-    field: 'club_iscritti'
-  },
   circolareGara: {
     type: DataTypes.BLOB('long'),
     allowNull: true,
