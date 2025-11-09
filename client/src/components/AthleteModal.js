@@ -210,24 +210,39 @@ const AthleteModal = ({
             />
           </Grid>
           <Grid item xs={12}>
-            <Autocomplete
-              id="club-select"
-              value={clubName}
-              sx={{ minWidth: 350 }}
-              groupBy={(club) => club.charAt(0).toUpperCase()}
-              getOptionLabel={(club) => club}
-              onChange={(event, value) => handleClubSelectChange(value)}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Club"
-                  fullWidth
-                  required
-                />
-              )}
-              options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
-            />
+            {(user?.permissions === 'admin' || user?.permissions === 'superAdmin') ? (
+              <Autocomplete
+                id="club-select"
+                value={clubName}
+                sx={{ minWidth: 350 }}
+                groupBy={(club) => club.charAt(0).toUpperCase()}
+                getOptionLabel={(club) => club}
+                onChange={(event, value) => handleClubSelectChange(value)}
+                isOptionEqualToValue={(option, value) => option === value}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Club"
+                    fullWidth
+                    required
+                  />
+                )}
+                options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
+              />
+            ) : (
+              <TextField
+                id="club-select"
+                label="Club"
+                value={clubName}
+                sx={{ minWidth: 350 }}
+                fullWidth
+                required
+                InputProps={{
+                  readOnly: true,
+                }}
+                disabled={false}
+              />
+            )}
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField

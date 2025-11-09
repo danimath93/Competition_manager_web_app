@@ -26,7 +26,6 @@ import ClubAthletesList from '../components/ClubAthletesList';
 import RegisteredAthletesList from '../components/RegisteredAthletesList';
 import AthleteModal from '../components/AthleteModal';
 import RegistrationDocumentsUploadModal from '../components/RegistrationDocumentsUploadModal';
-import { set } from 'date-fns';
 
 const CompetitionRegistration = () => {
   const { competitionId } = useParams();
@@ -481,7 +480,7 @@ const CompetitionRegistration = () => {
       {isAthleteModalOpen && (
         <AthleteModal
           open={isAthleteModalOpen}
-          
+          onClose={handleCloseAthleteModal}
           onSubmit={handleSaveAthlete}
           isEditMode={isEditMode}
           athlete={selectedAthlete}
