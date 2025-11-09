@@ -28,18 +28,18 @@ const RegistrationDocumentsUploadModal = ({
   clubRegistration = {},
 }) => {
   const { user } = useAuth();  
-  const competitionId = clubRegistration.competizioneId;
+  const competitionId = clubRegistration?.competizioneId;
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [error, setError] = useState(null);
 
   const [files, setFiles] = useState({
-    certificatiMedici: clubRegistration.certificatiMedici || null,
-    autorizzazioni: clubRegistration.autorizzazioni || null,
+    certificatiMedici: clubRegistration?.certificatiMedici || null,
+    autorizzazioni: clubRegistration?.autorizzazioni || null,
   });
 
   const [fileNames, setFileNames] = useState({
-    certificatiMedici: clubRegistration.certificatiMediciNome || '',
-    autorizzazioni: clubRegistration.autorizzazioniNome || '',
+    certificatiMedici: clubRegistration?.certificatiMediciNome || '',
+    autorizzazioni: clubRegistration?.autorizzazioniNome || '',
   });
 
   const [uploadStatus, setUploadStatus] = useState({
@@ -50,8 +50,8 @@ const RegistrationDocumentsUploadModal = ({
   useEffect(() => {
     // Aggiorna i nomi dei file quando cambiano i props iniziali
     setFileNames({
-      certificatiMedici: clubRegistration.certificatiMediciNome || '',
-      autorizzazioni: clubRegistration.autorizzazioniNome || '',
+      certificatiMedici: clubRegistration?.certificatiMediciNome || '',
+      autorizzazioni: clubRegistration?.autorizzazioniNome || '',
     });
   }, [clubRegistration]);
 

@@ -128,7 +128,7 @@ const AthleteModal = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open}>
       <Box sx={style} component="form" onSubmit={handleSubmit}>
         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
           {isEditMode ? 'Modifica Atleta' : 'Aggiungi Atleta'}

@@ -46,10 +46,8 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       return true;
     }
 
-    // TODO: Aggiungere controllo per organizzatore della gara
-    // return user.clubId === competition.organizzatoreClubId;
-
-    return false;
+    // Organizzatore della competizione può modificare
+    return user.clubId === competition.organizzatoreClubId;
   };
 
   const isEditable = canEdit();

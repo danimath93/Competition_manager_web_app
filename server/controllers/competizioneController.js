@@ -87,7 +87,7 @@ const getCompetizioneById = async (req, res) => {
 // Crea una nuova competizione
 const createCompetizione = async (req, res) => {
   try {
-    const competizione = await Competizione.create(req.body);
+    const competizione =  await Competizione.create(req.body);
     res.status(201).json(competizione);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {

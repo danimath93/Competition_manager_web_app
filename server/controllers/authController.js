@@ -103,7 +103,7 @@ const registerUser = async (req, res) => {
         salt,
         clubId: clubId || null,
         status: 'S',
-        permissions: 'user',
+        permissions: club ? 'club' : 'user',
         confirmationToken
       }, { transaction });
 

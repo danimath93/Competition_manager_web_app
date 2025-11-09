@@ -105,7 +105,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" >
+    <Dialog open={open} fullWidth maxWidth="sm" >
       <DialogTitle>{isEditMode ? 'Modifica Competizione' : 'Aggiungi Competizione'}</DialogTitle>
       <form onSubmit={handleSubmit} minWidth={900}>
         <DialogContent>
@@ -180,7 +180,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
                 SelectProps={{ native: true }}
               >
                 {Object.entries(CompetitionLevel).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={label}>{label}</option>
                 ))}
               </TextField>
             </Grid>

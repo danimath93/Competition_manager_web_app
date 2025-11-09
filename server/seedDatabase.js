@@ -257,7 +257,7 @@ const seedData = async () => {
         password: '89b230b40443cefaa94d4a523c678739884d6cc5aefb5390e27e5726569abbed', //psw: scurreggioni
         status: 'E',
         clubId: 1,
-        permissions: 'user',
+        permissions: 'club',
         salt: 'de684853376e06375694'
       },
       {
@@ -266,7 +266,7 @@ const seedData = async () => {
         password: '3b75d0f2f0dfdad678fa2e3e8e49e062f193a2432e6a53dc7ac718e209f6e615', //psw: formadibastone
         status: 'E',
         clubId: 2,
-        permissions: 'user',
+        permissions: 'club',
         salt: 'de684853376e06375694'
       },
       {

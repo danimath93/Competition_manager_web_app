@@ -230,7 +230,7 @@ const CompetitionRegistration = () => {
   const handleEditRegistration = () => {
     return async () => {
       try {
-        await editClubRegistration(competitionId, user.clubId);
+        await editClubRegistration(user.clubId, competitionId);
         const competitionData = await getCompetitionDetails(competitionId);
         setCompetition(competitionData);
         
@@ -481,6 +481,7 @@ const CompetitionRegistration = () => {
       {isAthleteModalOpen && (
         <AthleteModal
           open={isAthleteModalOpen}
+          
           onSubmit={handleSaveAthlete}
           isEditMode={isEditMode}
           athlete={selectedAthlete}
