@@ -134,3 +134,16 @@ export const editClubRegistration = async (clubId, competizioneId) => {
     throw error;
   }
 };
+
+// ============ COSTI ISCRIZIONE ============
+
+// Funzione per ottenere i costi totali per un club in una competizione
+export const getClubRegistrationCosts = async (clubId, competitionId) => {
+  try {
+    const response = await axios.get(`/iscrizioni/costs/${clubId}/${competitionId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il recupero dei costi:', error);
+    throw error;
+  }
+};

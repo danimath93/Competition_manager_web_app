@@ -60,6 +60,13 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
       max: 200.0
     }
   },
+  costoIscrizione: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: 0,
+    field: 'costo_iscrizione',
+    comment: 'Costo calcolato automaticamente in base alle categorie iscritte'
+  },
   dataIscrizione: {
     type: DataTypes.DATE,
     allowNull: false,

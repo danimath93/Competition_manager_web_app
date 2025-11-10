@@ -9,9 +9,13 @@ import {
   Grid,
   Typography,
   Divider,
+  Box,
+  IconButton,
 } from '@mui/material';
+import { Edit as EditIcon, Euro as EuroIcon } from '@mui/icons-material';
 import { CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
 import CompetitionCategoryManager from './CompetitionCategoryManager';
+import CostManagementModal from './CostManagementModal';
 
 const style = {
   position: 'absolute',
@@ -36,6 +40,7 @@ const style = {
 
 const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) => {
   const [formData, setFormData] = useState({});
+  const [costModalOpen, setCostModalOpen] = useState(false);
 
   useEffect(() => {
     if (isEditMode && competition) {
@@ -52,6 +57,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         indirizzo: competition.indirizzo || '',
         stato: competition.stato || CompetitionStatus.PLANNED,
         descrizione: competition.descrizione || '',
+        costiIscrizione: competition.costiIscrizione || null,
       });
     } else {
       setFormData({
@@ -66,6 +72,7 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         luogo: '',
         indirizzo: '',
         descrizione: '',
+        costiIscrizione: null,
       });
     }
   }, [isEditMode, competition, open]);
@@ -79,6 +86,13 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
       ...formData, 
       categorieAtleti: categoriesData.categorieAtleti,
       tipiCompetizione: categoriesData.tipiCompetizione || []
+    });
+  };
+
+  const handleCostsChange = (costiIscrizione) => {
+    setFormData({ 
+      ...formData, 
+      costiIscrizione 
     });
   };
 
@@ -204,6 +218,39 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
             isEditMode={isEditMode}
           />
           <Divider sx={{ my: 2 }} />
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <EuroIcon color="primary" />
+              <Typography variant="h6">
+                Costi Iscrizione
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => setCostModalOpen(true)}
+            >
+              {formData.costiIscrizione ? 'Modifica Costi' : 'Configura Costi'}
+            </Button>
+          </Box>
+          {formData.costiIscrizione && (
+            <Box sx={{ bgcolor: 'grey.100', p: 2, borderRadius: 1 }}>
+              <Typography variant="body2">
+                Configurazione costi impostata ✓
+              </Typography>
+              {formData.costiIscrizione.specials && Object.keys(formData.costiIscrizione.specials).length > 0 && (
+                <Typography variant="caption" color="text.secondary">
+                  • {Object.keys(formData.costiIscrizione.specials).length} costi speciali
+                </Typography>
+              )}
+              {formData.costiIscrizione.categories && formData.costiIscrizione.categories.length > 0 && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  • {formData.costiIscrizione.categories.length} configurazioni per tipo atleta
+                </Typography>
+              )}
+            </Box>
+          )}
+          <Divider sx={{ my: 2 }} />
           <TextField
             name="descrizione"
             label="Descrizione"
@@ -242,6 +289,13 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
           </Button>
         </DialogActions>
       </form>
+
+      <CostManagementModal
+        open={costModalOpen}
+        onClose={() => setCostModalOpen(false)}
+        value={formData.costiIscrizione}
+        onChange={handleCostsChange}
+      />
     </Dialog>
   );
 };

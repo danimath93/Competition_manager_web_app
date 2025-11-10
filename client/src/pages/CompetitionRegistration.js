@@ -8,8 +8,9 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  Chip,
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Euro as EuroIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
@@ -21,6 +22,7 @@ import {
   uploadClubRegistrationDocuments,
   confirmClubRegistrationFinal,
   editClubRegistration,
+  getClubRegistrationCosts,
 } from '../api/registrations';
 import ClubAthletesList from '../components/ClubAthletesList';
 import RegisteredAthletesList from '../components/RegisteredAthletesList';
@@ -44,6 +46,8 @@ const CompetitionRegistration = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
+  const [totalCost, setTotalCost] = useState(null);
+  const [costLoading, setCostLoading] = useState(false);
 
   // Carica i dati iniziali
   useEffect(() => {
@@ -123,8 +127,27 @@ const CompetitionRegistration = () => {
         user.clubId
       );
       setRegisteredAthletes(registrationsData);
+      
+      // Aggiorna anche i costi
+      await refreshCosts();
     } catch (err) {
       console.error('Errore nel ricaricamento delle iscrizioni:', err);
+    }
+  };
+
+  // Funzione per aggiornare i costi
+  const refreshCosts = async () => {
+    if (!user?.clubId || !competitionId) return;
+    
+    try {
+      setCostLoading(true);
+      const costsData = await getClubRegistrationCosts(user.clubId, competitionId);
+      setTotalCost(costsData.totalCost);
+    } catch (err) {
+      console.error('Errore nel caricamento dei costi:', err);
+      setTotalCost(null);
+    } finally {
+      setCostLoading(false);
     }
   };
 
@@ -402,7 +425,7 @@ const CompetitionRegistration = () => {
       <Box 
         sx={{ 
           display: 'flex', 
-          justifyContent: 'flex-end', 
+          justifyContent: 'space-between', 
           alignItems: 'center',
           gap: 2,
           mt: 2,
@@ -411,20 +434,37 @@ const CompetitionRegistration = () => {
           flexShrink: 0
         }}
       >
-        {/* Stato "In attesa" - mostra bottone documenti */}
-        {clubRegistration?.stato === 'In attesa' && (
-          <>
-            <Button
-              variant="outlined"
+        {/* Costi totali */}
+        <Box display="flex" alignItems="center" gap={1}>
+          {costLoading ? (
+            <CircularProgress size={20} />
+          ) : totalCost !== null && (
+            <Chip
+              icon={<EuroIcon />}
+              label={`Totale: ${totalCost.toFixed(2)} €`}
               color="primary"
               size="large"
-              onClick={handleOpenDocumentsModal}
-            >
-              {areDocumentsUploaded() ? 'Modifica Documenti' : 'Carica Documenti'}
-            </Button>
-            
-            {areDocumentsUploaded() && (
-              <Alert severity="success" sx={{ mb: 0 }}>
+              sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
+            />
+          )}
+        </Box>
+
+        {/* Bottoni azioni */}
+        <Box display="flex" gap={2}>
+          {/* Stato "In attesa" - mostra bottone documenti */}
+          {clubRegistration?.stato === 'In attesa' && (
+            <>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="large"
+                onClick={handleOpenDocumentsModal}
+              >
+                {areDocumentsUploaded() ? 'Modifica Documenti' : 'Carica Documenti'}
+              </Button>
+              
+              {areDocumentsUploaded() && (
+                <Alert severity="success" sx={{ mb: 0 }}>
                 ✓ Documenti caricati
               </Alert>
             )}
@@ -474,6 +514,7 @@ const CompetitionRegistration = () => {
             </Button>
           </Box>
         )}
+        </Box>
       </Box>
 
       {/* Modale per aggiungere/modificare atleta */}

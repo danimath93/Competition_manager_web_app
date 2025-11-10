@@ -1,4 +1,76 @@
 const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
+const { calculateAthleteCost, calculateClubTotalCost } = require('../helpers/costCalculator');
+
+/**
+ * Ricalcola e aggiorna i costi per tutti gli atleti di un club in una competizione
+ * @param {Number} clubId - ID del club
+ * @param {Number} competizioneId - ID della competizione
+ */
+const recalculateAthletesCosts = async (clubId, competizioneId) => {
+  try {
+    // Carica la competizione per ottenere costiIscrizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione || !competizione.costiIscrizione) {
+      console.log('Nessuna configurazione costi per questa competizione');
+      return;
+    }
+
+    // Carica tutte le iscrizioni del club per questa competizione
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          where: { clubId },
+          include: [
+            {
+              model: ConfigTipoAtleta,
+              as: 'tipoAtleta'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (iscrizioni.length === 0) {
+      return;
+    }
+
+    // Raggruppa le iscrizioni per atleta
+    const athletesMap = new Map();
+    iscrizioni.forEach(iscrizione => {
+      const atletaId = iscrizione.atletaId;
+      if (!athletesMap.has(atletaId)) {
+        athletesMap.set(atletaId, {
+          atletaId,
+          tipoAtletaId: iscrizione.atleta?.tipoAtletaId,
+          iscrizioni: []
+        });
+      }
+      athletesMap.get(atletaId).iscrizioni.push(iscrizione);
+    });
+
+    // Calcola e aggiorna il costo per ogni atleta
+    for (const [atletaId, athleteData] of athletesMap) {
+      const numCategories = athleteData.iscrizioni.length;
+      const cost = calculateAthleteCost(
+        competizione.costiIscrizione,
+        athleteData.tipoAtletaId,
+        numCategories
+      );
+
+      // Aggiorna tutte le iscrizioni dell'atleta con il costo calcolato
+      await Promise.all(
+        athleteData.iscrizioni.map(iscrizione =>
+          iscrizione.update({ costoIscrizione: cost })
+        )
+      );
+    }
+  } catch (error) {
+    console.error('Errore nel ricalcolo dei costi:', error);
+  }
+};
 
 // Ottieni tutte le iscrizioni di una competizione specifica
 const getIscrizioniByCompetizione = async (req, res) => {
@@ -130,6 +202,12 @@ const createIscrizione = async (req, res) => {
 
     const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
 
+    // Ricalcola i costi per tutti gli atleti del club
+    const atleta = await Atleta.findByPk(atletaId);
+    if (atleta && atleta.clubId) {
+      await recalculateAthletesCosts(atleta.clubId, competizioneId);
+    }
+
     // Recupera l'iscrizione con tutti i dettagli
     const iscrizioneCompleta = await IscrizioneAtleta.findByPk(newIscrizione.id, {
       include: [
@@ -173,12 +251,32 @@ const createIscrizione = async (req, res) => {
 const deleteIscrizione = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Recupera l'iscrizione prima di eliminarla per ricalcolare i costi
+    const iscrizione = await IscrizioneAtleta.findByPk(id, {
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta'
+        }
+      ]
+    });
+
+    if (!iscrizione) {
+      return res.status(404).json({ error: 'Iscrizione non trovata' });
+    }
+
+    const atletaId = iscrizione.atletaId;
+    const clubId = iscrizione.atleta?.clubId;
+    const competizioneId = iscrizione.competizioneId;
+
     const deletedRowsCount = await IscrizioneAtleta.destroy({
       where: { id }
     });
 
-    if (deletedRowsCount === 0) {
-      return res.status(404).json({ error: 'Iscrizione non trovata' });
+    // Ricalcola i costi per tutti gli atleti del club
+    if (clubId && competizioneId) {
+      await recalculateAthletesCosts(clubId, competizioneId);
     }
 
     res.status(204).send();
@@ -195,12 +293,21 @@ const deleteIscrizioniAtleta = async (req, res) => {
   try {
     const { atletaId, competizioneId } = req.params;
 
+    // Recupera l'atleta per ottenere il clubId
+    const atleta = await Atleta.findByPk(atletaId);
+    const clubId = atleta?.clubId;
+
     const deletedRowsCount = await IscrizioneAtleta.destroy({
       where: {
         atletaId,
         competizioneId
       }
     });
+
+    // Ricalcola i costi per tutti gli atleti del club
+    if (clubId && competizioneId) {
+      await recalculateAthletesCosts(clubId, competizioneId);
+    }
 
     res.status(200).json({
       message: `Eliminate ${deletedRowsCount} iscrizioni per l'atleta`
@@ -487,6 +594,62 @@ const modificaIscrizioneClub = async (req, res) => {
   }
 };
 
+// Ottieni il totale dei costi per un club in una competizione
+const getClubRegistrationCosts = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.params;
+
+    // Carica la competizione per ottenere costiIscrizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Carica tutte le iscrizioni del club per questa competizione
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          where: { clubId },
+          include: [
+            {
+              model: ConfigTipoAtleta,
+              as: 'tipoAtleta'
+            }
+          ]
+        },
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria'
+        }
+      ]
+    });
+
+    if (iscrizioni.length === 0) {
+      return res.status(200).json({
+        totalCost: 0,
+        athletesCosts: [],
+        costiIscrizione: competizione.costiIscrizione
+      });
+    }
+
+    // Calcola i costi
+    const costsData = calculateClubTotalCost(iscrizioni, competizione.costiIscrizione);
+
+    res.status(200).json({
+      ...costsData,
+      costiIscrizione: competizione.costiIscrizione
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Errore nel calcolo dei costi',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getIscrizioniByCompetizione,
   getIscrizioniByCompetitionAndClub,
@@ -498,5 +661,6 @@ module.exports = {
   uploadDocumentiIscrizioneClub,
   confermaIscrizioneClub,
   downloadDocumentoIscrizioneClub,
-  modificaIscrizioneClub
+  modificaIscrizioneClub,
+  getClubRegistrationCosts
 };

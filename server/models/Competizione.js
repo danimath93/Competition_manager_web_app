@@ -82,13 +82,11 @@ const Competizione = sequelize.define('Competizione', {
     },
     field: 'max_partecipanti'
   },
-  quotaIscrizione: {
+  costiIscrizione: {
     type: DataTypes.JSON,
     allowNull: true,
-    validate: {
-      min: 0
-    },
-    field: 'quota_iscrizione'
+    field: 'costi_iscrizione',
+    comment: 'Struttura JSON: { specials: { insurance: 5 }, categories: [{ idConfigTipoAtleta: 1, type: "fixed|minimum|additional", config: {...} }] }'
   },
   dataScadenzaIscrizioni: {
     type: DataTypes.DATE,

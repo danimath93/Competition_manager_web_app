@@ -33,7 +33,8 @@ import {
   Add,
   Delete,
   PersonRemove,
-  Warning
+  Warning,
+  Euro as EuroIcon
 } from '@mui/icons-material';
 import { createRegistration, deleteRegistration, deleteAthleteRegistrations } from '../api/registrations';
 import CategorySelector from './CategorySelector';
@@ -207,10 +208,12 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
                 Età: {calculateAge(athlete.dataNascita)} anni
               </Typography>
             </Box>
-            <Box>
-              {athlete?.costoIscrizione && athlete?.costoIscrizione > 0 && (
+            <Box display="flex" gap={1} alignItems="center">
+              {registrations[0]?.costoIscrizione != null && (
                 <Chip 
-                  label={`Costo: €${athlete.costoIscrizione}`} 
+                  icon={<EuroIcon />}
+                  label={`${registrations[0].costoIscrizione} €`} 
+                  color="primary"
                   size="small"
                 />
               )}
@@ -218,6 +221,7 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
                 label={`${registrations.length} ${registrations.length === 1 ? 'categoria' : 'categorie'}`}
                 color="primary"
                 variant="outlined"
+                size="small"
               />
             </Box>
           </Box>
