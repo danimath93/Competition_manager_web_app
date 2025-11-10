@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 3050;
 
 // Middleware
 app.use(cors({
-  exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length']
+  exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length'],
+  origin: process.env.FRONTEND_URL || '*',
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

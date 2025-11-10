@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { suspendSession } from '../utils/auth';
 
-const REACT_APP_API_URL = 'http://localhost:3050/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3050/api';
 
 const instance = axios.create({
-  baseURL: REACT_APP_API_URL,
+  baseURL: API_URL,
   timeout: 60000,
   headers: { 'Content-Type': 'application/json' }
 });
