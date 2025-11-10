@@ -1,4 +1,3 @@
-const { min } = require('date-fns');
 const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta } = require('../models');
 const { Op } = require('sequelize');
 
