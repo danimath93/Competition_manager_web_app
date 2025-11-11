@@ -33,12 +33,23 @@
  * @param {Object} specials - Oggetto con i costi speciali
  * @returns {Number} - Totale costi speciali
  */
-const calculateSpecialCosts = (specials) => {
+const calculateSpecialCosts = (athleteData, specials) => {
   if (!specials) return 0;
-  
-  return Object.values(specials).reduce((total, cost) => {
-    return total + (parseFloat(cost) || 0);
-  }, 0);
+
+  let total = 0;
+  // Devo gestire alcuni casi di costi speciali
+  for (const [key, value] of Object.entries(specials)) {
+    if (key === 'insurance' && typeof value === 'number') {
+      if (!athleteData?.tesseramento) {
+        total += parseFloat(value);
+      }
+    } 
+    else if (typeof value === 'number') {
+      total += parseFloat(value);
+    }
+  }
+
+  return total;
 };
 
 /**
@@ -104,13 +115,14 @@ const calculateAdditionalCost = (config, numCategories) => {
  * @param {Number} numCategories - Numero di categorie in cui l'atleta è iscritto
  * @returns {Number} - Costo totale per l'atleta
  */
-const calculateAthleteCost = (costiIscrizione, idConfigTipoAtleta, numCategories) => {
+const calculateAthleteCost = (costiIscrizione, athleteData, numCategories) => {
   if (!costiIscrizione || numCategories === 0) return 0;
   
   let totalCost = 0;
+  const idConfigTipoAtleta = athleteData.tipoAtletaId;
   
   // Aggiungi costi speciali
-  totalCost += calculateSpecialCosts(costiIscrizione.specials);
+  totalCost += calculateSpecialCosts(athleteData, costiIscrizione.specials);
   
   // Trova la configurazione per il tipo atleta
   if (costiIscrizione.categories && Array.isArray(costiIscrizione.categories)) {
@@ -158,6 +170,7 @@ const calculateClubTotalCost = (iscrizioni, costiIscrizione) => {
       athletesMap.set(atletaId, {
         atletaId,
         tipoAtletaId: iscrizione.atleta?.tipoAtletaId,
+        tesseramento: iscrizione.atleta?.tesseramento,
         categories: []
       });
     }
@@ -172,7 +185,7 @@ const calculateClubTotalCost = (iscrizioni, costiIscrizione) => {
     const numCategories = athleteData.categories.length;
     const cost = calculateAthleteCost(
       costiIscrizione,
-      athleteData.tipoAtletaId,
+      athleteData,
       numCategories
     );
     

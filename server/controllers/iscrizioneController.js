@@ -45,6 +45,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
         athletesMap.set(atletaId, {
           atletaId,
           tipoAtletaId: iscrizione.atleta?.tipoAtletaId,
+          tesseramento: iscrizione.atleta?.tesseramento,
           iscrizioni: []
         });
       }
@@ -56,7 +57,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
       const numCategories = athleteData.iscrizioni.length;
       const cost = calculateAthleteCost(
         competizione.costiIscrizione,
-        athleteData.tipoAtletaId,
+        athleteData,
         numCategories
       );
 
