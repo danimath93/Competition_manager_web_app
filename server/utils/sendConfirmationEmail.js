@@ -12,7 +12,7 @@ async function sendConfirmationEmail(to, token) {
     throw new Error('Email credentials GUSER and GPASS are not set in environment variables .env');
   }
   console.log('Invio email di conferma a:', to);
-  const confirmUrl = `http://localhost:3050/api/auth/confirm?token=${token}`;
+  const confirmUrl = `${process.env.BACKEND_URL}/auth/confirm?token=${token}`;
   const mailOptions = {
     from: process.env.GUSER || null,
     to,
@@ -27,7 +27,7 @@ async function sendResetPasswordEmail(to, token) {
     throw new Error('Email credentials GUSER and GPASS are not set in environment variables .env');
   }
   console.log('Invio email di reset password a:', to);
-  const resetUrl = `http://localhost:3000/reset-password/confirm?token=${token}`;
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/confirm?token=${token}`;
   const mailOptions = {
     from: process.env.GUSER || null,
     to,

@@ -65,14 +65,4 @@ const sendConfirmationEmail = async (to, token) => {
   }
 };
 
-const confirmUser = async (token) => {
-  try {
-    const response = await axios.get(`/auth/confirm?token=${token}`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante la conferma dell\'utente:', error);
-    throw error;
-  }
-};
-
-export { loginUser, logoutUser, registerUser, sendConfirmationEmail, confirmUser, requestPasswordReset, resetPassword };
+export { loginUser, logoutUser, registerUser, sendConfirmationEmail, requestPasswordReset, resetPassword };
