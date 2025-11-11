@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaEnvelope } from 'react-icons/fa';
-import './Login.css';
+import '../pages/styles/Login.css';
 import { requestPasswordReset } from '../api/auth';
 
 const RequestPasswordReset = () => {

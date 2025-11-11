@@ -15,7 +15,6 @@ import Athletes from './pages/Athletes';
 import ClubAdmin from './pages/ClubAdmin';
 import ClubUser from './pages/ClubUser';
 import Judges from './pages/Judges';
-import InfoClubLogged from './pages/InfoClubLogged';
 import Categories from './pages/Categories';
 import { getDefaultRoute } from './utils/permissions';
 import './App.css';

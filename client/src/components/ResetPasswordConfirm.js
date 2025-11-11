@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaLock } from 'react-icons/fa';
-import './Login.css';
+import '../pages/styles/Login.css';
 import { useSearchParams } from 'react-router-dom';
 import { resetPassword } from '../api/auth';
 

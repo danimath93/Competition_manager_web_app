@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaUser, FaLock, FaEnvelope, FaBuilding } from 'react-icons/fa';
-import './Login.css';
+import '../pages/styles/Login.css';
 import { checkClubExists,createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
 
