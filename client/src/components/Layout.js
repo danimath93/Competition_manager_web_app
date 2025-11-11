@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaBars } from 'react-icons/fa';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import './Layout.css';
+import './styles/Layout.css';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

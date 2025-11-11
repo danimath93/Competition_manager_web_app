@@ -10,7 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { loadClubByID, updateClub } from '../api/clubs';
 
-const InfoClubLogges = () => {
+const ClubUser = () => {
     const { user } = useAuth();
     const [club, setClubs] = useState([]);
 
@@ -35,4 +35,4 @@ const InfoClubLogges = () => {
     );
 };
 
-export default InfoClubLogges;
+export default ClubUser;

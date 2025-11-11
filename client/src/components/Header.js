@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FaGlobe, FaChevronDown } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import './Header.css';
+import './styles/Header.css';
 
 const Header = () => {
   const { language, changeLanguage, t } = useLanguage();

@@ -12,7 +12,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { hasPermission } from '../utils/permissions';
-import './Sidebar.css';
+import './styles/Sidebar.css';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();

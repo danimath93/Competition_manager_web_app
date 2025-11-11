@@ -24,7 +24,7 @@ const PermissionRoute = ({ children, requiredPermission }) => {
   
   // Se non è autenticato, reindirizza al login
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
   
   // Se l'utente non ha i permessi per questa pagina, reindirizza alla home

@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
-import Login from './components/Login';
+import Login from './pages/Login';
 import Register from './components/Register';
 import RequestPasswordReset from './components/RequestPasswordReset';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
@@ -12,7 +12,8 @@ import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
 import CompetitionRegistration from './pages/CompetitionRegistration';
 import Athletes from './pages/Athletes';
-import Clubs from './pages/Clubs';
+import ClubAdmin from './pages/ClubAdmin';
+import ClubUser from './pages/ClubUser';
 import Judges from './pages/Judges';
 import InfoClubLogged from './pages/InfoClubLogged';
 import Categories from './pages/Categories';
@@ -26,10 +27,11 @@ const AppContent = () => {
   if (!isAuthenticated) {
     return (
       <Routes>
-              <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<RequestPasswordReset />} />
-          <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-        <Route path="*" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<RequestPasswordReset />} />
+        <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
@@ -41,7 +43,8 @@ const AppContent = () => {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Navigate to={defaultRoute} />} />
+        <Route path="/login" element={<Navigate to={defaultRoute} replace />} />
+        <Route path="/" element={<Navigate to={defaultRoute} replace />} />
         
         {/* Dashboard - Accessibile a tutti gli utenti autenticati */}
         <Route path="/dashboard" element={
@@ -74,9 +77,9 @@ const AppContent = () => {
         {/* Club - superAdmin, admin, user */}
         <Route path="/clubs" element={ user && (user.permissions === 'admin' || user.permissions === 'superAdmin') ? (
           <PermissionRoute requiredPermission="clubs">
-            <Clubs />
+            <ClubAdmin />
           </PermissionRoute> ) : (
-            <InfoClubLogged />
+            <ClubUser />
           )
         } />
         
@@ -100,6 +103,9 @@ const AppContent = () => {
             <div>Pagina Impostazioni (da implementare)</div>
           </PermissionRoute>
         } />
+        
+        {/* Redirect per tutte le route non valide */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Layout>
   );

@@ -14,7 +14,7 @@ import ClubsTable from '../components/ClubsTable';
 import ClubModal from '../components/ClubModal';
 import ClubInfoModal from '../components/ClubInfoModal';
 
-const Clubs = () => {
+const ClubAdmin = () => {
   const { user } = useAuth();
   const [filteredClubs, setFilteredClubs] = useState([]);
   const [clubs, setClubs] = useState([]);
@@ -222,4 +222,4 @@ const Clubs = () => {
   );
 };
 
-export default Clubs;
+export default ClubAdmin;

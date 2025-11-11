@@ -3,7 +3,7 @@ import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
+import './styles/Login.css';
 
 const Login = () => {
   const [username, setUsername] = useState('');
