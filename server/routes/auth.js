@@ -9,6 +9,9 @@ router.post('/login', authController.loginUser);
 // POST /api/logoutUsers - Logout user
 router.post('/logout', authController.logoutUser);
 
+// GET /api/checkAuth - Check authentication level
+router.get('/check-auth', authController.checkAuthLevel);
+
 // POST /api/registerUsers - Register user
 router.post('/register', authController.registerUser);
 

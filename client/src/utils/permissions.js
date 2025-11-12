@@ -2,11 +2,11 @@
 
 // Definizione dei permessi per ogni ruolo
 export const PERMISSIONS = {
-  superAdmin: ['dashboard', 'competitions', 'athletes', 'clubs', 'judges', 'categories', 'settings'],
-  admin: ['dashboard', 'competitions', 'athletes', 'clubs', 'judges', 'categories', 'settings'],
-  club: ['dashboard', 'competitions', 'athletes', 'clubs'],
-  user: ['dashboard', 'competitions', 'clubs'],
-  table: ['dashboard', 'categories']
+  superAdmin: ['dashboard', 'competitions', 'athletes', 'clubs/admin', 'judges', 'categories', 'settings'],
+  admin: ['competitions', 'athletes', 'clubs/admin', 'judges', 'categories'],
+  club: ['competitions', 'athletes', 'club'],
+  user: ['competitions'],
+  table: ['categories']
 };
 
 // Verifica se l'utente ha permesso per una pagina specifica
@@ -15,16 +15,4 @@ export const hasPermission = (userRole, page) => {
   
   const userPermissions = PERMISSIONS[userRole] || [];
   return userPermissions.includes(page);
-};
-
-// Ottiene tutte le pagine accessibili per un ruolo
-export const getAccessiblePages = (userRole) => {
-  if (!userRole) return [];
-  return PERMISSIONS[userRole] || [];
-};
-
-// Ottiene il primo percorso valido per l'utente (per redirect)
-export const getDefaultRoute = (userRole) => {
-  const accessiblePages = getAccessiblePages(userRole);
-  return accessiblePages.length > 0 ? `/${accessiblePages[0]}` : '/dashboard';
 };

@@ -1,8 +1,76 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { suspendSession, clearAuthData } from '../utils/auth';
-import { loginUser } from '../api/auth';
+import { clearAuthData } from '../utils/auth';
+import { loginUser, checkAuthLevel  } from '../api/auth';
 
 const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const login = async (username, password) => {
+    try {
+      const response = await loginUser(username, password);
+
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      if (!response.user || !response.token) {
+        throw new Error('Invalid response from server');
+      }
+
+      setUser(response.user);
+
+      // Salvo su localStorage solo le info essenziali
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify({username: response.user.username, email: response.user.email}) );
+
+      return { success: true };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Unauthorized: ' + error.message };
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+
+    clearAuthData();
+  };
+
+  const checkAuth = () => {
+    const token = localStorage.getItem('token');
+
+    try {
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = checkAuthLevel(token);
+      if (!response.ok) {
+        throw new Error('Unauthorized');
+      }
+
+      setUser(response.user);
+    } catch (error) {
+      setUser(null);
+      console.error('Authentication check failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -12,67 +80,3 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Verifica se c'è un token salvato
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
-  }, []);
-
-  const login = async (username, password) => {
-    try {
-      // Call login function
-      const response = await loginUser(username, password);
-
-      if (response.user && response.token && response.token.length > 0) {
-        setUser(response.user);
-        setIsAuthenticated(true);
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        return { success: true };
-      } else {
-        return { success: false, error: 'Invalid credentials' };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error: 'Network error' };
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    clearAuthData();
-  };
-
-  const handleSuspendSession = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    suspendSession(); // Utilizza la funzione utility che include anche il redirect
-  };
-
-  const value = {
-    user,
-    isAuthenticated,
-    loading,
-    login,
-    logout,
-    suspendSession: handleSuspendSession,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};

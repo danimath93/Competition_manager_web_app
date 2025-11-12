@@ -35,7 +35,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Credenziali errate" });
     }
 
-    const token = jwt.sign({ username: user.username, permissions: user?.permissions }, JWT_SECRET, { expiresIn: "8h" });
+    const token = jwt.sign({ username: user.username, permissions: user?.permissions }, JWT_SECRET, { expiresIn: "2h" });
     const outUser = {
       username: user.username,
       email: user.email,
@@ -43,7 +43,7 @@ const loginUser = async (req, res) => {
       clubId: user.clubId,
     };
 
-    res.status(200).json({ message: 'Login effettuato con successo', user: outUser, token });
+    res.status(200).json({ ok: true, user: outUser, token });
   } catch (error) {
     res.status(500).json({
       error: 'Errore durante il login',
@@ -54,13 +54,30 @@ const loginUser = async (req, res) => {
 
 const logoutUser = async (req, res) => {
   try {
-    // TODO: Gestire eventuale logica di logout, come invalidare un token o una sessione
     res.json({ message: 'Logout effettuato con successo' });
   } catch (error) {
     res.status(500).json({
       error: 'Errore durante il logout',
       details: error.message
     });
+  }
+};
+
+const checkAuthLevel = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ ok: false, message: 'Token mancante' });
+    }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await UtentiLogin.findOne({ where: { username: decoded.username, status: 'E' } });
+
+    if (!user) {
+      return res.status(401).json({ ok: false, message: 'Utente non trovato o non attivo' });
+    }
+    res.status(200).json({ ok: true, user: { username: user.username, email: user.email, permissions: user.permissions, clubId: user.clubId } });
+  } catch (error) {
+    res.status(401).json({ ok: false, message: 'Token non valido o scaduto' });
   }
 };
 
@@ -194,6 +211,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   loginUser,
   logoutUser,
+  checkAuthLevel,
   registerUser,
   confirmUser,
   requestPasswordReset,

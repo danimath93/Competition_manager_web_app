@@ -22,6 +22,21 @@ const logoutUser = async () => {
   }
 };
 
+// Funzione per controllare il livello di autenticazione
+const checkAuthLevel = async (token) => {
+  try {
+    const response = await axios.get('/auth/check-auth/', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il controllo dell\'autenticazione:', error);
+    throw error;
+  }
+};
+
 // Funzione per registrare un nuovo utente
 const registerUser = async (userData) => {
   try {
@@ -65,4 +80,4 @@ const sendConfirmationEmail = async (to, token) => {
   }
 };
 
-export { loginUser, logoutUser, registerUser, sendConfirmationEmail, requestPasswordReset, resetPassword };
+export { loginUser, logoutUser, checkAuthLevel, registerUser, sendConfirmationEmail, requestPasswordReset, resetPassword };

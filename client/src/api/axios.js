@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { suspendSession } from '../utils/auth';
+import { clearAuthData } from '../utils/auth';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3050/api';
 
@@ -16,7 +16,7 @@ instance.interceptors.request.use(
     if (token) {
       if (isTokenExpired(token)) {
         console.log("Token scaduto");
-        suspendSession();
+        clearAuthData();
         window.location.href = "/login";
         return;
       }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -7,7 +6,7 @@ import Login from './pages/Login';
 import Register from './components/Register';
 import RequestPasswordReset from './components/RequestPasswordReset';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
-import PermissionRoute from './components/PermissionRoute';
+import AuthGate from './components/AuthGate';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
 import CompetitionRegistration from './pages/CompetitionRegistration';
@@ -16,14 +15,13 @@ import ClubAdmin from './pages/ClubAdmin';
 import ClubUser from './pages/ClubUser';
 import Judges from './pages/Judges';
 import Categories from './pages/Categories';
-import { getDefaultRoute } from './utils/permissions';
 import './App.css';
 
 // Componente principale dell'app
 const AppContent = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
 
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -35,9 +33,23 @@ const AppContent = () => {
     );
   }
 
-  // Ottiene la route di default basata sui permessi dell'utente
-  const userRole = user?.permissions || user?.role;
-  const defaultRoute = getDefaultRoute(userRole);
+  const defaultRoute = (() => {
+    const role = user.permissions;
+    switch (role) {
+      case 'superAdmin':
+        return '/competitions';
+      case 'admin':
+        return '/competitions';
+      case 'club':
+        return '/club';
+      case 'user':
+        return '/competitions';
+      case 'table':
+        return '/categories';
+      default:
+        return '/login';
+    }
+  })();
 
   return (
     <Layout>
@@ -45,62 +57,67 @@ const AppContent = () => {
         <Route path="/login" element={<Navigate to={defaultRoute} replace />} />
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
         
-        {/* Dashboard - Accessibile a tutti gli utenti autenticati */}
+        {/* Dashboard - TODO: al momento in sviluppo, solo superAdmin */}
         <Route path="/dashboard" element={
-          <PermissionRoute requiredPermission="dashboard">
+          <AuthGate requiredPermissions={["superAdmin"]}>
             <Dashboard />
-          </PermissionRoute>
+          </AuthGate>
         } />
         
-        {/* Competizioni - superAdmin, admin, user */}
+        {/* Competizioni - accesso comune, eventuali funzioni nascoste */}
         <Route path="/competitions" element={
-          <PermissionRoute requiredPermission="competitions">
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "user"]}>
             <Competitions />
-          </PermissionRoute>
+          </AuthGate>
         } />
         
         {/* Registrazione Competizione - superAdmin, admin, user */}
         <Route path="/competitions/:competitionId/register" element={
-          <PermissionRoute requiredPermission="competitions">
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <CompetitionRegistration />
-          </PermissionRoute>
+          </AuthGate>
         } />
         
-        {/* Atleti - superAdmin, admin, user */}
+        {/* Atleti - superAdmin, admin, club */}
         <Route path="/athletes" element={
-          <PermissionRoute requiredPermission="athletes">
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <Athletes />
-          </PermissionRoute>
+          </AuthGate>
         } />
         
-        {/* Club - superAdmin, admin, user */}
-        <Route path="/clubs" element={ user && (user.permissions === 'admin' || user.permissions === 'superAdmin') ? (
-          <PermissionRoute requiredPermission="clubs">
+        {/* ClubAdmin - visualizzazione dati e gestione tutti i club */}
+        <Route path="/clubs/admin" element={
+          <AuthGate requiredPermissions={["admin", "superAdmin"]}>
             <ClubAdmin />
-          </PermissionRoute> ) : (
+          </AuthGate>
+        } />
+
+        {/* ClubUser - visualizzazione dati club specifico */}
+        <Route path="/club" element={
+          <AuthGate requiredPermissions={["club"]}>
             <ClubUser />
-          )
+          </AuthGate>
         } />
         
         {/* Giudici - solo superAdmin, admin */}
         <Route path="/judges" element={
-          <PermissionRoute requiredPermission="judges">
+          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
             <Judges />
-          </PermissionRoute>
+          </AuthGate>
         } />
         
         {/* Categorie - superAdmin, admin, table */}
         <Route path="/categories" element={
-          <PermissionRoute requiredPermission="categories">
+          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
             <Categories />
-          </PermissionRoute>
+          </AuthGate>
         } />
         
-        {/* Impostazioni - solo superAdmin, admin */}
+        {/* Impostazioni - TODO: al momento in sviluppo, solo superAdmin */}
         <Route path="/settings" element={
-          <PermissionRoute requiredPermission="settings">
+          <AuthGate requiredPermissions={["superAdmin"]}>
             <div>Pagina Impostazioni (da implementare)</div>
-          </PermissionRoute>
+          </AuthGate>
         } />
         
         {/* Redirect per tutte le route non valide */}
