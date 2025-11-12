@@ -11,14 +11,12 @@ import {
 } from '@mui/material';
 import { Edit, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { useAuth } from '../context/AuthContext';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
+import AuthComponent from './AuthComponent';
 
-const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onEditClubOrganizer, onDocuments }) => {
-  const { user } = useAuth();
-
+const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onEditClubOrganizer, onDocuments, userClubId, userPermissions }) => {
   const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
-  const isClubRegistered = competition?.clubIscritti?.includes(user.clubId) || false;
+  const isClubRegistered = competition?.clubIscritti?.includes(userClubId) || false;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -60,8 +58,20 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
         <>
           <Box sx={{ display: 'flex', flexDirection: 'row', mb: 1 }}>
-            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin' || user.clubId === competition.organizzatoreClubId) && (
-              // Mostra il bottone modifica se club Organizzatore oppure Admin
+            {/* Selezione specifica per club organizzatore: */}
+            {competition.organizzatoreClubId === userClubId && (
+              <AuthComponent requiredRoles={['club']}>
+                <IconButton
+                  variant="contained"
+                  size="small"
+                  onClick={() => onEdit(competition)}
+                >
+                  <Edit />
+                </IconButton>
+              </AuthComponent>
+            )}
+            {/* Selezione solo per Admin o SuperAdmin */}
+            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
               <IconButton
                 variant="contained"
                 size="small"
@@ -69,9 +79,6 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <Edit />
               </IconButton>
-            )}
-            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
-              // Mostra il bottone selezione club Organizzatore solo se Admin
               <IconButton
                 variant="contained"
                 color="primary"
@@ -80,9 +87,6 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <ManageAccounts />
               </IconButton>
-            )}
-            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
-              // Mostra il bottone eliminazione completa gara solo se Admin
               <IconButton
                 variant="contained"
                 color="error"
@@ -91,10 +95,10 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <Delete />
               </IconButton>
-            )}
+            </AuthComponent>
           </Box>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
-            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin' || user.permissions === 'club') && (
+            <AuthComponent requiredRoles={['admin', 'superAdmin', 'club']}>
               <Button
                 variant="contained"
                 onClick={() => onRegister(competition.id)}
@@ -102,7 +106,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <AppRegistration />
               </Button>
-            )}
+            </AuthComponent>
             <Button
               variant="contained"
               onClick={() => onDetails(competition)}

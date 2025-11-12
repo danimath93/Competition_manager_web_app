@@ -10,13 +10,14 @@ import {
   FaCog 
 } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
 import { hasPermission } from '../utils/permissions';
 import './styles/Sidebar.css';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const userPermissions = user ? user.permissions : [];
 
   const allMenuItems = [
     { path: '/dashboard', icon: FaTachometerAlt, label: t('dashboard'), permission: 'dashboard' },
@@ -30,9 +31,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   ];
 
   // Filtra i menu items in base ai permessi dell'utente
-  const userRole = user?.permissions;
   const menuItems = allMenuItems.filter(item => 
-    hasPermission(userRole, item.permission)
+    hasPermission(userPermissions, item.permission)
   );
 
   return (

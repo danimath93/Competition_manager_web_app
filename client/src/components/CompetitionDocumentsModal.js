@@ -15,15 +15,13 @@ import {
   Download as DownloadIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
 import {
   uploadCompetitionFiles,
   downloadCompetitionFile,
   deleteCompetitionFile
 } from '../api/competitions';
 
-const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competition }) => {
-  const { user } = useAuth();
+const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competition, userClubId, userPermissions }) => {
 
   const [files, setFiles] = useState({
     circolareGara: null,
@@ -39,15 +37,15 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
 
   // Verifica se l'utente può modificare i documenti
   const canEdit = () => {
-    if (!user || !competition) return false;
+    if (!competition) return false;
 
     // Admin e SuperAdmin possono sempre modificare
-    if (user.permissions === 'admin' || user.permissions === 'superAdmin') {
+    if (userPermissions === 'admin' || userPermissions === 'superAdmin') {
       return true;
     }
 
     // Organizzatore della competizione può modificare
-    return user.clubId === competition.organizzatoreClubId;
+    return userClubId === competition.organizzatoreClubId;
   };
 
   const isEditable = canEdit();

@@ -525,6 +525,7 @@ const CompetitionRegistration = () => {
           onSubmit={handleSaveAthlete}
           isEditMode={isEditMode}
           athlete={selectedAthlete}
+          userClubId={user?.clubId}
         />
       )}
 

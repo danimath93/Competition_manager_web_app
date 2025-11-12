@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Container, Typography, Box, Tabs, Tab, Alert } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
 import CategoryDefinition from '../components/CategoryDefinition';
@@ -9,7 +8,6 @@ import CategoryExecution from '../components/CategoryExecution';
 
 const Categories = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   

@@ -16,6 +16,7 @@ import CompetitionModal from '../components/CompetitionModal';
 import CompetitionDetailsModal from '../components/CompetitionDetailsModal';
 import CompetitionOrganizerSelectorModal from '../components/CompetitionOrganizerSelectorModal';
 import CompetitionDocumentsModal from '../components/CompetitionDocumentsModal';
+import AuthComponent from '../components/AuthComponent';
 
 const Competitions = () => {
   const { t } = useLanguage();
@@ -157,7 +158,7 @@ const Competitions = () => {
         {t('competitions')}
       </Typography>
 
-      {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+      <AuthComponent requiredRoles={['admin', 'superAdmin']}>
         <Box sx={{ mb: 2 }}>
           <Button
             variant="contained"
@@ -167,7 +168,7 @@ const Competitions = () => {
             Aggiungi Competizione
           </Button>
         </Box>
-      )}
+      </AuthComponent>
 
       <div>
         {competitions.map((comp) => (
@@ -180,6 +181,8 @@ const Competitions = () => {
             onDelete={handleDeleteCompetition}
             onDetails={handleOpenDetailsModal}
             onDocuments={handleOpenDocumentsModal}
+            userClubId={user?.clubId}
+            userPermissions={user?.permissions}
           />
         ))}
       </div>
@@ -218,6 +221,8 @@ const Competitions = () => {
             onClose={handleCloseDocumentsModal}
             onDocumentChange={handleDocumentLoadedChanged}
             competition={selectedCompetition}
+            userClubId={user?.clubId}
+            userPermissions={user?.permissions}
         />
       )}
     </Container>

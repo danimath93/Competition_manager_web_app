@@ -12,14 +12,12 @@ import {
   //MenuItem,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
 import { loadAllJudges, createJudge, updateJudge, deleteJudge } from '../api/judges';
 import JudgesTable from '../components/JudgesTable';
 import JudgeModal from '../components/JudgeModal';
 import JudgeInfoModal from '../components/JudgeInfoModal';
 
 const Judges = () => {
-  const { user } = useAuth();
   const [judges, setJudges] = useState([]);
   const [filteredJudges, setFilteredJudges] = useState([]);
   const [filters, setFilters] = useState({
@@ -48,7 +46,7 @@ const Judges = () => {
     };
 
     fetchData();
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     let result = judges;
@@ -76,7 +74,7 @@ const Judges = () => {
 
 
     setFilteredJudges(result);
-  }, [filters, judges, user]);
+  }, [filters, judges]);
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -211,7 +209,6 @@ const Judges = () => {
           onSubmit={handleSaveJudge}
           isEditMode={isEditMode}
           judge={selectedJudge}
-          user={user}
         />
       )}
 

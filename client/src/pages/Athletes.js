@@ -19,6 +19,7 @@ import { loadAthleteTypes } from '../api/config';
 import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
 import AthleteInfoModal from '../components/AthleteInfoModal';
+import AuthComponent from '../components/AuthComponent';
 
 const Athletes = () => {
   const { user } = useAuth();
@@ -182,7 +183,7 @@ const Athletes = () => {
               </Select>
             </FormControl>
           </Grid>
-          {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Filtra per Club</InputLabel>
@@ -203,7 +204,7 @@ const Athletes = () => {
                 </Select>
               </FormControl>
             </Grid>
-          )}
+          </AuthComponent>
         </Grid>
       </Box>
 
@@ -232,7 +233,7 @@ const Athletes = () => {
           isEditMode={isEditMode}
           athlete={selectedAthlete}
           clubs={clubs}
-          user={user}
+          userClubId={user?.clubId}
         />
       )}
 

@@ -11,11 +11,9 @@ import {
 } from '@mui/material';
 import { Info, Edit, Delete } from '@mui/icons-material';
 import { format } from 'date-fns';
-import { useAuth } from '../context/AuthContext';
-
+import AuthComponent from './AuthComponent';
 
 const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
-  const { user } = useAuth();
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -25,9 +23,9 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
             <TableCell>Cognome</TableCell>
             <TableCell>Data di Nascita</TableCell>
             <TableCell>Tipo Atleta</TableCell>
-            {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
               <TableCell>Club</TableCell>
-            )}
+            </AuthComponent>
             <TableCell>Azioni</TableCell>
           </TableRow>
         </TableHead>
@@ -40,9 +38,9 @@ const AthletesTable = ({ athletes, onInfo, onEdit, onDelete }) => {
                 {format(new Date(athlete.dataNascita), 'dd/MM/yyyy')}
               </TableCell>
               <TableCell>{athlete.tipoAtleta ? athlete.tipoAtleta.nome : 'N/A'}</TableCell>
-              {user && (user.permissions === 'admin' || user.permissions === 'superAdmin') && (
+              <AuthComponent requiredRoles={['admin', 'superAdmin']}>
                 <TableCell>{athlete.club.denominazione}</TableCell>
-              )}
+              </AuthComponent>
               <TableCell>
                 <IconButton onClick={() => onInfo(athlete)}>
                   <Info />

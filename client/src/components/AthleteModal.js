@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { use } from 'react';
 import {
   Modal,
   Box,
@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { loadAllClubs } from '../api/clubs';
 import { loadAthleteTypes } from '../api/config';
-import { useAuth } from '../context/AuthContext';
+import AuthComponent from './AuthComponent';
 
 const style = {
   position: 'absolute',
@@ -38,8 +38,8 @@ const AthleteModal = ({
   onSubmit,
   athlete,
   isEditMode,
+  userClubId,
 }) => {
-  const { user } = useAuth();
   const [formData, setFormData] = React.useState({});
   const [clubs, setClubs] = React.useState([]);
   const [clubName, setClubName] = React.useState(athlete?.club?.denominazione || '');
@@ -51,8 +51,8 @@ const AthleteModal = ({
       setFormData(athlete);
     } else {
       let club = null;
-      if (user && (user?.clubId)) {
-        club = clubs.find((c) => c.id === user.clubId) || null;
+      if (userClubId) {
+        club = clubs.find((c) => c.id === userClubId) || null;
         setClubName(club?.denominazione || '');
       }
 
@@ -73,32 +73,32 @@ const AthleteModal = ({
         telefono: null,
       });
     }
-  }, [open, isEditMode, athlete, clubs]);
+  }, [open, isEditMode, athlete, clubs, userClubId]);
 
   React.useEffect(() => {
-      const fetchClubs = async () => {
-        try {
-          const clubsData = await loadAllClubs();
-          const clubNames = clubsData.map((club) => club.denominazione);
-          setClubs(clubsData);
-          setClubNames(clubNames);
-        } catch (error) {
-          console.error('Errore nel caricamento dei dati:', error);
-        }
-      };
+    const fetchClubs = async () => {
+      try {
+        const clubsData = await loadAllClubs();
+        const clubNames = clubsData.map((club) => club.denominazione);
+        setClubs(clubsData);
+        setClubNames(clubNames);
+      } catch (error) {
+        console.error('Errore nel caricamento dei dati:', error);
+      }
+    };
 
-      const fetchAthleteTypes = async () => {
-        try {
-          const athleteTypesData = await loadAthleteTypes();
-          setAthleteTypes(athleteTypesData);
-        } catch (error) {
-          console.error('Errore nel caricamento dei tipi atleta:', error);
-        }
-      };
+    const fetchAthleteTypes = async () => {
+      try {
+        const athleteTypesData = await loadAthleteTypes();
+        setAthleteTypes(athleteTypesData);
+      } catch (error) {
+        console.error('Errore nel caricamento dei tipi atleta:', error);
+      }
+    };
 
-      fetchClubs();
-      fetchAthleteTypes();
-    }, []);
+    fetchClubs();
+    fetchAthleteTypes();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value === '' ? null : e.target.value });
@@ -210,7 +210,7 @@ const AthleteModal = ({
             />
           </Grid>
           <Grid item xs={12}>
-            {(user?.permissions === 'admin' || user?.permissions === 'superAdmin') ? (
+            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
               <Autocomplete
                 id="club-select"
                 value={clubName}
@@ -229,7 +229,8 @@ const AthleteModal = ({
                 )}
                 options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
               />
-            ) : (
+            </AuthComponent>
+            <AuthComponent requiredRoles={['club']}>
               <TextField
                 id="club-select"
                 label="Club"
@@ -242,7 +243,7 @@ const AthleteModal = ({
                 }}
                 disabled={false}
               />
-            )}
+            </AuthComponent>
           </Grid>
           <Grid item xs={12} sm={6}>
             <TextField

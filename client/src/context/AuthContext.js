@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
     clearAuthData();
   };
 
-  const checkAuth = () => {
+  const checkAuth = async () => {
     const token = localStorage.getItem('token');
 
     try {
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('No token found');
       }
 
-      const response = checkAuthLevel(token);
+      const response = await checkAuthLevel(token);
       if (!response.ok) {
         throw new Error('Unauthorized');
       }
@@ -62,7 +62,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    checkAuth();
+    const verifyAuth = async () => {
+      await checkAuth();
+    };
+
+    verifyAuth();
   }, []);
 
   return (
