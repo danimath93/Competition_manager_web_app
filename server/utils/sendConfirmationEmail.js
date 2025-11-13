@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
 // Verifica che tutte le credenziali OAuth2 siano configurate
 function validateOAuth2Config() {
@@ -10,59 +10,104 @@ function validateOAuth2Config() {
   }
 }
 
-// Crea il transporter con OAuth2
-function createTransporter() {
+// Crea il client OAuth2
+function createOAuth2Client() {
   validateOAuth2Config();
 
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: process.env.GMAIL_USER,
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_CLIENT_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-    },
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    'https://developers.google.com/oauthplayground'
+  );
+
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN
   });
+
+  return oauth2Client;
+}
+
+// Crea l'email in formato RFC 2822
+function createEmail(to, subject, htmlBody) {
+  const from = process.env.GMAIL_USER;
+  const messageParts = [
+    `From: "Gestore Gare Viet Vo Dao" <${from}>`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8',
+    '',
+    htmlBody
+  ];
+  const message = messageParts.join('\n');
+
+  // Codifica in base64url
+  const encodedMessage = Buffer.from(message)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  return encodedMessage;
+}
+
+// Invia email usando Gmail API
+async function sendEmailViaGmailAPI(to, subject, htmlBody) {
+  try {
+    const oauth2Client = createOAuth2Client();
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    const raw = createEmail(to, subject, htmlBody);
+
+    const result = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: raw
+      }
+    });
+
+    console.log('Email inviata con successo via Gmail API:', result.data.id);
+    return result.data;
+  } catch (error) {
+    console.error('Errore nell\'invio email via Gmail API:', error);
+    throw new Error(`Impossibile inviare l'email: ${error.message}`);
+  }
 }
 
 async function sendConfirmationEmail(to, token) {
   try {
-    const transporter = createTransporter();
-
     console.log('Invio email di conferma a:', to);
     const confirmUrl = `${process.env.BACKEND_URL}/auth/confirm?token=${token}`;
 
-    const mailOptions = {
-      from: `"Gestore Gare Viet Vo Dao" <${process.env.GMAIL_USER}>`,
-      to,
-      subject: 'Gestore Gare Viet Vo Dao - Conferma la tua registrazione',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Benvenuto su Gestore Gare Viet Vo Dao!</h2>
-          <p>Grazie per la registrazione.</p>
-          <p>Per favore conferma il tuo indirizzo email cliccando sul pulsante qui sotto:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${confirmUrl}" 
-               style="background-color: #4CAF50; color: white; padding: 14px 28px; 
-                      text-decoration: none; border-radius: 4px; display: inline-block;">
-              Conferma Email
-            </a>
-          </div>
-          <p style="color: #666; font-size: 12px;">
-            Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br>
-            <a href="${confirmUrl}">${confirmUrl}</a>
-          </p>
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            Se non hai richiesto questa registrazione, ignora questa email.
-          </p>
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Benvenuto su Gestore Gare Viet Vo Dao!</h2>
+        <p>Grazie per la registrazione.</p>
+        <p>Per favore conferma il tuo indirizzo email cliccando sul pulsante qui sotto:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${confirmUrl}" 
+             style="background-color: #4CAF50; color: white; padding: 14px 28px; 
+                    text-decoration: none; border-radius: 4px; display: inline-block;">
+            Conferma Email
+          </a>
         </div>
-      `
-    };
+        <p style="color: #666; font-size: 12px;">
+          Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br>
+          <a href="${confirmUrl}">${confirmUrl}</a>
+        </p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+          Se non hai richiesto questa registrazione, ignora questa email.
+        </p>
+      </div>
+    `;
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email di conferma inviata con successo:', info.messageId);
-    return info;
+    const result = await sendEmailViaGmailAPI(
+      to,
+      'Gestore Gare Viet Vo Dao - Conferma la tua registrazione',
+      htmlBody
+    );
+
+    return result;
   } catch (error) {
     console.error('Errore nell\'invio dell\'email di conferma:', error);
     throw new Error(`Impossibile inviare l'email di conferma: ${error.message}`);
@@ -71,45 +116,42 @@ async function sendConfirmationEmail(to, token) {
 
 async function sendResetPasswordEmail(to, token) {
   try {
-    const transporter = createTransporter();
-
     console.log('Invio email di reset password a:', to);
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/confirm?token=${token}`;
 
-    const mailOptions = {
-      from: `"Gestore Gare Viet Vo Dao" <${process.env.GMAIL_USER}>`,
-      to,
-      subject: 'Gestore Gare Viet Vo Dao - Reset Password',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Reset Password</h2>
-          <p>Hai richiesto il reset della password per il tuo account.</p>
-          <p>Per impostare una nuova password, clicca sul pulsante qui sotto:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" 
-               style="background-color: #2196F3; color: white; padding: 14px 28px; 
-                      text-decoration: none; border-radius: 4px; display: inline-block;">
-              Reset Password
-            </a>
-          </div>
-          <p style="color: #666; font-size: 12px;">
-            Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br>
-            <a href="${resetUrl}">${resetUrl}</a>
-          </p>
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            Se non hai richiesto questo reset, ignora questa email. 
-            La tua password rimarrà invariata.
-          </p>
-          <p style="color: #666; font-size: 12px;">
-            Questo link scadrà tra 1 ora.
-          </p>
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Reset Password</h2>
+        <p>Hai richiesto il reset della password per il tuo account.</p>
+        <p>Per impostare una nuova password, clicca sul pulsante qui sotto:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" 
+             style="background-color: #2196F3; color: white; padding: 14px 28px; 
+                    text-decoration: none; border-radius: 4px; display: inline-block;">
+            Reset Password
+          </a>
         </div>
-      `
-    };
+        <p style="color: #666; font-size: 12px;">
+          Se il pulsante non funziona, copia e incolla questo link nel tuo browser:<br>
+          <a href="${resetUrl}">${resetUrl}</a>
+        </p>
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+          Se non hai richiesto questo reset, ignora questa email. 
+          La tua password rimarrà invariata.
+        </p>
+        <p style="color: #666; font-size: 12px;">
+          Questo link scadrà tra 1 ora.
+        </p>
+      </div>
+    `;
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email di reset password inviata con successo:', info.messageId);
-    return info;
+    const result = await sendEmailViaGmailAPI(
+      to,
+      'Gestore Gare Viet Vo Dao - Reset Password',
+      htmlBody
+    );
+
+    return result;
   } catch (error) {
     console.error('Errore nell\'invio dell\'email di reset password:', error);
     throw new Error(`Impossibile inviare l'email di reset password: ${error.message}`);
