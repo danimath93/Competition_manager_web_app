@@ -19,17 +19,28 @@ import './App.css';
 
 // Componente principale dell'app
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Mostra uno spinner o nulla mentre verifica l'autenticazione
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Caricamento...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/reset-password" element={<RequestPasswordReset />} />
-        <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <Layout>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<RequestPasswordReset />} />
+          <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Layout>
     );
   }
 
@@ -52,7 +63,7 @@ const AppContent = () => {
   })();
 
   return (
-    <Layout>
+    <Layout user={user}>
       <Routes>
         <Route path="/login" element={<Navigate to={defaultRoute} replace />} />
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
