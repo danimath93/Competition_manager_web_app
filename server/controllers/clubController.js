@@ -176,6 +176,7 @@ const uploadLogoClub = async (req, res) => {
     await club.save();
     res.json(club);
   } catch (error) {
+    logger.error(`Errore durante l'upload del logo per il club ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ error: 'Errore upload logo', details: error.message });
   }
 };

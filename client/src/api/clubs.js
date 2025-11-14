@@ -54,7 +54,6 @@ export const deleteClub = async (clubId) => {
 
 export const checkClubExists = async (codiceFiscale, partitaIva) => {
   try {
-    console.log('Controllo esistenza club con CF:', codiceFiscale, 'e P.IVA:', partitaIva);
     const response = await axios.post('/clubs/check', { codiceFiscale, partitaIva });
     return response.data;
   } catch (error) {
