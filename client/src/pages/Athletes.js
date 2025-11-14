@@ -163,7 +163,7 @@ const Athletes = () => {
             />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200}}>
               <InputLabel>Filtra per Tipo Atleta</InputLabel>
               <Select
                 name="type"

@@ -88,6 +88,13 @@ const updateClub = async (req, res) => {
         details: error.errors.map(e => e.message)
       });
     }
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      logger.warn(`Vincolo di unicità violato nell'aggiornamento club ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
+      return res.status(400).json({
+        error: 'Dati non validi',
+        details: error.errors.map(e => e.message)
+      });
+    }
     logger.error(`Errore nell'aggiornamento del club ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nell\'aggiornamento del club',

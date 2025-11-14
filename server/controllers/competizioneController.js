@@ -16,7 +16,8 @@ const getAllCompetizioni = async (req, res) => {
         },
         {
           model: Club,
-          as: 'organizzatore'
+          as: 'organizzatore',
+          attributes: { exclude: ['logo'] }
         }
       ],
       order: [['dataInizio', 'DESC']]
@@ -70,7 +71,8 @@ const getCompetizioneById = async (req, res) => {
         },
         {
           model: Club,
-          as: 'organizzatore'
+          as: 'organizzatore',
+          attributes: { exclude: ['logo'] }
         }
       ]
     });
@@ -184,7 +186,8 @@ const getCompetizioniByStato = async (req, res) => {
         },
         {
           model: Club,
-          as: 'organizzatore'
+          as: 'organizzatore',
+          attributes: { exclude: ['logo'] }
         }
       ],
       order: [['dataInizio', 'ASC']]
@@ -232,7 +235,8 @@ const getCompetizioniByTipologia = async (req, res) => {
         },
         {
           model: Club,
-          as: 'organizzatore'
+          as: 'organizzatore',
+          attributes: { exclude: ['logo'] }
         }
       ],
       order: [['dataInizio', 'DESC']]

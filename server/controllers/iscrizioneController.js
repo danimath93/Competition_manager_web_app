@@ -87,7 +87,8 @@ const getIscrizioniByCompetizione = async (req, res) => {
           include: [
             {
               model: Club,
-              as: 'club'
+              as: 'club',
+              attributes: { exclude: ['logo'] }
             },
             {
               model: ConfigTipoAtleta,
@@ -222,7 +223,8 @@ const createIscrizione = async (req, res) => {
           include: [
             {
               model: Club,
-              as: 'club'
+              as: 'club',
+              attributes: { exclude: ['logo'] }
             },
             {
               model: ConfigTipoAtleta,
@@ -345,7 +347,8 @@ const createOrGetIscrizioneClub = async (req, res) => {
       include: [
         {
           model: Club,
-          as: 'club'
+          as: 'club',
+          attributes: { exclude: ['logo'] }
         },
         {
           model: Competizione,
@@ -367,7 +370,8 @@ const createOrGetIscrizioneClub = async (req, res) => {
         include: [
           {
             model: Club,
-            as: 'club'
+            as: 'club',
+            attributes: { exclude: ['logo'] }
           },
           {
             model: Competizione,
@@ -397,7 +401,8 @@ const getIscrizioneClub = async (req, res) => {
       include: [
         {
           model: Club,
-          as: 'club'
+          as: 'club',
+          attributes: { exclude: ['logo'] }
         },
         {
           model: Competizione,

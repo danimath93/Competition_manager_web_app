@@ -63,9 +63,19 @@ const Club = sequelize.define('Club', {
     type: DataTypes.STRING,
     allowNull: true
   }
-}, {
-  tableName: 'clubs',
-  timestamps: true
-});
+},
+  {
+    tableName: 'clubs',
+    timestamps: true,
+    defaultScope: {
+      attributes: { exclude: ['logo', 'logoType'] }
+    },
+    scopes: {
+      withLogo: {
+        attributes: { include: ['logo', 'logoType'] }
+      }
+    }
+  }
+);
 
 module.exports = Club;

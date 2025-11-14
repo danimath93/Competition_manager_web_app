@@ -28,10 +28,21 @@ const ClubModal = ({
   isEditMode,
 }) => {
   const [formData, setFormData] = React.useState({});
+  const [displayError, setDisplayError] = React.useState('');
 
   React.useEffect(() => {
     if (isEditMode && club) {
-      setFormData(club);
+      setFormData({
+        denominazione: club?.denominazione,
+        codiceFiscale: club?.codiceFiscale,
+        partitaIva: club?.partitaIva,
+        indirizzo: club?.indirizzo,
+        legaleRappresentante: club?.legaleRappresentante,
+        direttoreTecnico: club?.direttoreTecnico,
+        recapitoTelefonico: club?.recapitoTelefonico,
+        email: club?.email,
+      });
+
     } else {
       setFormData({
         denominazione: '',
@@ -50,9 +61,14 @@ const ClubModal = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      setDisplayError('');
+      await onSubmit(formData);
+    } catch (error) {
+      setDisplayError(error.message || 'Errore durante la modifica del club.');
+    }
   };
 
   return (
@@ -61,6 +77,7 @@ const ClubModal = ({
         <Typography variant="h6" component="h2">
           {isEditMode ? 'Modifica Club' : 'Aggiungi Club'}
         </Typography>
+        {displayError && (<Typography color="error" sx={{ mt: 2 }}>{displayError}</Typography>)}
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={12}>
             <TextField

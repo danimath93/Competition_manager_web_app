@@ -96,6 +96,12 @@ instance.interceptors.response.use(
           errorResponse.message = data?.error || data?.message || 'Elemento già esistente.';
           break;
 
+        case 413:
+          // Payload troppo grande
+          errorResponse.type = 'PAYLOAD_TOO_LARGE';
+          errorResponse.message = 'I dati inviati sono troppo grandi. Riduci la dimensione delle immagini.';
+          break;
+
         case 500:
           // Errore del server
           errorResponse.type = 'SERVER_ERROR';

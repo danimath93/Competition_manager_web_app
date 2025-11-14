@@ -8,7 +8,8 @@ const getAllAtleti = async (req, res) => {
       include: [
         {
           model: Club,
-          as: 'club'
+          as: 'club',
+          attributes: { exclude: ['logo'] }
         },
         {
           model: ConfigTipoAtleta,
@@ -37,7 +38,8 @@ const getAtletiByClub = async (req, res) => {
       include: [
         {
           model: Club,
-          as: 'club'
+          as: 'club',
+          attributes: { exclude: ['logo'] }
         },
         {
           model: ConfigTipoAtleta,
@@ -66,10 +68,18 @@ const createAtleta = async (req, res) => {
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nella creazione atleta: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({
-        error: 'Dati non validi',
+        error: 'Dati atleta non validi',
         details: error.errors.map(e => e.message)
       });
     }
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      logger.warn(`Vincolo di unicità violato nella creazione atleta: ${error.errors.map(e => e.message).join(', ')}`);
+      return res.status(400).json({
+        error: 'Atleta gia\' registrato con questo codice fiscale',
+        details: error.errors.map(e => e.message)
+      });
+    }
+
     logger.error(`Errore nella creazione dell'atleta: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nella creazione dell\'atleta',

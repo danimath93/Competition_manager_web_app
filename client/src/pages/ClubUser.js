@@ -34,7 +34,7 @@ const ClubUser = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [logoModalOpen, setLogoModalOpen] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
-  const [logoError, setLogoError] = useState('');
+  const [displayError, setDisplayError] = useState('');
   const [loadingLogo, setLoadingLogo] = useState(false);
 
   useEffect(() => {
@@ -51,53 +51,51 @@ const ClubUser = () => {
 
   const handleEditClick = () => {
     setEditOpen(true);
+    setDisplayError('');
   };
 
   const handleEditClose = () => {
     setEditOpen(false);
+    setDisplayError('');
   };
 
   const handleEditSubmit = async (formData) => {
-    try {
-      const updated = await updateClub(club.id, formData);
-      setClub(updated);
-      setEditOpen(false);
-    } catch (error) {
-      alert('Errore durante l\'aggiornamento del club.');
-    }
+    const { logo, logoType, ...sendData } = formData;
+    const updated = await updateClub(club.id, sendData);
+    setClub(updated);
   };
 
   const handleLogoEditClick = () => {
     setLogoModalOpen(true);
     setLogoFile(null);
-    setLogoError('');
+    setDisplayError('');
   };
 
   const handleLogoModalClose = () => {
     setLogoModalOpen(false);
     setLogoFile(null);
-    setLogoError('');
+    setDisplayError('');
   };
 
   const handleLogoFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      setLogoError('Il file deve essere JPEG o PNG.');
+      setDisplayError('Il file deve essere JPEG o PNG.');
       return;
     }
     if (file.size > MAX_LOGO_SIZE) {
-      setLogoError('Il file deve essere massimo 2MB.');
+      setDisplayError('Il file deve essere massimo 2MB.');
       return;
     }
     setLogoFile(file);
-    setLogoError('');
+    setDisplayError('');
   };
 
   const handleLogoUpload = async (e) => {
     e.preventDefault();
     if (!logoFile) {
-      setLogoError('Seleziona un file.');
+      setDisplayError('Seleziona un file.');
       return;
     }
     setLoadingLogo(true);
@@ -106,7 +104,7 @@ const ClubUser = () => {
       setClub(updated);
       setLogoModalOpen(false);
     } catch (error) {
-      setLogoError('Errore durante l\'upload del logo.');
+      setDisplayError('Errore durante l\'upload del logo.');
     }
     setLoadingLogo(false);
   };
@@ -219,7 +217,7 @@ const ClubUser = () => {
               onChange={handleLogoFileChange}
               style={{ marginBottom: 16 }}
             />
-            {logoError && <Typography color="error" sx={{ mb: 1 }}>{logoError}</Typography>}
+            {displayError && <Typography color="error" sx={{ mb: 1 }}>{displayError}</Typography>}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button onClick={handleLogoModalClose}>Annulla</Button>
               <Button type="submit" variant="contained" disabled={loadingLogo}>

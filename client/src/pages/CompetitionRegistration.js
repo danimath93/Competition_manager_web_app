@@ -82,6 +82,8 @@ const CompetitionRegistration = () => {
           const clubRegData = await getClubRegistration(user.clubId, competitionId);
           setClubRegistration(clubRegData);
           setIsClubRegistered(clubRegData.stato === 'Confermata');
+
+          await refreshCosts();
         } catch (err) {
           // L'iscrizione non esiste ancora - creala se ci sono atleti iscritti
           if (registrationsData.length > 0) {
@@ -127,7 +129,13 @@ const CompetitionRegistration = () => {
         user.clubId
       );
       setRegisteredAthletes(registrationsData);
-      
+
+      if (clubRegistration == null) {
+        const newClubReg = await createOrGetClubRegistration(user.clubId, competitionId);
+        setClubRegistration(newClubReg);
+        setIsClubRegistered(false);
+      }
+
       // Aggiorna anche i costi
       await refreshCosts();
     } catch (err) {
@@ -449,7 +457,7 @@ const CompetitionRegistration = () => {
         {/* Bottoni azioni */}
         <Box display="flex" gap={2}>
           {/* Stato "In attesa" - mostra bottone documenti */}
-          {clubRegistration?.stato === 'In attesa' && (
+          {registeredAthletes?.length > 0 && clubRegistration?.stato === 'In attesa' && (
             <>
               <Button
                 variant="outlined"
