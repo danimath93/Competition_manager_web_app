@@ -30,21 +30,9 @@ const AppContent = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<RequestPasswordReset />} />
-          <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Layout>
-    );
-  }
-
   const defaultRoute = (() => {
+    if (!user) return '/login';
+    
     const role = user.permissions;
     switch (role) {
       case 'superAdmin':
@@ -65,7 +53,13 @@ const AppContent = () => {
   return (
     <Layout user={user}>
       <Routes>
-        <Route path="/login" element={<Navigate to={defaultRoute} replace />} />
+        {/* Route pubbliche - accessibili sempre */}
+        <Route path="/login" element={user ? <Navigate to={defaultRoute} replace /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to={defaultRoute} replace /> : <Register />} />
+        <Route path="/reset-password" element={<RequestPasswordReset />} />
+        <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
+        
+        {/* Redirect root */}
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
         
         {/* Dashboard - TODO: al momento in sviluppo, solo superAdmin */}
@@ -132,7 +126,7 @@ const AppContent = () => {
         } />
         
         {/* Redirect per tutte le route non valide */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to={defaultRoute} replace />} />
       </Routes>
     </Layout>
   );
