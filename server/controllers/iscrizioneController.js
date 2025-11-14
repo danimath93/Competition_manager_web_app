@@ -1,5 +1,6 @@
 const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
 const { calculateAthleteCost, calculateClubTotalCost } = require('../helpers/costCalculator');
+const logger = require('../helpers/logger/logger');
 
 /**
  * Ricalcola e aggiorna i costi per tutti gli atleti di un club in una competizione
@@ -11,7 +12,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
     // Carica la competizione per ottenere costiIscrizione
     const competizione = await Competizione.findByPk(competizioneId);
     if (!competizione || !competizione.costiIscrizione) {
-      console.log('Nessuna configurazione costi per questa competizione');
+      logger.debug('Nessuna configurazione costi per questa competizione');
       return;
     }
 
@@ -69,7 +70,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
       );
     }
   } catch (error) {
-    console.error('Errore nel ricalcolo dei costi:', error);
+    logger.error(`Errore nel ricalcolo dei costi per club ${clubId}, competizione ${competizioneId}: ${error.message}`, { stack: error.stack });
   }
 };
 
@@ -113,6 +114,7 @@ const getIscrizioniByCompetizione = async (req, res) => {
 
     res.status(200).json(iscrizioni);
   } catch (error) {
+    logger.error(`Errore nel recupero delle iscrizioni per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni',
       details: error.message
@@ -160,6 +162,7 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
 
     res.status(200).json(iscrizioni);
   } catch (error) {
+    logger.error(`Errore nel recupero delle iscrizioni del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni del club',
       details: error.message
@@ -178,6 +181,7 @@ const createIscrizione = async (req, res) => {
     });
 
     if (existingIscrizione) {
+      logger.warn(`Tentativo iscrizione duplicata - Atleta: ${atletaId}, Categoria: ${tipoCategoriaId}, Competizione: ${competizioneId}`);
       return res.status(409).json({
         error: 'L\'atleta è già iscritto a questa categoria per questa competizione'
       });
@@ -233,14 +237,17 @@ const createIscrizione = async (req, res) => {
       ]
     });
 
+    logger.info(`Iscrizione creata - ID: ${newIscrizione.id}, Atleta: ${atletaId}, Competizione: ${competizioneId}`);
     res.status(201).json(iscrizioneCompleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
+      logger.warn(`Validazione fallita nella creazione iscrizione: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
         details: error.errors.map(e => e.message)
       });
     }
+    logger.error(`Errore nella creazione dell'iscrizione - Atleta: ${req.body.atletaId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nella creazione dell\'iscrizione',
       details: error.message
@@ -264,6 +271,7 @@ const deleteIscrizione = async (req, res) => {
     });
 
     if (!iscrizione) {
+      logger.warn(`Tentativo eliminazione iscrizione inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Iscrizione non trovata' });
     }
 
@@ -280,8 +288,10 @@ const deleteIscrizione = async (req, res) => {
       await recalculateAthletesCosts(clubId, competizioneId);
     }
 
+    logger.info(`Iscrizione eliminata - ID: ${id}, Atleta: ${atletaId}, Competizione: ${competizioneId}`);
     res.status(204).send();
   } catch (error) {
+    logger.error(`Errore nell'eliminazione dell'iscrizione ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nell\'eliminazione dell\'iscrizione',
       details: error.message
@@ -314,6 +324,7 @@ const deleteIscrizioniAtleta = async (req, res) => {
       message: `Eliminate ${deletedRowsCount} iscrizioni per l'atleta`
     });
   } catch (error) {
+    logger.error(`Errore nell'eliminazione delle iscrizioni dell'atleta ${req.params.atletaId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nell\'eliminazione delle iscrizioni dell\'atleta',
       details: error.message
@@ -368,6 +379,7 @@ const createOrGetIscrizioneClub = async (req, res) => {
 
     res.status(200).json(iscrizioneClub);
   } catch (error) {
+    logger.error(`Errore nella gestione dell'iscrizione del club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nella gestione dell\'iscrizione del club',
       details: error.message
@@ -400,6 +412,7 @@ const getIscrizioneClub = async (req, res) => {
 
     res.status(200).json(iscrizioneClub);
   } catch (error) {
+    logger.error(`Errore nel recupero dell'iscrizione del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dell\'iscrizione del club',
       details: error.message
@@ -464,6 +477,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       }
     });
   } catch (error) {
+    logger.error(`Errore nel caricamento dei documenti per iscrizione club: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel caricamento dei documenti',
       details: error.message
@@ -517,6 +531,7 @@ const confermaIscrizioneClub = async (req, res) => {
       iscrizioneClub
     });
   } catch (error) {
+    logger.error(`Errore nella conferma dell'iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nella conferma dell\'iscrizione',
       details: error.message
@@ -559,6 +574,7 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(fileBuffer);
   } catch (error) {
+    logger.error(`Errore nel download del documento ${req.params.tipoDocumento} per club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel download del documento',
       details: error.message
@@ -588,6 +604,7 @@ const modificaIscrizioneClub = async (req, res) => {
       iscrizioneClub
     });
   } catch (error) {
+    logger.error(`Errore nella modifica dell'iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nella modifica dell\'iscrizione',
       details: error.message
@@ -644,6 +661,7 @@ const getClubRegistrationCosts = async (req, res) => {
       costiIscrizione: competizione.costiIscrizione
     });
   } catch (error) {
+    logger.error(`Errore nel calcolo dei costi per club ${req.params.clubId} in competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel calcolo dei costi',
       details: error.message

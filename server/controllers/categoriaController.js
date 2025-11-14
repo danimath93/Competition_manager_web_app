@@ -1,5 +1,6 @@
 const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta } = require('../models');
 const { Op } = require('sequelize');
+const logger = require('../helpers/logger/logger');
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
 exports.generateCategories = async (req, res) => {
@@ -114,7 +115,7 @@ exports.generateCategories = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Errore nella generazione delle categorie:', error);
+    logger.error(`Errore nella generazione delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante la generazione delle categorie',
       error: error.message 
@@ -176,6 +177,7 @@ exports.saveCategories = async (req, res) => {
 
     await transaction.commit();
 
+    logger.info(`Categorie salvate per competizione ${competizioneId} - Totale: ${categorieSalvate.length}`);
     res.status(201).json({
       message: 'Categorie salvate con successo',
       categorie: categorieSalvate
@@ -183,7 +185,7 @@ exports.saveCategories = async (req, res) => {
 
   } catch (error) {
     await transaction.rollback();
-    console.error('Errore nel salvataggio delle categorie:', error);
+    logger.error(`Errore nel salvataggio delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante il salvataggio delle categorie',
       error: error.message 
@@ -229,7 +231,7 @@ exports.getCategoriesByCompetizione = async (req, res) => {
     res.json(categorie);
 
   } catch (error) {
-    console.error('Errore nel recupero delle categorie:', error);
+    logger.error(`Errore nel recupero delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante il recupero delle categorie',
       error: error.message 
@@ -245,18 +247,20 @@ exports.updateCategoria = async (req, res) => {
 
     const categoria = await Categoria.findByPk(id);
     if (!categoria) {
+      logger.warn(`Tentativo aggiornamento categoria inesistente - ID: ${id}`);
       return res.status(404).json({ message: 'Categoria non trovata' });
     }
 
     await categoria.update(updateData);
 
+    logger.info(`Categoria aggiornata - ID: ${id}`);
     res.json({
       message: 'Categoria aggiornata con successo',
       categoria
     });
 
   } catch (error) {
-    console.error('Errore nell\'aggiornamento della categoria:', error);
+    logger.error(`Errore nell'aggiornamento della categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante l\'aggiornamento della categoria',
       error: error.message 
@@ -274,6 +278,7 @@ exports.deleteCategoria = async (req, res) => {
     const categoria = await Categoria.findByPk(id);
     if (!categoria) {
       await transaction.rollback();
+      logger.warn(`Tentativo eliminazione categoria inesistente - ID: ${id}`);
       return res.status(404).json({ message: 'Categoria non trovata' });
     }
 
@@ -291,11 +296,12 @@ exports.deleteCategoria = async (req, res) => {
 
     await transaction.commit();
 
+    logger.info(`Categoria eliminata - ID: ${id}`);
     res.json({ message: 'Categoria eliminata con successo' });
 
   } catch (error) {
     await transaction.rollback();
-    console.error('Errore nell\'eliminazione della categoria:', error);
+    logger.error(`Errore nell'eliminazione della categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante l\'eliminazione della categoria',
       error: error.message 
@@ -314,6 +320,7 @@ exports.moveAtleti = async (req, res) => {
     const categoria = await Categoria.findByPk(targetCategoriaId);
     if (!categoria) {
       await transaction.rollback();
+      logger.warn(`Tentativo spostamento atleti verso categoria inesistente - ID: ${targetCategoriaId}`);
       return res.status(404).json({ message: 'Categoria target non trovata' });
     }
 
@@ -330,11 +337,12 @@ exports.moveAtleti = async (req, res) => {
 
     await transaction.commit();
 
+    logger.info(`Atleti spostati nella categoria ${targetCategoriaId} - Totale: ${atletiIds.length}`);
     res.json({ message: 'Atleti spostati con successo' });
 
   } catch (error) {
     await transaction.rollback();
-    console.error('Errore nello spostamento degli atleti:', error);
+    logger.error(`Errore nello spostamento degli atleti: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante lo spostamento degli atleti',
       error: error.message 
@@ -392,6 +400,7 @@ exports.mergeCategorie = async (req, res) => {
 
     await transaction.commit();
 
+    logger.info(`Categorie unite - Categoria1: ${categoria1Id}, Categoria2: ${categoria2Id}, Atleti totali: ${countAtleti}`);
     res.json({ 
       message: 'Categorie unite con successo',
       categoria: categoria1
@@ -399,7 +408,7 @@ exports.mergeCategorie = async (req, res) => {
 
   } catch (error) {
     await transaction.rollback();
-    console.error('Errore nell\'unione delle categorie:', error);
+    logger.error(`Errore nell'unione delle categorie: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante l\'unione delle categorie',
       error: error.message 
@@ -459,6 +468,7 @@ exports.splitCategoria = async (req, res) => {
 
     await transaction.commit();
 
+    logger.info(`Categoria divisa - Originale: ${categoriaId}, Nuova: ${nuovaCategoria.id}, Atleti: ${atleti1.length}/${atleti2.length}`);
     res.json({ 
       message: 'Categoria divisa con successo',
       categoria1: categoriaOriginale,
@@ -467,7 +477,7 @@ exports.splitCategoria = async (req, res) => {
 
   } catch (error) {
     await transaction.rollback();
-    console.error('Errore nella divisione della categoria:', error);
+    logger.error(`Errore nella divisione della categoria: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       message: 'Errore durante la divisione della categoria',
       error: error.message 
