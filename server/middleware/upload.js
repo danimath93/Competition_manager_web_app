@@ -37,7 +37,21 @@ const uploadFiles = upload.fields([
   { name: 'fileExtra2', maxCount: 1 }
 ]);
 
+// Middleware dedicato per upload logo club (solo JPEG/PNG, memoryStorage)
+const uploadLogoMiddleware = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (["image/jpeg", "image/png"].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo file JPEG o PNG ammessi."), false);
+    }
+  },
+  limits: { fileSize: 2 * 1024 * 1024 }
+});
+
 module.exports = {
   uploadFiles,
-  upload
+  upload,
+  uploadLogoMiddleware
 };

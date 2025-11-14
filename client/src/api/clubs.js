@@ -63,4 +63,20 @@ export const checkClubExists = async (codiceFiscale, partitaIva) => {
   }
 };
 
+export const uploadLogoClub = async (clubId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await axios.put(`/clubs/${clubId}/logo`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante l\'upload del logo:', error);
+    throw error;
+  }
+};
+
 

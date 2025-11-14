@@ -138,6 +138,32 @@ const checkClubExists = async (req, res) => {
   }
 };
 
+const uploadLogoClub = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nessun file inviato.' });
+    }
+    const file = req.file;
+    if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
+      return res.status(400).json({ error: 'Solo file JPEG o PNG ammessi.' });
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File troppo grande (max 2MB).' });
+    }
+    const club = await Club.findByPk(id);
+    if (!club) {
+      return res.status(404).json({ error: 'Club non trovato.' });
+    }
+    club.logo = file.buffer;
+    club.logoType = file.mimetype;
+    await club.save();
+    res.json(club);
+  } catch (error) {
+    res.status(500).json({ error: 'Errore upload logo', details: error.message });
+  }
+};
+
 module.exports = {
   getAllClubs,
   getClubById,
@@ -145,5 +171,6 @@ module.exports = {
   updateClub,
   deleteClub,
   checkClubExists,
-  checkClubExistsHelper
+  checkClubExistsHelper,
+  uploadLogoClub,
 };

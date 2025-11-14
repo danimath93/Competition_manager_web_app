@@ -57,6 +57,14 @@ const Club = sequelize.define('Club', {
     validate: {
       isEmail: true
     }
+  },
+  logo: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true
+  },
+  logoType: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'clubs',

@@ -82,6 +82,11 @@ const Register = () => {
 
   return (
     <div className="login-container">
+      <div style={{ position: 'absolute', top: 24, left: 24 }}>
+        <a href="/login" className="back-login-link" style={{ color: '#dc3545', textDecoration: 'none', fontWeight: 500, display: 'flex', alignItems: 'center', fontSize: '1rem' }}>
+          <span style={{ fontSize: '1.3em', marginRight: 6 }}>&larr;</span> Torna alla pagina di login
+        </a>
+      </div>
       <div className="login-card">
         <div className="login-header">
           <img src="/logo_ufficiale.png" alt="Logo" className="login-logo" />
