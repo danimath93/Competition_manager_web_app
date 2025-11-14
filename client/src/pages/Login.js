@@ -22,7 +22,7 @@ const Login = () => {
     setLoading(true);
 
     if (!username.trim() || !password.trim()) {
-      setError('Inserisci username e password');
+      setError('Username o password mancanti');
       setLoading(false);
       return;
     }
@@ -30,7 +30,7 @@ const Login = () => {
     const result = await login(username, password);
     
     if (!result.success) {
-      setError(t('userNotFound'));
+      setError(result.message || t('userNotFound'));
     }
     
     setLoading(false);

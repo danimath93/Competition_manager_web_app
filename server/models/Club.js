@@ -24,10 +24,7 @@ const Club = sequelize.define('Club', {
   },
   partitaIva: {
     type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
+    allowNull: true,
   },
   indirizzo: {
     type: DataTypes.STRING,

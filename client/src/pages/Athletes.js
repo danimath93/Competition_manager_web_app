@@ -124,10 +124,9 @@ const Athletes = () => {
       }
       const athletesData = await loadAllAthletes();
       setAthletes(athletesData);
-    } catch (error) {
-      console.error("Errore nel salvataggio dell'atleta:", error);
-    } finally {
       handleCloseModal();
+    } catch (error) {
+      throw error;
     }
   };
 

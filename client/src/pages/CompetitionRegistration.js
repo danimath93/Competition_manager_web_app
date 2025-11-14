@@ -242,10 +242,7 @@ const CompetitionRegistration = () => {
       }
       await refreshClubAthletes();
     } catch (error) {
-      console.error("Errore nel salvataggio dell'atleta:", error);
-      setError("Errore nel salvataggio dell'atleta");
-    } finally {
-      handleCloseAthleteModal();
+      throw error;
     }
   };
 

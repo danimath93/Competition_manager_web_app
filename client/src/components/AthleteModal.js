@@ -45,6 +45,7 @@ const AthleteModal = ({
   const [clubName, setClubName] = React.useState(athlete?.club?.denominazione || '');
   const [clubNames, setClubNames] = React.useState([]);
   const [athleteTypes, setAthleteTypes] = React.useState([]);
+  const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
     if (isEditMode && athlete) {
@@ -84,6 +85,7 @@ const AthleteModal = ({
         setClubNames(clubNames);
       } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
+        setError('Errore nel caricamento dei dati');
       }
     };
 
@@ -93,6 +95,7 @@ const AthleteModal = ({
         setAthleteTypes(athleteTypesData);
       } catch (error) {
         console.error('Errore nel caricamento dei tipi atleta:', error);
+        setError('Errore nel caricamento dei tipi atleta');
       }
     };
 
@@ -122,9 +125,13 @@ const AthleteModal = ({
     setFormData({ ...formData, tesseramento: value || null });
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      setError(error.message || "Errore nel salvataggio dell'atleta");
+    }
   };
 
   return (
@@ -133,6 +140,11 @@ const AthleteModal = ({
         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
           {isEditMode ? 'Modifica Atleta' : 'Aggiungi Atleta'}
         </Typography>
+        {error && (
+          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -252,6 +264,7 @@ const AthleteModal = ({
               sx={{ minWidth: 250 }}
               value={formData.codiceFiscale || ''}
               onChange={handleChange}
+              required
               fullWidth
             />
           </Grid>

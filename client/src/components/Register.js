@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaUser, FaLock, FaEnvelope, FaBuilding } from 'react-icons/fa';
+import { FaUser, FaLock, FaEnvelope, FaBuilding, FaEye, FaEyeSlash } from 'react-icons/fa';
 import '../pages/styles/Login.css';
 import { checkClubExists,createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
@@ -9,13 +9,16 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Sezione 2: dati club
   const [denominazione, setDenominazione] = useState('');
   const [codiceFiscale, setCodiceFiscale] = useState('');
   const [partitaIva, setPartitaIva] = useState('');
-  const [indirizzo, setIndirizzo] = useState('');
+  const [indirizzoComune, setIndirizzoComune] = useState('');
+  const [indirizzoVia, setIndirizzoVia] = useState('');
+  const [indirizzoCap, setIndirizzoCap] = useState('');
   const [legaleRappresentante, setLegaleRappresentante] = useState('');
   const [direttoreTecnico, setDirettoreTecnico] = useState('');
   const [recapitoTelefonico, setRecapitoTelefonico] = useState('');
@@ -32,8 +35,20 @@ const Register = () => {
   };
 
   const validateFields = () => {
-    if (!username.trim() || !email.trim() || !password.trim()) return false;
-    if (!denominazione.trim() || !codiceFiscale.trim() || !partitaIva.trim() || !legaleRappresentante.trim() || !direttoreTecnico.trim() || !email.trim()) return false;
+    if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+      setError('Tutti i campi delle credenziali sono obbligatori.');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setError('Le password non corrispondono.');
+      return false;
+    }
+    if (!denominazione.trim() || !codiceFiscale.trim() || 
+        !indirizzoVia.trim() || !indirizzoComune.trim() || !indirizzoCap.trim() ||
+        !direttoreTecnico.trim() || !legaleRappresentante.trim() || !clubEmail.trim()) {
+      setError('Tutti i campi del club contrassegnati con * sono obbligatori.');
+      return false;
+    }
     return true;
   };
 
@@ -44,7 +59,6 @@ const Register = () => {
     setLoading(true);
 
     if (!validateFields()) {
-      setError('Compila tutti i campi obbligatori per continuare.');
       setLoading(false);
       return;
     }
@@ -56,7 +70,7 @@ const Register = () => {
           denominazione,
           codiceFiscale,
           partitaIva,
-          indirizzo,
+          indirizzo: indirizzoCap && indirizzoComune && indirizzoVia ? `${indirizzoVia}, ${indirizzoComune} (${indirizzoCap})` : '',
           legaleRappresentante,
           direttoreTecnico,
           recapitoTelefonico,
@@ -74,7 +88,7 @@ const Register = () => {
         setLoading(false);
       }
     } catch (err) {
-      setError('Errore durante la registrazione. Controlla i dati inseriti e riprova.');
+      setError(err.message || 'Errore durante la registrazione.');
       setLoading(false);
       return;
     }
@@ -113,8 +127,28 @@ const Register = () => {
             <div className="input-wrapper">
               <FaLock className="input-icon" />
               <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={e => setPassword(e.target.value)} className="form-input" disabled={loading} />
-              <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} disabled={loading}>
-                {showPassword ? 'Nascondi' : 'Mostra'}
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="confirmPassword" className="form-label">Conferma Password*</label>
+            <div className="input-wrapper">
+              <FaLock className="input-icon" />
+              <input type={showPassword ? 'text' : 'password'} id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="form-input" disabled={loading} />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
           </div>
@@ -132,12 +166,21 @@ const Register = () => {
             <input type="text" id="codiceFiscale" value={codiceFiscale} onChange={e => setCodiceFiscale(e.target.value)} className="form-input" disabled={loading} />
           </div>
           <div className="form-group">
-            <label htmlFor="partitaIva" className="form-label">Partita IVA*</label>
+            <label htmlFor="partitaIva" className="form-label">Partita IVA</label>
             <input type="text" id="partitaIva" value={partitaIva} onChange={e => setPartitaIva(e.target.value)} className="form-input" disabled={loading} />
           </div>
           <div className="form-group">
-            <label htmlFor="indirizzo" className="form-label">Indirizzo</label>
-            <input type="text" id="indirizzo" value={indirizzo} onChange={e => setIndirizzo(e.target.value)} className="form-input" disabled={loading} />
+            <label htmlFor="indirizzoVia" className="form-label">Ragione sociale: Indirizzo*</label>
+            <input type="text" id="indirizzoVia" value={indirizzoVia} onChange={e => setIndirizzoVia(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="indirizzoComune" className="form-label">Ragione sociale: Comune*</label>
+            <input type="text" id="indirizzoComune" value={indirizzoComune} onChange={e => setIndirizzoComune(e.target.value)} className="form-input" disabled={loading} />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="indirizzoCap" className="form-label">Ragione sociale: CAP*</label>
+            <input type="text" id="indirizzoCap" value={indirizzoCap} onChange={e => setIndirizzoCap(e.target.value)} className="form-input" disabled={loading} />
           </div>
           <div className="form-group">
             <label htmlFor="legaleRappresentante" className="form-label">Legale Rappresentante*</label>

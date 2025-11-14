@@ -28,7 +28,7 @@ const loginUser = async (req, res) => {
       }
     });
     if (!user) {
-      return res.status(401).json({ error: 'Credenziali non valide' });
+      return res.status(401).json({ error: 'Credenziali non valide. Account non trovato.' });
     }
 
     const hash = crypto.createHash('sha256').update(password + '.' + user.username + '.' + user.salt, 'utf8').digest('hex');
@@ -96,6 +96,14 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Registrazione per utenti singoli non autorizzata' });
     }
 
+    if (!club.codiceFiscale) {
+      return res.status(400).json({ success: false, message: 'Codice fiscale del club è obbligatorio' });
+    }
+
+    if (!club.denominazione || !club.indirizzo || !club.legaleRappresentante || !club.direttoreTecnico || !club.email) {
+      return res.status(400).json({ success: false, message: 'Tutti i campi del club contrassegnati con * sono obbligatori' });
+    }
+
     const clubExists = await checkClubExistsHelper({ codiceFiscale: club.codiceFiscale, partitaIva: club.partitaIva });
     if (clubExists) {
       return res.status(400).json({ success: false, message: 'Il club è già stato registrato.' });
@@ -137,7 +145,7 @@ const registerUser = async (req, res) => {
       throw error;
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Errore registrazione utente', error });
+    res.status(500).json({ success: false, error });
   }
 };
 
