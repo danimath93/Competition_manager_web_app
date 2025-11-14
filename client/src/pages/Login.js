@@ -46,95 +46,99 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <img 
-            src="/logo_ufficiale.png" 
-            alt="Logo" 
-            className="login-logo"
-          />
-          <h1 className="login-title">{t('signIn')}</h1>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="username" className="form-label">
-              {t('username')}
-            </label>
-            <div className="input-wrapper">
-              <FaUser className="input-icon" />
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={t('username')}
-                className="form-input"
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div className="form-label-row">
-              <label htmlFor="password" className="form-label">
-                {t('password')}
+      <div className="login-left">
+        <div className="login-card">
+          <form onSubmit={handleSubmit} className="login-form">
+            <h5 className="text-red text-center">{t('loginIntro')}</h5>
+            <div className="form-group">
+              <label htmlFor="username" className="form-label">
+                <h6>
+                  {t('username')}
+                </h6>
               </label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={t('username')}
+                  className="form-input"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <div className="form-label-row">
+                <label htmlFor="password" className="form-label">
+                  <h6>
+                    {t('password')}
+                  </h6>
+                </label>
+              </div>
+              <div className="input-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t('password')}
+                  className="form-input"
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
               <div className="forgot-password-link">
                 <a href="#" onClick={(e) => { e.preventDefault(); handleResetPWClick(); }}>
                   {t('forgotPassword')}
                 </a>
               </div>
             </div>
-            <div className="input-wrapper">
-              <FaLock className="input-icon" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('password')}
-                className="form-input"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-          </div>
 
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? t('signingIn') : t('signInButton')}
-          </button>
-
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
-        </form>
-
-        <div className="login-footer">
-          <span className="register-text">
-            {t('noAccount')}
-            <a 
-              href="#" 
-              className="register-link"
-              onClick={(e) => { e.preventDefault(); handleRegisterClick(); }}
+            <button
+              type="submit"
+              className="login-button"
+              disabled={loading}
             >
-              {t('registerNow')}
-            </a>
-          </span>
+              {loading ? t('signingIn') : t('signInButton')}
+            </button>
+
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+          </form>
+
+          <div className="login-footer">
+            <span className="register-text">
+              {t('noAccount')}
+              <a
+                href="#"
+                className="register-link"
+                onClick={(e) => { e.preventDefault(); handleRegisterClick(); }}
+              >
+                {t('registerNow')}
+              </a>
+            </span>
+          </div>
         </div>
+      </div>
+      
+      <div className="login-right">
+        <img 
+          src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop"
+          alt="Sports background"
+          className="login-image"
+        />
       </div>
     </div>
   );

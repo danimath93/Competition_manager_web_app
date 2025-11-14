@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaUser, FaLock, FaEnvelope, FaBuilding } from 'react-icons/fa';
+import Header from './Header';
 import '../pages/styles/Login.css';
 import { checkClubExists,createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
@@ -81,8 +82,10 @@ const Register = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <>
+      <Header />
+      <div className="login-container">
+        <div className="login-card">
         <div className="login-header">
           <img src="/logo_ufficiale.png" alt="Logo" className="login-logo" />
           <h1 className="login-title">Registrazione nuovo utente</h1>
@@ -160,6 +163,7 @@ const Register = () => {
         </form>
       </div>
     </div>
+    </>
   );
 };
 

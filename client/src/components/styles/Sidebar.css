@@ -1,6 +1,6 @@
 .sidebar-overlay {
   position: fixed;
-  top: 0;
+  top: 100px; /* Inizia sotto l'header */
   left: 0;
   right: 0;
   bottom: 0;
@@ -18,13 +18,13 @@
 
 .sidebar {
   position: fixed;
-  top: 70px; /* Altezza dell'header */
+  top: 100px; /* Altezza dell'header */
   left: 0;
   width: 250px;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 100px);
   background-color: white;
-  border-right: 2px solid #dc3545;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  border-right: 2px solid rgba(35, 35, 35, 0.1);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 999;

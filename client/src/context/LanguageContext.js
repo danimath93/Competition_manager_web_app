@@ -13,7 +13,7 @@ export const useLanguage = () => {
 const translations = {
   it: {
     // Header
-    welcomeMessage: 'Benvenuto nel Gestore Gare',
+    welcomeMessage: 'Gestore competizioni',
     
     // Sidebar
     dashboard: 'Dashboard',
@@ -26,6 +26,7 @@ const translations = {
     logout: 'Esci',
     
     // Login
+    loginIntro: "Accedi al tuo account",
     login: 'Accedi',
     signIn: 'Accedi',
     signInButton: 'Accedi',
@@ -46,7 +47,7 @@ const translations = {
   },
   en: {
     // Header
-    welcomeMessage: 'Welcome to Competition Manager',
+    welcomeMessage: 'Competition Manager',
     
     // Sidebar
     dashboard: 'Dashboard',
@@ -59,6 +60,7 @@ const translations = {
     logout: 'Logout',
     
     // Login
+    loginIntro: "Access your account",
     login: 'Login',
     signIn: 'Sign In',
     signInButton: 'Sign In',

@@ -2,11 +2,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: white;
-  border-bottom: 2px solid #dc3545;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  height: 70px;
+  padding: 1.5rem 3rem;
+  background-color: rgba(35, 35, 35, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  height: 100px;
   position: fixed;
   top: 0;
   left: 0;
@@ -17,19 +16,33 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+.logo-container {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .header-logo {
-  height: 50px;
-  width: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .header-title {
-  color: #dc3545;
-  font-size: 1.5rem;
+  color: white;
+  font-size: 1.8rem;
   font-weight: bold;
   margin: 0;
+  margin-left: 1rem;
 }
 
 .header-right {
@@ -38,56 +51,84 @@
   gap: 1.5rem;
 }
 
-.language-selector {
+/* User Menu Styles */
+.user-menu {
   position: relative;
 }
 
-.language-button {
+.user-button {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: white;
-  border: 2px solid #dc3545;
-  border-radius: 6px;
-  color: #dc3545;
-  cursor: pointer;
-  font-weight: 500;
+  justify-content: center;
   transition: all 0.3s ease;
 }
 
-.language-button:hover {
-  background-color: #dc3545;
-  color: white;
+.user-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
 }
 
-.language-icon {
+.user-icon {
+  font-size: 1.5rem;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  min-width: 200px;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-info-dropdown {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.user-name-dropdown {
+  color: #333;
+  font-weight: 600;
   font-size: 1rem;
 }
 
-.dropdown-icon {
-  font-size: 0.8rem;
-  transition: transform 0.3s ease;
+.user-role {
+  color: #666;
+  font-size: 0.85rem;
+  text-transform: capitalize;
 }
 
-.language-button:hover .dropdown-icon {
-  transform: rotate(180deg);
+.dropdown-divider {
+  height: 1px;
+  background-color: #e0e0e0;
 }
 
-.language-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: white;
-  border: 2px solid #dc3545;
-  border-radius: 6px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  min-width: 120px;
-  z-index: 1001;
-}
-
-.language-option {
+.dropdown-item {
   display: block;
   width: 100%;
   padding: 0.75rem 1rem;
@@ -96,7 +137,69 @@
   color: #333;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Language Selector Styles */
+.language-selector {
+  position: relative;
+}
+
+.language-button {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  transition: all 0.3s ease;
+}
+
+.language-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+.flag-emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  min-width: 160px;
+  z-index: 1001;
+  animation: fadeIn 0.2s ease;
+}
+
+.language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: white;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
   text-align: left;
 }
 
@@ -105,50 +208,83 @@
 }
 
 .language-option.active {
-  background-color: #dc3545;
-  color: white;
+  background-color: rgba(35, 35, 35, 0.05);
+  font-weight: 600;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.language-option .flag-emoji {
+  font-size: 1.3rem;
 }
 
-.user-name {
-  color: #333;
-  font-weight: 500;
-}
-
-.logout-button {
-  padding: 0.5rem 1rem;
-  background-color: #333;
-  border: none;
-  border-radius: 6px;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-}
-
-.logout-button:hover {
-  background-color: #555;
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
   .header {
-    padding: 1rem;
+    padding: 1rem 1.5rem;
+    height: 80px;
   }
   
   .header-title {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
   }
   
+  .logo-container {
+    width: 50px;
+    height: 50px;
+  }
+
+  .user-button,
+  .language-button {
+    width: 45px;
+    height: 45px;
+  }
+
+  .user-icon {
+    font-size: 1.2rem;
+  }
+
+  .flag-emoji {
+    font-size: 1.5rem;
+  }
+
   .header-right {
     gap: 1rem;
   }
-  
-  .user-name {
-    display: none;
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.75rem 1rem;
+    height: 70px;
+  }
+
+  .header-title {
+    font-size: 1rem;
+  }
+
+  .logo-container {
+    width: 45px;
+    height: 45px;
+  }
+
+  .user-button,
+  .language-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .user-icon {
+    font-size: 1rem;
+  }
+
+  .flag-emoji {
+    font-size: 1.3rem;
+  }
+
+  .header-right {
+    gap: 0.75rem;
+  }
+
+  .header-left {
+    gap: 0.75rem;
   }
 }
