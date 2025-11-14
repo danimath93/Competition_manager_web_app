@@ -31,6 +31,10 @@ const AppContent = () => {
   }
 
   const defaultRoute = (() => {
+    console.log("user:", user);
+    console.log("loading:", loading);
+
+    
     if (!user) return '/login';
 
     const role = user.permissions;
