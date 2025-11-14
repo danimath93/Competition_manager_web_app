@@ -3,8 +3,9 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../models');
-const { sendConfirmationEmail, sendResetPasswordEmail } = require('../utils/sendConfirmationEmail');
+const { sendConfirmationEmail, sendResetPasswordEmail } = require('../helpers/sendConfirmationEmail');
 const { checkClubExistsHelper } = require('./clubController');
+const logger = require('../helpers/logger/logger');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -45,6 +46,7 @@ const loginUser = async (req, res) => {
 
     res.status(200).json({ ok: true, user: outUser, token });
   } catch (error) {
+    logger.error(`Errore durante il login per utente ${req.body.username}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore durante il login',
       details: error.message
@@ -56,6 +58,7 @@ const logoutUser = async (req, res) => {
   try {
     res.json({ message: 'Logout effettuato con successo' });
   } catch (error) {
+    logger.error(`Errore durante il logout: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore durante il logout',
       details: error.message

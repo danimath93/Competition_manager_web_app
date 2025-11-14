@@ -19,21 +19,24 @@ import './App.css';
 
 // Componente principale dell'app
 const AppContent = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (!user) {
+  // Mostra uno spinner o nulla mentre verifica l'autenticazione
+  if (loading) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/reset-password" element={<RequestPasswordReset />} />
-        <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Caricamento...</div>
+      </div>
     );
   }
 
   const defaultRoute = (() => {
+    console.log("user:", user);
+    console.log("loading:", loading);
+
+    
+    if (!user) return '/login';
+
     const role = user.permissions;
     switch (role) {
       case 'superAdmin':
@@ -52,39 +55,45 @@ const AppContent = () => {
   })();
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/login" element={<Navigate to={defaultRoute} replace />} />
+    <Routes>
+      {/* Route pubbliche - accessibili sempre */}
+      <Route path="/login" element={user ? <Navigate to={defaultRoute} replace /> : <Login />} />
+      <Route path="/register" element={user ? <Navigate to={defaultRoute} replace /> : <Register />} />
+      <Route path="/reset-password" element={<RequestPasswordReset />} />
+      <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
+
+      <Route element={<Layout user={user} />}>
+        {/* Redirect root */}
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
-        
+
         {/* Dashboard - TODO: al momento in sviluppo, solo superAdmin */}
         <Route path="/dashboard" element={
           <AuthGate requiredPermissions={["superAdmin"]}>
             <Dashboard />
           </AuthGate>
         } />
-        
+
         {/* Competizioni - accesso comune, eventuali funzioni nascoste */}
         <Route path="/competitions" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club", "user"]}>
             <Competitions />
           </AuthGate>
         } />
-        
+
         {/* Registrazione Competizione - superAdmin, admin, user */}
         <Route path="/competitions/:competitionId/register" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <CompetitionRegistration />
           </AuthGate>
         } />
-        
+
         {/* Atleti - superAdmin, admin, club */}
         <Route path="/athletes" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <Athletes />
           </AuthGate>
         } />
-        
+
         {/* ClubAdmin - visualizzazione dati e gestione tutti i club */}
         <Route path="/clubs/admin" element={
           <AuthGate requiredPermissions={["admin", "superAdmin"]}>
@@ -98,32 +107,32 @@ const AppContent = () => {
             <ClubUser />
           </AuthGate>
         } />
-        
+
         {/* Giudici - solo superAdmin, admin */}
         <Route path="/judges" element={
           <AuthGate requiredPermissions={["superAdmin", "admin"]}>
             <Judges />
           </AuthGate>
         } />
-        
+
         {/* Categorie - superAdmin, admin, table */}
         <Route path="/categories" element={
           <AuthGate requiredPermissions={["superAdmin", "admin"]}>
             <Categories />
           </AuthGate>
         } />
-        
+
         {/* Impostazioni - TODO: al momento in sviluppo, solo superAdmin */}
         <Route path="/settings" element={
           <AuthGate requiredPermissions={["superAdmin"]}>
             <div>Pagina Impostazioni (da implementare)</div>
           </AuthGate>
         } />
-        
+
         {/* Redirect per tutte le route non valide */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Layout>
+        <Route path="*" element={<Navigate to={defaultRoute} replace />} />
+      </Route>
+    </Routes>
   );
 };
 

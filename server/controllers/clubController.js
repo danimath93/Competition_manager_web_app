@@ -1,5 +1,6 @@
 const { Club } = require('../models');
 const { Op } = require('sequelize');
+const logger = require('../helpers/logger/logger');
 
 // Ottieni tutti i club
 const getAllClubs = async (req, res) => {
@@ -10,6 +11,7 @@ const getAllClubs = async (req, res) => {
     });
     res.json(clubs);
   } catch (error) {
+    logger.error(`Errore nel recupero dei club: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero dei club',
       details: error.message 
@@ -26,11 +28,13 @@ const getClubById = async (req, res) => {
     });
     
     if (!club) {
+      logger.warn(`Tentativo recupero club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
     
     res.json(club);
   } catch (error) {
+    logger.error(`Errore nel recupero del club ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero del club',
       details: error.message 
@@ -42,14 +46,17 @@ const getClubById = async (req, res) => {
 const createClub = async (req, res) => {
   try {
     const club = await Club.create(req.body);
+    logger.info(`Club creato - ID: ${club.id}, Denominazione: ${club.denominazione}`);
     res.status(201).json(club);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
+      logger.warn(`Validazione fallita nella creazione club: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({ 
         error: 'Dati non validi',
         details: error.errors.map(e => e.message)
       });
     }
+    logger.error(`Errore nella creazione del club: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nella creazione del club',
       details: error.message 
@@ -66,18 +73,22 @@ const updateClub = async (req, res) => {
     });
     
     if (updatedRowsCount === 0) {
+      logger.warn(`Tentativo aggiornamento club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
     
     const updatedClub = await Club.findByPk(id);
+    logger.info(`Club aggiornato - ID: ${id}`);
     res.json(updatedClub);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
+      logger.warn(`Validazione fallita nell'aggiornamento club ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({ 
         error: 'Dati non validi',
         details: error.errors.map(e => e.message)
       });
     }
+    logger.error(`Errore nell'aggiornamento del club ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nell\'aggiornamento del club',
       details: error.message 
@@ -94,16 +105,20 @@ const deleteClub = async (req, res) => {
     });
     
     if (deletedRowsCount === 0) {
+      logger.warn(`Tentativo eliminazione club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
     
+    logger.info(`Club eliminato - ID: ${id}`);
     res.status(204).send();
   } catch (error) {
     if (error.name === 'SequelizeForeignKeyConstraintError') {
+      logger.warn(`Tentativo eliminazione club con dipendenze - ID: ${req.params.id}`);
       return res.status(400).json({ 
         error: 'Impossibile eliminare il club: esistono atleti o giudici associati'
       });
     }
+    logger.error(`Errore nell'eliminazione del club ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nell\'eliminazione del club',
       details: error.message 
@@ -131,6 +146,7 @@ const checkClubExists = async (req, res) => {
     const exists = await checkClubExistsHelper({ codiceFiscale, partitaIva });
     res.json({ exists });
   } catch (error) {
+    logger.error(`Errore durante la verifica del club: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore durante la verifica del club',
       details: error.message 

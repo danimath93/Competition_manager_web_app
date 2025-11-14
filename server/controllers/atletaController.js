@@ -1,4 +1,5 @@
 const {Atleta, Club, ConfigTipoAtleta } = require('../models');
+const logger = require('../helpers/logger/logger');
 
 // Ottieni tutti gli atleti
 const getAllAtleti = async (req, res) => {
@@ -19,6 +20,7 @@ const getAllAtleti = async (req, res) => {
     });
     res.status(200).json(atleti);
   } catch (error) {
+    logger.error(`Errore nel recupero degli atleti: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero degli atleti',
       details: error.message 
@@ -46,6 +48,7 @@ const getAtletiByClub = async (req, res) => {
     });
     res.status(200).json(atleti);
   } catch (error) {
+    logger.error(`Errore nel recupero degli atleti del club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero degli atleti del club',
       details: error.message 
@@ -57,14 +60,17 @@ const getAtletiByClub = async (req, res) => {
 const createAtleta = async (req, res) => {
   try {
     const newAtleta = await Atleta.create(req.body);
+    logger.info(`Atleta creato - ID: ${newAtleta.id}, Nome: ${newAtleta.nome} ${newAtleta.cognome}`);
     res.status(201).json(newAtleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
+      logger.warn(`Validazione fallita nella creazione atleta: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
         details: error.errors.map(e => e.message)
       });
     }
+    logger.error(`Errore nella creazione dell'atleta: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nella creazione dell\'atleta',
       details: error.message 
@@ -81,18 +87,22 @@ const updateAtleta = async (req, res) => {
     });
     
     if (updatedRowsCount === 0) {
+      logger.warn(`Tentativo aggiornamento atleta inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Atleta non trovato' });
     }
 
     const updatedAtleta = await Atleta.findByPk(id);
+    logger.info(`Atleta aggiornato - ID: ${id}`);
     res.json(updatedAtleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
+      logger.warn(`Validazione fallita nell'aggiornamento atleta ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({ 
         error: 'Dati non validi',
         details: error.errors.map(e => e.message)
       });
     }
+    logger.error(`Errore nell'aggiornamento dell'atleta ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nell\'aggiornamento dell\'atleta',
       details: error.message 
@@ -109,11 +119,14 @@ const deleteAtleta = async (req, res) => {
     });
     
     if (deletedRowsCount === 0) {
+      logger.warn(`Tentativo eliminazione atleta inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Atleta non trovato' });
     }
     
+    logger.info(`Atleta eliminato - ID: ${id}`);
     res.status(204).send();
   } catch (error) {
+    logger.error(`Errore nell'eliminazione dell'atleta ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nell\'eliminazione dell\'atleta',
       details: error.message 

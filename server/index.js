@@ -5,6 +5,10 @@ require('dotenv').config();
 const { sequelize } = require('./models');
 const apiRoutes = require('./routes');
 const { authenticateToken } = require('./middleware/auth');
+const logger = require('./helpers/logger/logger');
+const requestLogger = require('./middleware/requestLogger');
+const { errorHandler } = require('./middleware/errorHandler');
+
 
 const app = express();
 const PORT = process.env.PORT || 3050;
@@ -16,6 +20,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Request logging
+app.use(requestLogger);
 
 // Routes pubbliche (senza autenticazione)
 app.get('/', (req, res) => {
@@ -50,37 +57,26 @@ app.use('/api/auth', require('./routes/auth'));
 // Applica il middleware di autenticazione a tutte le altre API routes  
 app.use('/api', authenticateToken, apiRoutes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint non trovato' });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Errore interno del server' });
-});
+// Error handler (deve essere l'ultimo middleware)
+app.use(errorHandler);
 
 // Initialize database and start server
 const startServer = async () => {
   try {
     // Test database connection
     await sequelize.authenticate();
-    console.log('✅ Database connection established successfully.');
+    logger.info('✅ Database connection established successfully.');
 
     // Sync database (create tables if they don't exist)
     await sequelize.sync({ alter: true });
-    console.log('✅ Database synchronized successfully.');
-
+    logger.info('✅ Database synchronized successfully.');
     // Start server
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📊 Health check: ${process.env.BACKEND_URL}/health`);
-      console.log(`🏠 API Base URL: ${process.env.BACKEND_URL}`);
-      console.log(`📖 API Documentation: ${process.env.BACKEND_URL}`);
+      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`📊 Health check: ${process.env.BACKEND_URL}/health`);
     });
   } catch (error) {
-    console.error('❌ Unable to start server:', error);
+    logger.error('❌ Unable to start server:', error);
     process.exit(1);
   }
 };

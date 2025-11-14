@@ -1,4 +1,5 @@
 const { ConfigTipoCompetizione, ConfigTipoCategoria, ConfigGruppoEta, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
+const logger = require('../helpers/logger/logger');
 
 // Ottieni tutti i tipi di competizione
 const getAllTipiCompetizione = async (req, res) => {
@@ -18,6 +19,7 @@ const getAllTipiCompetizione = async (req, res) => {
     });
     res.json(tipiCompetizione);
   } catch (error) {
+    logger.error(`Errore nel recupero dei tipi di competizione: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero dei tipi di competizione',
       details: error.message 
@@ -47,6 +49,7 @@ const getTipoCompetizioneById = async (req, res) => {
 
     res.json(tipoCompetizione);
   } catch (error) {
+    logger.error(`Errore nel recupero del tipo di competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero del tipo di competizione',
       details: error.message 
@@ -75,6 +78,7 @@ const getCategorieByTipoCompetizione = async (req, res) => {
 
     res.json(categorie);
   } catch (error) {
+    logger.error(`Errore nel recupero delle categorie per tipo competizione ${req.params.tipoCompetizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero delle categorie',
       details: error.message 
@@ -97,6 +101,7 @@ const getAllTipiCategoria = async (req, res) => {
     });
     res.json(tipiCategoria);
   } catch (error) {
+    logger.error(`Errore nel recupero dei tipi di categoria: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero dei tipi di categoria',
       details: error.message 
@@ -123,6 +128,7 @@ const getTipoCategoriaById = async (req, res) => {
 
     res.json(tipoCategoria);
   } catch (error) {
+    logger.error(`Errore nel recupero del tipo categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero del tipo categoria',
       details: error.message 
@@ -139,6 +145,7 @@ const getAllGruppiEta = async (req, res) => {
     });
     res.json(gruppiEta);
   } catch (error) {
+    logger.error(`Errore nel recupero dei gruppi età: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero dei gruppi età',
       details: error.message 
@@ -161,6 +168,7 @@ const getAllTipiAtleta = async (req, res) => {
     });
     res.json(tipiAtleta);
   } catch (error) {
+    logger.error(`Errore nel recupero dei tipi atleta: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dei tipi atleta',
       details: error.message
@@ -186,6 +194,7 @@ const getTipoAtletaById = async (req, res) => {
     }
     res.json(tipoAtleta);
   } catch (error) {
+    logger.error(`Errore nel recupero del tipo atleta ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero del tipo atleta',
       details: error.message
@@ -207,6 +216,7 @@ const getAllEsperienze = async (req, res) => {
     });
     res.json(esperienze);
   } catch (error) {
+    logger.error(`Errore nel recupero delle esperienze: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle esperienze',
       details: error.message
@@ -230,6 +240,7 @@ const getEsperienzaById = async (req, res) => {
     }
     res.json(esperienza);
   } catch (error) {
+    logger.error(`Errore nel recupero dell'esperienza ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dell\'esperienza',
       details: error.message
@@ -249,6 +260,7 @@ const getEsperienzeByTipoAtleta = async (req, res) => {
     });
     res.json(esperienze);
   } catch (error) {
+    logger.error(`Errore nel recupero delle esperienze per tipo atleta ${req.params.tipoAtletaId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle esperienze per tipo atleta',
       details: error.message

@@ -1,4 +1,5 @@
 const { google } = require('googleapis');
+const logger = require('../helpers/logger/logger');
 
 // Verifica che tutte le credenziali OAuth2 siano configurate
 function validateOAuth2Config() {
@@ -66,17 +67,17 @@ async function sendEmailViaGmailAPI(to, subject, htmlBody) {
       }
     });
 
-    console.log('Email inviata con successo via Gmail API:', result.data.id);
+    logger.info('Email inviata con successo via Gmail API:', result.data.id);
     return result.data;
   } catch (error) {
-    console.error('Errore nell\'invio email via Gmail API:', error);
+    logger.error('Errore nell\'invio email via Gmail API:', error);
     throw new Error(`Impossibile inviare l'email: ${error.message}`);
   }
 }
 
 async function sendConfirmationEmail(to, token) {
   try {
-    console.log('Invio email di conferma a:', to);
+    logger.info('Invio email di conferma a:', to);
     const confirmUrl = `${process.env.BACKEND_URL}/auth/confirm?token=${token}`;
 
     const htmlBody = `
@@ -109,14 +110,14 @@ async function sendConfirmationEmail(to, token) {
 
     return result;
   } catch (error) {
-    console.error('Errore nell\'invio dell\'email di conferma:', error);
+    logger.error('Errore nell\'invio dell\'email di conferma:', error);
     throw new Error(`Impossibile inviare l'email di conferma: ${error.message}`);
   }
 }
 
 async function sendResetPasswordEmail(to, token) {
   try {
-    console.log('Invio email di reset password a:', to);
+    logger.info('Invio email di reset password a:', to);
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/confirm?token=${token}`;
 
     const htmlBody = `
@@ -153,7 +154,7 @@ async function sendResetPasswordEmail(to, token) {
 
     return result;
   } catch (error) {
-    console.error('Errore nell\'invio dell\'email di reset password:', error);
+    logger.error('Errore nell\'invio dell\'email di reset password:', error);
     throw new Error(`Impossibile inviare l'email di reset password: ${error.message}`);
   }
 }
