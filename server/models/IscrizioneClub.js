@@ -71,6 +71,21 @@ const IscrizioneClub = sequelize.define('IscrizioneClub', {
     allowNull: true,
     field: 'autorizzazioni_tipo'
   },
+  confermaPresidente: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true,
+    field: 'conferma_presidente'
+  },
+  confermaPresidenteNome: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'conferma_presidente_nome'
+  },
+  confermaPresidenteTipo: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'conferma_presidente_tipo'
+  },
   note: {
     type: DataTypes.TEXT,
     allowNull: true

@@ -61,8 +61,7 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
       handleCloseCategorySelector();
       onRegistrationSuccess();
     } catch (err) {
-      console.error('Errore nell\'iscrizione:', err);
-      setError('Errore nell\'iscrizione dell\'atleta');
+      throw err;
     } finally {
       setLoading(false);
     }

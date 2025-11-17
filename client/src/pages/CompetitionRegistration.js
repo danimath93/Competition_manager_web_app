@@ -19,7 +19,6 @@ import {
   loadAthleteRegistrationsByCompetitionAndClub, 
   createOrGetClubRegistration,
   getClubRegistration,
-  uploadClubRegistrationDocuments,
   confirmClubRegistrationFinal,
   editClubRegistration,
   getClubRegistrationCosts,
@@ -248,6 +247,7 @@ const CompetitionRegistration = () => {
       } else {
         await createAthlete(athleteData);
       }
+      handleCloseAthleteModal();
       await refreshClubAthletes();
     } catch (error) {
       throw error;

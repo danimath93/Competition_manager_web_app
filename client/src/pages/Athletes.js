@@ -184,7 +184,7 @@ const Athletes = () => {
           </Grid>
           <AuthComponent requiredRoles={['admin', 'superAdmin']}>
             <Grid item xs={12} sm={4}>
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
                 <InputLabel>Filtra per Club</InputLabel>
                 <Select
                   name="club"

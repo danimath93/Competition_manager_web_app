@@ -41,6 +41,7 @@ const style = {
 const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) => {
   const [formData, setFormData] = useState({});
   const [costModalOpen, setCostModalOpen] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isEditMode && competition) {
@@ -281,6 +282,11 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
               <option key={value} value={label}>{label}</option>
             ))}
           </TextField>
+          {error && (
+          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Annulla</Button>

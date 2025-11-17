@@ -40,6 +40,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
 
     // Raggruppa le iscrizioni per atleta
     const athletesMap = new Map();
+    let categories = [];
     iscrizioni.forEach(iscrizione => {
       const atletaId = iscrizione.atletaId;
       if (!athletesMap.has(atletaId)) {
@@ -51,15 +52,15 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
         });
       }
       athletesMap.get(atletaId).iscrizioni.push(iscrizione);
+      categories.push(iscrizione.tipoCategoriaId);
     });
 
     // Calcola e aggiorna il costo per ogni atleta
-    for (const [atletaId, athleteData] of athletesMap) {
-      const numCategories = athleteData.iscrizioni.length;
+    for (const [athleteId, athleteData] of athletesMap) {
       const cost = calculateAthleteCost(
         competizione.costiIscrizione,
         athleteData,
-        numCategories
+        categories
       );
 
       // Aggiorna tutte le iscrizioni dell'atleta con il costo calcolato
@@ -440,8 +441,8 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
     }
 
-    // Verifica che entrambi i file siano presenti
-    if (!files || !files.certificatiMedici || !files.autorizzazioni) {
+    // Verifica tutti i file presenti
+    if (!files || !files.certificatiMedici || !files.autorizzazioni || !files.confermaPresidente) {
       return res.status(400).json({
         error: 'Entrambi i documenti (certificati medici e autorizzazioni) sono obbligatori'
       });
@@ -449,6 +450,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
 
     const certificatiMedici = files.certificatiMedici[0];
     const autorizzazioni = files.autorizzazioni[0];
+    const confermaPresidente = files.confermaPresidente[0];
 
     // Verifica che siano PDF
     if (certificatiMedici.mimetype !== 'application/pdf') {
@@ -463,6 +465,12 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       });
     }
 
+    if (confermaPresidente.mimetype !== 'application/pdf') {
+      return res.status(400).json({
+        error: 'Le conferme autorizzazioni presidenti devono essere in formato PDF'
+      });
+    }
+
     // Salva i file nel database
     iscrizioneClub.certificatiMedici = certificatiMedici.buffer;
     iscrizioneClub.certificatiMediciNome = certificatiMedici.originalname;
@@ -470,6 +478,9 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
     iscrizioneClub.autorizzazioni = autorizzazioni.buffer;
     iscrizioneClub.autorizzazioniNome = autorizzazioni.originalname;
     iscrizioneClub.autorizzazioniTipo = autorizzazioni.mimetype;
+    iscrizioneClub.confermaPresidente = confermaPresidente.buffer;
+    iscrizioneClub.confermaPresidenteNome = confermaPresidente.originalname;
+    iscrizioneClub.confermaPresidenteTipo = confermaPresidente.mimetype;
 
     await iscrizioneClub.save();
 
@@ -478,7 +489,8 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       iscrizioneClub: {
         id: iscrizioneClub.id,
         certificatiMediciNome: iscrizioneClub.certificatiMediciNome,
-        autorizzazioniNome: iscrizioneClub.autorizzazioniNome
+        autorizzazioniNome: iscrizioneClub.autorizzazioniNome,
+        confermaPresidenteNome: iscrizioneClub.confermaPresidenteNome
       }
     });
   } catch (error) {

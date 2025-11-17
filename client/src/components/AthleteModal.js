@@ -140,11 +140,6 @@ const AthleteModal = ({
         <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
           {isEditMode ? 'Modifica Atleta' : 'Aggiungi Atleta'}
         </Typography>
-        {error && (
-          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
-            {error}
-          </Typography>
-        )}
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <TextField
@@ -328,6 +323,11 @@ const AthleteModal = ({
             />
           </Grid>
         </Grid>
+        {error && (
+          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>
           <Button type="submit" variant="contained" sx={{ ml: 2 }}>

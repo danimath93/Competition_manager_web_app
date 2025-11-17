@@ -79,13 +79,14 @@ export const getClubRegistration = async (clubId, competizioneId) => {
 };
 
 // Funzione per caricare i documenti dell'iscrizione del club
-export const uploadClubRegistrationDocuments = async (clubId, competizioneId, certificatiMedici, autorizzazioni) => {
+export const uploadClubRegistrationDocuments = async (clubId, competizioneId, certificatiMedici, autorizzazioni, confermaPresidente) => {
   try {
     const formData = new FormData();
     formData.append('clubId', clubId);
     formData.append('competizioneId', competizioneId);
     formData.append('certificatiMedici', certificatiMedici);
     formData.append('autorizzazioni', autorizzazioni);
+    formData.append('confermaPresidente', confermaPresidente);
 
     const response = await axios.post('/iscrizioni/club-iscrizione/documenti', formData, {
       headers: {

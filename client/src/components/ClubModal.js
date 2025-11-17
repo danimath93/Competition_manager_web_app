@@ -77,7 +77,6 @@ const ClubModal = ({
         <Typography variant="h6" component="h2">
           {isEditMode ? 'Modifica Club' : 'Aggiungi Club'}
         </Typography>
-        {displayError && (<Typography color="error" sx={{ mt: 2 }}>{displayError}</Typography>)}
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={12}>
             <TextField
@@ -158,6 +157,11 @@ const ClubModal = ({
             />
           </Grid>
         </Grid>
+        {displayError && (
+          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+            {displayError}
+          </Typography>
+        )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>
           <Button type="submit" variant="contained" sx={{ ml: 2 }}>

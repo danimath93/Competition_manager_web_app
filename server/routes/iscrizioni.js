@@ -49,7 +49,8 @@ router.post(
   '/club-iscrizione/documenti',
   uploadDocumenti.fields([
     { name: 'certificatiMedici', maxCount: 1 },
-    { name: 'autorizzazioni', maxCount: 1 }
+    { name: 'autorizzazioni', maxCount: 1 },
+    { name: 'confermaPresidente', maxCount: 1 }
   ]),
   iscrizioneController.uploadDocumentiIscrizioneClub
 );

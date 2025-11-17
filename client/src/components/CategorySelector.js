@@ -233,8 +233,6 @@ const CategorySelector = ({
 
       await onConfirm(registrationData);
     } catch (err) {
-      console.error('Errore nella registrazione:', err);
-      
       // Gestione errori specifici
       if (err.response?.status === 409 || err.message?.includes('già iscritto')) {
         setError('L\'atleta è già iscritto a questa categoria');
@@ -367,12 +365,6 @@ const CategorySelector = ({
         {title} - {athlete?.nome} {athlete?.cognome}
       </DialogTitle>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
         {availableCategories.length === 0 ? (
           <Alert severity="warning">
             Nessuna categoria disponibile per il tipo atleta di {athlete?.nome}
@@ -395,7 +387,11 @@ const CategorySelector = ({
           </Stepper>
         )}
       </DialogContent>
-      
+      {error && (
+        <Alert severity="error" sx={{ mx: 1 }}>
+          {error}
+        </Alert>
+      )}
       <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
         <Button onClick={onClose}>
           Annulla

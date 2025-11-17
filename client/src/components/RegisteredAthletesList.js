@@ -168,8 +168,7 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
       handleCloseCategorySelector();
       onRegistrationChange();
     } catch (error) {
-      console.error('Errore nella registrazione:', error);
-      setError('Errore nella registrazione');
+      throw error;
     } finally {
       setLoading(false);
     }
