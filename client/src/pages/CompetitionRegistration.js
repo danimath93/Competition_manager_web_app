@@ -8,6 +8,7 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  Divider,
   Chip,
 } from '@mui/material';
 import { ArrowBack, Euro as EuroIcon } from '@mui/icons-material';
@@ -15,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
 import { loadAthletesByClub, createAthlete, updateAthlete } from '../api/athletes';
+import { getCompetitionCostSummary } from '../api/competitions';
 import { 
   loadAthleteRegistrationsByCompetitionAndClub, 
   createOrGetClubRegistration,
@@ -47,6 +49,35 @@ const CompetitionRegistration = () => {
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [totalCost, setTotalCost] = useState(null);
   const [costLoading, setCostLoading] = useState(false);
+
+  // Stato per la card riepilogo costi
+  const [showCostSummary, setShowCostSummary] = useState(false);
+  const [costSummary, setCostSummary] = useState(null);
+  const [costSummaryLoading, setCostSummaryLoading] = useState(false);
+  const [costSummaryError, setCostSummaryError] = useState(null);
+
+  // Funzione per aprire la card riepilogo costi
+  const handleOpenCostSummary = async () => {
+    setShowCostSummary(true);
+    setCostSummaryLoading(true);
+    setCostSummaryError(null);
+    try {
+      const summary = await getCompetitionCostSummary(user.clubId, competitionId);
+      setCostSummary(summary);
+    } catch (err) {
+      setCostSummaryError('Errore nel caricamento del riepilogo costi');
+      setCostSummary(null);
+    } finally {
+      setCostSummaryLoading(false);
+    }
+  };
+
+  // Funzione per chiudere la card riepilogo costi
+  const handleCloseCostSummary = () => {
+    setShowCostSummary(false);
+    setCostSummary(null);
+    setCostSummaryError(null);
+  };
 
   // Carica i dati iniziali
   useEffect(() => {
@@ -444,13 +475,26 @@ const CompetitionRegistration = () => {
           {costLoading ? (
             <CircularProgress size={20} />
           ) : totalCost !== null && (
-            <Chip
-              icon={<EuroIcon />}
-              label={`Totale: ${totalCost.toFixed(2)} €`}
-              color="primary"
-              size="large"
-              sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
-            />
+            <>
+              <Chip
+                icon={<EuroIcon />}
+                label={`Totale: ${totalCost.toFixed(2)} €`}
+                color="primary"
+                size="large"
+                sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
+              />
+              {isClubRegistered && (
+                <Button
+                  variant="outlined"
+                  color="info"
+                  size="small"
+                  sx={{ ml: 2 }}
+                  onClick={handleOpenCostSummary}
+                >
+                  Riepilogo costi
+                </Button>
+              )}
+            </>
           )}
         </Box>
 
@@ -540,6 +584,63 @@ const CompetitionRegistration = () => {
         onClose={handleCloseDocumentsModal}
         clubRegistration={clubRegistration}
       />
+
+      {/* Card riepilogo costi */}
+      {showCostSummary && (
+        <>
+          {/* Overlay per chiusura clic esterno */}
+          <Box onClick={handleCloseCostSummary} sx={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1299, background: 'transparent' }} />
+          <Box sx={{ position: 'fixed', top: 80, right: 40, zIndex: 1300, width: 420 }}>
+            <Paper elevation={6} sx={{ p: 3, borderRadius: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Riepilogo costi iscrizione</Typography>
+                <Button size="small" color="error" onClick={handleCloseCostSummary}>Chiudi</Button>
+              </Box>
+              {costSummaryLoading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight={120}>
+                  <CircularProgress />
+                </Box>
+              ) : costSummaryError ? (
+                <Alert severity="error">{costSummaryError}</Alert>
+              ) : costSummary ? (
+                <>
+                  <Typography variant="body1" sx={{ mb: 1 }}>
+                    In totale hai iscritto <strong>{costSummary.totalAthletes}</strong> atleti alla competizione per un totale di <strong>{costSummary.totalCategories}</strong> categorie.
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Di seguito i dettagli:
+                  </Typography>
+                  {/* Dettaglio per tipo atleta */}
+                  {costSummary.athleteTypeDetails && Object.entries(costSummary.athleteTypeDetails).map(([type, detail]) => (
+                    <Box key={type} sx={{ mb: 1, ml: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        • <strong>{detail.total}</strong> {type} iscritti alla gara, di cui
+                      </Typography>
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        - {detail.singleCategory} iscritti ad una sola categoria
+                      </Typography>
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        - {detail.multiCategory} iscritti a 2 o più categorie
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    L'IBAN sul quale versare il pagamento della competizione è il seguente:
+                  </Typography>
+                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                    {costSummary.iban || 'Non disponibile'}
+                  </Typography>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Costo totale:</strong> {(costSummary.totalCost != null ? costSummary.totalCost : totalCost)?.toFixed(2)} €
+                  </Typography>
+                </>
+              ) : null}
+            </Paper>
+          </Box>
+        </>
+      )}
     </Container>
   );
 };

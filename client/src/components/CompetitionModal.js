@@ -90,10 +90,11 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     });
   };
 
-  const handleCostsChange = (costiIscrizione) => {
+  const handleCostsChange = (costiIscrizione, iban) => {
     setFormData({ 
       ...formData, 
-      costiIscrizione 
+      costiIscrizione,
+      iban: iban
     });
   };
 
@@ -251,6 +252,18 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
               )}
             </Box>
           )}
+          {formData.iban && (
+            <Box sx={{ bgcolor: 'grey.100', p: 2, borderRadius: 1 }}>
+              <Typography variant="body2">
+                Configurazione Iban impostata ✓
+              </Typography>
+              {formData.iban && (
+                <Typography variant="caption" color="text.secondary">
+                  • {formData.iban} impostato per versare i pagamenti
+                </Typography>
+              )}                            
+            </Box>
+          )}
           <Divider sx={{ my: 2 }} />
           <TextField
             name="descrizione"
@@ -299,7 +312,10 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
       <CostManagementModal
         open={costModalOpen}
         onClose={() => setCostModalOpen(false)}
-        value={formData.costiIscrizione}
+        value={{
+          ...formData.costiIscrizione,
+          iban: formData.iban || (competition && competition.iban) || ''
+        }}
         onChange={handleCostsChange}
       />
     </Dialog>

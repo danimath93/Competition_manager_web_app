@@ -33,6 +33,18 @@ export const loadCompetitionCategories = async (competitionId) => {
   }
 };
 
+
+// Ottiene il riepilogo costi dettagliato per una competizione e club
+export const getCompetitionCostSummary = async (clubId, competitionId) => {
+  try {
+    const response = await axios.get(`/competizioni/${competitionId}/riepilogo-costi?clubId=${clubId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel caricamento del riepilogo costi:', error);
+    throw error;
+  }
+};
+
 // Ottiene le competizioni filtrate per tipologia
 export const loadCompetitionsByTipologia = async (tipologiaId) => {
   try {

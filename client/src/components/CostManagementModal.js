@@ -30,6 +30,7 @@ import { loadAthleteTypes } from '../api/config';
 const steps = [
   'Costi Speciali',
   'Configurazione Costi per Tipo Atleta',
+  'IBAN Club',
   'Riepilogo'
 ];
 
@@ -44,6 +45,8 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
   // Stato per nuovo costo speciale
   const [newSpecialName, setNewSpecialName] = useState('');
   const [newSpecialCost, setNewSpecialCost] = useState('');
+
+  const [iban, setIbanClub] = useState('');
 
   // Carica tipi atleta
   useEffect(() => {
@@ -70,6 +73,13 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
       setActiveStep(0);
     }
   }, [value, open]);
+
+  // Inizializza lo stato iban dalla prop value.iban ogni volta che il modal si apre o cambia la prop
+  useEffect(() => {
+    if (open) {
+      setIbanClub((value && value.iban) ? value.iban : '');
+    }
+  }, [open, value && value.iban]);
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -176,7 +186,7 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
       specials: specialCosts,
       categories: athleteCostConfigs.filter(config => config.idConfigTipoAtleta !== null)
     };
-    onChange(costiIscrizione);
+    onChange(costiIscrizione, iban);
     onClose();
   };
 
@@ -191,7 +201,7 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
         return (
           <Box>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              Aggiungi costi fissi che verranno applicati a tutti gli atleti (es. assicurazione, tassa gara, ecc.)
+              Aggiungi i costi fissi che verranno applicati a tutti gli atleti (es. assicurazione, tassa gara, ecc.)
             </Typography>
             
             <Box display="flex" gap={2} mb={2}>
@@ -421,6 +431,29 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
       case 2:
         return (
           <Box>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              Aggiungi l'IBAN per la gestione dei pagamenti.
+            </Typography>
+            {(iban || (value && value.iban)) ? (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                IBAN attuale: <strong>{iban || value.iban}</strong>
+              </Alert>
+            ) : null}
+            <Box display="flex" gap={2} mb={2}>
+              <TextField
+                label="IBAN"
+                value={iban}
+                onChange={(e) => setIbanClub(e.target.value)}
+                size="small"
+                placeholder="Inserisci l'iban del club"
+              />
+            </Box>
+          </Box>
+        );
+
+      case 3:
+        return (
+          <Box>
             <Typography variant="h6" gutterBottom>
               Riepilogo Configurazione Costi
             </Typography>
@@ -479,6 +512,7 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
                   </Box>
                 ))}
               </Paper>
+              
             )}
 
             {Object.keys(specialCosts).length === 0 && athleteCostConfigs.length === 0 && (
@@ -486,6 +520,9 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
                 Nessuna configurazione costi impostata
               </Alert>
             )}
+            <Typography variant="h10" gutterBottom>
+              Per i pagamenti verrà fornito il seguente IBAN ai vari club iscritti: {iban || 'Nessun IBAN inserito'}
+            </Typography>
           </Box>
         );
 
