@@ -247,13 +247,17 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
               Rimuovi Atleta
             </Button>
           )}
-          
-          <IconButton
-            onClick={toggleExpanded}
-            sx={{ ml: 'auto' }}
-          >
-            {expanded ? <ExpandLess /> : <ExpandMore />}
-          </IconButton>
+          <Box  display="flex" 
+                alignItems="center" 
+                sx={{ cursor: 'pointer', ml: 'auto' }}
+                onClick={toggleExpanded} >
+            <Typography variant="body2" color="text.secondary">
+              DETTAGLI
+            </Typography>
+            <IconButton>
+              {expanded ? <ExpandLess /> : <ExpandMore />}
+            </IconButton>
+          </Box>
         </CardActions>
 
         {/* Dettagli delle categorie (espandibile) */}
