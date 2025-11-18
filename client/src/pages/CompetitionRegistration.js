@@ -501,17 +501,6 @@ const CompetitionRegistration = () => {
                 size="large"
                 sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
               />
-              {isClubRegistered && (
-                <Button
-                  variant="outlined"
-                  color="info"
-                  size="large"
-                  sx={{ ml: 2 }}
-                  onClick={handleOpenCostSummary}
-                >
-                  FINALIZZA ISCRIZIONE
-                </Button>
-              )}
             </>
           )}
         </Box>
@@ -578,6 +567,15 @@ const CompetitionRegistration = () => {
               onClick={handleEditRegistration()}
             >
               Modifica Iscrizione
+            </Button>
+            <Button
+              variant="outlined"
+              color="info"
+              size="large"
+              sx={{ ml: 1 }}
+              onClick={handleOpenCostSummary}
+            >
+              FINALIZZA ISCRIZIONE
             </Button>
           </Box>
         )}
