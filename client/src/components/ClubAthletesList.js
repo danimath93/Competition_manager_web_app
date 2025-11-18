@@ -116,6 +116,7 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
               // }
             />
             <ListItemSecondaryAction>
+            {!isClubRegistered && (
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <Tooltip title="Modifica Atleta" arrow>     
                   <Button
@@ -128,7 +129,7 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
                     <Edit />
                   </Button>
                 </Tooltip>
-                {!isClubRegistered && (
+
                 <Tooltip title="Iscrivi Atleta" arrow>                    
                   <Button
                     size="small"
@@ -139,8 +140,9 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
                     <PersonAdd />
                   </Button>
                 </Tooltip>
-                )}
+                
               </Box>
+            )}
             </ListItemSecondaryAction>
           </ListItem>
         ))}
