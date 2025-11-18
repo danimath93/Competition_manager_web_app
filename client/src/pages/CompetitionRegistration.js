@@ -505,11 +505,11 @@ const CompetitionRegistration = () => {
                 <Button
                   variant="outlined"
                   color="info"
-                  size="small"
+                  size="large"
                   sx={{ ml: 2 }}
                   onClick={handleOpenCostSummary}
                 >
-                  Riepilogo costi
+                  FINALIZZA ISCRIZIONE
                 </Button>
               )}
             </>
@@ -661,6 +661,22 @@ const CompetitionRegistration = () => {
                         </Button>
                       </Tooltip>
                     )}
+                  </Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Intestatario da inserire:
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
+                      {costSummary.intestatario || 'Non disponibile'}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Causale da inserire:
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
+                      {costSummary.causale || 'Non disponibile'}
+                    </Typography>
                   </Box>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2" sx={{ mb: 1 }}>

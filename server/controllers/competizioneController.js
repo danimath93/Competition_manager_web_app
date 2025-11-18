@@ -444,12 +444,16 @@ const getCompetitionCostSummary = async (req, res) => {
 
     // Costi: se non trovato, prendi dal box frontend
     let totalCost = iscrizioneClub && iscrizioneClub.costoTotale != null ? iscrizioneClub.costoTotale : null;
-    // IBAN
+    // IBAN, intestatario, causale
     const iban = competizione.iban || null;
+    const intestatario = competizione.intestatario || null;
+    const causale = competizione.causale || null;
 
     res.json({
       totalCost,
       iban,
+      intestatario,
+      causale,
       totalAthletes,
       totalCategories,
       athleteTypeDetails,

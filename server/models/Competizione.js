@@ -92,6 +92,14 @@ const Competizione = sequelize.define('Competizione', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  intestatario: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  causale: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   dataScadenzaIscrizioni: {
     type: DataTypes.DATE,
     allowNull: true,

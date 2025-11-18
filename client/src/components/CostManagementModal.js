@@ -47,6 +47,8 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
   const [newSpecialCost, setNewSpecialCost] = useState('');
 
   const [iban, setIbanClub] = useState('');
+  const [intestatario, setIntestatarioClub] = useState('');
+  const [causale, setCausaleClub] = useState('');
 
   // Carica tipi atleta
   useEffect(() => {
@@ -78,8 +80,10 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
   useEffect(() => {
     if (open) {
       setIbanClub((value && value.iban) ? value.iban : '');
+      setIntestatarioClub((value && value.intestatario) ? value.intestatario : '');
+      setCausaleClub((value && value.causale) ? value.causale : '');
     }
-  }, [open, value && value.iban]);
+  }, [open, value && value.iban, value && value.intestatario, value && value.causale]);
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -186,7 +190,7 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
       specials: specialCosts,
       categories: athleteCostConfigs.filter(config => config.idConfigTipoAtleta !== null)
     };
-    onChange(costiIscrizione, iban);
+    onChange(costiIscrizione, iban, intestatario, causale);
     onClose();
   };
 
@@ -448,6 +452,42 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
                 placeholder="Inserisci l'iban del club"
               />
             </Box>
+
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              Aggiungi l'intestatario dell'IBAN inserito.
+            </Typography>
+            {(intestatario || (value && value.intestatario)) ? (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Intestatario attuale: <strong>{intestatario || value.intestatario}</strong>
+              </Alert>
+            ) : null}
+            <Box display="flex" gap={2} mb={2}>
+              <TextField
+                label="Intestatario"
+                value={intestatario}
+                onChange={(e) => setIntestatarioClub(e.target.value)}
+                size="small"
+                placeholder="Inserisci l'intestatario dell'IBAN"
+              />
+            </Box>
+
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              Aggiungi la causale da inserire per i pagamenti.
+            </Typography>
+            {(causale || (value && value.causale)) ? (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Causale attuale: <strong>{causale || value.causale}</strong>
+              </Alert>
+            ) : null}
+            <Box display="flex" gap={2} mb={2}>
+              <TextField
+                label="Causale"
+                value={causale}
+                onChange={(e) => setCausaleClub(e.target.value)}
+                size="small"
+                placeholder="Inserisci la causale per i pagamenti"
+              />
+            </Box>
           </Box>
         );
 
@@ -521,7 +561,10 @@ const CostManagementModal = ({ open, onClose, value, onChange }) => {
               </Alert>
             )}
             <Typography variant="h10" gutterBottom>
-              Per i pagamenti verrà fornito il seguente IBAN ai vari club iscritti: {iban || 'Nessun IBAN inserito'}
+              Per i pagamenti verranno fornite le seguenti informazioni ai vari club iscritti:  <br />
+               • Iban: {iban || 'Nessun IBAN inserito'}  <br />
+               • Intestatario: {intestatario || 'Nessun Intestatario inserito'}  <br />
+               • Causale: {causale || 'Nessuna Causale inserita'}  <br />
             </Typography>
           </Box>
         );

@@ -90,11 +90,13 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     });
   };
 
-  const handleCostsChange = (costiIscrizione, iban) => {
+  const handleCostsChange = (costiIscrizione, iban, intestatario, causale) => {
     setFormData({ 
       ...formData, 
       costiIscrizione,
-      iban: iban
+      iban: iban,
+      intestatario: intestatario,
+      causale: causale
     });
   };
 
@@ -314,7 +316,9 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
         onClose={() => setCostModalOpen(false)}
         value={{
           ...formData.costiIscrizione,
-          iban: formData.iban || (competition && competition.iban) || ''
+          iban: formData.iban || (competition && competition.iban) || '',
+          intestatario: formData.intestatario || (competition && competition.intestatario) || '',
+          causale: formData.causale || (competition && competition.causale) || ''
         }}
         onChange={handleCostsChange}
       />
