@@ -40,7 +40,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
 
     // Raggruppa le iscrizioni per atleta
     const athletesMap = new Map();
-    let categories = [];
+    const categoriesMap = new Map();
     iscrizioni.forEach(iscrizione => {
       const atletaId = iscrizione.atletaId;
       if (!athletesMap.has(atletaId)) {
@@ -52,7 +52,11 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
         });
       }
       athletesMap.get(atletaId).iscrizioni.push(iscrizione);
-      categories.push(iscrizione.tipoCategoriaId);
+
+      if (!categoriesMap.has(atletaId)) {
+        categoriesMap.set(atletaId, []);
+      }
+      categoriesMap.get(atletaId).push(iscrizione.tipoCategoriaId);
     });
 
     // Calcola e aggiorna il costo per ogni atleta
@@ -60,7 +64,7 @@ const recalculateAthletesCosts = async (clubId, competizioneId) => {
       const cost = calculateAthleteCost(
         competizione.costiIscrizione,
         athleteData,
-        categories
+        categoriesMap.get(athleteId)
       );
 
       // Aggiorna tutte le iscrizioni dell'atleta con il costo calcolato
