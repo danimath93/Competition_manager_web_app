@@ -61,8 +61,13 @@ const ClubUser = () => {
 
   const handleEditSubmit = async (formData) => {
     const { logo, logoType, ...sendData } = formData;
-    const updated = await updateClub(club.id, sendData);
-    setClub(updated);
+    try {
+      const updated = await updateClub(club.id, sendData);
+      setClub(updated);
+      handleEditClose();
+    } catch (error) {
+      throw error;
+    }
   };
 
   const handleLogoEditClick = () => {

@@ -7,6 +7,7 @@ import {
   Button,
   Grid,
   Autocomplete,
+  Alert,
 } from '@mui/material';
 import { loadAllClubs } from '../api/clubs';
 import { loadAthleteTypes } from '../api/config';
@@ -324,9 +325,9 @@ const AthleteModal = ({
           </Grid>
         </Grid>
         {error && (
-          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             {error}
-          </Typography>
+          </Alert>
         )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>

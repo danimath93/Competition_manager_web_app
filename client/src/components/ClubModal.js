@@ -6,6 +6,7 @@ import {
   TextField,
   Button,
   Grid,
+  Alert,
 } from '@mui/material';
 
 const style = {
@@ -163,9 +164,9 @@ const ClubModal = ({
           </Grid>
         </Grid>
         {displayError && (
-          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             {displayError}
-          </Typography>
+          </Alert>
         )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>

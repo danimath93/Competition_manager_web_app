@@ -10,9 +10,9 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
-import { ArrowBack, Euro as EuroIcon } from '@mui/icons-material';
+import { ArrowBack, Euro as EuroIcon, ContentCopy as CopyIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
@@ -56,6 +56,7 @@ const CompetitionRegistration = () => {
   const [costSummary, setCostSummary] = useState(null);
   const [costSummaryLoading, setCostSummaryLoading] = useState(false);
   const [costSummaryError, setCostSummaryError] = useState(null);
+  const [ibanCopied, setIbanCopied] = useState(false);
 
   // Funzione per aprire la card riepilogo costi
   const handleOpenCostSummary = async () => {
@@ -78,6 +79,20 @@ const CompetitionRegistration = () => {
     setShowCostSummary(false);
     setCostSummary(null);
     setCostSummaryError(null);
+    setIbanCopied(false);
+  };
+
+  // Funzione per copiare l'IBAN negli appunti
+  const handleCopyIban = async () => {
+    if (costSummary?.iban) {
+      try {
+        await navigator.clipboard.writeText(costSummary.iban);
+        setIbanCopied(true);
+        setTimeout(() => setIbanCopied(false), 2000);
+      } catch (err) {
+        console.error('Errore durante la copia dell\'IBAN:', err);
+      }
+    }
   };
 
   // Carica i dati iniziali
@@ -631,9 +646,22 @@ const CompetitionRegistration = () => {
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     L'IBAN sul quale versare il pagamento della competizione è il seguente:
                   </Typography>
-                  <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
-                    {costSummary.iban || 'Non disponibile'}
-                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
+                      {costSummary.iban || 'Non disponibile'}
+                    </Typography>
+                    {costSummary.iban && (
+                      <Tooltip title="Iban copiato correttamente sulla clipboard!" open={ibanCopied} arrow>
+                        <Button
+                          size="small"
+                          onClick={handleCopyIban}
+                          sx={{ minWidth: 'auto', flexShrink: 0 }}
+                        >
+                          <CopyIcon />
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2" sx={{ mb: 1 }}>
                     <strong>Costo totale:</strong> {(costSummary.totalCost != null ? costSummary.totalCost : totalCost)?.toFixed(2)} €

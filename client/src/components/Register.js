@@ -170,16 +170,16 @@ const Register = () => {
             <input type="text" id="partitaIva" value={partitaIva} onChange={e => setPartitaIva(e.target.value)} className="form-input" disabled={loading} />
           </div>
           <div className="form-group">
-            <label htmlFor="indirizzoVia" className="form-label">Ragione sociale: Indirizzo*</label>
+            <label htmlFor="indirizzoVia" className="form-label">Sede sociale: Indirizzo*</label>
             <input type="text" id="indirizzoVia" value={indirizzoVia} onChange={e => setIndirizzoVia(e.target.value)} className="form-input" disabled={loading} />
           </div>
           <div className="form-group">
-            <label htmlFor="indirizzoComune" className="form-label">Ragione sociale: Comune*</label>
+            <label htmlFor="indirizzoComune" className="form-label">Sede sociale: Comune*</label>
             <input type="text" id="indirizzoComune" value={indirizzoComune} onChange={e => setIndirizzoComune(e.target.value)} className="form-input" disabled={loading} />
           </div>
 
           <div className="form-group">
-            <label htmlFor="indirizzoCap" className="form-label">Ragione sociale: CAP*</label>
+            <label htmlFor="indirizzoCap" className="form-label">Sede sociale: CAP*</label>
             <input type="text" id="indirizzoCap" value={indirizzoCap} onChange={e => setIndirizzoCap(e.target.value)} className="form-input" disabled={loading} />
           </div>
           <div className="form-group">

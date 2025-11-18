@@ -226,11 +226,11 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
           </Box>
         </CardContent>
 
-        <CardActions>
+        <CardActions sx={{ gap: 1 }}>
           {!isClubRegistered && (
             <Button
               size="small"
-              startIcon={<Add />}
+              endIcon={<Add />}
               onClick={handleAddCategory}
             >
               Aggiungi Categoria
@@ -240,23 +240,20 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
             <Button
               size="small"
               color="error"
-              startIcon={<PersonRemove />}
+              endIcon={<PersonRemove />}
               onClick={handleDeleteAthlete}
             >
               Rimuovi Atleta
             </Button>
           )}
-          <Box  display="flex" 
-                alignItems="center" 
-                sx={{ cursor: 'pointer', ml: 'auto' }}
-                onClick={toggleExpanded} >
-            <Typography variant="body2" color="text.secondary">
-              DETTAGLI
-            </Typography>
-            <IconButton>
-              {expanded ? <ExpandLess /> : <ExpandMore />}
-            </IconButton>
-          </Box>
+          <Button
+            size="small"
+            color="text.secondary"
+            endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
+            onClick={toggleExpanded}
+          >
+            Dettagli
+          </Button>
         </CardActions>
 
         {/* Dettagli delle categorie (espandibile) */}
