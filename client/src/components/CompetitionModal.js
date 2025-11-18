@@ -10,7 +10,7 @@ import {
   Typography,
   Divider,
   Box,
-  IconButton,
+  Alert,
 } from '@mui/material';
 import { Edit as EditIcon, Euro as EuroIcon } from '@mui/icons-material';
 import { CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
@@ -296,10 +296,10 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
             ))}
           </TextField>
           {error && (
-          <Typography variant="body1" color="error" sx={{ mb: 2 }}>
-            {error}
-          </Typography>
-        )}
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Annulla</Button>

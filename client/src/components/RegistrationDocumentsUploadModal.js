@@ -5,7 +5,6 @@ import {
   Button,
   Alert,
   Paper,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -326,6 +325,11 @@ const RegistrationDocumentsUploadModal = ({
             * Formato accettato: PDF | Dimensione massima: 10MB per file
           </Typography>
         </Box>
+        {error && (
+          <Alert severity="error">
+            {error}
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>
         <Box>
