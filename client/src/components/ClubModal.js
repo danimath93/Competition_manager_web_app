@@ -65,7 +65,12 @@ const ClubModal = ({
     e.preventDefault();
     try {
       setDisplayError('');
-      await onSubmit(formData);
+      // Passa anche l'id se in edit mode
+      if (isEditMode && club && club.id) {
+        await onSubmit({ ...formData, id: club.id });
+      } else {
+        await onSubmit(formData);
+      }
     } catch (error) {
       setDisplayError(error.message || 'Errore durante la modifica del club.');
     }

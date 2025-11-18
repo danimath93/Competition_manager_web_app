@@ -17,7 +17,8 @@ import {
   Select,
   MenuItem,
   Alert,
-  IconButton
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import { PersonAdd, Edit } from '@mui/icons-material';
 import { createRegistration } from '../api/registrations';
@@ -116,16 +117,19 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
             />
             <ListItemSecondaryAction>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Button
-                  aria-label="edit"
-                  size="small"
-                  variant="outlined"
-                  sx={{p:0.5, minWidth: 20}}
-                  onClick={() => onEditAthlete(athlete)}
-                >
-                  <Edit />
-                </Button>
+                <Tooltip title="Modifica Atleta" arrow>     
+                  <Button
+                    aria-label="edit"
+                    size="small"
+                    variant="outlined"
+                    sx={{p:0.5, minWidth: 20}}
+                    onClick={() => onEditAthlete(athlete)}
+                  >
+                    <Edit />
+                  </Button>
+                </Tooltip>
                 {!isClubRegistered && (
+                <Tooltip title="Iscrivi Atleta" arrow>                    
                   <Button
                     size="small"
                     variant="outlined"
@@ -134,6 +138,7 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
                   >
                     <PersonAdd />
                   </Button>
+                </Tooltip>
                 )}
               </Box>
             </ListItemSecondaryAction>

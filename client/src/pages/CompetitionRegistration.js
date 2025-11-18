@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Divider,
   Chip,
+  Tooltip
 } from '@mui/material';
 import { ArrowBack, Euro as EuroIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -407,14 +408,16 @@ const CompetitionRegistration = () => {
               <Typography variant="h6">
                 Atleti del Club
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={() => handleOpenAthleteModal()}
-              >
-                +
-              </Button>
+              <Tooltip title="Aggiungi Atleta" arrow>             
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleOpenAthleteModal()}
+                >
+                  +
+                </Button>
+              </Tooltip> 
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
               <ClubAthletesList

@@ -23,15 +23,15 @@ const getAllClubs = async (req, res) => {
 const getClubById = async (req, res) => {
   try {
     const { id } = req.params;
-    const club = await Club.findByPk(id, {
+    const club = await Club.scope('withLogo').findByPk(id, {
       include: ['atleti', 'giudici', 'competizioniOrganizzate']
     });
-    
+
     if (!club) {
       logger.warn(`Tentativo recupero club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
-    
+
     res.json(club);
   } catch (error) {
     logger.error(`Errore nel recupero del club ${req.params.id}: ${error.message}`, { stack: error.stack });
@@ -77,7 +77,7 @@ const updateClub = async (req, res) => {
       return res.status(404).json({ error: 'Club non trovato' });
     }
     
-    const updatedClub = await Club.findByPk(id);
+    const updatedClub = await Club.scope('withLogo').findByPk(id);
     logger.info(`Club aggiornato - ID: ${id}`);
     res.json(updatedClub);
   } catch (error) {
