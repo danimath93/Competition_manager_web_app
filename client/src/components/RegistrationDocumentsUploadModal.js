@@ -312,8 +312,8 @@ const RegistrationDocumentsUploadModal = ({
 
           <FileUploadBox
             fileType="confermaPresidente"
-            label="Conferma Presidente"
-            description="Carica il PDF contenente la conferma firmata dal presidente del club."
+            label="Dichiarazione del Presidente"
+            description="Carica il PDF contenente la dichiarazione firmata dal presidente del club."
           />
 
           {uploadStatus.message && (
