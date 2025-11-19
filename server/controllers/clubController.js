@@ -135,14 +135,22 @@ const deleteClub = async (req, res) => {
 
 // Helper function per verificare se un club esiste (per uso interno)
 const checkClubExistsHelper = async ({ codiceFiscale, partitaIva }) => {
+  // Controllo se esiste un club con lo stesso codice fiscale
   const club = await Club.findOne({
     where: {
-      [Op.or]: [  
-        { codiceFiscale },
-        { partitaIva }
-      ]
+      codiceFiscale
     }
   });
+
+  // Se il club non esiste, controllo per partita IVA se fornita
+  if (!club && partitaIva) {
+    return await Club.findOne({
+      where: {
+        partitaIva
+      }
+    });
+  }
+
   return !!club;
 };
 
