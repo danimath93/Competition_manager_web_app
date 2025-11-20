@@ -65,9 +65,9 @@ const createAtleta = async (req, res) => {
     const tipoAtleta = req.body?.tipoAtleta;
 
     if (!checkAgeEligibility(dataNascita, tipoAtleta)) {
-      logger.warn(`Tentativo di aggiunta atleta con dati di età non validi - ID: ${id}`);
+      logger.warn(`Tentativo di aggiunta atleta con dati di età non validi. Club: ${req.body?.club?.denominazione}`);
       return res.status(400).json({
-        error: 'L\'età dell\'atleta non è compatibile con il tipo di atleta selezionato'
+        error: `L\'età dell\'atleta non è compatibile con il tipo di atleta selezionato. ${tipoAtleta?.nome}: (${tipoAtleta?.etaMinima} - ${tipoAtleta?.etaMassima}) anni`
       });
     }
 
@@ -108,7 +108,7 @@ const updateAtleta = async (req, res) => {
     if (!checkAgeEligibility(dataNascita, tipoAtleta)) {
       logger.warn(`Tentativo di aggiornamento atleta con dati di età non validi - ID: ${id}`);
       return res.status(400).json({
-        error: 'L\'età dell\'atleta non è compatibile con il tipo di atleta selezionato'
+        error: `L\'età dell\'atleta non è compatibile con il tipo di atleta selezionato. ${tipoAtleta?.nome}: (${tipoAtleta?.etaMinima} - ${tipoAtleta?.etaMassima}) anni`
       });
     }
 
