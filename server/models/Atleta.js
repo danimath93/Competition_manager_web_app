@@ -26,6 +26,11 @@ const Atleta = sequelize.define('Atleta', {
     allowNull: false,
     field: 'data_nascita'
   },
+  luogoNascita: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'luogo_nascita'
+  },
   sesso: {
     type: DataTypes.ENUM('M', 'F'),
     allowNull: false

@@ -29,14 +29,16 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   // Funzione di redirect già presente
-  const handleRegisterSuccess = () => {
-    // Implementa qui la logica di redirect dopo la registrazione
-    // Ad esempio: window.location.href = '/login';
-  };
+  const handleRegisterSuccess = () => {};
 
   const validateFields = () => {
     if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError('Tutti i campi delle credenziali sono obbligatori.');
+      return false;
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError('La password deve essere di almeno 8 caratteri e contenere almeno una lettera maiuscola, una minuscola e un numero.');
       return false;
     }
     if (password !== confirmPassword) {
@@ -65,7 +67,12 @@ const Register = () => {
 
     try {
       const sendData = {
-        user: { username, email, password },
+        // Prima di inserire username, email e password, faccio il trim e normalizzo
+        user: {
+          username: username.trim(),
+          email: email.trim().toLowerCase(),
+          password: password.trim()
+        },
         club: {
           denominazione,
           codiceFiscale,

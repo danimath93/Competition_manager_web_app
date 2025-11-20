@@ -159,4 +159,125 @@ async function sendResetPasswordEmail(to, token) {
   }
 }
 
-module.exports = { sendConfirmationEmail, sendResetPasswordEmail };
+// Crea una pagina HTML di risposta con messaggio e redirect
+function createConfirmationResponsePage({ title, message, details, status = 'info', redirectUrl, redirectDelay = 5 }) {
+  const statusConfig = {
+    success: {
+      icon: '✓',
+      color: '#4caf50',
+      buttonColor: '#4caf50',
+      buttonHover: '#45a049'
+    },
+    error: {
+      icon: '❌',
+      color: '#f44336',
+      buttonColor: '#667eea',
+      buttonHover: '#5568d3'
+    },
+    warning: {
+      icon: '⚠️',
+      color: '#ff9800',
+      buttonColor: '#667eea',
+      buttonHover: '#5568d3'
+    },
+    info: {
+      icon: 'ℹ️',
+      color: '#2196F3',
+      buttonColor: '#2196F3',
+      buttonHover: '#1976D2'
+    }
+  };
+
+  const config = statusConfig[status] || statusConfig.info;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${title}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+          background: white;
+          padding: 40px;
+          border-radius: 10px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          text-align: center;
+          max-width: 500px;
+        }
+        .icon {
+          font-size: 64px;
+          margin-bottom: 20px;
+          color: ${config.color};
+        }
+        h1 { 
+          color: #333; 
+          margin-bottom: 20px; 
+        }
+        p { 
+          color: #666; 
+          line-height: 1.6;
+          margin: 10px 0;
+        }
+        .redirect-info {
+          margin-top: 20px;
+          padding: 15px;
+          background: #f5f5f5;
+          border-radius: 5px;
+          font-size: 14px;
+          color: #666;
+        }
+        .button {
+          display: inline-block;
+          margin-top: 20px;
+          padding: 12px 30px;
+          background: ${config.buttonColor};
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          transition: background 0.3s;
+        }
+        .button:hover { 
+          background: ${config.buttonHover}; 
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="icon">${config.icon}</div>
+        <h1>${title}</h1>
+        <p>${message}</p>
+        ${details ? `<p>${details}</p>` : ''}
+        <div class="redirect-info">
+          Verrai reindirizzato alla pagina di login tra <span id="countdown">${redirectDelay}</span> secondi...
+        </div>
+        <a href="${redirectUrl}" class="button">Vai al Login</a>
+      </div>
+      <script>
+        let seconds = ${redirectDelay};
+        const countdown = document.getElementById('countdown');
+        const interval = setInterval(() => {
+          seconds--;
+          countdown.textContent = seconds;
+          if (seconds <= 0) {
+            clearInterval(interval);
+            window.location.href = '${redirectUrl}';
+          }
+        }, 1000);
+      </script>
+    </body>
+    </html>
+  `;
+}
+
+module.exports = { sendConfirmationEmail, sendResetPasswordEmail, createConfirmationResponsePage };

@@ -3,7 +3,7 @@ const { Op } = require('sequelize');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const db = require('../models');
-const { sendConfirmationEmail, sendResetPasswordEmail } = require('../helpers/sendConfirmationEmail');
+const { sendConfirmationEmail, sendResetPasswordEmail, createConfirmationResponsePage } = require('../helpers/sendConfirmationEmail');
 const { checkClubExistsHelper } = require('./clubController');
 const logger = require('../helpers/logger/logger');
 
@@ -145,6 +145,7 @@ const registerUser = async (req, res) => {
       throw error;
     }
   } catch (error) {
+    logger.error(`Errore durante la registrazione utente: ${error.message}`, { stack: error.stack });
     res.status(500).json({ success: false, error });
   }
 };
@@ -152,24 +153,52 @@ const registerUser = async (req, res) => {
 const confirmUser = async (req, res) => {
   try {
     const { token } = req.query;
+    const loginUrl = `${process.env.FRONTEND_URL}/login`;
+
     if (!token) {
       logger.warn('Nessun token fornito per la conferma utente');
-      return res.status(400).json({ error: 'Token di accesso richiesto', message: 'Nessun token fornito' });
+      return res.status(400).send(createConfirmationResponsePage({
+        title: 'Errore di Conferma',
+        message: 'Token di accesso mancante o non valido.',
+        status: 'error',
+        redirectUrl: loginUrl
+      }));
     }
 
     const user = await UtentiLogin.findOne({ where: { confirmationToken: token } });
     if (!user) {
-      logger.warn('Token non valido o utente non trovato per la conferma utente');
-      return res.status(400).json({ error: 'Token non valido o utente non trovato' });
+      logger.warn('Token non trovato tra gli user per la conferma utente');
+      return res.status(400).send(createConfirmationResponsePage({
+        title: 'Token Non Valido',
+        message: 'Il token di conferma non è valido o è scaduto.',
+        details: 'Per favore richiedi una nuova email di conferma.',
+        status: 'error',
+        redirectUrl: loginUrl
+      }));
     }
+
     user.status = 'E';
     user.confirmationToken = null;
     await user.save();
     logger.info(`Account confermato per utente: ${user.username}`);
-    res.send('Account confermato! Ora puoi accedere.');
+    
+    return res.status(200).send(createConfirmationResponsePage({
+      title: 'Account Confermato!',
+      message: 'Il tuo account è stato confermato con successo.',
+      details: 'Ora puoi effettuare il login e iniziare ad utilizzare l\'applicazione.',
+      status: 'success',
+      redirectUrl: loginUrl
+    }));
   } catch (error) {
     logger.error(`Errore durante la conferma account: ${error.message}`, { stack: error.stack });
-    res.status(500).send('Errore nella conferma account');
+    const loginUrl = `${process.env.FRONTEND_URL}/login`;
+    return res.status(500).send(createConfirmationResponsePage({
+      title: 'Errore',
+      message: 'Si è verificato un errore durante la conferma dell\'account.',
+      details: 'Per favore riprova più tardi o contatta l\'assistenza.',
+      status: 'warning',
+      redirectUrl: loginUrl
+    }));
   }
 };
 
@@ -182,7 +211,7 @@ const requestPasswordReset = async (req, res) => {
     }
     const user = await UtentiLogin.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Utente non esistente.' });
+      return res.status(404).json({ success: false, message: 'Utente non esistente per l\'email fornita.' });
     }
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
@@ -191,6 +220,7 @@ const requestPasswordReset = async (req, res) => {
     await sendResetPasswordEmail(email, resetToken);
     return res.json({ success: true, message: 'Controlla la tua email per il reset della password.' });
   } catch (error) {
+    logger.error(`Errore durante la richiesta di reset password: ${error.message}`, { stack: error.stack });
     return res.status(500).json({ success: false, message: 'Errore richiesta reset password', error });
   }
 };
@@ -214,6 +244,7 @@ const resetPassword = async (req, res) => {
     await user.save();
     return res.json({ success: true, message: 'Password aggiornata correttamente.' });
   } catch (error) {
+    logger.error(`Errore durante il reset della password: ${error.message}`, { stack: error.stack });
     return res.status(500).json({ success: false, message: 'Errore nel reset della password', error });
   }
 };
