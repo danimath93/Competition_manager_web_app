@@ -8,6 +8,7 @@ import {
   Button,
   Box,
   Chip,
+  Tooltip
 } from '@mui/material';
 import { Edit, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
 import { format } from 'date-fns';
@@ -61,6 +62,20 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
             {/* Selezione specifica per club organizzatore: */}
             {competition.organizzatoreClubId === userClubId && (
               <AuthComponent requiredRoles={['club']}>
+                <Tooltip title="Info Competizione" arrow>
+                  <IconButton
+                    variant="contained"
+                    size="small"
+                    onClick={() => onEdit(competition)}
+                  >
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+              </AuthComponent>
+            )}
+            {/* Selezione solo per Admin o SuperAdmin */}
+            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+              <Tooltip title="Info Competizione" arrow>
                 <IconButton
                   variant="contained"
                   size="small"
@@ -68,58 +83,58 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                 >
                   <Edit />
                 </IconButton>
-              </AuthComponent>
-            )}
-            {/* Selezione solo per Admin o SuperAdmin */}
-            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-              <IconButton
-                variant="contained"
-                size="small"
-                onClick={() => onEdit(competition)}
-              >
-                <Edit />
-              </IconButton>
-              <IconButton
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={() => onEditClubOrganizer(competition.id)}
-              >
-                <ManageAccounts />
-              </IconButton>
-              <IconButton
-                variant="contained"
-                color="error"
-                size="small"
-                onClick={() => onDelete(competition.id)}
-              >
-                <Delete />
-              </IconButton>
+              </Tooltip>
+              <Tooltip title="Assegna Competizione" arrow>
+                <IconButton
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => onEditClubOrganizer(competition.id)}
+                >
+                  <ManageAccounts />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Elimina Competizione" arrow>
+                <IconButton
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => onDelete(competition.id)}
+                >
+                  <Delete />
+                </IconButton>
+              </Tooltip>
             </AuthComponent>
           </Box>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
             <AuthComponent requiredRoles={['admin', 'superAdmin', 'club']}>
+              <Tooltip title="Registra Atleti" arrow>
+                <Button
+                  variant="contained"
+                  onClick={() => onRegister(competition.id)}
+                  disabled={!isActive}
+                >
+                  <AppRegistration />
+                </Button>
+              </Tooltip>
+            </AuthComponent>
+            <Tooltip title="Dettagli Competizione" arrow>
               <Button
                 variant="contained"
-                onClick={() => onRegister(competition.id)}
+                onClick={() => onDetails(competition)}
+              >
+                <InfoOutline />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Inserisci Documenti Competizione" arrow>
+              <Button
+                variant="contained"
+                onClick={() => onDocuments(competition)}
                 disabled={!isActive}
               >
-                <AppRegistration />
+                <Description />
               </Button>
-            </AuthComponent>
-            <Button
-              variant="contained"
-              onClick={() => onDetails(competition)}
-            >
-              <InfoOutline />
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => onDocuments(competition)}
-              disabled={!isActive}
-            >
-              <Description />
-            </Button>
+            </Tooltip>            
           </Box>
         </>
       </CardActions>

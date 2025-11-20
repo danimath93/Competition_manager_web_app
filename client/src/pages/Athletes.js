@@ -40,16 +40,12 @@ const Athletes = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
-          const athletesData = await loadAllAthletes();
-          setAthletes(athletesData);
-          setFilteredAthletes(athletesData);
-        } else {
-          const athletesData = await loadAthletesByClub(user.clubId);
-          setAthletes(athletesData);
-          setFilteredAthletes(athletesData);
-        }
+        await loadAthleteByUserPermissions();
+      } catch (error) {
+        console.error('Errore nel caricamento degli atleti:', error);
+      }
 
+      try {
         const athleteTypesData = await loadAthleteTypes();
         setAthleteTypes(athleteTypesData);
         
@@ -58,7 +54,7 @@ const Athletes = () => {
           setClubs(clubsData);
         }
       } catch (error) {
-        console.error('Errore nel caricamento dei dati:', error);
+        console.error('Errore nel caricamento dei tipi di atleta o dei club:', error);
       }
     };
 
@@ -122,22 +118,33 @@ const Athletes = () => {
       } else {
         await createAthlete(athleteData);
       }
-      const athletesData = await loadAllAthletes();
-      setAthletes(athletesData);
-    } catch (error) {
-      console.error("Errore nel salvataggio dell'atleta:", error);
-    } finally {
+
+      await loadAthleteByUserPermissions();
       handleCloseModal();
+    } catch (error) {
+      throw error;
     }
   };
 
   const handleDeleteAthlete = async (athleteId) => {
     try {
       await deleteAthlete(athleteId);
-      const athletesData = await loadAllAthletes();
-      setAthletes(athletesData);
+
+      await loadAthleteByUserPermissions();
     } catch (error) {
       console.error("Errore nell'eliminazione dell'atleta:", error);
+    }
+  };
+
+  const loadAthleteByUserPermissions = async () => {
+    if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
+      const athletesData = await loadAllAthletes();
+      setAthletes(athletesData);
+      setFilteredAthletes(athletesData);
+    } else {
+      const athletesData = await loadAthletesByClub(user.clubId);
+      setAthletes(athletesData);
+      setFilteredAthletes(athletesData);
     }
   };
 
@@ -164,7 +171,7 @@ const Athletes = () => {
             />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <FormControl fullWidth variant="outlined">
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200}}>
               <InputLabel>Filtra per Tipo Atleta</InputLabel>
               <Select
                 name="type"
@@ -185,7 +192,7 @@ const Athletes = () => {
           </Grid>
           <AuthComponent requiredRoles={['admin', 'superAdmin']}>
             <Grid item xs={12} sm={4}>
-              <FormControl fullWidth variant="outlined">
+              <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
                 <InputLabel>Filtra per Club</InputLabel>
                 <Select
                   name="club"

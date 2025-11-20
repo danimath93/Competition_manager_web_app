@@ -8,18 +8,20 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  Divider,
   Chip,
+  Tooltip,
 } from '@mui/material';
-import { ArrowBack, Euro as EuroIcon } from '@mui/icons-material';
+import { ArrowBack, Euro as EuroIcon, ContentCopy as CopyIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getCompetitionDetails } from '../api/competitions';
 import { loadAthletesByClub, createAthlete, updateAthlete } from '../api/athletes';
+import { getCompetitionCostSummary } from '../api/competitions';
 import { 
   loadAthleteRegistrationsByCompetitionAndClub, 
   createOrGetClubRegistration,
   getClubRegistration,
-  uploadClubRegistrationDocuments,
   confirmClubRegistrationFinal,
   editClubRegistration,
   getClubRegistrationCosts,
@@ -48,6 +50,50 @@ const CompetitionRegistration = () => {
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [totalCost, setTotalCost] = useState(null);
   const [costLoading, setCostLoading] = useState(false);
+
+  // Stato per la card riepilogo costi
+  const [showCostSummary, setShowCostSummary] = useState(false);
+  const [costSummary, setCostSummary] = useState(null);
+  const [costSummaryLoading, setCostSummaryLoading] = useState(false);
+  const [costSummaryError, setCostSummaryError] = useState(null);
+  const [ibanCopied, setIbanCopied] = useState(false);
+
+  // Funzione per aprire la card riepilogo costi
+  const handleOpenCostSummary = async () => {
+    setShowCostSummary(true);
+    setCostSummaryLoading(true);
+    setCostSummaryError(null);
+    try {
+      const summary = await getCompetitionCostSummary(user.clubId, competitionId);
+      setCostSummary(summary);
+    } catch (err) {
+      setCostSummaryError('Errore nel caricamento del riepilogo costi');
+      setCostSummary(null);
+    } finally {
+      setCostSummaryLoading(false);
+    }
+  };
+
+  // Funzione per chiudere la card riepilogo costi
+  const handleCloseCostSummary = () => {
+    setShowCostSummary(false);
+    setCostSummary(null);
+    setCostSummaryError(null);
+    setIbanCopied(false);
+  };
+
+  // Funzione per copiare l'IBAN negli appunti
+  const handleCopyIban = async () => {
+    if (costSummary?.iban) {
+      try {
+        await navigator.clipboard.writeText(costSummary.iban);
+        setIbanCopied(true);
+        setTimeout(() => setIbanCopied(false), 2000);
+      } catch (err) {
+        console.error('Errore durante la copia dell\'IBAN:', err);
+      }
+    }
+  };
 
   // Carica i dati iniziali
   useEffect(() => {
@@ -82,6 +128,8 @@ const CompetitionRegistration = () => {
           const clubRegData = await getClubRegistration(user.clubId, competitionId);
           setClubRegistration(clubRegData);
           setIsClubRegistered(clubRegData.stato === 'Confermata');
+
+          await refreshCosts();
         } catch (err) {
           // L'iscrizione non esiste ancora - creala se ci sono atleti iscritti
           if (registrationsData.length > 0) {
@@ -127,7 +175,13 @@ const CompetitionRegistration = () => {
         user.clubId
       );
       setRegisteredAthletes(registrationsData);
-      
+
+      if (clubRegistration == null) {
+        const newClubReg = await createOrGetClubRegistration(user.clubId, competitionId);
+        setClubRegistration(newClubReg);
+        setIsClubRegistered(false);
+      }
+
       // Aggiorna anche i costi
       await refreshCosts();
     } catch (err) {
@@ -240,12 +294,10 @@ const CompetitionRegistration = () => {
       } else {
         await createAthlete(athleteData);
       }
+      handleCloseAthleteModal();
       await refreshClubAthletes();
     } catch (error) {
-      console.error("Errore nel salvataggio dell'atleta:", error);
-      setError("Errore nel salvataggio dell'atleta");
-    } finally {
-      handleCloseAthleteModal();
+      throw error;
     }
   };
 
@@ -371,14 +423,16 @@ const CompetitionRegistration = () => {
               <Typography variant="h6">
                 Atleti del Club
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={() => handleOpenAthleteModal()}
-              >
-                +
-              </Button>
+              <Tooltip title="Aggiungi Atleta" arrow>             
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  onClick={() => handleOpenAthleteModal()}
+                >
+                  +
+                </Button>
+              </Tooltip> 
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
               <ClubAthletesList
@@ -439,20 +493,22 @@ const CompetitionRegistration = () => {
           {costLoading ? (
             <CircularProgress size={20} />
           ) : totalCost !== null && (
-            <Chip
-              icon={<EuroIcon />}
-              label={`Totale: ${totalCost.toFixed(2)} €`}
-              color="primary"
-              size="large"
-              sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
-            />
+            <>
+              <Chip
+                icon={<EuroIcon />}
+                label={`Totale: ${totalCost.toFixed(2)} €`}
+                color="primary"
+                size="large"
+                sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
+              />
+            </>
           )}
         </Box>
 
         {/* Bottoni azioni */}
         <Box display="flex" gap={2}>
           {/* Stato "In attesa" - mostra bottone documenti */}
-          {clubRegistration?.stato === 'In attesa' && (
+          {registeredAthletes?.length > 0 && clubRegistration?.stato === 'In attesa' && (
             <>
               <Button
                 variant="outlined"
@@ -512,6 +568,15 @@ const CompetitionRegistration = () => {
             >
               Modifica Iscrizione
             </Button>
+            <Button
+              variant="outlined"
+              color="info"
+              size="large"
+              sx={{ ml: 1 }}
+              onClick={handleOpenCostSummary}
+            >
+              FINALIZZA ISCRIZIONE
+            </Button>
           </Box>
         )}
         </Box>
@@ -535,6 +600,92 @@ const CompetitionRegistration = () => {
         onClose={handleCloseDocumentsModal}
         clubRegistration={clubRegistration}
       />
+
+      {/* Card riepilogo costi */}
+      {showCostSummary && (
+        <>
+          {/* Overlay per chiusura clic esterno */}
+          <Box onClick={handleCloseCostSummary} sx={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1299, background: 'transparent' }} />
+          <Box sx={{ position: 'fixed', top: 80, right: 40, zIndex: 1300, width: 420 }}>
+            <Paper elevation={6} sx={{ p: 3, borderRadius: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Riepilogo costi iscrizione</Typography>
+                <Button size="small" color="error" onClick={handleCloseCostSummary}>Chiudi</Button>
+              </Box>
+              {costSummaryLoading ? (
+                <Box display="flex" justifyContent="center" alignItems="center" minHeight={120}>
+                  <CircularProgress />
+                </Box>
+              ) : costSummaryError ? (
+                <Alert severity="error">{costSummaryError}</Alert>
+              ) : costSummary ? (
+                <>
+                  <Typography variant="body1" sx={{ mb: 1 }}>
+                    In totale hai iscritto <strong>{costSummary.totalAthletes}</strong> atleti alla competizione per un totale di <strong>{costSummary.totalCategories}</strong> categorie.
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    Di seguito i dettagli:
+                  </Typography>
+                  {/* Dettaglio per tipo atleta */}
+                  {costSummary.athleteTypeDetails && Object.entries(costSummary.athleteTypeDetails).map(([type, detail]) => (
+                    <Box key={type} sx={{ mb: 1, ml: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        • <strong>{detail.total}</strong> {type} iscritti alla gara, di cui
+                      </Typography>
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        - {detail.singleCategory} iscritti ad una sola categoria
+                      </Typography>
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        - {detail.multiCategory} iscritti a 2 o più categorie
+                      </Typography>
+                    </Box>
+                  ))}
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    L'IBAN sul quale versare il pagamento della competizione è il seguente:
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
+                      {costSummary.iban || 'Non disponibile'}
+                    </Typography>
+                    {costSummary.iban && (
+                      <Tooltip title="Iban copiato correttamente sulla clipboard!" open={ibanCopied} arrow>
+                        <Button
+                          size="small"
+                          onClick={handleCopyIban}
+                          sx={{ minWidth: 'auto', flexShrink: 0 }}
+                        >
+                          <CopyIcon />
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Intestatario da inserire:
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
+                      {costSummary.intestatario || 'Non disponibile'}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Causale da inserire:
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
+                      {costSummary.causale || 'Non disponibile'}
+                    </Typography>
+                  </Box>
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <strong>Costo totale:</strong> {(costSummary.totalCost != null ? costSummary.totalCost : totalCost)?.toFixed(2)} €
+                  </Typography>
+                </>
+              ) : null}
+            </Paper>
+          </Box>
+        </>
+      )}
     </Container>
   );
 };

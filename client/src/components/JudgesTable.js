@@ -8,6 +8,7 @@ import {
   TableRow,
   Paper,
   IconButton,
+  Tooltip
 } from '@mui/material';
 import { Info, Edit, Delete } from '@mui/icons-material';
 import { format } from 'date-fns';
@@ -35,15 +36,21 @@ const JudgesTable = ({ judges, onInfo, onEdit, onDelete }) => {
               </TableCell>
               <TableCell>{judge.livelloEsperienza}</TableCell>
               <TableCell>
-                <IconButton onClick={() => onInfo(judge)}>
-                  <Info />
-                </IconButton>
-                <IconButton onClick={() => onEdit(judge)}>
-                  <Edit />
-                </IconButton>
-                <IconButton onClick={() => onDelete(judge.id)}>
-                  <Delete />
-                </IconButton>
+                <Tooltip title="Info Giudice" arrow>
+                  <IconButton onClick={() => onInfo(judge)}>
+                    <Info />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Modifica Giudice" arrow>                
+                  <IconButton onClick={() => onEdit(judge)}>
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Elimina Giudice" arrow>                
+                  <IconButton onClick={() => onDelete(judge.id)}>
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))}

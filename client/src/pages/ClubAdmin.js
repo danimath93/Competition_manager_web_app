@@ -110,10 +110,9 @@ const ClubAdmin = () => {
       }
       const clubsData = await loadAllClubs();
       setClubs(clubsData);
-    } catch (error) {
-      console.error("Errore nel salvataggio del club:", error);
-    } finally {
       handleCloseModal();
+    } catch (error) {
+      throw error;
     }
   };
 

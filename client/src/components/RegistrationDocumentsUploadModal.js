@@ -5,7 +5,6 @@ import {
   Button,
   Alert,
   Paper,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -36,11 +35,13 @@ const RegistrationDocumentsUploadModal = ({
   const [displayedFiles, setDisplayedFiles] = useState({
     certificatiMedici: null,
     autorizzazioni: null,
+    confermaPresidente: null
   });
 
   const [displayedFileNames, setDisplayedFileNames] = useState({
     certificatiMedici: '',
     autorizzazioni: '',
+    confermaPresidente: ''
   });
 
   const [uploadStatus, setUploadStatus] = useState({
@@ -54,10 +55,12 @@ const RegistrationDocumentsUploadModal = ({
       setDisplayedFiles({
         certificatiMedici: null,
         autorizzazioni: null,
+        confermaPresidente: null,
       });
       setDisplayedFileNames({
         certificatiMedici: clubRegistration?.certificatiMediciNome || '',
         autorizzazioni: clubRegistration?.autorizzazioniNome || '',
+        confermaPresidente: clubRegistration?.confermaPresidenteNome || '',
       });
       setUploadStatus({
         message: '',
@@ -127,17 +130,21 @@ const RegistrationDocumentsUploadModal = ({
     setDisplayedFiles({
       certificatiMedici: null,
       autorizzazioni: null,
+      confermaPresidente: null,
     });
     setDisplayedFileNames({
       certificatiMedici: '',
       autorizzazioni: '',
+      confermaPresidente: '',
     });
     
     // Reset degli input file
     const inputCertificati = document.getElementById('certificatiMedici-input');
     const inputAutorizzazioni = document.getElementById('autorizzazioni-input');
+    const inputConferma = document.getElementById('confermaPresidente-input');
     if (inputCertificati) inputCertificati.value = '';
     if (inputAutorizzazioni) inputAutorizzazioni.value = '';
+    if (inputConferma) inputConferma.value = '';
   };
 
   const handleCloseModal = () => {
@@ -146,9 +153,9 @@ const RegistrationDocumentsUploadModal = ({
 
   const handleUploadDocuments = async () => {
     // Verifica che ci siano file da caricare (devono essere File objects, non solo nomi)
-    if (!displayedFiles.certificatiMedici || !displayedFiles.autorizzazioni) {
+    if (!displayedFiles.certificatiMedici || !displayedFiles.autorizzazioni || !displayedFiles.confermaPresidente) {
       setUploadStatus({
-        message: 'Entrambi i documenti sono obbligatori',
+        message: 'Tutti e tre i documenti sono obbligatori',
         error: true
       });
       return;
@@ -162,7 +169,8 @@ const RegistrationDocumentsUploadModal = ({
         user.clubId,
         competitionId,
         displayedFiles.certificatiMedici,
-        displayedFiles.autorizzazioni
+        displayedFiles.autorizzazioni,
+        displayedFiles.confermaPresidente
       );
       setError(null);
       if (onClose)
@@ -176,13 +184,13 @@ const RegistrationDocumentsUploadModal = ({
   };
 
   // Verifica se almeno un file è presente
-  const hasAnyFile = displayedFileNames.certificatiMedici || displayedFileNames.autorizzazioni;
+  const hasAnyFile = displayedFileNames.certificatiMedici || displayedFileNames.autorizzazioni || displayedFileNames.confermaPresidente;
   
-  // Verifica se entrambi i file sono File objects nuovi (non solo nomi da DB)
-  const hasBothNewFiles = displayedFiles.certificatiMedici && displayedFiles.autorizzazioni;
+  // Verifica se tutti e tre i file sono File objects nuovi (non solo nomi da DB)
+  const hasAllNewFiles = displayedFiles.certificatiMedici && displayedFiles.autorizzazioni && displayedFiles.confermaPresidente;
   
-  // Il pulsante "Carica Documenti" è abilitato solo se ci sono entrambi i file NUOVI
-  const canUpload = hasBothNewFiles && !uploadingDocuments;
+  // Il pulsante "Carica Documenti" è abilitato solo se ci sono tutti e tre i file NUOVI
+  const canUpload = hasAllNewFiles && !uploadingDocuments;
 
   const FileUploadBox = ({ fileType, label, description }) => {
     const fileName = displayedFileNames[fileType];
@@ -286,7 +294,7 @@ const RegistrationDocumentsUploadModal = ({
         <Box>
           <Alert severity="info" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              <strong>Documenti obbligatori:</strong> Per confermare l'iscrizione è necessario caricare entrambi i documenti in formato PDF.
+              <strong>Documenti obbligatori:</strong> Per confermare l'iscrizione è necessario caricare tutti e tre i documenti in formato PDF.
             </Typography>
           </Alert>
           <FileUploadBox
@@ -301,6 +309,12 @@ const RegistrationDocumentsUploadModal = ({
             description="Carica il PDF contenente le autorizzazioni necessarie per la partecipazione."
           />
 
+          <FileUploadBox
+            fileType="confermaPresidente"
+            label="Dichiarazione del Presidente"
+            description="Carica il PDF contenente la dichiarazione firmata dal presidente del club."
+          />
+
           {uploadStatus.message && (
             <Alert severity={uploadStatus.error ? 'error' : 'success'} sx={{ mb: 2 }}>
               {uploadStatus.message}
@@ -311,6 +325,11 @@ const RegistrationDocumentsUploadModal = ({
             * Formato accettato: PDF | Dimensione massima: 10MB per file
           </Typography>
         </Box>
+        {error && (
+          <Alert severity="error">
+            {error}
+          </Alert>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>
         <Box>

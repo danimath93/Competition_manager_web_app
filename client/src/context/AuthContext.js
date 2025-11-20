@@ -11,25 +11,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const response = await loginUser(username, password);
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      if (!response.user || !response.token) {
-        throw new Error('Invalid response from server');
-      }
-
       setUser(response.user);
 
       // Salvo su localStorage solo le info essenziali
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify({username: response.user.username, email: response.user.email}) );
 
-      return { success: true };
+      return { success: true, user: response.user, token: response.token };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Unauthorized: ' + error.message };
+      return { success: false, error, type: error.type, message: error.message};
     }
   };
 

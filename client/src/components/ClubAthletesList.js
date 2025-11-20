@@ -17,7 +17,8 @@ import {
   Select,
   MenuItem,
   Alert,
-  IconButton
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import { PersonAdd, Edit } from '@mui/icons-material';
 import { createRegistration } from '../api/registrations';
@@ -61,8 +62,7 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
       handleCloseCategorySelector();
       onRegistrationSuccess();
     } catch (err) {
-      console.error('Errore nell\'iscrizione:', err);
-      setError('Errore nell\'iscrizione dell\'atleta');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -116,17 +116,21 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
               // }
             />
             <ListItemSecondaryAction>
+            {!isClubRegistered && (
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Button
-                  aria-label="edit"
-                  size="small"
-                  variant="outlined"
-                  sx={{p:0.5, minWidth: 20}}
-                  onClick={() => onEditAthlete(athlete)}
-                >
-                  <Edit />
-                </Button>
-                {!isClubRegistered && (
+                <Tooltip title="Modifica Atleta" arrow>     
+                  <Button
+                    aria-label="edit"
+                    size="small"
+                    variant="outlined"
+                    sx={{p:0.5, minWidth: 20}}
+                    onClick={() => onEditAthlete(athlete)}
+                  >
+                    <Edit />
+                  </Button>
+                </Tooltip>
+
+                <Tooltip title="Iscrivi Atleta" arrow>                    
                   <Button
                     size="small"
                     variant="outlined"
@@ -135,8 +139,10 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
                   >
                     <PersonAdd />
                   </Button>
-                )}
+                </Tooltip>
+                
               </Box>
+            )}
             </ListItemSecondaryAction>
           </ListItem>
         ))}

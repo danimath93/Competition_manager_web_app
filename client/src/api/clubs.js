@@ -54,11 +54,26 @@ export const deleteClub = async (clubId) => {
 
 export const checkClubExists = async (codiceFiscale, partitaIva) => {
   try {
-    console.log('Controllo esistenza club con CF:', codiceFiscale, 'e P.IVA:', partitaIva);
     const response = await axios.post('/clubs/check', { codiceFiscale, partitaIva });
     return response.data;
   } catch (error) {
     console.error('Errore durante la verifica dell\'club:', error);
+    throw error;
+  }
+};
+
+export const uploadLogoClub = async (clubId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await axios.put(`/clubs/${clubId}/logo`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante l\'upload del logo:', error);
     throw error;
   }
 };

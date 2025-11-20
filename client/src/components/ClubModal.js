@@ -6,6 +6,7 @@ import {
   TextField,
   Button,
   Grid,
+  Alert,
 } from '@mui/material';
 
 const style = {
@@ -28,10 +29,21 @@ const ClubModal = ({
   isEditMode,
 }) => {
   const [formData, setFormData] = React.useState({});
+  const [displayError, setDisplayError] = React.useState('');
 
   React.useEffect(() => {
     if (isEditMode && club) {
-      setFormData(club);
+      setFormData({
+        denominazione: club?.denominazione,
+        codiceFiscale: club?.codiceFiscale,
+        partitaIva: club?.partitaIva,
+        indirizzo: club?.indirizzo,
+        legaleRappresentante: club?.legaleRappresentante,
+        direttoreTecnico: club?.direttoreTecnico,
+        recapitoTelefonico: club?.recapitoTelefonico,
+        email: club?.email,
+      });
+
     } else {
       setFormData({
         denominazione: '',
@@ -50,9 +62,19 @@ const ClubModal = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      setDisplayError('');
+      // Passa anche l'id se in edit mode
+      if (isEditMode && club && club.id) {
+        await onSubmit({ ...formData, id: club.id });
+      } else {
+        await onSubmit(formData);
+      }
+    } catch (error) {
+      setDisplayError(error.message || 'Errore durante la modifica del club.');
+    }
   };
 
   return (
@@ -141,6 +163,11 @@ const ClubModal = ({
             />
           </Grid>
         </Grid>
+        {displayError && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {displayError}
+          </Alert>
+        )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>
           <Button type="submit" variant="contained" sx={{ ml: 2 }}>

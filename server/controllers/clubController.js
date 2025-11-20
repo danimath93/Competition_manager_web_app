@@ -23,15 +23,15 @@ const getAllClubs = async (req, res) => {
 const getClubById = async (req, res) => {
   try {
     const { id } = req.params;
-    const club = await Club.findByPk(id, {
+    const club = await Club.scope('withLogo').findByPk(id, {
       include: ['atleti', 'giudici', 'competizioniOrganizzate']
     });
-    
+
     if (!club) {
       logger.warn(`Tentativo recupero club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
-    
+
     res.json(club);
   } catch (error) {
     logger.error(`Errore nel recupero del club ${req.params.id}: ${error.message}`, { stack: error.stack });
@@ -77,13 +77,20 @@ const updateClub = async (req, res) => {
       return res.status(404).json({ error: 'Club non trovato' });
     }
     
-    const updatedClub = await Club.findByPk(id);
+    const updatedClub = await Club.scope('withLogo').findByPk(id);
     logger.info(`Club aggiornato - ID: ${id}`);
     res.json(updatedClub);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nell'aggiornamento club ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({ 
+        error: 'Dati non validi',
+        details: error.errors.map(e => e.message)
+      });
+    }
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      logger.warn(`Vincolo di unicità violato nell'aggiornamento club ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
+      return res.status(400).json({
         error: 'Dati non validi',
         details: error.errors.map(e => e.message)
       });
@@ -128,14 +135,22 @@ const deleteClub = async (req, res) => {
 
 // Helper function per verificare se un club esiste (per uso interno)
 const checkClubExistsHelper = async ({ codiceFiscale, partitaIva }) => {
+  // Controllo se esiste un club con lo stesso codice fiscale
   const club = await Club.findOne({
     where: {
-      [Op.or]: [  
-        { codiceFiscale },
-        { partitaIva }
-      ]
+      codiceFiscale
     }
   });
+
+  // Se il club non esiste, controllo per partita IVA se fornita
+  if (!club && partitaIva) {
+    return await Club.findOne({
+      where: {
+        partitaIva
+      }
+    });
+  }
+
   return !!club;
 };
 
@@ -154,6 +169,33 @@ const checkClubExists = async (req, res) => {
   }
 };
 
+const uploadLogoClub = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nessun file inviato.' });
+    }
+    const file = req.file;
+    if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
+      return res.status(400).json({ error: 'Solo file JPEG o PNG ammessi.' });
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File troppo grande (max 2MB).' });
+    }
+    const club = await Club.findByPk(id);
+    if (!club) {
+      return res.status(404).json({ error: 'Club non trovato.' });
+    }
+    club.logo = file.buffer;
+    club.logoType = file.mimetype;
+    await club.save();
+    res.json(club);
+  } catch (error) {
+    logger.error(`Errore durante l'upload del logo per il club ${req.params.id}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ error: 'Errore upload logo', details: error.message });
+  }
+};
+
 module.exports = {
   getAllClubs,
   getClubById,
@@ -161,5 +203,6 @@ module.exports = {
   updateClub,
   deleteClub,
   checkClubExists,
-  checkClubExistsHelper
+  checkClubExistsHelper,
+  uploadLogoClub,
 };

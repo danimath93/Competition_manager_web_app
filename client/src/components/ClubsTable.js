@@ -8,6 +8,7 @@ import {
   TableRow,
   Paper,
   IconButton,
+  Tooltip
 } from '@mui/material';
 import { Info, Edit, Delete } from '@mui/icons-material';
 //import { format } from 'date-fns';
@@ -39,15 +40,21 @@ const ClubsTable = ({ clubs, onInfo, onEdit, onDelete }) => {
               <TableCell>{club.recapitoTelefonico}</TableCell>
               <TableCell>{club.email}</TableCell>
               <TableCell>
-                <IconButton onClick={() => onInfo(club)}>
-                  <Info />
-                </IconButton>
-                <IconButton onClick={() => onEdit(club)}>
-                  <Edit />
-                </IconButton>
-                <IconButton onClick={() => onDelete(club.id)}>
-                  <Delete />
-                </IconButton>
+                <Tooltip title="Info Club" arrow>
+                  <IconButton onClick={() => onInfo(club)}>
+                    <Info />
+                  </IconButton>
+                </Tooltip>                
+                <Tooltip title="Modifica Club" arrow>
+                  <IconButton onClick={() => onEdit(club)}>
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Elimina Club" arrow>       
+                  <IconButton onClick={() => onDelete(club.id)}>
+                    <Delete />
+                  </IconButton>
+                </Tooltip>                  
               </TableCell>
             </TableRow>
           ))}

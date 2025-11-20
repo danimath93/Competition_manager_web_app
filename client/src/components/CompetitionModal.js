@@ -10,7 +10,7 @@ import {
   Typography,
   Divider,
   Box,
-  IconButton,
+  Alert,
 } from '@mui/material';
 import { Edit as EditIcon, Euro as EuroIcon } from '@mui/icons-material';
 import { CompetitionStatus, CompetitionLevel  } from '../constants/enums/CompetitionEnums';
@@ -41,6 +41,7 @@ const style = {
 const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) => {
   const [formData, setFormData] = useState({});
   const [costModalOpen, setCostModalOpen] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (isEditMode && competition) {
@@ -89,10 +90,13 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
     });
   };
 
-  const handleCostsChange = (costiIscrizione) => {
+  const handleCostsChange = (costiIscrizione, iban, intestatario, causale) => {
     setFormData({ 
       ...formData, 
-      costiIscrizione 
+      costiIscrizione,
+      iban: iban,
+      intestatario: intestatario,
+      causale: causale
     });
   };
 
@@ -250,6 +254,18 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
               )}
             </Box>
           )}
+          {formData.iban && (
+            <Box sx={{ bgcolor: 'grey.100', p: 2, borderRadius: 1 }}>
+              <Typography variant="body2">
+                Configurazione Iban impostata ✓
+              </Typography>
+              {formData.iban && (
+                <Typography variant="caption" color="text.secondary">
+                  • {formData.iban} impostato per versare i pagamenti
+                </Typography>
+              )}                            
+            </Box>
+          )}
           <Divider sx={{ my: 2 }} />
           <TextField
             name="descrizione"
@@ -281,6 +297,11 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
               <option key={value} value={label}>{label}</option>
             ))}
           </TextField>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Annulla</Button>
@@ -293,7 +314,12 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
       <CostManagementModal
         open={costModalOpen}
         onClose={() => setCostModalOpen(false)}
-        value={formData.costiIscrizione}
+        value={{
+          ...formData.costiIscrizione,
+          iban: formData.iban || (competition && competition.iban) || '',
+          intestatario: formData.intestatario || (competition && competition.intestatario) || '',
+          causale: formData.causale || (competition && competition.causale) || ''
+        }}
         onChange={handleCostsChange}
       />
     </Dialog>

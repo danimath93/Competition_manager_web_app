@@ -50,9 +50,9 @@ const seedData = async () => {
     ]);
 
     const configTipiAtleta = await sequelize.models.ConfigTipoAtleta.bulkCreate([
-      { id: 1, nome: 'Bambini', etaMinima: 5, etaMassima: 12, descrizione: 'Atleti bambini' },
-      { id: 2, nome: 'CB', etaMinima: 13, etaMassima: 99, descrizione: 'Atleti adulti cinture bianche' },
-      { id: 3, nome: 'CN', etaMinima: 13, etaMassima: 99, descrizione: 'Atleti adulti cinture nere' }
+      { id: 1, nome: 'CB Bambini', etaMinima: 5, etaMassima: 12, descrizione: 'Atleti bambini' },
+      { id: 2, nome: 'CB Adulti', etaMinima: 13, etaMassima: 99, descrizione: 'Atleti adulti cinture bianche' },
+      { id: 3, nome: 'CN', etaMinima: 16, etaMassima: 99, descrizione: 'Atleti adulti cinture nere' }
     ]);
 
     const configEsperienze = await sequelize.models.ConfigEsperienza.bulkCreate([

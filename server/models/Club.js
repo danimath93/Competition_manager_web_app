@@ -24,10 +24,7 @@ const Club = sequelize.define('Club', {
   },
   partitaIva: {
     type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
+    allowNull: true,
   },
   indirizzo: {
     type: DataTypes.STRING,
@@ -57,10 +54,28 @@ const Club = sequelize.define('Club', {
     validate: {
       isEmail: true
     }
+  },
+  logo: {
+    type: DataTypes.BLOB('long'),
+    allowNull: true
+  },
+  logoType: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
-}, {
-  tableName: 'clubs',
-  timestamps: true
-});
+},
+  {
+    tableName: 'clubs',
+    timestamps: true,
+    defaultScope: {
+      attributes: { exclude: ['logo', 'logoType'] }
+    },
+    scopes: {
+      withLogo: {
+        attributes: { include: ['logo', 'logoType'] }
+      }
+    }
+  }
+);
 
 module.exports = Club;

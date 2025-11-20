@@ -7,6 +7,7 @@ import {
   Button,
   Grid,
   Autocomplete,
+  Alert,
 } from '@mui/material';
 import { loadAllClubs } from '../api/clubs';
 import { loadAthleteTypes } from '../api/config';
@@ -45,6 +46,7 @@ const AthleteModal = ({
   const [clubName, setClubName] = React.useState(athlete?.club?.denominazione || '');
   const [clubNames, setClubNames] = React.useState([]);
   const [athleteTypes, setAthleteTypes] = React.useState([]);
+  const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
     if (isEditMode && athlete) {
@@ -84,6 +86,7 @@ const AthleteModal = ({
         setClubNames(clubNames);
       } catch (error) {
         console.error('Errore nel caricamento dei dati:', error);
+        setError('Errore nel caricamento dei dati');
       }
     };
 
@@ -93,6 +96,7 @@ const AthleteModal = ({
         setAthleteTypes(athleteTypesData);
       } catch (error) {
         console.error('Errore nel caricamento dei tipi atleta:', error);
+        setError('Errore nel caricamento dei tipi atleta');
       }
     };
 
@@ -122,9 +126,13 @@ const AthleteModal = ({
     setFormData({ ...formData, tesseramento: value || null });
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      setError(error.message || "Errore nel salvataggio dell'atleta");
+    }
   };
 
   return (
@@ -252,6 +260,7 @@ const AthleteModal = ({
               sx={{ minWidth: 250 }}
               value={formData.codiceFiscale || ''}
               onChange={handleChange}
+              required
               fullWidth
             />
           </Grid>
@@ -315,6 +324,11 @@ const AthleteModal = ({
             />
           </Grid>
         </Grid>
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={onClose}>Annulla</Button>
           <Button type="submit" variant="contained" sx={{ ml: 2 }}>

@@ -168,8 +168,7 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
       handleCloseCategorySelector();
       onRegistrationChange();
     } catch (error) {
-      console.error('Errore nella registrazione:', error);
-      setError('Errore nella registrazione');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -227,11 +226,11 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
           </Box>
         </CardContent>
 
-        <CardActions>
+        <CardActions sx={{ gap: 1 }}>
           {!isClubRegistered && (
             <Button
               size="small"
-              startIcon={<Add />}
+              endIcon={<Add />}
               onClick={handleAddCategory}
             >
               Aggiungi Categoria
@@ -241,19 +240,20 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
             <Button
               size="small"
               color="error"
-              startIcon={<PersonRemove />}
+              endIcon={<PersonRemove />}
               onClick={handleDeleteAthlete}
             >
               Rimuovi Atleta
             </Button>
           )}
-          
-          <IconButton
+          <Button
+            size="small"
+            color="text.secondary"
+            endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
             onClick={toggleExpanded}
-            sx={{ ml: 'auto' }}
           >
-            {expanded ? <ExpandLess /> : <ExpandMore />}
-          </IconButton>
+            Dettagli
+          </Button>
         </CardActions>
 
         {/* Dettagli delle categorie (espandibile) */}

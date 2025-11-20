@@ -115,7 +115,8 @@ const calculateAdditionalCost = (config, numCategories) => {
  * @param {Number} numCategories - Numero di categorie in cui l'atleta è iscritto
  * @returns {Number} - Costo totale per l'atleta
  */
-const calculateAthleteCost = (costiIscrizione, athleteData, numCategories) => {
+const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
+  const numCategories = categories.length;
   if (!costiIscrizione || numCategories === 0) return 0;
   
   let totalCost = 0;
@@ -129,6 +130,13 @@ const calculateAthleteCost = (costiIscrizione, athleteData, numCategories) => {
     const categoryConfig = costiIscrizione.categories.find(
       cat => cat.idConfigTipoAtleta === idConfigTipoAtleta
     );
+
+    // TODO: rimuovere questa impostazione o gestire in modo appropriato
+    const idFestaDiNatale = 13;
+    if (numCategories === 1 && categories[0] === idFestaDiNatale) {
+      totalCost += 15;
+      return parseFloat(totalCost.toFixed(2));
+    }
     
     if (categoryConfig && categoryConfig.config) {
       switch (categoryConfig.type) {
@@ -182,17 +190,16 @@ const calculateClubTotalCost = (iscrizioni, costiIscrizione) => {
   let totalCost = 0;
   
   athletesMap.forEach((athleteData) => {
-    const numCategories = athleteData.categories.length;
     const cost = calculateAthleteCost(
       costiIscrizione,
       athleteData,
-      numCategories
+      athleteData.categories
     );
     
     athletesCosts.push({
       atletaId: athleteData.atletaId,
       cost,
-      numCategories
+      numCategories: athleteData.categories.length
     });
     
     totalCost += cost;
