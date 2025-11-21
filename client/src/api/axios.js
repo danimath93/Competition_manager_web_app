@@ -62,14 +62,14 @@ instance.interceptors.response.use(
         case 400:
           // Errore di validazione - mostra messaggio dal server
           errorResponse.type = 'VALIDATION_ERROR';
-          errorResponse.message = data?.error || data?.message || 'Dati non validi';
+          errorResponse.message = data?.error || 'Dati non validi';
           errorResponse.details = data?.details || null;
           break;
 
         case 401:
           // Non autorizzato
           errorResponse.type = 'UNAUTHORIZED';
-          errorResponse.message = data?.error || data?.message || 'Sessione scaduta. Effettua nuovamente il login.';
+          errorResponse.message = data?.error || 'Sessione scaduta. Effettua nuovamente il login.';
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           // Redirect al login dopo un breve delay
@@ -81,19 +81,19 @@ instance.interceptors.response.use(
         case 403:
           // Accesso negato
           errorResponse.type = 'FORBIDDEN';
-          errorResponse.message = data?.error || data?.message || 'Non hai i permessi per eseguire questa operazione.';
+          errorResponse.message = data?.error || 'Non hai i permessi per eseguire questa operazione.';
           break;
 
         case 404:
           // Risorsa non trovata
           errorResponse.type = 'NOT_FOUND';
-          errorResponse.message = data?.error || data?.message || 'Risorsa non trovata.';
+          errorResponse.message = data?.error || 'Risorsa non trovata.';
           break;
 
         case 409:
           // Conflitto (es. duplicato)
           errorResponse.type = 'CONFLICT';
-          errorResponse.message = data?.error || data?.message || 'Elemento già esistente.';
+          errorResponse.message = data?.error || 'Elemento già esistente.';
           break;
 
         case 413:
@@ -105,20 +105,20 @@ instance.interceptors.response.use(
         case 500:
           // Errore del server
           errorResponse.type = 'SERVER_ERROR';
-          errorResponse.message = data?.error || data?.message || 'Errore interno del server.';
+          errorResponse.message = data?.error || 'Errore interno del server.';
           break;
         case 502:
         case 503:
         case 504:
           // Errore del server
           errorResponse.type = 'SERVER_ERROR';
-          errorResponse.message = data?.error || data?.message || 'Errore interno del server.';
+          errorResponse.message = data?.error || 'Errore interno del server.';
           break;
 
         default:
           // Altri errori
           errorResponse.type = 'UNKNOWN_ERROR';
-          errorResponse.message = data?.error || data?.message || 'Si è verificato un errore imprevisto.';
+          errorResponse.message = data?.error || 'Si è verificato un errore imprevisto.';
       }
     } else if (error.request) {
       // Richiesta inviata ma nessuna risposta
