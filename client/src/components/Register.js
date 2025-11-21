@@ -87,7 +87,8 @@ const Register = () => {
 
       const response = await registerUser(sendData);
       if (response.success) {
-        setSuccess('Registrazione avvenuta! Controlla la tua email per confermare l’account.');
+        setSuccess('Registrazione avvenuta! Torna alla pagina di login e procedi con l\'autenticazione.');
+        // setSuccess('Registrazione avvenuta! Controlla la tua email per confermare l’account.');
         setLoading(false);
         handleRegisterSuccess();
       } else {

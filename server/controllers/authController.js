@@ -130,7 +130,7 @@ const registerUser = async (req, res) => {
         password: hashedPassword,
         salt,
         clubId: clubId || null,
-        status: 'S',
+        status: 'E',
         permissions: club ? 'club' : 'user',
         confirmationToken
       }, { transaction });
