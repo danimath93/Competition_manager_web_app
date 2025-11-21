@@ -70,17 +70,17 @@ const checkAuthLevel = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ ok: false, message: 'Token mancante' });
+      return res.status(401).json({ error: 'Token mancante' });
     }
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await UtentiLogin.findOne({ where: { username: decoded.username, status: 'E' } });
 
     if (!user) {
-      return res.status(401).json({ ok: false, message: 'Utente non trovato o non attivo' });
+      return res.status(401).json({ error: 'Utente non trovato o non attivo' });
     }
     res.status(200).json({ ok: true, user: { username: user.username, email: user.email, permissions: user.permissions, clubId: user.clubId } });
   } catch (error) {
-    res.status(401).json({ ok: false, message: 'Token non valido o scaduto' });
+    res.status(401).json({ error: 'Token non valido o scaduto' });
   }
 };
 
@@ -89,24 +89,24 @@ const registerUser = async (req, res) => {
     const { user, club } = req.body;
 
     if (!user.username || !user.email || !user.password) {
-      return res.status(400).json({ success: false, message: 'Username, email e password sono obbligatori' });
+      return res.status(400).json({ error: 'Username, email e password sono obbligatori' });
     }
 
     if (!club) {
-      return res.status(400).json({ success: false, message: 'Registrazione per utenti singoli non autorizzata' });
+      return res.status(400).json({ error: 'Registrazione per utenti singoli non autorizzata' });
     }
 
     if (!club.codiceFiscale) {
-      return res.status(400).json({ success: false, message: 'Codice fiscale del club è obbligatorio' });
+      return res.status(400).json({ error: 'Codice fiscale del club è obbligatorio' });
     }
 
     if (!club.denominazione || !club.indirizzo || !club.legaleRappresentante || !club.direttoreTecnico || !club.email) {
-      return res.status(400).json({ success: false, message: 'Tutti i campi del club contrassegnati con * sono obbligatori' });
+      return res.status(400).json({ error: 'Tutti i campi del club contrassegnati con * sono obbligatori' });
     }
 
     const clubExists = await checkClubExistsHelper({ codiceFiscale: club.codiceFiscale, partitaIva: club.partitaIva });
     if (clubExists) {
-      return res.status(400).json({ success: false, message: 'Il club è già stato registrato.' });
+      return res.status(400).json({ error: 'Il club è già stato registrato.' });
     }
 
     // Utilizzo una transaction per assicurarmi che l'utente venga creato correttamente
@@ -146,7 +146,10 @@ const registerUser = async (req, res) => {
     }
   } catch (error) {
     logger.error(`Errore durante la registrazione utente: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ success: false, error });
+    res.status(500).json({ 
+      error: 'Errore durante la registrazione',
+      details: error.message
+     });
   }
 };
 
@@ -207,11 +210,11 @@ const requestPasswordReset = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Email obbligatoria' });
+      return res.status(400).json({ error: 'Email obbligatoria' });
     }
     const user = await UtentiLogin.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Utente non esistente per l\'email fornita.' });
+      return res.status(404).json({ error: 'Utente non esistente per l\'email fornita.' });
     }
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
@@ -221,7 +224,10 @@ const requestPasswordReset = async (req, res) => {
     return res.json({ success: true, message: 'Controlla la tua email per il reset della password.' });
   } catch (error) {
     logger.error(`Errore durante la richiesta di reset password: ${error.message}`, { stack: error.stack });
-    return res.status(500).json({ success: false, message: 'Errore richiesta reset password', error });
+    return res.status(500).json({ 
+      error: 'Errore nel reset della password',
+      details: error.message
+     });
   }
 };
 
@@ -230,11 +236,11 @@ const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
     if (!token || !password) {
-      return res.status(400).json({ success: false, message: 'Token e nuova password obbligatori.' });
+      return res.status(400).json({ error: 'Token e nuova password obbligatori' });
     }
     const user = await UtentiLogin.findOne({ where: { resetPasswordToken: token } });
     if (!user) {
-      return res.status(400).json({ success: false, message: 'Token non valido o utente non trovato.' });
+      return res.status(400).json({ error: 'Token non valido o utente non trovato' });
     }
     const salt = crypto.randomBytes(10).toString('hex');
     const hashedPassword = crypto.createHash('sha256').update(password + '.' + user.username + '.' + salt, 'utf8').digest('hex');
@@ -245,7 +251,10 @@ const resetPassword = async (req, res) => {
     return res.json({ success: true, message: 'Password aggiornata correttamente.' });
   } catch (error) {
     logger.error(`Errore durante il reset della password: ${error.message}`, { stack: error.stack });
-    return res.status(500).json({ success: false, message: 'Errore nel reset della password', error });
+    return res.status(500).json({ 
+      error: 'Errore nel reset della password',
+      details: error.message
+     });
   }
 };
 

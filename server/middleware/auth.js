@@ -9,7 +9,7 @@ const authenticateToken = (req, res, next) => {
   if (!token) {
     return res.status(401).json({ 
       error: 'Token di accesso richiesto',
-      message: 'Nessun token fornito' 
+      details: 'Nessun token fornito' 
     });
   }
 
@@ -17,7 +17,7 @@ const authenticateToken = (req, res, next) => {
     if (err) {
       return res.status(403).json({ 
         error: 'Token non valido',
-        message: 'Token scaduto o non valido' 
+        details: 'Token scaduto o non valido' 
       });
     }
     

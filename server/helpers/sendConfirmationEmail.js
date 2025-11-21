@@ -12,7 +12,7 @@ function validateOAuth2Config() {
 }
 
 // Crea il client OAuth2
-function createOAuth2Client() {
+async function createOAuth2Client() {
   validateOAuth2Config();
 
   const oauth2Client = new google.auth.OAuth2(
@@ -24,6 +24,16 @@ function createOAuth2Client() {
   oauth2Client.setCredentials({
     refresh_token: process.env.GMAIL_REFRESH_TOKEN
   });
+
+  // Verifica e aggiorna il token se necessario
+  try {
+    const { credentials } = await oauth2Client.refreshAccessToken();
+    oauth2Client.setCredentials(credentials);
+    logger.info('Access token refreshed successfully');
+  } catch (error) {
+    logger.error('Error refreshing access token:', error.message);
+    throw new Error(`OAuth2 refresh failed: ${error.message}. Il refresh token potrebbe essere scaduto. Genera un nuovo refresh token.`);
+  }
 
   return oauth2Client;
 }
@@ -55,7 +65,7 @@ function createEmail(to, subject, htmlBody) {
 // Invia email usando Gmail API
 async function sendEmailViaGmailAPI(to, subject, htmlBody) {
   try {
-    const oauth2Client = createOAuth2Client();
+    const oauth2Client = await createOAuth2Client();
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
     const raw = createEmail(to, subject, htmlBody);
@@ -71,6 +81,15 @@ async function sendEmailViaGmailAPI(to, subject, htmlBody) {
     return result.data;
   } catch (error) {
     logger.error('Errore nell\'invio email via Gmail API:', error);
+    
+    // Diagnostica errori comuni
+    if (error.message.includes('invalid_grant')) {
+      throw new Error('Il refresh token è scaduto o non valido. Genera un nuovo refresh token da OAuth Playground.');
+    }
+    if (error.message.includes('insufficient authentication scopes')) {
+      throw new Error('Permessi insufficienti. Assicurati che il token abbia lo scope https://www.googleapis.com/auth/gmail.send');
+    }
+    
     throw new Error(`Impossibile inviare l'email: ${error.message}`);
   }
 }

@@ -1,6 +1,7 @@
 const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
+const e = require('express');
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
 exports.generateCategories = async (req, res) => {
@@ -10,7 +11,7 @@ exports.generateCategories = async (req, res) => {
     // Verifica che la competizione esista
     const competition = await Competizione.findByPk(competizioneId);
     if (!competition) {
-      return res.status(404).json({ message: 'Competizione non trovata' });
+      return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
     // Recupera gli atleti iscritti alla competizione, con categorie non ancora assegnate
@@ -31,7 +32,7 @@ exports.generateCategories = async (req, res) => {
     });
 
     if (registrations.length === 0) {
-      return res.status(400).json({ message: 'Nessun atleta iscritto trovato per questa tipologia' });
+      return res.status(400).json({ error: 'Nessun atleta iscritto trovato per questa tipologia' });
     }
 
     // Crea le categorie con eventuali preferenze di generazione
@@ -117,8 +118,8 @@ exports.generateCategories = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nella generazione delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante la generazione delle categorie',
-      error: error.message 
+      error: 'Errore durante la generazione delle categorie',
+      details: error.message
     });
   }
 };
@@ -135,7 +136,7 @@ exports.saveCategories = async (req, res) => {
     const competizione = await Competizione.findByPk(competizioneId);
     if (!competizione) {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Competizione non trovata' });
+      return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
     const categorieSalvate = [];
@@ -187,8 +188,8 @@ exports.saveCategories = async (req, res) => {
     await transaction.rollback();
     logger.error(`Errore nel salvataggio delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante il salvataggio delle categorie',
-      error: error.message 
+      error: 'Errore durante il salvataggio delle categorie',
+      details: error.message 
     });
   }
 };
@@ -233,8 +234,8 @@ exports.getCategoriesByCompetizione = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nel recupero delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante il recupero delle categorie',
-      error: error.message 
+      error: 'Errore durante il recupero delle categorie',
+      details: error.message 
     });
   }
 };
@@ -248,7 +249,7 @@ exports.updateCategoria = async (req, res) => {
     const categoria = await Categoria.findByPk(id);
     if (!categoria) {
       logger.warn(`Tentativo aggiornamento categoria inesistente - ID: ${id}`);
-      return res.status(404).json({ message: 'Categoria non trovata' });
+      return res.status(404).json({ error: 'Categoria non trovata' });
     }
 
     await categoria.update(updateData);
@@ -262,8 +263,8 @@ exports.updateCategoria = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nell'aggiornamento della categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante l\'aggiornamento della categoria',
-      error: error.message 
+      error: 'Errore durante l\'aggiornamento della categoria',
+      details: error.message 
     });
   }
 };
@@ -279,7 +280,7 @@ exports.deleteCategoria = async (req, res) => {
     if (!categoria) {
       await transaction.rollback();
       logger.warn(`Tentativo eliminazione categoria inesistente - ID: ${id}`);
-      return res.status(404).json({ message: 'Categoria non trovata' });
+      return res.status(404).json({ error: 'Categoria non trovata' });
     }
 
     // Rimuovi il categoriaId dalle iscrizioni
@@ -303,8 +304,8 @@ exports.deleteCategoria = async (req, res) => {
     await transaction.rollback();
     logger.error(`Errore nell'eliminazione della categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante l\'eliminazione della categoria',
-      error: error.message 
+      error: 'Errore durante l\'eliminazione della categoria',
+      details: error.message 
     });
   }
 };
@@ -321,7 +322,7 @@ exports.moveAtleti = async (req, res) => {
     if (!categoria) {
       await transaction.rollback();
       logger.warn(`Tentativo spostamento atleti verso categoria inesistente - ID: ${targetCategoriaId}`);
-      return res.status(404).json({ message: 'Categoria target non trovata' });
+      return res.status(404).json({ error: 'Categoria target non trovata' });
     }
 
     // Sposta gli atleti
@@ -344,8 +345,8 @@ exports.moveAtleti = async (req, res) => {
     await transaction.rollback();
     logger.error(`Errore nello spostamento degli atleti: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante lo spostamento degli atleti',
-      error: error.message 
+      error: 'Errore durante lo spostamento degli atleti',
+      details: error.message 
     });
   }
 };
@@ -363,13 +364,13 @@ exports.mergeCategorie = async (req, res) => {
 
     if (!categoria1 || !categoria2) {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Una o entrambe le categorie non trovate' });
+      return res.status(404).json({ error: 'Una o entrambe le categorie non trovate' });
     }
 
     // Verifica che appartengano alla stessa competizione
     if (categoria1.competizioneId !== categoria2.competizioneId) {
       await transaction.rollback();
-      return res.status(400).json({ message: 'Le categorie devono appartenere alla stessa competizione' });
+      return res.status(400).json({ error: 'Le categorie devono appartenere alla stessa competizione' });
     }
 
     // Aggiorna il nome della categoria1
@@ -410,8 +411,8 @@ exports.mergeCategorie = async (req, res) => {
     await transaction.rollback();
     logger.error(`Errore nell'unione delle categorie: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante l\'unione delle categorie',
-      error: error.message 
+      error: 'Errore durante l\'unione delle categorie',
+      details: error.message 
     });
   }
 };
@@ -427,7 +428,7 @@ exports.splitCategoria = async (req, res) => {
     const categoriaOriginale = await Categoria.findByPk(categoriaId);
     if (!categoriaOriginale) {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Categoria non trovata' });
+      return res.status(404).json({ error: 'Categoria non trovata' });
     }
 
     // Aggiorna il nome della categoria originale
@@ -479,8 +480,8 @@ exports.splitCategoria = async (req, res) => {
     await transaction.rollback();
     logger.error(`Errore nella divisione della categoria: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
-      message: 'Errore durante la divisione della categoria',
-      error: error.message 
+      error: 'Errore durante la divisione della categoria',
+      details: error.message 
     });
   }
 };
