@@ -130,12 +130,12 @@ const registerUser = async (req, res) => {
         password: hashedPassword,
         salt,
         clubId: clubId || null,
-        status: 'E',
+        status: 'S',
         permissions: club ? 'club' : 'user',
         confirmationToken
       }, { transaction });
 
-      // await sendConfirmationEmail(user.email, confirmationToken);
+      await sendConfirmationEmail(user.email, confirmationToken);
 
       await transaction.commit();
 
