@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import '../pages/styles/Login.css';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { resetPassword } from '../api/auth';
+import Header from './Header';
+import { PasswordInput } from './common';
+import './styles/Login.css';
+import './styles/Layout.css';
 
 const ResetPasswordConfirm = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const token = searchParams.get('token');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,54 +52,73 @@ const ResetPasswordConfirm = () => {
   };
 
   return (
-    <div className="login-container">
-      <div style={{ position: 'absolute', top: 24, left: 24 }}>
-        <a href="/login" className="back-login-link" style={{ color: '#dc3545', textDecoration: 'none', fontWeight: 500, display: 'flex', alignItems: 'center', fontSize: '1rem' }}>
-          <span style={{ fontSize: '1.3em', marginRight: 6 }}>&larr;</span> Torna alla pagina di login
-        </a>
-      </div>
-      <div className="login-card">
-        <div className="login-header">
-          <img src="/logo_ufficiale.png" alt="Logo" className="login-logo" />
-          <h1 className="login-title">Imposta nuova password</h1>
+    <div className="layout">
+      <Header />
+      <div className="layout-content">
+        <div className="login-container-full">
+          <div className="login-left">
+            <div className="login-card">
+              <form onSubmit={handleSubmit} className="login-form">
+                <h5 className="text-primary text-center">Imposta nuova password</h5>
+                
+                <PasswordInput
+                  id="password"
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Inserisci la nuova password"
+                  disabled={loading}
+                  required
+                  name="new-password"
+                  autoComplete="new-password"
+                />
+
+                <PasswordInput
+                  id="confirmPassword"
+                  label="Conferma Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Conferma la nuova password"
+                  disabled={loading}
+                  required
+                  name="confirm-password"
+                  autoComplete="new-password"
+                />
+
+                <button
+                  type="submit"
+                  className="reset-password-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Reset in corso...' : 'Reset password'}
+                </button>
+
+                {error && (
+                  <div className="error-message">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="success-message">
+                    {success}
+                  </div>
+                )}
+              </form>
+
+              <div className="login-footer">
+                <span className="register-text">
+                  <a
+                    href="#"
+                    className="register-link"
+                    onClick={(e) => { e.preventDefault(); navigate('/login'); }}
+                  >
+                    ← Torna alla pagina di login
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Password*</label>
-            <div className="input-wrapper">
-              <FaLock className="input-icon" />
-              <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={e => setPassword(e.target.value)} className="form-input" disabled={loading} />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Conferma Password*</label>
-            <div className="input-wrapper">
-              <FaLock className="input-icon" />
-              <input type={showPassword ? 'text' : 'password'} id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="form-input" disabled={loading} />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-          </div>
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Reset in corso...' : 'Reset password'}
-          </button>
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
-        </form>
       </div>
     </div>
   );

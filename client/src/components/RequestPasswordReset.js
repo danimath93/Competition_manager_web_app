@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { FaEnvelope } from 'react-icons/fa';
-import '../pages/styles/Login.css';
+import { useNavigate } from 'react-router-dom';
 import { requestPasswordReset } from '../api/auth';
+import Header from './Header';
+import { TextInput } from './common';
+import './styles/Login.css';
+import './styles/Layout.css';
 
 const RequestPasswordReset = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -39,31 +43,63 @@ const RequestPasswordReset = () => {
   };
 
   return (
-    <div className="login-container">
-      <div style={{ position: 'absolute', top: 24, left: 24 }}>
-        <a href="/login" className="back-login-link" style={{ color: '#dc3545', textDecoration: 'none', fontWeight: 500, display: 'flex', alignItems: 'center', fontSize: '1rem' }}>
-          <span style={{ fontSize: '1.3em', marginRight: 6 }}>&larr;</span> Torna alla pagina di login
-        </a>
-      </div>
-      <div className="login-card">
-        <div className="login-header">
-          <img src="/logo_ufficiale.png" alt="Logo" className="login-logo" />
-          <h1 className="login-title">Reset Password</h1>
-        </div>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Email*</label>
-            <div className="input-wrapper">
-              <FaEnvelope className="input-icon" />
-              <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} className="form-input" disabled={loading} />
+    <div className="layout">
+      <Header />
+      <div className="layout-content">
+        <div className="login-container-full">
+          <div className="login-left">
+            <div className="login-card">
+              <form onSubmit={handleSubmit} className="login-form">
+                <h5 className="text-primary text-center">Password dimenticata?</h5>
+                <h6 className="text-secondary text-center p-1">Ci pensiamo noi! Inserisci la tua email qui sotto.</h6>
+                
+                <TextInput
+                  id="email"
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Inserisci la tua email"
+                  disabled={loading}
+                  required
+                  name="email"
+                  autoComplete="email"
+                />
+
+                <button
+                  type="submit"
+                  className="reset-password-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Invio richiesta...' : 'Richiedi reset password'}
+                </button>
+
+                {error && (
+                  <div className="error-message">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="success-message">
+                    {success}
+                  </div>
+                )}
+              </form>
+
+              <div className="login-footer">
+                <span className="register-text">
+                  <a
+                    href="#"
+                    className="register-link"
+                    onClick={(e) => { e.preventDefault(); navigate('/login'); }}
+                  >
+                    ← Torna alla pagina di login
+                  </a>
+                </span>
+              </div>
             </div>
           </div>
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Invio richiesta...' : 'Richiedi reset password'}
-          </button>
-          {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
-        </form>
+        </div>
       </div>
     </div>
   );

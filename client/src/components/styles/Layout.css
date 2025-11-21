@@ -1,22 +1,18 @@
 .layout {
-  height: 100vh;
+  min-height: 100vh;
   background-color:rgba(255, 255, 255, 1);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .layout-content {
-  margin-top: 0;
-  padding-top: 100px;
+  margin-top: 100px;
   margin-left: 0;
-  height: 100vh;
+  min-height: calc(100vh - 100px);
   transition: margin-left 0.3s ease;
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .sidebar-toggle {
@@ -57,32 +53,25 @@
   .sidebar-toggle {
     display: none;
   }
-  
-  .main-content {
-  }
 }
 
 /* Stili responsive per tablet */
 @media (max-width: 1024px) and (min-width: 769px) {
   .layout-content {
-    padding-top: 80px; /* Header ridotto per tablet */
+    margin-top: 80px; /* Header ridotto per tablet */
+    min-height: calc(100vh - 80px);
   }
 
   .sidebar-toggle {
     top: 95px;
-  }
-
-  .main-content {
   }
 }
 
 /* Stili responsive per mobile */
 @media (max-width: 768px) {
   .layout-content {
-    padding-top: 80px; /* Header ridotto per mobile */
-  }
-
-  .main-content {
+    margin-top: 80px; /* Header ridotto per mobile */
+    min-height: calc(100vh - 80px);
   }
   
   .sidebar-toggle {
@@ -96,10 +85,8 @@
 /* Stili responsive per schermi molto piccoli */
 @media (max-width: 480px) {
   .layout-content {
-    padding-top: 70px;
-  }
-
-  .main-content {
+    margin-top: 70px;
+    min-height: calc(100vh - 70px);
   }
   
   .sidebar-toggle {

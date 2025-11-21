@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { FaUser, FaLock, FaEnvelope, FaBuilding, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import Header from './Header';
+import { TextInput, PasswordInput } from './common';
 import { checkClubExists, createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
-import '../pages/styles/Login.css';
+import './styles/Login.css';
+import './styles/Layout.css';
 
 const Register = () => {
+  const navigate = useNavigate();
+  
   // Sezione 1: credenziali utente
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   // Sezione 2: dati club
   const [denominazione, setDenominazione] = useState('');
@@ -103,122 +106,207 @@ const Register = () => {
   };
 
   return (
-    <>
+    <div className="layout">
       <Header />
-      <div className="login-container">
-        <div style={{ position: 'absolute', top: 24, left: 24 }}>
-          <a href="/login" className="back-login-link" style={{ color: '#dc3545', textDecoration: 'none', fontWeight: 500, display: 'flex', alignItems: 'center', fontSize: '1rem' }}>
-            <span style={{ fontSize: '1.3em', marginRight: 6 }}>&larr;</span> Torna alla pagina di login
-          </a>
-        </div>
-        <div className="login-card">
-          <div className="login-header">
-            <img src="/logo_ufficiale.png" alt="Logo" className="login-logo" />
-            <h1 className="login-title">Registrazione nuovo utente</h1>
+      <div className="layout-content">
+        <div className="login-container-full">
+          <div className="login-left">
+            <div className="login-card">
+              <form onSubmit={handleSubmit} className="login-form">
+                <h3 className="text-accent text-center">Benvenuto! Crea il tuo account</h3>
+                
+                <h6 className="text-primary text-center" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Credenziali di accesso</h6>
+                
+                <TextInput
+                  id="username"
+                  label="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Inserisci username"
+                  disabled={loading}
+                  required
+                  name="username"
+                  autoComplete="username"
+                />
+
+                <TextInput
+                  id="email"
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Inserisci email"
+                  disabled={loading}
+                  required
+                  name="email"
+                  autoComplete="email"
+                />
+
+                <PasswordInput
+                  id="password"
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Inserisci password"
+                  disabled={loading}
+                  required
+                  name="new-password"
+                  autoComplete="new-password"
+                />
+
+                <PasswordInput
+                  id="confirmPassword"
+                  label="Conferma Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Conferma password"
+                  disabled={loading}
+                  required
+                  name="confirm-password"
+                  autoComplete="new-password"
+                />
+
+                <h6 className="text-primary text-center" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Informazioni Club</h6>
+                
+                <TextInput
+                  id="denominazione"
+                  label="Denominazione"
+                  value={denominazione}
+                  onChange={(e) => setDenominazione(e.target.value)}
+                  placeholder="Nome del club"
+                  disabled={loading}
+                  required
+                />
+
+                <TextInput
+                  id="codiceFiscale"
+                  label="Codice Fiscale"
+                  value={codiceFiscale}
+                  onChange={(e) => setCodiceFiscale(e.target.value)}
+                  placeholder="Codice Fiscale"
+                  disabled={loading}
+                  required
+                />
+
+                <TextInput
+                  id="partitaIva"
+                  label="Partita IVA"
+                  value={partitaIva}
+                  onChange={(e) => setPartitaIva(e.target.value)}
+                  placeholder="Partita IVA (opzionale)"
+                  disabled={loading}
+                />
+
+                <TextInput
+                  id="indirizzoVia"
+                  label="Sede sociale: Indirizzo"
+                  value={indirizzoVia}
+                  onChange={(e) => setIndirizzoVia(e.target.value)}
+                  placeholder="Via, numero civico"
+                  disabled={loading}
+                  required
+                />
+
+                <TextInput
+                  id="indirizzoComune"
+                  label="Sede sociale: Comune"
+                  value={indirizzoComune}
+                  onChange={(e) => setIndirizzoComune(e.target.value)}
+                  placeholder="Comune"
+                  disabled={loading}
+                  required
+                />
+
+                <TextInput
+                  id="indirizzoCap"
+                  label="Sede sociale: CAP"
+                  value={indirizzoCap}
+                  onChange={(e) => setIndirizzoCap(e.target.value)}
+                  placeholder="CAP"
+                  disabled={loading}
+                  required
+                  maxLength={5}
+                />
+
+                <TextInput
+                  id="legaleRappresentante"
+                  label="Legale Rappresentante"
+                  value={legaleRappresentante}
+                  onChange={(e) => setLegaleRappresentante(e.target.value)}
+                  placeholder="Nome e cognome"
+                  disabled={loading}
+                  required
+                />
+
+                <TextInput
+                  id="direttoreTecnico"
+                  label="Direttore Tecnico"
+                  value={direttoreTecnico}
+                  onChange={(e) => setDirettoreTecnico(e.target.value)}
+                  placeholder="Nome e cognome"
+                  disabled={loading}
+                  required
+                />
+
+                <TextInput
+                  id="recapitoTelefonico"
+                  label="Recapito Telefonico"
+                  value={recapitoTelefonico}
+                  onChange={(e) => setRecapitoTelefonico(e.target.value)}
+                  placeholder="Numero di telefono (opzionale)"
+                  disabled={loading}
+                />
+
+                <TextInput
+                  id="clubEmail"
+                  label="Email Club"
+                  type="email"
+                  value={clubEmail}
+                  onChange={(e) => setClubEmail(e.target.value)}
+                  placeholder="Email del club"
+                  disabled={loading}
+                  required
+                  name="club-email"
+                  autoComplete="email"
+                />
+
+                <button
+                  type="submit"
+                  className="login-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Registrazione in corso...' : 'Registrati'}
+                </button>
+
+                {error && (
+                  <div className="error-message">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="success-message">
+                    {success}
+                  </div>
+                )}
+              </form>
+
+              <div className="login-footer">
+                <span className="register-text">
+                  Hai già un account?
+                  <a
+                    href="#"
+                    className="register-link"
+                    onClick={(e) => { e.preventDefault(); navigate('/login'); }}
+                  >
+                    Accedi qui
+                  </a>
+                </span>
+              </div>
+            </div>
           </div>
-          <form onSubmit={handleSubmit} className="login-form">
-            <h2 className="section-title">Credenziali di accesso</h2>
-            <div className="form-group">
-              <label htmlFor="username" className="form-label">Username*</label>
-              <div className="input-wrapper">
-                <FaUser className="input-icon" />
-                <input type="text" id="username" value={username} onChange={e => setUsername(e.target.value)} className="form-input" disabled={loading} />
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">Email*</label>
-              <div className="input-wrapper">
-                <FaEnvelope className="input-icon" />
-                <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} className="form-input" disabled={loading} />
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Password*</label>
-              <div className="input-wrapper">
-                <FaLock className="input-icon" />
-                <input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={e => setPassword(e.target.value)} className="form-input" disabled={loading} />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">Conferma Password*</label>
-              <div className="input-wrapper">
-                <FaLock className="input-icon" />
-                <input type={showPassword ? 'text' : 'password'} id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="form-input" disabled={loading} />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                >
-                  {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
-            </div>
-
-            <h2 className="section-title">Dati Club</h2>
-            <div className="form-group">
-              <label htmlFor="denominazione" className="form-label">Denominazione*</label>
-              <div className="input-wrapper">
-                <FaBuilding className="input-icon" />
-                <input type="text" id="denominazione" value={denominazione} onChange={e => setDenominazione(e.target.value)} className="form-input" disabled={loading} />
-              </div>
-            </div>
-            <div className="form-group">
-              <label htmlFor="codiceFiscale" className="form-label">Codice Fiscale*</label>
-              <input type="text" id="codiceFiscale" value={codiceFiscale} onChange={e => setCodiceFiscale(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="partitaIva" className="form-label">Partita IVA</label>
-              <input type="text" id="partitaIva" value={partitaIva} onChange={e => setPartitaIva(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="indirizzoVia" className="form-label">Sede sociale: Indirizzo*</label>
-              <input type="text" id="indirizzoVia" value={indirizzoVia} onChange={e => setIndirizzoVia(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="indirizzoComune" className="form-label">Sede sociale: Comune*</label>
-              <input type="text" id="indirizzoComune" value={indirizzoComune} onChange={e => setIndirizzoComune(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="indirizzoCap" className="form-label">Sede sociale: CAP*</label>
-              <input type="text" id="indirizzoCap" value={indirizzoCap} onChange={e => setIndirizzoCap(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="legaleRappresentante" className="form-label">Legale Rappresentante*</label>
-              <input type="text" id="legaleRappresentante" value={legaleRappresentante} onChange={e => setLegaleRappresentante(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="direttoreTecnico" className="form-label">Direttore Tecnico*</label>
-              <input type="text" id="direttoreTecnico" value={direttoreTecnico} onChange={e => setDirettoreTecnico(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="recapitoTelefonico" className="form-label">Recapito Telefonico</label>
-              <input type="text" id="recapitoTelefonico" value={recapitoTelefonico} onChange={e => setRecapitoTelefonico(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="clubEmail" className="form-label">Email Club*</label>
-              <input type="email" id="clubEmail" value={clubEmail} onChange={e => setClubEmail(e.target.value)} className="form-input" disabled={loading} />
-            </div>
-
-            <button type="submit" className="login-button" disabled={loading}>
-              {loading ? 'Registrazione in corso...' : 'Registrati'}
-            </button>
-
-            {error && <div className="error-message">{error}</div>}
-            {success && <div className="success-message">{success}</div>}
-          </form>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

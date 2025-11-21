@@ -1,6 +1,9 @@
 /* Import font Outfit da Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
+/* Import variabili CSS globali */
+@import './styles/variables.css';
+
 /* Reset e stili globali */
 * {
   margin: 0;
@@ -15,8 +18,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8f9fa;
-  color: #333;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   line-height: 1.6;
 }
 
@@ -34,103 +37,103 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
   line-height: 1.3;
   margin-bottom: 0.5em;
-  color: #333;
+  color: var(--text-primary);
 }
 
 h1 {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: var(--font-bold);
 }
 
 h2 {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: var(--font-bold);
 }
 
 h3 {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 }
 
 h4 {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 }
 
 h5 {
   font-size: 1.25rem;
-  font-weight: 500;
+  font-weight: var(--font-medium);
 }
 
 h6 {
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: var(--font-medium);
 }
 
 p {
   font-family: 'Outfit', sans-serif;
   font-size: 1rem;
-  font-weight: 400;
+  font-weight: var(--font-normal);
   line-height: 1.6;
   margin-bottom: 1em;
-  color: #333;
+  color: var(--text-primary);
 }
 
 /* Classi utility per i testi */
 .text-xs {
-  font-size: 0.75rem;
+  font-size: var(--font-xs);
 }
 
 .text-sm {
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
 }
 
 .text-base {
-  font-size: 1rem;
+  font-size: var(--font-base);
 }
 
 .text-lg {
-  font-size: 1.125rem;
+  font-size: var(--font-lg);
 }
 
 .text-xl {
-  font-size: 1.25rem;
+  font-size: var(--font-xl);
 }
 
 .text-2xl {
-  font-size: 1.5rem;
+  font-size: var(--font-2xl);
 }
 
 .text-3xl {
-  font-size: 1.875rem;
+  font-size: var(--font-3xl);
 }
 
 .text-4xl {
-  font-size: 2.25rem;
+  font-size: var(--font-4xl);
 }
 
 .text-light {
-  font-weight: 300;
+  font-weight: var(--font-light);
 }
 
 .text-normal {
-  font-weight: 400;
+  font-weight: var(--font-normal);
 }
 
 .text-medium {
-  font-weight: 500;
+  font-weight: var(--font-medium);
 }
 
 .text-semibold {
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 }
 
 .text-bold {
-  font-weight: 700;
+  font-weight: var(--font-bold);
 }
 
 .text-extrabold {
-  font-weight: 800;
+  font-weight: var(--font-extrabold);
 }
 
 .text-center {
@@ -145,80 +148,56 @@ p {
   text-align: right;
 }
 
-.text-red {
-  color: rgba(204, 14, 0, 1);
-}
-
-.text-dark {
-  color: #333;
-}
-
-.text-gray {
-  color: #666;
-}
-
-.text-light-gray {
-  color: #999;
-}
-
-.text-white {
-  color: #ffffff;
-}
-
 /* Stili per scrollbar personalizzata */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-tertiary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(204, 14, 0, 1);
-  border-radius: 4px;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(200, 35, 51, 1);
+  background: var(--color-hover);
 }
 
 /* Utilities comuni */
-.bg-white {
-  background-color: white;
-}
-
 .border-red {
-  border: 1px solid rgba(204, 14, 0, 1);
+  border: 1px solid var(--border-primary);
 }
 
 .rounded {
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .shadow {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .p-2 {
-  padding: 1rem;
+  padding: var(--spacing-md);
 }
 
 .p-3 {
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
 }
 
 .mb-2 {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 }
 
 .mb-3 {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 /* Focus outline personalizzato */
 *:focus {
-  outline: 2px solid rgba(204, 14, 0, 1);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
