@@ -135,7 +135,7 @@ const registerUser = async (req, res) => {
         confirmationToken
       }, { transaction });
 
-      await sendConfirmationEmail(user.email, confirmationToken);
+      // await sendConfirmationEmail(user.email, confirmationToken);
 
       await transaction.commit();
 
