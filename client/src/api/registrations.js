@@ -78,6 +78,17 @@ export const getClubRegistration = async (clubId, competizioneId) => {
   }
 };
 
+// Funzione per ottenere tutte le iscrizioni dei club per una competizione
+export const getClubRegistrationsByCompetition = async (competizioneId) => {
+  try {
+    const response = await axios.get(`/iscrizioni/club-iscrizione/competizione/${competizioneId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il recupero delle iscrizioni dei club:', error);
+    throw error;
+  }
+};
+
 // Funzione per caricare i documenti dell'iscrizione del club
 export const uploadClubRegistrationDocuments = async (clubId, competizioneId, certificatiMedici, autorizzazioni, confermaPresidente) => {
   try {

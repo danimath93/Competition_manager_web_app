@@ -84,9 +84,9 @@ const CompetitionRegistration = () => {
 
   // Funzione per copiare l'IBAN negli appunti
   const handleCopyIban = async () => {
-    if (costSummary?.iban) {
+    if (costSummary?.versamento?.iban) {
       try {
-        await navigator.clipboard.writeText(costSummary.iban);
+        await navigator.clipboard.writeText(costSummary.versamento.iban);
         setIbanCopied(true);
         setTimeout(() => setIbanCopied(false), 2000);
       } catch (err) {
@@ -621,13 +621,13 @@ const CompetitionRegistration = () => {
               ) : costSummary ? (
                 <>
                   <Typography variant="body1" sx={{ mb: 1 }}>
-                    In totale hai iscritto <strong>{costSummary.totalAthletes}</strong> atleti alla competizione per un totale di <strong>{costSummary.totalCategories}</strong> categorie.
+                    In totale hai iscritto <strong>{costSummary?.totals?.totalAthletes}</strong> atleti alla competizione per un totale di <strong>{costSummary?.totals?.totalCategories}</strong> categorie.
                   </Typography>
                   <Typography variant="body2" sx={{ mb: 2 }}>
                     Di seguito i dettagli:
                   </Typography>
                   {/* Dettaglio per tipo atleta */}
-                  {costSummary.athleteTypeDetails && Object.entries(costSummary.athleteTypeDetails).map(([type, detail]) => (
+                  {costSummary?.athleteTypeTotals && Object.entries(costSummary?.athleteTypeTotals).map(([type, detail]) => (
                     <Box key={type} sx={{ mb: 1, ml: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                         • <strong>{detail.total}</strong> {type} iscritti alla gara, di cui
@@ -646,9 +646,9 @@ const CompetitionRegistration = () => {
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
                     <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
-                      {costSummary.iban || 'Non disponibile'}
+                      {costSummary?.versamento?.iban || 'Non disponibile'}
                     </Typography>
-                    {costSummary.iban && (
+                    {costSummary?.versamento?.iban && (
                       <Tooltip title="Iban copiato correttamente sulla clipboard!" open={ibanCopied} arrow>
                         <Button
                           size="small"
@@ -665,7 +665,7 @@ const CompetitionRegistration = () => {
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
                     <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
-                      {costSummary.intestatario || 'Non disponibile'}
+                      {costSummary?.versamento?.intestatario || 'Non disponibile'}
                     </Typography>
                   </Box>
                   <Typography variant="body2" sx={{ mb: 1 }}>
@@ -673,7 +673,7 @@ const CompetitionRegistration = () => {
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
                     <Typography variant="body1" sx={{ fontWeight: 'bold', flexGrow: 1 }}>
-                      {costSummary.causale || 'Non disponibile'}
+                      {costSummary?.versamento?.causale || 'Non disponibile'}
                     </Typography>
                   </Box>
                   <Divider sx={{ my: 2 }} />

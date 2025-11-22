@@ -1,4 +1,6 @@
-const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoCompetizione } = require('../models');
+const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione } = require('../models');
+const { IscrizioneClub, IscrizioneAtleta, Atleta } = require('../models');
+
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutte le competizioni
@@ -363,8 +365,6 @@ const downloadFile = async (req, res) => {
 
 
 // Riepilogo costi dettagliato per una competizione e club
-const { IscrizioneClub, IscrizioneAtleta, Atleta } = require('../models');
-
 const getCompetitionCostSummary = async (req, res) => {
   try {
     const { competizioneId } = req.params;
@@ -373,19 +373,17 @@ const getCompetitionCostSummary = async (req, res) => {
       return res.status(400).json({ error: 'clubId mancante' });
     }
 
+    if (!competizioneId) {
+      return res.status(400).json({ error: 'competizioneId mancante' });
+    }
+
     // Trova la competizione
     const competizione = await Competizione.findByPk(competizioneId);
     if (!competizione) {
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
-    // Trova l'iscrizione club
-    const iscrizioneClub = await IscrizioneClub.findOne({
-      where: { clubId, competizioneId },
-    });
-
     // Trova gli atleti iscritti del club alla competizione, includendo la categoria
-    const { ConfigTipoAtleta, ConfigTipoCategoria } = require('../models');
     const iscrizioniAtleti = await IscrizioneAtleta.findAll({
       where: { competizioneId },
       include: [
@@ -404,9 +402,13 @@ const getCompetitionCostSummary = async (req, res) => {
     });
 
     // Calcola dettagli per tipo atleta
-    const athleteTypeDetails = {};
+    const athleteTypeTotals = {};
     const categoryBreakdown = {};
-    let nonMemberCount = 0;
+
+    if (iscrizioniAtleti.length === 0) {
+      return res.status(404).json({ error: 'Nessuna iscrizione atleta trovata per questo club e competizione' });
+    }
+
     // Raggruppa iscrizioni per atleta
     const iscrizioniPerAtleta = {};
     iscrizioniAtleti.forEach((iscrizione) => {
@@ -415,50 +417,52 @@ const getCompetitionCostSummary = async (req, res) => {
       if (atleta) {
         // Raggruppa per id atleta
         if (!iscrizioniPerAtleta[atleta.id]) {
-          iscrizioniPerAtleta[atleta.id] = { atleta, categorie: [] };
+          iscrizioniPerAtleta[atleta.id] = { atleta, categorie: [], costoIscrizione: iscrizione.costoIscrizione };
         }
         if (tipoCategoria && tipoCategoria.nome) {
           iscrizioniPerAtleta[atleta.id].categorie.push(tipoCategoria.nome);
           categoryBreakdown[tipoCategoria.nome] = (categoryBreakdown[tipoCategoria.nome] || 0) + 1;
         }
-        // Non soci
-        if (typeof atleta.isSocio !== 'undefined' && !atleta.isSocio) nonMemberCount++;
       }
     });
 
     // Calcola breakdown per tipo atleta e iscrizioni singole/multiple
-    Object.values(iscrizioniPerAtleta).forEach(({ atleta, categorie }) => {
+    Object.values(iscrizioniPerAtleta).forEach(({ atleta, categorie, costoIscrizione }) => {
       // Tipo atleta: mostra nome invece di id
       let tipo = atleta.tipoAtleta && atleta.tipoAtleta.nome ? atleta.tipoAtleta.nome : 'Altro';
-      if (!athleteTypeDetails[tipo]) {
-        athleteTypeDetails[tipo] = { total: 0, singleCategory: 0, multiCategory: 0 };
+      if (!athleteTypeTotals[tipo]) {
+        athleteTypeTotals[tipo] = { total: 0, singleCategory: 0, multiCategory: 0 };
       }
-      athleteTypeDetails[tipo].total++;
-      if (categorie.length === 1) athleteTypeDetails[tipo].singleCategory++;
-      if (categorie.length > 1) athleteTypeDetails[tipo].multiCategory++;
+      athleteTypeTotals[tipo].total++;
+      if (categorie.length === 1) athleteTypeTotals[tipo].singleCategory++;
+      if (categorie.length > 1) athleteTypeTotals[tipo].multiCategory++;
+      if (costoIscrizione > 0) athleteTypeTotals[tipo].totalCost = (athleteTypeTotals[tipo].totalCost || 0) + parseFloat(costoIscrizione);
     });
 
     // Totali
     const totalAthletes = Object.keys(iscrizioniPerAtleta).length;
     const totalCategories = Object.values(categoryBreakdown).reduce((acc, v) => acc + v, 0);
+    const totalCost = Object.values(iscrizioniPerAtleta).reduce((acc, iscrizione) => acc + parseFloat(iscrizione.costoIscrizione || 0), 0); 
 
-    // Costi: se non trovato, prendi dal box frontend
-    let totalCost = iscrizioneClub && iscrizioneClub.costoTotale != null ? iscrizioneClub.costoTotale : null;
     // IBAN, intestatario, causale
     const iban = competizione.iban || null;
     const intestatario = competizione.intestatario || null;
     const causale = competizione.causale || null;
 
-    res.json({
-      totalCost,
-      iban,
-      intestatario,
-      causale,
-      totalAthletes,
-      totalCategories,
-      athleteTypeDetails,
-      nonMemberCount,
-    });
+    const summary = {
+      versamento: {
+        iban,
+        intestatario,
+        causale
+      }, 
+      totals: {
+        totalAthletes,
+        totalCategories,
+        totalCost
+      },
+      athleteTypeTotals
+    };
+    res.json(summary);
   } catch (error) {
     logger.error(`Errore nel riepilogo costi per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ error: 'Errore nel riepilogo costi', details: error.message });

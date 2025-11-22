@@ -11,6 +11,7 @@ import AuthGate from './components/AuthGate';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
 import CompetitionRegistration from './pages/CompetitionRegistration';
+import CompetitionSummary from './pages/CompetitionSummary';
 import Athletes from './pages/Athletes';
 import ClubAdmin from './pages/ClubAdmin';
 import ClubUser from './pages/ClubUser';
@@ -81,10 +82,17 @@ const AppContent = () => {
           </AuthGate>
         } />
 
-        {/* Registrazione Competizione - superAdmin, admin, user */}
+        {/* Registrazione Competizione - superAdmin, admin, club */}
         <Route path="/competitions/:competitionId/register" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <CompetitionRegistration />
+          </AuthGate>
+        } />
+
+        {/* Riepilogo Competizione - superAdmin, admin, club */}
+        <Route path="/competitions/:competitionId/summary" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <CompetitionSummary />
           </AuthGate>
         } />
 
@@ -139,17 +147,17 @@ const AppContent = () => {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <LanguageProvider>
-        <AuthProvider>
-          <Router>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router>
+          <ErrorBoundary>
             <div className="App">
               <AppContent />
             </div>
-          </Router>
-        </AuthProvider>
-      </LanguageProvider>
-    </ErrorBoundary>
+          </ErrorBoundary>
+        </Router>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

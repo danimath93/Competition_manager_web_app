@@ -41,6 +41,9 @@ router.delete('/atleta/:atletaId/competizione/:competizioneId', iscrizioneContro
 // POST /api/iscrizioni/club-iscrizione - Crea o recupera l'iscrizione di un club a una competizione
 router.post('/club-iscrizione', iscrizioneController.createOrGetIscrizioneClub);
 
+// GET /api/iscrizioni/club-iscrizione/competizione/:competizioneId - Ottieni tutte le iscrizioni dei club per una competizione
+router.get('/club-iscrizione/competizione/:competizioneId', iscrizioneController.getClubRegistrationsByCompetition);
+
 // GET /api/iscrizioni/club-iscrizione/:clubId/:competizioneId - Ottieni l'iscrizione di un club a una competizione
 router.get('/club-iscrizione/:clubId/:competizioneId', iscrizioneController.getIscrizioneClub);
 

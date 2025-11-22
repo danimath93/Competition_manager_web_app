@@ -10,12 +10,12 @@ import {
   Chip,
   Tooltip
 } from '@mui/material';
-import { Edit, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
+import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 import AuthComponent from './AuthComponent';
 
-const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onEditClubOrganizer, onDocuments, userClubId, userPermissions }) => {
+const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onSummary, onEditClubOrganizer, onDocuments, userClubId }) => {
   const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
   const isClubRegistered = competition?.clubIscritti?.includes(userClubId) || false;
 
@@ -58,51 +58,67 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
       </CardContent>
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
         <>
-          <Box sx={{ display: 'flex', flexDirection: 'row', mb: 1 }}>
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
             {/* Selezione specifica per club organizzatore: */}
             {competition.organizzatoreClubId === userClubId && (
               <AuthComponent requiredRoles={['club']}>
-                <Tooltip title="Info Competizione" arrow>
-                  <IconButton
+                <Tooltip title="Definisci Competizione" arrow>
+                  <Button
+                    color='secondary'
                     variant="contained"
-                    size="small"
                     onClick={() => onEdit(competition)}
                   >
-                    <Edit />
-                  </IconButton>
+                    <EditDocument />
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Riepilogo Iscrizioni" arrow>
+                  <Button
+                    color='secondary'
+                    variant="contained"
+                    onClick={() => onSummary(competition.id)}
+                  >
+                    <Notes />
+                  </Button>
                 </Tooltip>
               </AuthComponent>
             )}
             {/* Selezione solo per Admin o SuperAdmin */}
             <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-              <Tooltip title="Info Competizione" arrow>
-                <IconButton
+              <Tooltip title="Definisci Competizione" arrow>
+                <Button
+                  color='secondary'
                   variant="contained"
-                  size="small"
                   onClick={() => onEdit(competition)}
                 >
-                  <Edit />
-                </IconButton>
+                  <EditDocument />
+                </Button>
+              </Tooltip>
+              <Tooltip title="Riepilogo Iscrizioni" arrow>
+                <Button
+                  color='secondary'
+                  variant="contained"
+                  onClick={() => onSummary(competition.id)}
+                >
+                  <Notes />
+                </Button>
               </Tooltip>
               <Tooltip title="Assegna Competizione" arrow>
-                <IconButton
+                <Button
+                  color='error'
                   variant="contained"
-                  color="primary"
-                  size="small"
                   onClick={() => onEditClubOrganizer(competition.id)}
                 >
                   <ManageAccounts />
-                </IconButton>
+                </Button>
               </Tooltip>
               <Tooltip title="Elimina Competizione" arrow>
-                <IconButton
+                <Button
+                  color='error'
                   variant="contained"
-                  color="error"
-                  size="small"
                   onClick={() => onDelete(competition.id)}
                 >
                   <Delete />
-                </IconButton>
+                </Button>
               </Tooltip>
             </AuthComponent>
           </Box>
@@ -134,7 +150,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               >
                 <Description />
               </Button>
-            </Tooltip>            
+            </Tooltip>
           </Box>
         </>
       </CardActions>

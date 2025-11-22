@@ -85,6 +85,7 @@ const getIscrizioniByCompetizione = async (req, res) => {
     const { competizioneId } = req.params;
 
     const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { competizioneId },
       include: [
         {
           model: Atleta,
@@ -102,9 +103,16 @@ const getIscrizioniByCompetizione = async (req, res) => {
           ]
         },
         {
-          model: Categoria,
-          as: 'categoria',
-          where: { competizioneId }
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: { include: ['id', 'nome', 'descrizione', 'tipoCompetizioneId'] },
+          include: [
+            {
+              model: ConfigTipoCompetizione,
+              as: 'tipoCompetizione',
+              attributes: { include: ['id', 'nome', 'descrizione'] }
+            }
+          ]
         },
         {
           model: ConfigEsperienza,
@@ -430,6 +438,35 @@ const getIscrizioneClub = async (req, res) => {
   }
 };
 
+// Ottieni tutte le iscrizioni dei club per una competizione
+const getClubRegistrationsByCompetition = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+
+    const clubRegistrations = await IscrizioneClub.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Club,
+          as: 'club',
+          attributes: { exclude: ['logo'] }
+        }
+      ],
+      order: [
+        [{ model: Club, as: 'club' }, 'denominazione', 'ASC']
+      ]
+    });
+
+    res.status(200).json(clubRegistrations);
+  } catch (error) {
+    logger.error(`Errore nel recupero delle iscrizioni dei club per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel recupero delle iscrizioni dei club',
+      details: error.message
+    });
+  }
+};
+
 // Upload dei documenti per l'iscrizione del club
 const uploadDocumentiIscrizioneClub = async (req, res) => {
   try {
@@ -698,6 +735,7 @@ module.exports = {
   deleteIscrizioniAtleta,
   createOrGetIscrizioneClub,
   getIscrizioneClub,
+  getClubRegistrationsByCompetition,
   uploadDocumentiIscrizioneClub,
   confermaIscrizioneClub,
   downloadDocumentoIscrizioneClub,
