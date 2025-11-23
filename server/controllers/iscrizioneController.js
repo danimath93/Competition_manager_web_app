@@ -445,6 +445,7 @@ const getClubRegistrationsByCompetition = async (req, res) => {
 
     const clubRegistrations = await IscrizioneClub.findAll({
       where: { competizioneId },
+      attributes: { exclude: ['autorizzazioni', 'certificatiMedici', 'confermaPresidente'] },
       include: [
         {
           model: Club,
