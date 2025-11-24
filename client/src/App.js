@@ -16,7 +16,10 @@ import Athletes from './pages/Athletes';
 import ClubAdmin from './pages/ClubAdmin';
 import ClubUser from './pages/ClubUser';
 import Judges from './pages/Judges';
-import Categories from './pages/Categories';
+import Categories from './pages/categories/Categories';
+import CategoryDefinition from './pages/categories/CategoryDefinition';
+import CategoryExecution from './pages/categories/CategoryExecution';
+import CategoryResults from './pages/categories/CategoryResults';
 import './App.css';
 
 // Componente principale dell'app
@@ -126,8 +129,29 @@ const AppContent = () => {
 
         {/* Categorie - superAdmin, admin, table */}
         <Route path="/categories" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <Categories />
+          </AuthGate>
+        } />
+
+        {/* Definizione Categorie - superAdmin, admin, club organizzatore */}
+        <Route path="/categories/definition" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <CategoryDefinition />
+          </AuthGate>
+        } />
+
+        {/* Svolgimento Categorie - superAdmin, admin, club organizzatore */}
+        <Route path="/categories/execution" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <CategoryExecution />
+          </AuthGate>
+        } />
+
+        {/* Risultati Categorie - superAdmin, admin, club organizzatore */}
+        <Route path="/categories/results" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <CategoryResults />
           </AuthGate>
         } />
 

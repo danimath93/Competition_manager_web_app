@@ -1,9 +1,13 @@
 import axios from './axios';
 
 // Carica tutte le competizioni (per admin)
-export const loadAllCompetitions = async () => {
+export const loadAllCompetitions = async (states = []) => {
   try {
-    const response = await axios.get('/competizioni');
+    const params = new URLSearchParams();
+    if (states.length > 0) {
+      states.forEach(state => params.append('stati', state));
+    }
+    const response = await axios.get('/competizioni', { params });
     return response.data;
   } catch (error) {
     console.error('Errore nel caricamento delle competizioni:', error);
