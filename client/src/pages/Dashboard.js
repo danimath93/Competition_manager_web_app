@@ -21,15 +21,6 @@ const Dashboard = () => {
         <p>Benvenuto nella dashboard del Gestore Gare!</p>
         <p>Qui puoi visualizzare un riepilogo delle attività principali.</p>
       </div>
-      <Box sx={{ mb: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => sendConfirmationEmail('ixion95@gmail.com', 'TEST')}
-        >
-          Manda email
-        </Button>
-      </Box>
     </div>
   );
 };
