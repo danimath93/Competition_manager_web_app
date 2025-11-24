@@ -1,4 +1,4 @@
-const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta } = require('../models');
+const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione, Club } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
 const e = require('express');
@@ -23,12 +23,21 @@ exports.generateCategories = async (req, res) => {
       include: [{
         model: Atleta,
         as: 'atleta',
-        attributes: ['id', 'nome', 'cognome', 'dataNascita', 'peso'],
+        attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId', 'clubId'],
         include: [{
           model: ConfigTipoAtleta,
           as: 'tipoAtleta'
         }]
-      }]
+      }, {
+        model: ConfigTipoCategoria,
+        as: 'tipoCategoria',
+        attributes: ['id', 'nome', 'tipoCompetizioneId']
+      }, {
+        model: ConfigEsperienza,
+        as: 'esperienza',
+        attributes: ['id', 'nome']
+      }
+    ]
     });
 
     if (registrations.length === 0) {
@@ -55,7 +64,18 @@ exports.generateCategories = async (req, res) => {
 
       // Determina la chiave della categoria
       let categoryKey = registration.tipoCategoriaId.toString();
+      let categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
 
+      // Aggiungi il tipo atleta alla chiave
+      if (tipoAtleta) {
+        categoryKey += `_tipo_${tipoAtleta.id}`;
+        categoryName = `${tipoAtleta.nome} - ${categoryName}`;
+
+      } else {
+        categoryKey += `_tipo_misto`;
+        categoryName = `Misto - ${categoryName}`;
+      }
+      
       // Aggiungi il gruppo di età alla chiave
       let groupAge = null;
       let athleteGroupAge = null;
@@ -66,28 +86,30 @@ exports.generateCategories = async (req, res) => {
         }
       });
       categoryKey += `_age_${groupAge || 'open'}`;
+      categoryName = athleteGroupAge ? `${categoryName} - ${athleteGroupAge.nome}` : `${categoryName} - Open`;
 
       // Aggiungi il genere alla chiave
       let gender = athlete.sesso || 'U';
       categoryKey += `_${gender}`;
-
-      // Aggiungi il tipo atleta alla chiave
-      let tipoAtletaNome = 'misto';
-      if (tipoAtleta) {
-        tipoAtletaNome = tipoAtleta.nome;
-        categoryKey += `_tipo_${tipoAtleta.id}`;
-      } else {
-        categoryKey += `_tipo_misto`;
+      categoryName = `${categoryName} - ${gender}`;
+      
+      // Aggiungi lvl esperienza se presente
+      let lvlEsperienza = null;
+      if (registration.esperienza) {
+        lvlEsperienza = registration.esperienza.id;
+        categoryKey += `_lvl_${registration.esperienza.id}`;
+        categoryName = `${categoryName} - ${registration.esperienza.nome}`;
       }
       
       // Inizializza la categoria se non esiste
       if (!createdCategories[categoryKey]) {
         createdCategories[categoryKey] = {
-          nome: `Cat ${registration.tipoCategoriaId} - ${athleteGroupAge ? athleteGroupAge.nome : 'Open'} - ${gender} - ${tipoAtletaNome}`,
+          nome: categoryName,
           atleti: [],
           genere: gender,
           tipoAtletaId: tipoAtleta ? tipoAtleta.id : null,
-          tipoAtletaNome: tipoAtletaNome,
+          tipoAtletaNome: tipoAtleta ? tipoAtleta.nome : null,
+          livelloEsperienzaId: lvlEsperienza,
           minAge: athleteGroupAge ? athleteGroupAge.etaMinima : null,
           maxAge: athleteGroupAge ? athleteGroupAge.etaMassima : null,
           tipoCategoriaId: registration.tipoCategoriaId
@@ -146,10 +168,12 @@ exports.saveCategories = async (req, res) => {
       const nuovaCategoria = await Categoria.create({
         nome: categoria.nome,
         competizioneId: parseInt(competizioneId),
-        tipoCategoriaId: tipoCategoriaId,
+        tipoCategoriaId: categoria.tipoCategoriaId,
+        // tipoAtletaId: categoria.tipoAtletaId || null,
+        // livelloEsperienzaId: categoria.livelloEsperienzaId || null,
         genere: categoria.genere || 'U',
-        gruppoEtaId: categoria.gruppoEtaId,
-        grado: categoria.grado,
+        etaMinima: categoria.minAge || 0,
+        etaMassima: categoria.maxAge || 99,
         pesoMassimo: categoria.pesoMassimo || null,
         numeroTurni: categoria.numeroTurni || 1,
         maxPartecipanti: categoria.atleti.length,
@@ -203,31 +227,37 @@ exports.getCategoriesByCompetizione = async (req, res) => {
       where: { competizioneId },
       include: [
         {
-          model: ConfigGruppoEta,
-          as: 'gruppoEta',
-          attributes: ['id', 'nome', 'etaMinima', 'etaMassima']
-        },
-        {
           model: ConfigTipoCategoria,
           as: 'configTipoCategoria',
-          attributes: ['id', 'nome']
-        },
-        {
-          model: IscrizioneAtleta,
-          as: 'iscrizioni',
+          attributes: ['id', 'nome'],
           include: [{
-            model: Atleta,
-            as: 'atleta',
-            attributes: ['id', 'nome', 'cognome', 'dataNascita', 'peso'],
-            include: [{
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
-            }]
+            model: ConfigTipoCompetizione,
+            as: 'tipoCompetizione',
+            attributes: ['id', 'nome']
           }]
         }
       ],
       order: [['createdAt', 'ASC']]
     });
+
+    for (const categoria of categorie) {
+      const iscrizioni = await IscrizioneAtleta.findAll({
+        where: { categoriaId: categoria.id },
+        attributes: ['id', 'atletaId', 'tipoCategoriaId', 'categoriaId', 'peso'],
+        include: [{
+          model: Atleta,
+          as: 'atleta',
+          attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso'],
+          include: [{
+            model: Club,
+            as: 'club',
+            attributes: ['id', 'denominazione']
+          }]
+        }]
+      });
+      categoria.dataValues.iscrizioni = iscrizioni;
+    }
+
 
     res.json(categorie);
 
@@ -306,6 +336,40 @@ exports.deleteCategoria = async (req, res) => {
     res.status(500).json({ 
       error: 'Errore durante l\'eliminazione della categoria',
       details: error.message 
+    });
+  }
+};
+
+// Elimina tutte le categorie di una competizione
+exports.deleteCategoriesByCompetizione = async (req, res) => {
+  const transaction = await Categoria.sequelize.transaction();
+  try {
+    const { id } = req.params;
+    const categorie = await Categoria.findAll({ where: { competizioneId: id } });
+    if (categorie.length === 0) {
+      await transaction.rollback();
+      logger.warn(`Tentativo eliminazione categorie per competizione inesistente o senza categorie - Competizione ID: ${id}`);
+      return res.status(404).json({ error: 'Nessuna categoria trovata per questa competizione' });
+    }
+    // Rimuovi il categoriaId dalle iscrizioni
+    await IscrizioneAtleta.update(
+      { categoriaId: null },
+      { 
+        where: { categoriaId: { [Op.in]: categorie.map(c => c.id) } },
+        transaction
+      }
+    );
+    // Elimina le categorie
+    await Categoria.destroy({ where: { competizioneId: id }, transaction });
+    await transaction.commit();
+    logger.info(`Categorie eliminate per competizione - Competizione ID: ${id}, Totale Categorie: ${categorie.length}`);
+    res.json({ message: 'Tutte le categorie della competizione sono state eliminate con successo' });
+  } catch (error) {
+    await transaction.rollback();
+    logger.error(`Errore nell'eliminazione delle categorie per competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore durante l\'eliminazione delle categorie della competizione',
+      details: error.message
     });
   }
 };

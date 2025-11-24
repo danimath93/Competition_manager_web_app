@@ -6,7 +6,17 @@ const logger = require('../helpers/logger/logger');
 // Ottieni tutte le competizioni
 const getAllCompetizioni = async (req, res) => {
   try {
+    const { stati } = req.query;
+    const whereClause = {};
+    
+    // Se sono specificati stati, filtra per quegli stati
+    if (stati) {
+      const statiArray = Array.isArray(stati) ? stati : [stati];
+      whereClause.stato = statiArray;
+    }
+    
     const competizioni = await Competizione.findAll({
+      where: whereClause,
       attributes: { 
         // Escludiamo tutti i file BLOB per performance
         exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']

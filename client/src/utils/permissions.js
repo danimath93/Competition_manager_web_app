@@ -4,7 +4,7 @@
 export const PERMISSIONS = {
   superAdmin: ['dashboard', 'competitions', 'athletes', 'clubs/admin', 'judges', 'categories', 'settings'],
   admin: ['competitions', 'athletes', 'clubs/admin', 'judges', 'categories'],
-  club: ['competitions', 'athletes', 'club'],
+  club: ['competitions', 'athletes', 'club', 'categories'],
   user: ['competitions'],
   table: ['categories']
 };

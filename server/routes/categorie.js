@@ -14,6 +14,9 @@ router.get('/competizioni/:competizioneId/', categoriaController.getCategoriesBy
 // Aggiorna una categoria
 router.put('/:id', categoriaController.updateCategoria);
 
+// DELETE /api/competizioni/:id/categorie - Elimina tutte le categorie di una competizione
+router.delete('/:id/categorie', categoriaController.deleteCategoriesByCompetizione);
+
 // Elimina una categoria
 router.delete('/:id', categoriaController.deleteCategoria);
 

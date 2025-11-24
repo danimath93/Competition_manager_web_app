@@ -55,6 +55,17 @@ export const deleteCategoria = async (id) => {
   }
 };
 
+// Elimina tutte le categorie di una competizione
+export const deleteCategoriesByCompetition = async (competitionId) => {
+  try {
+    const response = await axios.delete(`/categorie/${competitionId}/categorie`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante l\'eliminazione delle categorie della competizione:', error);
+    throw error;
+  }
+};
+
 // Sposta atleti tra categorie
 export const moveAtleti = async (atletiIds, targetCategoriaId) => {
   try {
