@@ -37,21 +37,10 @@ const Categoria = sequelize.define('Categoria', {
     allowNull: false,
     defaultValue: 'U'
   },
-  etaMinima: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 0
-    }, 
-    field: 'eta_minima'
-  },
-  etaMassima: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 0
-    }, 
-    field: 'eta_massima'
+  gruppiEtaId: {
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
+    allowNull: true,
+    field: 'gruppi_eta_id'
   },
   pesoMassimo: {
     type: DataTypes.DECIMAL(5, 2),

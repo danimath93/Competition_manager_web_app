@@ -1,7 +1,10 @@
 const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione, Club } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
-const e = require('express');
+
+const FIGHTING_COMPETITION_TYPE_ID = 3; // ID del tipo di competizione per combattimento  
+const COMPLEMENTARY_ACTIVITIES_TYPE_ID = 4; // ID del tipo di competizione per attività complementari
+
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
 exports.generateCategories = async (req, res) => {
@@ -74,21 +77,26 @@ exports.generateCategories = async (req, res) => {
       const tipoCompetizioneId = registration?.tipoCategoria?.tipoCompetizioneId;
 
       // Solo per le attività complementari (id=4), posso attivare il merge globale
-      const mergeComplementaryActivities = unisciAttivitaComplementari && tipoCompetizioneId && tipoCompetizioneId == 4? true : false;
+      const mergeComplementaryActivities = unisciAttivitaComplementari && tipoCompetizioneId && tipoCompetizioneId == COMPLEMENTARY_ACTIVITIES_TYPE_ID? true : false;
 
       // Determina la chiave della categoria
       let categoryKey = registration.tipoCategoriaId.toString();
       let categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
 
       // Aggiungi il tipo atleta alla chiave
+      // TODO: Gestire meglio questa parte con costanti o config esterna
       if (tipoAtleta && tipoAtleta.id == 3) // id.3 = CN
       {
-        categoryKey += `_CN`;
-        categoryName = `${tipoAtleta.nome} - ${categoryName}`;
+        if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
+          categoryKey += `_CN`;
+          categoryName = `${tipoAtleta.nome} - ${categoryName}`;
+        }
       }
       else {
-        categoryKey += `_CB`;
-        categoryName = `CB - ${categoryName}`;
+        if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
+          categoryKey += `_CB`;
+          categoryName = `CB - ${categoryName}`;
+        }
       }
 
       // Aggiungi il gruppo di età alla chiave
@@ -221,8 +229,9 @@ exports.saveCategories = async (req, res) => {
         // tipoAtletaId: categoria.tipoAtletaId || null,
         // livelloEsperienzaId: categoria.livelloEsperienzaId || null,
         genere: categoria.genere || 'U',
-        etaMinima: categoria.etaMinima || 0,
-        etaMassima: categoria.etaMassima || 99,
+        // etaMinima: categoria.etaMinima || 0,
+        // etaMassima: categoria.etaMassima || 99,
+        gruppiEtaId: categoria.gruppiEtaId || [],
         pesoMassimo: categoria.pesoMassimo || null,
         numeroTurni: categoria.numeroTurni || 1,
         maxPartecipanti: categoria.atleti.length,
@@ -277,7 +286,7 @@ exports.getCategoriesByCompetizione = async (req, res) => {
       include: [
         {
           model: ConfigTipoCategoria,
-          as: 'configTipoCategoria',
+          as: 'tipoCategoria',
           attributes: ['id', 'nome'],
           include: [{
             model: ConfigTipoCompetizione,

@@ -55,6 +55,7 @@ import {
   getGruppiEta
 } from '../../api/categories';
 import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
+import CategorySplit from './CategorySplit';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -91,7 +92,7 @@ const CategoryDefinition = () => {
   // Dialog states
   const [editDialog, setEditDialog] = useState({ open: false, categoria: null, originalNome: null });
   const [mergeDialog, setMergeDialog] = useState({ open: false, mergedName: '' });
-  const [splitDialog, setSplitDialog] = useState({ open: false, categoria: null, atleti1: [], atleti2: [], nome1: '', nome2: '' });
+  const [splitDialog, setSplitDialog] = useState({ open: false, categoria: null });
   
   // Merge mode state
   const [isMergeMode, setIsMergeMode] = useState(false);
@@ -417,61 +418,20 @@ const CategoryDefinition = () => {
   const handleOpenSplit = (categoria) => {
     setSplitDialog({
       open: true,
-      categoria: categoria,
-      atleti1: [],
-      atleti2: [],
-      nome1: `${categoria.nome}_A`,
-      nome2: `${categoria.nome}_B`
+      categoria: categoria
     });
   };
 
-  const handleSplit = () => {
-    const { categoria, atleti1, atleti2, nome1, nome2 } = splitDialog;
-
-    if (atleti1.length === 0 || atleti2.length === 0) {
-      setError('Entrambe le categorie devono avere almeno un atleta');
-      return;
-    }
-
+  const handleSplit = ({ categoria1, categoria2 }) => {
     if (isGenerated) {
-      const cat1 = {
-        ...categoria,
-        nome: nome1,
-        atleti: categoria.atleti.filter(a => atleti1.includes(a.id))
-      };
-
-      const cat2 = {
-        ...categoria,
-        nome: nome2,
-        atleti: categoria.atleti.filter(a => atleti2.includes(a.id))
-      };
-
       const updated = generatedCategories.map(c => 
-        c.nome === categoria.nome ? cat1 : c
+        c.nome === splitDialog.categoria.nome ? categoria1 : c
       );
-      updated.push(cat2);
+      updated.push(categoria2);
 
       setGeneratedCategories(updated);
-      setSplitDialog({ open: false, categoria: null, atleti1: [], atleti2: [], nome1: '', nome2: '' });
-      setSuccess('Categoria divisa');
-    }
-  };
-
-  const handleToggleAtletaSplit = (atletaId, gruppo) => {
-    const { atleti1, atleti2 } = splitDialog;
-    
-    if (gruppo === 1) {
-      const newAtleti1 = atleti1.includes(atletaId)
-        ? atleti1.filter(id => id !== atletaId)
-        : [...atleti1, atletaId];
-      const newAtleti2 = atleti2.filter(id => id !== atletaId);
-      setSplitDialog({ ...splitDialog, atleti1: newAtleti1, atleti2: newAtleti2 });
-    } else {
-      const newAtleti2 = atleti2.includes(atletaId)
-        ? atleti2.filter(id => id !== atletaId)
-        : [...atleti2, atletaId];
-      const newAtleti1 = atleti1.filter(id => id !== atletaId);
-      setSplitDialog({ ...splitDialog, atleti1: newAtleti1, atleti2: newAtleti2 });
+      setSplitDialog({ open: false, categoria: null });
+      setSuccess('Categoria divisa con successo');
     }
   };
 
@@ -1158,26 +1118,8 @@ const CategoryDefinition = () => {
 
           {/* Filtri per categorie salvate */}
           <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Filtri
-            </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Tipo Atleta</InputLabel>
-                  <Select
-                    value={filters.tipoAtletaId}
-                    onChange={(e) => handleFilterChange('tipoAtletaId', e.target.value)}
-                    label="Tipo Atleta"
-                  >
-                    <MenuItem value="">Tutti</MenuItem>
-                    {getUniqueFilterValues(categories).tipiAtleta.map((tipo) => (
-                      <MenuItem key={tipo.id} value={tipo.id}>{tipo.nome}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Categoria</InputLabel>
                   <Select
@@ -1192,7 +1134,7 @@ const CategoryDefinition = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Genere</InputLabel>
                   <Select
@@ -1207,7 +1149,7 @@ const CategoryDefinition = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Gruppo Età</InputLabel>
                   <Select
@@ -1343,80 +1285,13 @@ const CategoryDefinition = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog Dividi */}
-      <Dialog 
-        open={splitDialog.open} 
-        onClose={() => setSplitDialog({ open: false, categoria: null, atleti1: [], atleti2: [], nome1: '', nome2: '' })}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Dividi Categoria: {splitDialog.categoria?.nome}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Nome Prima Categoria"
-                value={splitDialog.nome1 || ''}
-                onChange={(e) => setSplitDialog({ ...splitDialog, nome1: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <Typography variant="subtitle2" gutterBottom>
-                Atleti Gruppo 1 ({splitDialog.atleti1.length})
-              </Typography>
-              <List dense sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'background.paper' }}>
-                {splitDialog.categoria?.atleti?.map((atleta) => (
-                  <ListItem key={atleta.id}>
-                    <Checkbox
-                      checked={splitDialog.atleti1.includes(atleta.id)}
-                      onChange={() => handleToggleAtletaSplit(atleta.id, 1)}
-                    />
-                    <ListItemText 
-                      primary={`${atleta.nome} ${atleta.cognome}`}
-                      secondary={atleta.peso ? `${atleta.peso}kg` : ''}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Nome Seconda Categoria"
-                value={splitDialog.nome2 || ''}
-                onChange={(e) => setSplitDialog({ ...splitDialog, nome2: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <Typography variant="subtitle2" gutterBottom>
-                Atleti Gruppo 2 ({splitDialog.atleti2.length})
-              </Typography>
-              <List dense sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'background.paper' }}>
-                {splitDialog.categoria?.atleti?.map((atleta) => (
-                  <ListItem key={atleta.id}>
-                    <Checkbox
-                      checked={splitDialog.atleti2.includes(atleta.id)}
-                      onChange={() => handleToggleAtletaSplit(atleta.id, 2)}
-                    />
-                    <ListItemText 
-                      primary={`${atleta.nome} ${atleta.cognome}`}
-                      secondary={atleta.peso ? `${atleta.peso}kg` : ''}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSplitDialog({ open: false, categoria: null, atleti1: [], atleti2: [], nome1: '', nome2: '' })}>
-            Annulla
-          </Button>
-          <Button onClick={handleSplit} variant="contained">
-            Dividi
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Dialog Dividi - Nuovo Componente */}
+      <CategorySplit
+        open={splitDialog.open}
+        onClose={() => setSplitDialog({ open: false, categoria: null })}
+        categoria={splitDialog.categoria}
+        onSplit={handleSplit}
+      />
     </Container>
   );
 };
