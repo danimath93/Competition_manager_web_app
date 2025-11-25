@@ -44,8 +44,10 @@ exports.generateCategories = async (req, res) => {
       return res.status(400).json({ error: 'Nessun atleta iscritto trovato per questa tipologia' });
     }
 
+    // Crea la struttura delle categorie come mappa key-value ordinata per key
+    const createdCategories = new Map();
+
     // Crea le categorie con eventuali preferenze di generazione
-    const createdCategories = {};
     const today = new Date();
     const tipoAtletaMap = {};
     const tipiAtleta = await ConfigTipoAtleta.findAll();
@@ -102,8 +104,8 @@ exports.generateCategories = async (req, res) => {
       }
       
       // Inizializza la categoria se non esiste
-      if (!createdCategories[categoryKey]) {
-        createdCategories[categoryKey] = {
+      if (!createdCategories.has(categoryKey)) {
+        createdCategories.set(categoryKey, {
           nome: categoryName,
           atleti: [],
           genere: gender,
@@ -113,10 +115,10 @@ exports.generateCategories = async (req, res) => {
           minAge: athleteGroupAge ? athleteGroupAge.etaMinima : null,
           maxAge: athleteGroupAge ? athleteGroupAge.etaMassima : null,
           tipoCategoriaId: registration.tipoCategoriaId
-        };
+        });
       }
 
-      createdCategories[categoryKey].atleti.push({
+      createdCategories.get(categoryKey).atleti.push({
         id: athlete.id,
         nome: athlete.nome,
         cognome: athlete.cognome,
@@ -127,8 +129,10 @@ exports.generateCategories = async (req, res) => {
       });
     });
 
-    // Converti in array
-    const risultato = Object.values(createdCategories);
+    // Converti in array, ordinato per nome categoria
+    const risultato = Array.from(createdCategories.entries())
+      .sort((a, b) => a[1].nome.localeCompare(b[1].nome))
+      .map(entry => entry[1]);
 
     res.json({
       message: 'Categorie generate con successo',
