@@ -75,13 +75,14 @@ exports.generateCategories = async (req, res) => {
       const age = today.getFullYear() - birthDate.getFullYear();
       const tipoAtleta = athlete.tipoAtleta;
       const tipoCompetizioneId = registration?.tipoCategoria?.tipoCompetizioneId;
+      const categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
 
       // Solo per le attività complementari (id=4), posso attivare il merge globale
       const mergeComplementaryActivities = unisciAttivitaComplementari && tipoCompetizioneId && tipoCompetizioneId == COMPLEMENTARY_ACTIVITIES_TYPE_ID? true : false;
 
       // Determina la chiave della categoria
       let categoryKey = registration.tipoCategoriaId.toString();
-      let categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
+      let displayName = '';
 
       // Aggiungi il tipo atleta alla chiave
       // TODO: Gestire meglio questa parte con costanti o config esterna
@@ -89,13 +90,12 @@ exports.generateCategories = async (req, res) => {
       {
         if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
           categoryKey += `_CN`;
-          categoryName = `${tipoAtleta.nome} - ${categoryName}`;
+          displayName = `${tipoAtleta.nome} - `;
         }
       }
       else {
         if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
           categoryKey += `_CB`;
-          categoryName = `CB - ${categoryName}`;
         }
       }
 
@@ -125,15 +125,21 @@ exports.generateCategories = async (req, res) => {
 
       if (!mergeComplementaryActivities) {
         categoryKey += `_age_${groupAge || 'open'}`;
-        categoryName = athleteGroupAge ? `${categoryName} - ${athleteGroupAge.nome}` : `${categoryName} - Open`;
+        displayName = athleteGroupAge ? `${displayName}${athleteGroupAge.nome}` : `${displayName}Open`;
       }
 
       // Aggiungi il genere alla chiave
       let gender = athlete.sesso || 'U';
       if (!mergeComplementaryActivities) {
         categoryKey += `_${gender}`;
-        categoryName = `${categoryName} - ${gender}`;
+        displayName = `${displayName} - ${gender}`;
       }
+
+      // Aggiungo il nome della categoria
+      if (displayName !== '')
+        displayName = `${displayName} - ${categoryName}`; 
+      else
+        displayName = categoryName;
       
       // Aggiungi lvl esperienza se presente
       let lvlEsperienza = null;
@@ -141,14 +147,14 @@ exports.generateCategories = async (req, res) => {
         lvlEsperienza = registration.esperienza.id;
         if (!mergeComplementaryActivities && !unisciLivelloEsperienza) {
           categoryKey += `_lvl_${registration.esperienza.id}`;
-          categoryName = `${categoryName} - ${registration.esperienza.nome}`;
+          displayName = `${displayName} - ${registration.esperienza.nome}`;
         }
       }
       
       // Inizializza la categoria se non esiste
       if (!createdCategories.has(categoryKey)) {
         createdCategories.set(categoryKey, {
-          nome: categoryName,
+          nome: displayName,
           atleti: [],
           genere: gender,
           tipiAtletaId: tipoAtleta ? [tipoAtleta.id] : [],
@@ -209,7 +215,7 @@ exports.saveCategories = async (req, res) => {
   
   try {
     const { competizioneId } = req.params;
-    const { categorie, tipoCategoriaId } = req.body;
+    const { categorie } = req.body;
 
     // Verifica che la competizione esista
     const competizione = await Competizione.findByPk(competizioneId);
