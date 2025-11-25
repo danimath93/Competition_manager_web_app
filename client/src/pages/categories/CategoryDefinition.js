@@ -34,7 +34,11 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Pagination,
+  ToggleButtonGroup,
+  ToggleButton,
+  Tooltip
 } from '@mui/material';
 import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
@@ -45,8 +49,10 @@ import {
   deleteCategoria,
   deleteCategoriesByCompetition,
   generateCategories,
-  saveCategories
+  saveCategories,
+  getGruppiEta
 } from '../../api/categories';
+import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -65,6 +71,19 @@ const CategoryDefinition = () => {
   const [hasPermission, setHasPermission] = useState(false);
   const [expandedCards, setExpandedCards] = useState({});
 
+  // Config data for filters
+  const [allTipiAtleta, setAllTipiAtleta] = useState([]);
+  const [allCategorie, setAllCategorie] = useState([]);
+
+  // Pagination and filters
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [filters, setFilters] = useState({
+    tipoAtletaId: '',
+    tipoCategoriaId: '',
+    genere: ''
+  });
+
   // Dialog states
   const [editDialog, setEditDialog] = useState({ open: false, categoria: null, originalNome: null });
   const [mergeDialog, setMergeDialog] = useState({ open: false, categoria1: null, categoria2: null });
@@ -78,6 +97,7 @@ const CategoryDefinition = () => {
     }
 
     loadCompetitionData();
+    loadConfigData();
   }, [competizioneId, user]);
 
   const loadCompetitionData = async () => {
@@ -114,6 +134,19 @@ const CategoryDefinition = () => {
       setCategories(data);
     } catch (error) {
       console.error('Errore nel caricamento delle categorie:', error);
+    }
+  };
+
+  const loadConfigData = async () => {
+    try {
+      const [tipiAtleta, categorie, gruppiEta] = await Promise.all([
+        loadAthleteTypes(),
+        loadAllCategoryTypes(),
+      ]);
+      setAllTipiAtleta(tipiAtleta || []);
+      setAllCategorie(categorie || []);
+    } catch (error) {
+      console.error('Errore nel caricamento dei config:', error);
     }
   };
 
@@ -341,52 +374,141 @@ const CategoryDefinition = () => {
     }));
   };
 
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: value
+    }));
+    setPage(1);
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  const handleRowsPerPageChange = (event, newValue) => {
+    if (newValue !== null) {
+      setRowsPerPage(newValue);
+      setPage(1);
+    }
+  };
+
+  // Funzione per filtrare le categorie
+  const getFilteredCategories = (categoriesList) => {
+    return categoriesList.filter(categoria => {
+      if (filters.tipoAtletaId && categoria.tipoAtletaId !== filters.tipoAtletaId) return false;
+      if (filters.tipoCategoriaId && categoria.tipoCategoriaId !== filters.tipoCategoriaId) return false;
+      if (filters.genere && categoria.genere !== filters.genere) return false;
+      return true;
+    });
+  };
+
+  // Funzione per ottenere le categorie paginate
+  const getPaginatedCategories = (categoriesList) => {
+    const filtered = getFilteredCategories(categoriesList);
+    const startIndex = (page - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return {
+      items: filtered.slice(startIndex, endIndex),
+      total: filtered.length,
+      totalPages: Math.ceil(filtered.length / rowsPerPage)
+    };
+  };
+
+  // Ottieni valori unici per i filtri dalle categorie
+  const getUniqueFilterValues = (categoriesList) => {
+    // Ottieni i valori presenti nelle categorie
+    const presentTipiAtleta = [...new Set(categoriesList.map(c => c.tipoAtletaId).filter(Boolean))];
+    const presentCategorie = [...new Set(categoriesList.map(c => c.tipoCategoriaId).filter(Boolean))];
+    const generi = [...new Set(categoriesList.map(c => c.genere).filter(Boolean))];
+    
+    // Filtra i config per mostrare solo quelli effettivamente presenti
+    const tipiAtleta = allTipiAtleta.filter(tipo => presentTipiAtleta.includes(tipo.id));
+    const categorie = allCategorie.filter(cat => presentCategorie.includes(cat.id));
+    
+    return { tipiAtleta, categorie, generi };
+  };
+
   const renderCategoriaCard = (categoria, index, isGeneratedCard) => {
     const cardKey = `${isGeneratedCard ? 'gen' : 'saved'}_${index}`;
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
     
     return (
-      <Card key={index}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" gutterBottom>
-                  {categoria.nome}
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Card key={index} sx={{ width: 500, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Titolo con tooltip */}
+            <Tooltip title={categoria.nome} arrow placement="top">
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  fontWeight: 600, 
+                  fontSize: '0.95rem', 
+                  mb: 0.5,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+              >
+                {categoria.nome}
+              </Typography>
+            </Tooltip>
+
+            {/* Container scrollabile orizzontalmente per chips e bottoni */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              gap: 0.5, 
+              mb: 1,
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': {
+                height: '6px'
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                borderRadius: '3px'
+              }
+            }}>
+              {/* Chips */}
+              <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+                <Chip 
+                  label={`Genere: ${categoria.genere}`} 
+                  size="small"
+                  sx={{ height: 20, fontSize: '0.7rem' }}
+                />
+                {categoria.grado && (
                   <Chip 
-                    label={`Genere: ${categoria.genere}`} 
-                    size="small" 
+                    label={`Grado: ${categoria.grado}`} 
+                    size="small"
+                    sx={{ height: 20, fontSize: '0.7rem' }}
                   />
-                  {categoria.grado && (
-                    <Chip 
-                      label={`Grado: ${categoria.grado}`} 
-                      size="small" 
-                    />
-                  )}
-                  {categoria.gradoEta && (
-                    <Chip 
-                      label={`Grado Età: ${categoria.gradoEta}`} 
-                      size="small" 
-                      color="secondary"
-                    />
-                  )}
-                  {categoria.livello && (
-                    <Chip 
-                      label={`Livello: ${categoria.livello}`} 
-                      size="small" 
-                      color="secondary"
-                    />
-                  )}
+                )}
+                {categoria.gradoEta && (
                   <Chip 
-                    label={`${atleti.length} atleti`} 
+                    label={`Grado Età: ${categoria.gradoEta}`} 
                     size="small" 
-                    color="primary"
+                    color="secondary"
+                    sx={{ height: 20, fontSize: '0.7rem' }}
                   />
-                </Box>
+                )}
+                {categoria.livello && (
+                  <Chip 
+                    label={`Livello: ${categoria.livello}`} 
+                    size="small" 
+                    color="secondary"
+                    sx={{ height: 20, fontSize: '0.7rem' }}
+                  />
+                )}
+                <Chip 
+                  label={`${atleti.length} atleti`} 
+                  size="small" 
+                  color="primary"
+                  sx={{ height: 20, fontSize: '0.7rem' }}
+                />
               </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
+
+              {/* Bottoni azioni sulla stessa riga */}
+              <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto', flexShrink: 0 }}>
                 {isGeneratedCard ? (
                   <>
                     <IconButton size="small" onClick={() => handleEditCategoria(categoria, true)}>
@@ -425,19 +547,17 @@ const CategoryDefinition = () => {
               </Box>
             </Box>
 
+            {/* Contenuto espandibile */}
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              <Divider sx={{ mb: 2 }} />
-              <Typography variant="subtitle2" gutterBottom>
-                Atleti Iscritti
-              </Typography>
+              <Divider sx={{ mb: 1.5 }} />
               {atleti.length > 0 ? (
-                <TableContainer>
+                <TableContainer sx={{ maxHeight: 300, overflowY: 'auto' }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell><strong>Atleta</strong></TableCell>
-                        <TableCell align="center"><strong>Peso (kg)</strong></TableCell>
-                        <TableCell><strong>Club</strong></TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Atleta</strong></TableCell>
+                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Club</strong></TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -446,13 +566,13 @@ const CategoryDefinition = () => {
                         const club = isGeneratedCard ? item.club : item.atleta?.club;
                         return (
                           <TableRow key={idx} hover>
-                            <TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {atleta.nome} {atleta.cognome}
                             </TableCell>
-                            <TableCell align="center">
+                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {atleta.peso || item.peso || '-'}
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {club?.denominazione || club?.nome || '-'}
                             </TableCell>
                           </TableRow>
@@ -462,7 +582,7 @@ const CategoryDefinition = () => {
                   </Table>
                 </TableContainer>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                   Nessun atleta iscritto
                 </Typography>
               )}
@@ -470,9 +590,7 @@ const CategoryDefinition = () => {
           </CardContent>
         </Card>
     );
-  };
-
-  if (loading) {
+  };  if (loading) {
     return (
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -653,8 +771,98 @@ const CategoryDefinition = () => {
             Queste categorie non sono ancora state salvate. Puoi modificarle, unirle o dividerle prima di confermare.
           </Alert>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {generatedCategories.map((categoria, index) => renderCategoriaCard(categoria, index, true))}
+          {/* Filtri per categorie generate */}
+          <Paper elevation={0} sx={{ py: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Tipo Atleta</InputLabel>
+                  <Select
+                    value={filters.tipoAtletaId}
+                    onChange={(e) => handleFilterChange('tipoAtletaId', e.target.value)}
+                    label="Tipo Atleta"
+                  >
+                    <MenuItem value="">Tutti</MenuItem>
+                    {getUniqueFilterValues(generatedCategories).tipiAtleta.map((tipo) => (
+                      <MenuItem key={tipo.id} value={tipo.id}>{tipo.nome}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Categoria</InputLabel>
+                  <Select
+                    value={filters.tipoCategoriaId}
+                    onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)}
+                    label="Categoria"
+                  >
+                    <MenuItem value="">Tutte</MenuItem>
+                    {getUniqueFilterValues(generatedCategories).categorie.map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id}>{cat.nome}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Genere</InputLabel>
+                  <Select
+                    value={filters.genere}
+                    onChange={(e) => handleFilterChange('genere', e.target.value)}
+                    label="Genere"
+                  >
+                    <MenuItem value="">Tutti</MenuItem>
+                    {getUniqueFilterValues(generatedCategories).generi.map((gen, idx) => (
+                      <MenuItem key={idx} value={gen}>{gen}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Divider sx={{ mb: 2 }} />
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
+            {getPaginatedCategories(generatedCategories).items.map((categoria, index) => (
+              <Box key={`gen_${(page - 1) * rowsPerPage + index}`}>
+                {renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}
+              </Box>
+            ))}
+          </Box>
+
+          {/* Controlli paginazione in fondo */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2">
+                Mostra per pagina:
+              </Typography>
+              <ToggleButtonGroup
+                value={rowsPerPage}
+                exclusive
+                onChange={handleRowsPerPageChange}
+                size="small"
+              >
+                <ToggleButton value={5}>5</ToggleButton>
+                <ToggleButton value={10}>10</ToggleButton>
+                <ToggleButton value={25}>25</ToggleButton>
+                <ToggleButton value={50}>50</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              Totale: {getPaginatedCategories(generatedCategories).total} categorie
+            </Typography>
+            {getPaginatedCategories(generatedCategories).totalPages > 1 && (
+              <Pagination
+                count={getPaginatedCategories(generatedCategories).totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            )}
           </Box>
         </Paper>
       )}
@@ -676,9 +884,100 @@ const CategoryDefinition = () => {
               Elimina Tutte
             </Button>
           </Box>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {categories.map((categoria, index) => renderCategoriaCard(categoria, index, false))}
+
+          {/* Filtri per categorie salvate */}
+          <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Filtri
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Tipo Atleta</InputLabel>
+                  <Select
+                    value={filters.tipoAtletaId}
+                    onChange={(e) => handleFilterChange('tipoAtletaId', e.target.value)}
+                    label="Tipo Atleta"
+                  >
+                    <MenuItem value="">Tutti</MenuItem>
+                    {getUniqueFilterValues(categories).tipiAtleta.map((tipo) => (
+                      <MenuItem key={tipo.id} value={tipo.id}>{tipo.nome}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Categoria</InputLabel>
+                  <Select
+                    value={filters.tipoCategoriaId}
+                    onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)}
+                    label="Categoria"
+                  >
+                    <MenuItem value="">Tutte</MenuItem>
+                    {getUniqueFilterValues(categories).categorie.map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id}>{cat.nome}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>Genere</InputLabel>
+                  <Select
+                    value={filters.genere}
+                    onChange={(e) => handleFilterChange('genere', e.target.value)}
+                    label="Genere"
+                  >
+                    <MenuItem value="">Tutti</MenuItem>
+                    {getUniqueFilterValues(categories).generi.map((gen, idx) => (
+                      <MenuItem key={idx} value={gen}>{gen}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
+            {getPaginatedCategories(categories).items.map((categoria, index) => (
+              <Box key={`saved_${(page - 1) * rowsPerPage + index}`}>
+                {renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, false)}
+              </Box>
+            ))}
+          </Box>
+
+          {/* Controlli paginazione in fondo */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2">
+                Mostra per pagina:
+              </Typography>
+              <ToggleButtonGroup
+                value={rowsPerPage}
+                exclusive
+                onChange={handleRowsPerPageChange}
+                size="small"
+              >
+                <ToggleButton value={5}>5</ToggleButton>
+                <ToggleButton value={10}>10</ToggleButton>
+                <ToggleButton value={25}>25</ToggleButton>
+                <ToggleButton value={50}>50</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              Totale: {getPaginatedCategories(categories).total} categorie
+            </Typography>
+            {getPaginatedCategories(categories).totalPages > 1 && (
+              <Pagination
+                count={getPaginatedCategories(categories).totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            )}
           </Box>
         </Paper>
       ) : !isGenerated && (
