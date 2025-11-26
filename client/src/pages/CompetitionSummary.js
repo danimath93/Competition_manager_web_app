@@ -355,7 +355,7 @@ const CompetitionSummary = () => {
           </Typography>
 
           {clubRegistrations.length === 0 ? (
-            <Alert severity="info">Nessun club iscritto a questa competizione</Alert>
+            <Alert severity="info">Nessun club iscritto a questa competizione.</Alert>
           ) : (
             <TableContainer>
               <Table>
