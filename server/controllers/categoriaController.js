@@ -301,7 +301,7 @@ exports.getCategoriesByCompetizione = async (req, res) => {
           }]
         }
       ],
-      order: [['createdAt', 'ASC']]
+      order: [['nome', 'ASC']]
     });
 
     for (const categoria of categorie) {

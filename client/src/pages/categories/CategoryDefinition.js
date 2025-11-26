@@ -52,6 +52,7 @@ import {
   deleteCategoriesByCompetition,
   generateCategories,
   saveCategories,
+  updateCategoria,
   getGruppiEta
 } from '../../api/categories';
 import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
@@ -345,7 +346,7 @@ const CategoryDefinition = () => {
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     const { categoria, originalNome, isGenerated: isGeneratedCard } = editDialog;
     
     if (isGeneratedCard) {
@@ -354,8 +355,19 @@ const CategoryDefinition = () => {
       );
       setGeneratedCategories(updated);
       setSuccess('Categoria modificata');
+    } else {
+      const updated = categories.map(cat =>
+        cat.nome === originalNome ? categoria : cat
+      );
+
+      try {
+        await updateCategoria(categoria.id, categoria); 
+        setCategories(updated);
+      } catch (error) {
+        setError(error.response?.data?.message || 'Errore nella modifica della categoria');
+      }
     }
-    
+
     setEditDialog({ open: false, categoria: null, originalNome: null });
   };
 
@@ -1262,7 +1274,7 @@ const CategoryDefinition = () => {
       )}
 
       {/* Dialog Modifica */}
-      <Dialog open={editDialog.open} onClose={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>
+      <Dialog open={editDialog.open} onClose={() => setEditDialog({ open: false, categoria: null, originalNome: null })} maxWidth="sm" fullWidth>
         <DialogTitle>Modifica Categoria</DialogTitle>
         <DialogContent>
           <TextField
