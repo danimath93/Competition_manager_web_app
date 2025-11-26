@@ -42,7 +42,7 @@ import {
   FormControlLabel,
   Switch
 } from '@mui/material';
-import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep, Settings } from '@mui/icons-material';
+import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep, Settings, Summarize, Print } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCompetitionDetails } from '../../api/competitions';
@@ -55,7 +55,10 @@ import {
   getGruppiEta
 } from '../../api/categories';
 import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
+import { loadAllJudges } from '../../api/judges';
 import CategorySplit from './CategorySplit';
+import CategorySummaryModal from '../../components/CategorySummaryModal';
+import CompetitionNotebookPrint from '../../components/CompetitionNotebookPrint';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -104,6 +107,12 @@ const CategoryDefinition = () => {
     unisciAttivitaComplementari: false,
     unisciLivelloEsperienza: false
   });
+
+  // Modals for summary and print
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [selectedCategoryForPrint, setSelectedCategoryForPrint] = useState(null);
+  const [judges, setJudges] = useState([]);
 
   useEffect(() => {
     if (!competizioneId) {
@@ -155,14 +164,16 @@ const CategoryDefinition = () => {
 
   const loadConfigData = async () => {
     try {
-      const [tipiAtleta, categorie, gruppiEta] = await Promise.all([
+      const [tipiAtleta, categorie, gruppiEta, judgesData] = await Promise.all([
         loadAthleteTypes(),
         loadAllCategoryTypes(),
-        getGruppiEta()
+        getGruppiEta(),
+        loadAllJudges()
       ]);
       setAllTipiAtleta(tipiAtleta || []);
       setAllCategorie(categorie || []);
       setAllGruppiEta(gruppiEta || []);
+      setJudges(judgesData || []);
     } catch (error) {
       console.error('Errore nel caricamento dei config:', error);
     }
@@ -505,6 +516,12 @@ const CategoryDefinition = () => {
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
     const isSelected = selectedForMerge.includes(categoria.nome);
+
+    const getBirthYear = (dataNascita) => {
+      if (!dataNascita) return null;
+      const date = new Date(dataNascita);
+      return isNaN(date.getFullYear()) ? null : date.getFullYear();
+    };
     
     return (
       <Card 
@@ -631,6 +648,17 @@ const CategoryDefinition = () => {
                   </>
                 ) : (
                   <>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => {
+                        setSelectedCategoryForPrint(categoria);
+                        setShowPrintModal(true);
+                      }} 
+                      title="Stampa Quaderno di Gara"
+                      color="info"
+                    >
+                      <Print fontSize="small" />
+                    </IconButton>
                     <IconButton size="small" onClick={() => handleEditCategoria(categoria, false)} title="Modifica">
                       <Edit fontSize="small" />
                     </IconButton>
@@ -657,6 +685,7 @@ const CategoryDefinition = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Atleta</strong></TableCell>
+                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
                         <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
                         { isGeneratedCard ? (
                           <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Esperienza</strong></TableCell>
@@ -674,6 +703,9 @@ const CategoryDefinition = () => {
                           <TableRow key={idx} hover>
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {atleta.nome} {atleta.cognome}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {getBirthYear(atleta.dataNascita) || getBirthYear(item.dataNascita) || '-'}
                             </TableCell>
                             <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {atleta.peso || item.peso || '-'}
@@ -1105,15 +1137,25 @@ const CategoryDefinition = () => {
             <Typography variant="h6">
               Categorie Salvate ({categories.length})
             </Typography>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteSweep />}
-              onClick={handleDeleteAllCategories}
-              disabled={loading}
-            >
-              Elimina Tutte
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="outlined"
+                startIcon={<Summarize />}
+                onClick={() => setShowSummaryModal(true)}
+                disabled={loading}
+              >
+                Riepilogo Generale
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteSweep />}
+                onClick={handleDeleteAllCategories}
+                disabled={loading}
+              >
+                Elimina Tutte
+              </Button>
+            </Box>
           </Box>
 
           {/* Filtri per categorie salvate */}
@@ -1291,6 +1333,24 @@ const CategoryDefinition = () => {
         onClose={() => setSplitDialog({ open: false, categoria: null })}
         categoria={splitDialog.categoria}
         onSplit={handleSplit}
+      />
+
+      {/* Category Summary Modal */}
+      <CategorySummaryModal
+        open={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        competitionId={competizioneId}
+      />
+
+      {/* Competition Notebook Print Modal */}
+      <CompetitionNotebookPrint
+        open={showPrintModal}
+        onClose={() => {
+          setShowPrintModal(false);
+          setSelectedCategoryForPrint(null);
+        }}
+        category={selectedCategoryForPrint}
+        judges={judges}
       />
     </Container>
   );

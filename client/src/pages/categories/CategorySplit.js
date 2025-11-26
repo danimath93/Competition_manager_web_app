@@ -43,7 +43,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
   const [nome2, setNome2] = useState('');
 
   // Filtri per selezione multipla
-  const [ageFilter, setAgeFilter] = useState('');
+  const [bornYearFilter, setBornYearFilter] = useState('');
   const [weightFilter, setWeightFilter] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('');
 
@@ -57,33 +57,27 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
       setNome1(`${categoria.nome}_A`);
       setNome2(`${categoria.nome}_B`);
       setSortCriteria('alphabetical');
-      setAgeFilter('');
+      setBornYearFilter('');
       setWeightFilter('');
       setExperienceFilter('');
     }
   }, [open, categoria]);
 
   // Calcola età atleta
-  const calculateAge = (dataNascita) => {
-    if (!dataNascita) return 0;
-    const today = new Date();
-    const birthDate = new Date(dataNascita);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+  const calculateBornYear = (dataNascita) => {
+    if (!dataNascita) return null;
+    const date = new Date(dataNascita);
+    return isNaN(date.getFullYear()) ? null : date.getFullYear();
   };
 
   // Ottieni liste uniche per filtri
-  const uniqueAges = useMemo(() => {
-    const ages = new Set();
+  const uniqueBornYears = useMemo(() => {
+    const years = new Set();
     [...leftAthletes, ...rightAthletes].forEach(atleta => {
-      const age = calculateAge(atleta.dataNascita);
-      ages.add(age);
+      const bornYear = calculateBornYear(atleta.dataNascita);
+      if (bornYear) years.add(bornYear);
     });
-    return Array.from(ages).sort((a, b) => a - b);
+    return Array.from(years).sort((a, b) => b - a); // Ordinamento decrescente
   }, [leftAthletes, rightAthletes]);
 
   const uniqueWeights = useMemo(() => {
@@ -111,10 +105,10 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
         return sorted.sort((a, b) => 
           `${a.cognome} ${a.nome}`.localeCompare(`${b.cognome} ${b.nome}`)
         );
-      case 'age':
+      case 'bornYear':
         return sorted.sort((a, b) => 
-          calculateAge(a.dataNascita) - calculateAge(b.dataNascita)
-        );
+          calculateBornYear(b.dataNascita) - calculateBornYear(a.dataNascita)
+        ); // Decrescente (più recenti prima)
       case 'weight':
         return sorted.sort((a, b) => (a.peso || 0) - (b.peso || 0));
       case 'experience':
@@ -159,14 +153,14 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
   };
 
   // Selezione multipla per caratteristica
-  const selectByAge = (age) => {
-    if (!age) {
+  const selectByBornYear = (year) => {
+    if (!year) {
       setSelectedLeftAthletes([]);
       return;
     }
-    const ageNum = parseInt(age);
+    const yearNum = parseInt(year);
     const toSelect = leftAthletes
-      .filter(a => calculateAge(a.dataNascita) === ageNum)
+      .filter(a => calculateBornYear(a.dataNascita) === yearNum)
       .map(a => a.id);
     setSelectedLeftAthletes(toSelect);
   };
@@ -244,7 +238,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
   };
 
   const renderAthleteItem = (atleta, side) => {
-    const age = calculateAge(atleta.dataNascita);
+    const bornYear = calculateBornYear(atleta.dataNascita);
     const isSelected = side === 'left' 
       ? selectedLeftAthletes.includes(atleta.id)
       : selectedRightAthletes.includes(atleta.id);
@@ -315,9 +309,9 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
               </Typography>
               <Typography 
                 variant="body2" 
-                sx={{ flex: '0 0 60px', textAlign: 'center', color: 'text.secondary' }}
+                sx={{ flex: '0 0 80px', textAlign: 'center', color: 'text.secondary' }}
               >
-                {age}
+                {bornYear || '-'}
               </Typography>
               <Typography 
                 variant="body2" 
@@ -377,7 +371,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
                 label="Ordina per"
               >
                 <MenuItem value="alphabetical">Alfabetico</MenuItem>
-                <MenuItem value="age">Età</MenuItem>
+                <MenuItem value="bornYear">Anno di Nascita</MenuItem>
                 <MenuItem value="weight">Peso</MenuItem>
                 <MenuItem value="experience">Esperienza</MenuItem>
               </Select>
@@ -385,23 +379,23 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
 
             <Divider orientation="vertical" flexItem />
 
-            {/* Filtro Età */}
+            {/* Filtro Anno di Nascita */}
             <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Filtra per età</InputLabel>
+              <InputLabel>Filtra per anno nascita</InputLabel>
               <Select
-                value={ageFilter}
+                value={bornYearFilter}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setAgeFilter(value);
+                  setBornYearFilter(value);
                   setWeightFilter('');
                   setExperienceFilter('');
-                  selectByAge(value);
+                  selectByBornYear(value);
                 }}
-                label="Filtra per età"
+                label="Filtra per anno nascita"
               >
                 <MenuItem value="">Nessuno</MenuItem>
-                {uniqueAges.map(age => (
-                  <MenuItem key={age} value={age}>{age} anni</MenuItem>
+                {uniqueBornYears.map(year => (
+                  <MenuItem key={year} value={year}>{year}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -414,7 +408,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
                 onChange={(e) => {
                   const value = e.target.value;
                   setWeightFilter(value);
-                  setAgeFilter('');
+                  setBornYearFilter('');
                   setExperienceFilter('');
                   selectByWeight(value);
                 }}
@@ -435,7 +429,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
                 onChange={(e) => {
                   const value = e.target.value;
                   setExperienceFilter(value);
-                  setAgeFilter('');
+                  setBornYearFilter('');
                   setWeightFilter('');
                   selectByExperience(value);
                 }}
@@ -495,8 +489,8 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
               <Typography variant="caption" fontWeight={600} sx={{ flex: '1 1 40%' }}>
                 ATLETA
               </Typography>
-              <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 60px', textAlign: 'center' }}>
-                ETÀ
+              <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 80px', textAlign: 'center' }}>
+                ANNO NASC.
               </Typography>
               <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 60px', textAlign: 'center' }}>
                 PESO
@@ -553,8 +547,8 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
               <Typography variant="caption" fontWeight={600} sx={{ flex: '1 1 40%' }}>
                 ATLETA
               </Typography>
-              <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 60px', textAlign: 'center' }}>
-                ETÀ
+              <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 80px', textAlign: 'center' }}>
+                ANNO NASC.
               </Typography>
               <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 60px', textAlign: 'center' }}>
                 PESO
