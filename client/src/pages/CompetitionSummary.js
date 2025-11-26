@@ -54,6 +54,21 @@ const CompetitionSummary = () => {
     fetchData();
   }, [competitionId]);
 
+  // Carica i costSummary di tutti i club quando si apre il tab Riepilogo Generale
+  useEffect(() => {
+    if (activeTab === 0 && clubRegistrations.length > 0) {
+      const missingClubIds = clubRegistrations
+        .map((clubReg) => clubReg.clubId)
+        .filter((clubId) => !clubCostSummaries[clubId]);
+      if (missingClubIds.length > 0) {
+        missingClubIds.forEach((clubId) => {
+          loadClubCostSummary(clubId);
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, clubRegistrations]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -221,20 +236,126 @@ const CompetitionSummary = () => {
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
         <Tabs value={activeTab} onChange={handleTabChange} centered>
-          <Tab label="Club" />
+          <Tab label="Riepilogo generale" />
+          <Tab label="Dettagli per Club" />
           <Tab label="Atleti" />
         </Tabs>
       </Paper>
 
-      {/* Tab Panel - Club */}
+      {/* Tab Panel - Riepilogo generale */}
       {activeTab === 0 && (
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Riepilogo Generale
+          </Typography>
+
+          {clubRegistrations.length === 0 ? (
+            <Alert severity="info">Nessun club iscritto a questa competizione</Alert>
+          ) : (
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>Nome Club</strong></TableCell>
+                    <TableCell align="center"><strong>CB Bambini</strong></TableCell>
+                    <TableCell align="center"><strong>CB Adulti</strong></TableCell>
+                    <TableCell align="center"><strong>CN</strong></TableCell>
+                    <TableCell align="center"><strong>Totale iscritti</strong></TableCell>
+                    <TableCell align="right"><strong>Quota dovuta (€)</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {clubRegistrations.map((clubReg) => {
+                    const clubId = clubReg.clubId;
+                    const costSummary = clubCostSummaries[clubId];
+
+                    // Ricava i conteggi per tipo atleta
+                    const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
+                    const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
+                    const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
+                    const totale = cbBambini + cbAdulti + cn;
+                    const quota = costSummary?.totals?.totalCost?.toFixed(2) || '0.00';
+
+                    return (
+                      <TableRow key={clubId}>
+                        <TableCell>{clubReg.club?.denominazione || 'N/A'}</TableCell>
+                        <TableCell align="center">{cbBambini}</TableCell>
+                        <TableCell align="center">{cbAdulti}</TableCell>
+                        <TableCell align="center">{cn}</TableCell>
+                        <TableCell align="center">{totale}</TableCell>
+                        <TableCell align="right">{quota}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+
+                  {/* Riga dei totali */}
+                  <TableRow sx={{ borderTop: '3px solid #d8240cff' }}>
+                    <TableCell><strong>Totale</strong></TableCell>
+                    <TableCell align="center">
+                      <strong>
+                        {clubRegistrations.reduce((sum, clubReg) => {
+                          const clubId = clubReg.clubId;
+                          const costSummary = clubCostSummaries[clubId];
+                          return sum + (costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0);
+                        }, 0)}
+                      </strong>
+                    </TableCell>
+                    <TableCell align="center">
+                      <strong>
+                        {clubRegistrations.reduce((sum, clubReg) => {
+                          const clubId = clubReg.clubId;
+                          const costSummary = clubCostSummaries[clubId];
+                          return sum + (costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0);
+                        }, 0)}
+                      </strong>
+                    </TableCell>
+                    <TableCell align="center">
+                      <strong>
+                        {clubRegistrations.reduce((sum, clubReg) => {
+                          const clubId = clubReg.clubId;
+                          const costSummary = clubCostSummaries[clubId];
+                          return sum + (costSummary?.athleteTypeTotals?.['CN']?.total || 0);
+                        }, 0)}
+                      </strong>
+                    </TableCell>
+                    <TableCell align="center">
+                      <strong>
+                        {clubRegistrations.reduce((sum, clubReg) => {
+                          const clubId = clubReg.clubId;
+                          const costSummary = clubCostSummaries[clubId];
+                          const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
+                          const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
+                          const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
+                          return sum + cbBambini + cbAdulti + cn;
+                        }, 0)}
+                      </strong>
+                    </TableCell>
+                    <TableCell align="right">
+                      <strong>
+                        {clubRegistrations.reduce((sum, clubReg) => {
+                          const clubId = clubReg.clubId;
+                          const costSummary = clubCostSummaries[clubId];
+                          return sum + (costSummary?.totals?.totalCost || 0);
+                        }, 0).toFixed(2)}
+                      </strong>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+      )}
+
+      {/* Tab Panel - Club */}
+      {activeTab === 1 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Club Iscritti
           </Typography>
 
           {clubRegistrations.length === 0 ? (
-            <Alert severity="info">Nessun club iscritto a questa competizione</Alert>
+            <Alert severity="info">Nessun club iscritto a questa competizione.</Alert>
           ) : (
             <TableContainer>
               <Table>
@@ -479,7 +600,7 @@ const CompetitionSummary = () => {
       )}
 
       {/* Tab Panel - Atleti */}
-      {activeTab === 1 && (
+      {activeTab === 2 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Atleti Iscritti
