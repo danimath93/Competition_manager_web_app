@@ -2,6 +2,7 @@ const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, Co
 const { IscrizioneClub, IscrizioneAtleta, Atleta } = require('../models');
 
 const logger = require('../helpers/logger/logger');
+const PDFDocument = require('pdfkit');
 
 // Ottieni tutte le competizioni
 const getAllCompetizioni = async (req, res) => {
@@ -534,6 +535,224 @@ const deleteFile = async (req, res) => {
   }
 };
 
+// Stampa categorie in PDF
+const printCategories = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+
+    // Recupera la competizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      logger.warn(`Tentativo stampa categorie per competizione inesistente - ID: ${competizioneId}`);
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Recupera tutte le categorie con gli atleti iscritti
+    const categorie = await Categoria.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome'],
+          include: [{
+            model: ConfigTipoCompetizione,
+            as: 'tipoCompetizione',
+            attributes: ['id', 'nome']
+          }]
+        }
+      ],
+      order: [['nome', 'ASC']]
+    });
+
+    // Ordina le categorie in modo intelligente considerando i numeri
+    categorie.sort((a, b) => {
+      return a.nome.localeCompare(b.nome, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      });
+    });
+
+    // Per ogni categoria, recupera gli atleti
+    let totalAthletes = 0;
+    for (const categoria of categorie) {
+      const iscrizioni = await IscrizioneAtleta.findAll({
+        where: { categoriaId: categoria.id },
+        attributes: ['id', 'atletaId', 'peso'],
+        include: [{
+          model: Atleta,
+          as: 'atleta',
+          attributes: ['id', 'nome', 'cognome', 'dataNascita'],
+          include: [{
+            model: Club,
+            as: 'club',
+            attributes: ['id', 'denominazione']
+          }]
+        }],
+        order: [['atleta', 'cognome', 'ASC']]
+      });
+      categoria.dataValues.iscrizioni = iscrizioni;
+      totalAthletes += iscrizioni.length;
+    }
+
+    // Crea il PDF
+    const doc = new PDFDocument({
+      bufferPages: true,
+      margin: 40,
+      size: 'A4'
+    });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="categorie-${competizione.nome.replace(/\s+/g, '_')}.pdf"`);
+
+    // Pipe to response
+    doc.pipe(res);
+
+    // Titolo
+    doc.fontSize(20).font('Helvetica-Bold').text('CATEGORIE COMPETIZIONE', { align: 'center' });
+    doc.fontSize(14).font('Helvetica').text(competizione.nome, { align: 'center' });
+    doc.moveDown(0.5);
+
+    // Sezione riepilogo
+    doc.fontSize(11).font('Helvetica-Bold').text('RIEPILOGO GENERALE:', { underline: true });
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`Nome Competizione: ${competizione.nome}`);
+    doc.text(`Totale Categorie: ${categorie.length}`);
+    doc.text(`Totale Iscritti: ${totalAthletes}`);
+    doc.moveDown(1);
+
+    // Linea separatrice
+    doc.strokeColor('#cccccc').lineWidth(1).moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+    doc.moveDown(1);
+
+    // Per ogni categoria, crea una sezione
+    categorie.forEach((categoria, categoryIndex) => {
+      const iscrizioni = categoria.dataValues.iscrizioni || [];
+
+      // Verifica se abbiamo spazio sulla pagina, altrimenti crea una nuova pagina
+      if (doc.y > 700) {
+        doc.addPage();
+      }
+
+      // Titolo categoria
+      doc.fontSize(11).font('Helvetica-Bold').fillColor('#1976d2');
+      doc.text(`${categoria.nome} (${iscrizioni.length} atleti)`, 40, doc.y, {
+        underline: true,
+        width: 515,
+        align: 'left'
+      });
+      doc.fillColor('black');
+      doc.moveDown(0.2);
+
+      // Tabella atleti
+      if (iscrizioni.length === 0) {
+        doc.fontSize(10).font('Helvetica').text('Nessun atleta iscritto', { color: '#999999', italics: true });
+      } else {
+        // Intestazione tabella
+        const tableTop = doc.y;
+        const col1 = 50;  // Progressivo
+        const col2 = 70;  // Cognome
+        const col3 = 150;  // Nome
+        const col4 = 250;  // Club
+        const col5 = 490;  // Nascita / Peso
+        const rowHeight = 14;
+        const cellPadding = 2;
+
+        // Header
+        doc.fontSize(9).font('Helvetica-Bold');
+        doc.fillColor('#f0f0f0').rect(40, tableTop, 515, rowHeight).fill();
+        doc.fillColor('black');
+        
+        doc.text('#', col1, tableTop + cellPadding);
+        doc.text('Cognome', col2, tableTop + cellPadding);
+        doc.text('Nome', col3, tableTop + cellPadding);
+        doc.text('Club', col4, tableTop + cellPadding);
+        doc.text('Nascita / Peso', col5, tableTop + cellPadding);
+
+        let currentY = tableTop + rowHeight + 8;
+
+        // Righe atleti
+        doc.fontSize(9).font('Helvetica');
+        iscrizioni.forEach((iscrizione, athleteIndex) => {
+          const atleta = iscrizione.atleta;
+          if (!atleta) return;
+
+          // Controlla lo spazio sulla pagina
+          if (currentY > 750) {
+            doc.addPage();
+            currentY = 60;
+          }
+
+          // Calcola l'anno di nascita
+          const birthDate = new Date(atleta.dataNascita);
+          const birthYear = birthDate.getFullYear();
+          
+          // Peso
+          const peso = iscrizione.peso ? `${iscrizione.peso} kg` : '-';
+          
+          // Club - tronca se troppo lungo
+          let clubName = atleta.club?.denominazione || '-';
+          let clubLine2 = '';
+          const maxClubLength = 55;
+          if (clubName.length > maxClubLength) {
+            const lastSpace = clubName.substring(0, maxClubLength).lastIndexOf(' ');
+            if (lastSpace > 0) {
+              clubLine2 = clubName.substring(lastSpace + 1);
+              clubName = clubName.substring(0, lastSpace);
+            } else {
+              clubLine2 = clubName.substring(maxClubLength);
+              clubName = clubName.substring(0, maxClubLength);
+            }
+          }
+          
+          // Disegna la riga
+          doc.text(athleteIndex + 1, col1, currentY);
+          doc.text(atleta.cognome || '-', col2, currentY);
+          doc.text(atleta.nome || '-', col3, currentY);
+          doc.text(clubName, col4, currentY);
+          doc.text(`${birthYear} / ${peso}`, col5, currentY);
+
+          // Se il club ha una seconda riga, disegnala
+          if (clubLine2) {
+            currentY += rowHeight;
+            if (currentY > 750) {
+              doc.addPage();
+              currentY = 60;
+            }
+            doc.text(clubLine2, col4, currentY);
+          }
+
+          currentY += rowHeight;
+        });
+
+        // Linea separatrice dopo la tabella
+        doc.strokeColor('#cccccc').lineWidth(0.5).moveTo(40, currentY + 5).lineTo(555, currentY + 2).stroke();
+        doc.y = currentY + 15;
+      }
+
+      doc.moveDown(0.5);
+    });
+
+    // Footer
+    doc.fontSize(8).font('Helvetica').fillColor('#999999');
+    doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')} - ${new Date().toLocaleTimeString('it-IT')}`, {
+      align: 'center'
+    });
+
+    // Finalize PDF
+    doc.end();
+
+    logger.info(`PDF categorie generato per competizione ${competizioneId}`);
+  } catch (error) {
+    logger.error(`Errore nella generazione del PDF categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nella generazione del PDF',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllCompetizioni,
   getTipoCategorieByCompetizione,
@@ -546,5 +765,6 @@ module.exports = {
   uploadFiles,
   downloadFile,
   deleteFile,
-  getCompetitionCostSummary
+  getCompetitionCostSummary,
+  printCategories
 };

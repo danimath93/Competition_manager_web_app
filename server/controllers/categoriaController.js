@@ -300,8 +300,15 @@ exports.getCategoriesByCompetizione = async (req, res) => {
             attributes: ['id', 'nome']
           }]
         }
-      ],
-      order: [['nome', 'ASC']]
+      ]
+    });
+
+    // Ordina le categorie in modo "intelligente" considerando i numeri
+    categorie.sort((a, b) => {
+      return a.nome.localeCompare(b.nome, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      });
     });
 
     for (const categoria of categorie) {

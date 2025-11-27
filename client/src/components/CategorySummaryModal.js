@@ -21,15 +21,17 @@ import {
 } from '@mui/material';
 import { 
   EmojiEvents as TrophyIcon,
-  Close as CloseIcon 
+  Close as CloseIcon,
+  Print as PrintIcon
 } from '@mui/icons-material';
 
-const { getCategoriesByCompetizione } = await import('../api/categories');
+const { getCategoriesByCompetizione, printCategories } = await import('../api/categories');
 const TIPO_COMPETIZIONE_COMBATTIMENTO = 3;
 const TIPO_COMPETIZIONE_ATT_COMPLEMENTARI = 4;
 
 const CategorySummaryModal = ({ open, onClose, competitionId }) => {
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [summary, setSummary] = useState({
@@ -122,6 +124,18 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       }
     }
     return { gold: 0, silver: 0, bronze: 0 };
+  };
+
+  const handlePrint = async () => {
+    try {
+      setPrinting(true);
+      await printCategories(competitionId);
+    } catch (err) {
+      console.error('Errore nella stampa:', err);
+      setError('Impossibile stampare le categorie');
+    } finally {
+      setPrinting(false);
+    }
   };
 
   return (
@@ -268,6 +282,14 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       </DialogContent>
 
       <DialogActions>
+        <Button 
+          onClick={handlePrint} 
+          variant="outlined"
+          startIcon={<PrintIcon />}
+          disabled={printing || loading}
+        >
+          {printing ? 'Stampa in corso...' : 'Stampa'}
+        </Button>
         <Button onClick={onClose} variant="contained">
           Chiudi
         </Button>
