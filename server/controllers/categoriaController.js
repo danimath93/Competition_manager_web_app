@@ -553,3 +553,74 @@ exports.splitCategoria = async (req, res) => {
     });
   }
 };
+const SvolgimentoCategoria = require('../models/SvolgimentoCategoria');
+
+// Salva la lettera estratta per una competizione
+exports.saveExtractedLetter = async (req, res) => {
+  const { competizioneId } = req.params;
+  const { lettera } = req.body;
+  try {
+    let record = await SvolgimentoCategoria.findOne({ where: { competizioneId } });
+    if (!record) {
+      record = await SvolgimentoCategoria.create({ competizioneId, letteraEstratta: lettera });
+    } else {
+      record.letteraEstratta = lettera;
+      await record.save();
+    }
+    res.json({ lettera: record.letteraEstratta });
+  } catch (err) {
+    res.status(500).json({ error: 'Errore nel salvataggio della lettera estratta' });
+  }
+};
+
+// Recupera la lettera estratta per una competizione
+exports.getExtractedLetter = async (req, res) => {
+  const { competizioneId } = req.params;
+  try {
+    const record = await SvolgimentoCategoria.findOne({ where: { competizioneId } });
+    res.json({ lettera: record ? record.letteraEstratta : null });
+  } catch (err) {
+    res.status(500).json({ error: 'Errore nel recupero della lettera estratta' });
+  }
+};
+
+// Salva lo svolgimento di una categoria
+exports.saveCategoryExecution = async (req, res) => {
+  const { id } = req.params; // categoriaId
+  const { punteggi, classifica, commissione, tabellone, risultati } = req.body;
+  try {
+    let record = await SvolgimentoCategoria.findOne({ where: { categoriaId: id } });
+    if (!record) {
+      record = await SvolgimentoCategoria.create({
+        categoriaId: id,
+        punteggi,
+        classifica,
+        commissione,
+        tabellone,
+        risultati
+      });
+    } else {
+      if (punteggi !== undefined) record.punteggi = punteggi;
+      if (classifica !== undefined) record.classifica = classifica;
+      if (commissione !== undefined) record.commissione = commissione;
+      if (tabellone !== undefined) record.tabellone = tabellone;
+      if (risultati !== undefined) record.risultati = risultati;
+      await record.save();
+    }
+    res.json(record);
+  } catch (err) {
+    res.status(500).json({ error: 'Errore nel salvataggio dello svolgimento categoria' });
+  }
+};
+
+// Recupera lo svolgimento di una categoria
+exports.getCategoryExecution = async (req, res) => {
+  const { id } = req.params; // categoriaId
+  try {
+    const record = await SvolgimentoCategoria.findOne({ where: { categoriaId: id } });
+    res.json(record || {});
+  } catch (err) {
+    res.status(500).json({ error: 'Errore nel recupero dello svolgimento categoria' });
+  }
+};
+

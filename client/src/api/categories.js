@@ -122,3 +122,47 @@ export const getGruppiEta = async () => {
     throw error;
   }
 };
+
+// Salva la lettera estratta per una competizione
+export const saveExtractedLetter = async (competizioneId, lettera) => {
+  try {
+    const response = await axios.post(`/categorie/competizioni/${competizioneId}/lettera`, { lettera });
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel salvataggio della lettera estratta:', error);
+    throw error;
+  }
+};
+
+// Recupera la lettera estratta per una competizione
+export const getExtractedLetter = async (competizioneId) => {
+  try {
+    const response = await axios.get(`/categorie/competizioni/${competizioneId}/lettera`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel recupero della lettera estratta:', error);
+    throw error;
+  }
+};
+
+// Salva lo svolgimento di una categoria
+export const saveCategoryExecution = async (categoriaId, data) => {
+  try {
+    const response = await axios.post(`/categorie/${categoriaId}/svolgimento`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel salvataggio dello svolgimento categoria:', error);
+    throw error;
+  }
+};
+
+// Recupera lo svolgimento di una categoria
+export const getCategoryExecution = async (categoriaId) => {
+  try {
+    const response = await axios.get(`/categorie/${categoriaId}/svolgimento`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel recupero dello svolgimento categoria:', error);
+    throw error;
+  }
+};

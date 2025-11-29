@@ -166,6 +166,10 @@ const Competizione = sequelize.define('Competizione', {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'file_extra_2_tipo'
+  },
+  letteraEstratta: {
+  type: DataTypes.STRING(1),
+  allowNull: true
   }
 }, {
   tableName: 'competizioni',

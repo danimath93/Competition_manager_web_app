@@ -15,7 +15,8 @@ const ConfigTipoCategoria = require('./ConfigTipoCategoria');
 const ConfigGruppoEta = require('./ConfigGruppoEta');
 const ConfigTipoAtleta = require('./ConfigTipoAtleta');
 const ConfigEsperienza = require('./ConfigEsperienza');
-
+const SvolgimentoCategoriaAtleta = require('./SvolgimentoCategoriaAtleta');
+const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 // Definisci le associazioni
 
 // Club -> Atleti (One-to-Many)
@@ -249,5 +250,7 @@ module.exports = {
   ConfigTipoCategoria,
   ConfigGruppoEta,
   ConfigTipoAtleta,
-  ConfigEsperienza
+  ConfigEsperienza,
+  SvolgimentoCategoriaAtleta,
+  SvolgimentoCategoria
 };

@@ -20,6 +20,7 @@ import Categories from './pages/categories/Categories';
 import CategoryDefinition from './pages/categories/CategoryDefinition';
 import CategoryExecution from './pages/categories/CategoryExecution';
 import CategoryResults from './pages/categories/CategoryResults';
+import CategoryInProgress from './pages/categories/CategoryInProgress';
 import './App.css';
 
 // Componente principale dell'app
@@ -145,6 +146,12 @@ const AppContent = () => {
         <Route path="/categories/execution" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <CategoryExecution />
+          </AuthGate>
+        } />
+
+        <Route path="/category-execution/:id/category-in-progress" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <CategoryInProgress />
           </AuthGate>
         } />
 

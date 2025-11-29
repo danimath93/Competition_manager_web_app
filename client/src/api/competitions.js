@@ -166,3 +166,8 @@ export const deleteCompetitionFile = async (id, fileType) => {
     throw error;
   }
 };
+
+export const getCompetizioneLetter = async (competizioneId) => {
+  const res = await axios.get(`/competizioni/${competizioneId}/lettera`);
+  return res.data;
+};

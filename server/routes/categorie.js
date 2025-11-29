@@ -29,4 +29,16 @@ router.post('/merge', categoriaController.mergeCategorie);
 // Dividi una categoria
 router.post('/split', categoriaController.splitCategoria);
 
+// Salva la lettera estratta per una competizione
+router.post('/competizioni/:competizioneId/lettera', categoriaController.saveExtractedLetter);
+
+// Recupera la lettera estratta per una competizione
+router.get('/competizioni/:competizioneId/lettera', categoriaController.getExtractedLetter);
+
+// Salva lo svolgimento di una categoria
+router.post('/:id/svolgimento', categoriaController.saveCategoryExecution);
+
+// Recupera lo svolgimento di una categoria
+router.get('/:id/svolgimento', categoriaController.getCategoryExecution);
+
 module.exports = router;
