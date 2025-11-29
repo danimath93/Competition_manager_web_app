@@ -40,6 +40,18 @@ const ConfigGruppoEta = sequelize.define('ConfigGruppoEta', {
     field: 'eta_massima',
     comment: 'Età massima per il gruppo'
   },
+  inizioValidita: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    field: 'inizio_validita',
+    comment: 'Data di inizio validità del gruppo età'
+  },
+  fineValidita: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    field: 'fine_validita',
+    comment: 'Data di fine validità del gruppo età'
+  },
   descrizione: {
     type: DataTypes.TEXT,
     allowNull: true

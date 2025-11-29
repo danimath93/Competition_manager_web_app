@@ -162,3 +162,4 @@ sketch
 node_modules
 server/.env_prod
 client/.env_prod
+immagini

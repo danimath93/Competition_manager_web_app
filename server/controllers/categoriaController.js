@@ -1,12 +1,19 @@
 const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione, Club } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
-const e = require('express');
+
+const FIGHTING_COMPETITION_TYPE_ID = 3; // ID del tipo di competizione per combattimento  
+const COMPLEMENTARY_ACTIVITIES_TYPE_ID = 4; // ID del tipo di competizione per attività complementari
+
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
 exports.generateCategories = async (req, res) => {
   try {
     const { competizioneId } = req.params;
+    const { unisciAttivitaComplementari, unisciLivelloEsperienza } = req.body;
+
+    // TODO: Aggiungere opzione per usare date di validità gruppi età
+    const useGroupAgeValidityDate = true;
 
     // Verifica che la competizione esista
     const competition = await Competizione.findByPk(competizioneId);
@@ -23,11 +30,15 @@ exports.generateCategories = async (req, res) => {
       include: [{
         model: Atleta,
         as: 'atleta',
-        attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId', 'clubId'],
+        attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId'],
         include: [{
           model: ConfigTipoAtleta,
           as: 'tipoAtleta'
-        }]
+        }, {
+          model: Club,
+          as: 'club',
+          attributes: ['id', 'denominazione']
+        }],
       }, {
         model: ConfigTipoCategoria,
         as: 'tipoCategoria',
@@ -63,59 +74,106 @@ exports.generateCategories = async (req, res) => {
       const birthDate = new Date(athlete.dataNascita);
       const age = today.getFullYear() - birthDate.getFullYear();
       const tipoAtleta = athlete.tipoAtleta;
+      const tipoCompetizioneId = registration?.tipoCategoria?.tipoCompetizioneId;
+      const categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
+
+      // Solo per le attività complementari (id=4), posso attivare il merge globale
+      const mergeComplementaryActivities = unisciAttivitaComplementari && tipoCompetizioneId && tipoCompetizioneId == COMPLEMENTARY_ACTIVITIES_TYPE_ID? true : false;
 
       // Determina la chiave della categoria
       let categoryKey = registration.tipoCategoriaId.toString();
-      let categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
+      let displayName = '';
 
       // Aggiungi il tipo atleta alla chiave
-      if (tipoAtleta) {
-        categoryKey += `_tipo_${tipoAtleta.id}`;
-        categoryName = `${tipoAtleta.nome} - ${categoryName}`;
-
-      } else {
-        categoryKey += `_tipo_misto`;
-        categoryName = `Misto - ${categoryName}`;
+      // TODO: Gestire meglio questa parte con costanti o config esterna
+      if (tipoAtleta && tipoAtleta.id == 3) // id.3 = CN
+      {
+        if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
+          categoryKey += `_CN`;
+          displayName = `${tipoAtleta.nome} - `;
+        }
       }
-      
+      else {
+        if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
+          categoryKey += `_CB`;
+        }
+      }
+
       // Aggiungi il gruppo di età alla chiave
       let groupAge = null;
       let athleteGroupAge = null;
-      gruppiEta.forEach(gruppo => {
-        if (age >= gruppo.etaMinima && age <= gruppo.etaMassima) {
-          groupAge = gruppo.id;
-          athleteGroupAge = gruppo;
-        }
-      });
-      categoryKey += `_age_${groupAge || 'open'}`;
-      categoryName = athleteGroupAge ? `${categoryName} - ${athleteGroupAge.nome}` : `${categoryName} - Open`;
+      if (!useGroupAgeValidityDate) {
+        gruppiEta.forEach(gruppo => {
+          if (age >= gruppo.etaMinima && age <= gruppo.etaMassima) {
+            groupAge = gruppo.id;
+            athleteGroupAge = gruppo;
+          }
+        });
+      } 
+      else {
+        gruppiEta.forEach(gruppo => {
+          const inizioValidita = gruppo.inizioValidita ? new Date(gruppo.inizioValidita) : null;
+          const fineValidita = gruppo.fineValidita ? new Date(gruppo.fineValidita) : null;
+          if (birthDate &&
+              (inizioValidita === null || birthDate >= inizioValidita) &&
+              (fineValidita === null || birthDate <= fineValidita)) {
+            groupAge = gruppo.id;
+            athleteGroupAge = gruppo;
+          }
+        });
+      }
+
+      if (!mergeComplementaryActivities) {
+        categoryKey += `_age_${groupAge || 'open'}`;
+        displayName = athleteGroupAge ? `${displayName}${athleteGroupAge.nome}` : `${displayName}Open`;
+      }
 
       // Aggiungi il genere alla chiave
       let gender = athlete.sesso || 'U';
-      categoryKey += `_${gender}`;
-      categoryName = `${categoryName} - ${gender}`;
+      if (!mergeComplementaryActivities) {
+        categoryKey += `_${gender}`;
+        displayName = `${displayName} - ${gender}`;
+      }
+
+      // Aggiungo il nome della categoria
+      if (displayName !== '')
+        displayName = `${displayName} - ${categoryName}`; 
+      else
+        displayName = categoryName;
       
       // Aggiungi lvl esperienza se presente
       let lvlEsperienza = null;
       if (registration.esperienza) {
         lvlEsperienza = registration.esperienza.id;
-        categoryKey += `_lvl_${registration.esperienza.id}`;
-        categoryName = `${categoryName} - ${registration.esperienza.nome}`;
+        if (!mergeComplementaryActivities && !unisciLivelloEsperienza) {
+          categoryKey += `_lvl_${registration.esperienza.id}`;
+          displayName = `${displayName} - ${registration.esperienza.nome}`;
+        }
       }
       
       // Inizializza la categoria se non esiste
       if (!createdCategories.has(categoryKey)) {
         createdCategories.set(categoryKey, {
-          nome: categoryName,
+          nome: displayName,
           atleti: [],
           genere: gender,
-          tipoAtletaId: tipoAtleta ? tipoAtleta.id : null,
-          tipoAtletaNome: tipoAtleta ? tipoAtleta.nome : null,
-          livelloEsperienzaId: lvlEsperienza,
-          minAge: athleteGroupAge ? athleteGroupAge.etaMinima : null,
-          maxAge: athleteGroupAge ? athleteGroupAge.etaMassima : null,
+          tipiAtletaId: tipoAtleta ? [tipoAtleta.id] : [],
+          livelliEsperienzaId: lvlEsperienza ? [lvlEsperienza] : [],
+          gruppiEtaId: groupAge? [groupAge] : [],
           tipoCategoriaId: registration.tipoCategoriaId
         });
+      } else {
+        // Aggiunge i cmapi array se non già presenti
+        const existingCategory = createdCategories.get(categoryKey);
+        if (tipoAtleta && !existingCategory.tipiAtletaId.includes(tipoAtleta.id)) {
+          existingCategory.tipiAtletaId.push(tipoAtleta.id);
+        }
+        if (lvlEsperienza && !existingCategory.livelliEsperienzaId.includes(lvlEsperienza)) {
+          existingCategory.livelliEsperienzaId.push(lvlEsperienza);
+        }
+        if (groupAge && !existingCategory.gruppiEtaId.includes(groupAge)) {
+          existingCategory.gruppiEtaId.push(groupAge);
+        }
       }
 
       createdCategories.get(categoryKey).atleti.push({
@@ -123,7 +181,8 @@ exports.generateCategories = async (req, res) => {
         nome: athlete.nome,
         cognome: athlete.cognome,
         dataNascita: athlete.dataNascita,
-        peso: athlete.peso,
+        peso: registration.peso,
+        esperienza: registration.esperienza ? registration.esperienza.nome : null,
         tipoAtleta: tipoAtleta ? tipoAtleta.nome : null,
         iscrizioneId: registration.id
       });
@@ -156,7 +215,7 @@ exports.saveCategories = async (req, res) => {
   
   try {
     const { competizioneId } = req.params;
-    const { categorie, tipoCategoriaId } = req.body;
+    const { categorie } = req.body;
 
     // Verifica che la competizione esista
     const competizione = await Competizione.findByPk(competizioneId);
@@ -176,8 +235,9 @@ exports.saveCategories = async (req, res) => {
         // tipoAtletaId: categoria.tipoAtletaId || null,
         // livelloEsperienzaId: categoria.livelloEsperienzaId || null,
         genere: categoria.genere || 'U',
-        etaMinima: categoria.minAge || 0,
-        etaMassima: categoria.maxAge || 99,
+        // etaMinima: categoria.etaMinima || 0,
+        // etaMassima: categoria.etaMassima || 99,
+        gruppiEtaId: categoria.gruppiEtaId || [],
         pesoMassimo: categoria.pesoMassimo || null,
         numeroTurni: categoria.numeroTurni || 1,
         maxPartecipanti: categoria.atleti.length,
@@ -232,7 +292,7 @@ exports.getCategoriesByCompetizione = async (req, res) => {
       include: [
         {
           model: ConfigTipoCategoria,
-          as: 'configTipoCategoria',
+          as: 'tipoCategoria',
           attributes: ['id', 'nome'],
           include: [{
             model: ConfigTipoCompetizione,
@@ -240,8 +300,15 @@ exports.getCategoriesByCompetizione = async (req, res) => {
             attributes: ['id', 'nome']
           }]
         }
-      ],
-      order: [['createdAt', 'ASC']]
+      ]
+    });
+
+    // Ordina le categorie in modo "intelligente" considerando i numeri
+    categorie.sort((a, b) => {
+      return a.nome.localeCompare(b.nome, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      });
     });
 
     for (const categoria of categorie) {

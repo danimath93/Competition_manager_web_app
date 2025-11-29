@@ -41,12 +41,14 @@ const seedData = async () => {
     ]);
 
     const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([
-      { nome: 'Speranze', etaMinima: 6, etaMassima: 8, descrizione: 'Bambini dai 6 ai 8 anni', ordine: 1, attivo: true },
-      { nome: 'Pulcini', etaMinima: 9, etaMassima: 11, descrizione: 'Bambini dagli 9 ai 11 anni', ordine: 2, attivo: true },
-      { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, descrizione: 'Ragazzi dai 12 ai 14 anni', ordine: 3, attivo: true },
-      { nome: 'Juniores', etaMinima: 15, etaMassima: 17, descrizione: 'Giovani dai 15 ai 17 anni', ordine: 4, attivo: true },
-      { nome: 'Seniores', etaMinima: 18, etaMassima: 35, descrizione: 'Adulti dai 18 ai 35 anni', ordine: 5, attivo: true },
-      { nome: 'Master', etaMinima: 36, etaMassima: 100, descrizione: 'Adulti oltre i 36 anni', ordine: 6, attivo: true }
+      { nome: 'Pulcini', etaMinima: 4, etaMassima: 6, inizioValidita: '2018-01-01', fineValidita: '2022-12-31', descrizione: 'Bambini dai 4 ai 6 anni' },
+      { nome: 'Bambini', etaMinima: 7, etaMassima: 8, inizioValidita: '2016-01-01', fineValidita: '2017-12-31', descrizione: 'Bambini dai 7 ai 8 anni' },
+      { nome: 'Esordienti', etaMinima: 9, etaMassima: 11, inizioValidita: '2013-01-01', fineValidita: '2015-12-31', descrizione: 'Bambini dagli 9 agli 11 anni' },
+      { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, inizioValidita: '2010-01-01', fineValidita: '2012-12-31', descrizione: 'Ragazzi dai 12 ai 14 anni' },
+      { nome: 'Junior', etaMinima: 15, etaMassima: 17, inizioValidita: '2007-01-01', fineValidita: '2009-12-31', descrizione: 'Ragazzi dai 15 ai 17 anni' },
+      { nome: 'Seniores', etaMinima: 18, etaMassima: 39, inizioValidita: '1985-01-01', fineValidita: '2006-12-31', descrizione: 'Adulti dai 18 ai 39 anni' },
+      { nome: 'MastersA', etaMinima: 40, etaMassima: 49, inizioValidita: '1975-01-01', fineValidita: '1984-12-31', descrizione: 'Adulti dai 40 ai 49 anni' },
+      { nome: 'MastersB', etaMinima: 50, etaMassima: 99, inizioValidita: '1900-01-01', fineValidita: '1974-12-31', descrizione: 'Adulti dai 50 anni in su' }
     ]);
 
     const configTipiAtleta = await sequelize.models.ConfigTipoAtleta.bulkCreate([
@@ -294,11 +296,31 @@ const seedData = async () => {
   }
 };
 
-module.exports = seedData;
+const seedConfigurations = async () => {
+  const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([
+    { nome: 'Pulcini', etaMinima: 4, etaMassima: 6, inizioValidita: '2018-01-01', fineValidita: '2022-12-31', descrizione: 'Bambini dai 4 ai 6 anni' },
+    { nome: 'Bambini', etaMinima: 7, etaMassima: 8, inizioValidita: '2016-01-01', fineValidita: '2017-12-31', descrizione: 'Bambini dai 7 ai 8 anni' },
+    { nome: 'Esordienti', etaMinima: 9, etaMassima: 11, inizioValidita: '2013-01-01', fineValidita: '2015-12-31', descrizione: 'Bambini dagli 9 agli 11 anni' },
+    { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, inizioValidita: '2010-01-01', fineValidita: '2012-12-31', descrizione: 'Ragazzi dai 12 ai 14 anni' },
+    { nome: 'Junior', etaMinima: 15, etaMassima: 17, inizioValidita: '2007-01-01', fineValidita: '2009-12-31', descrizione: 'Ragazzi dai 15 ai 17 anni' },
+    { nome: 'Seniores', etaMinima: 18, etaMassima: 39, inizioValidita: '1985-01-01', fineValidita: '2006-12-31', descrizione: 'Adulti dai 18 ai 39 anni' },
+    { nome: 'MastersA', etaMinima: 40, etaMassima: 49, inizioValidita: '1975-01-01', fineValidita: '1984-12-31', descrizione: 'Adulti dai 40 ai 49 anni' },
+    { nome: 'MastersB', etaMinima: 50, etaMassima: 99, inizioValidita: '1900-01-01', fineValidita: '1974-12-31', descrizione: 'Adulti dai 50 anni in su' }
+  ]);
+
+  console.log('✅ Configurazioni create');
+}
+
+
+
+module.exports = { seedData, seedConfigurations };
 
 // Esegui il seed se questo file viene chiamato direttamente
 if (require.main === module) {
-  seedData().then(() => {
+  // seedData().then(() => {
+  //   process.exit(0);
+  // });
+  seedConfigurations().then(() => {
     process.exit(0);
   });
 }

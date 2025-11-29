@@ -90,7 +90,8 @@ IscrizioneAtleta.belongsTo(Categoria, {
 // Aggiunta associazione per Competizione
 IscrizioneAtleta.belongsTo(Competizione, {
   foreignKey: 'competizioneId',
-  as: 'competizione'
+  as: 'competizione',
+  onDelete: 'SET NULL'
 });
 Competizione.hasMany(IscrizioneAtleta, {
   foreignKey: 'competizioneId',
@@ -121,7 +122,8 @@ Atleta.hasMany(IscrizioneAtleta, {
 });
 Categoria.hasMany(IscrizioneAtleta, {
   foreignKey: 'categoriaId',
-  as: 'iscrizioni'
+  as: 'iscrizioni',
+  onDelete: 'SET NULL'
 });
 
 // Giudice -> Categorie (Many-to-Many attraverso AssegnazioneGiudice)
@@ -170,13 +172,13 @@ ConfigTipoCategoria.belongsTo(ConfigTipoCompetizione, {
 
 // ConfigTipoCategoria -> Categoria (One-to-Many)
 ConfigTipoCategoria.hasMany(Categoria, {
-  foreignKey: 'configTipoCategoriaId',
+  foreignKey: 'tipoCategoriaId',
   as: 'categorie',
-  onDelete: 'SET NULL'
+  onDelete: 'RESTRICT'
 });
 Categoria.belongsTo(ConfigTipoCategoria, {
-  foreignKey: 'configTipoCategoriaId',
-  as: 'configTipoCategoria'
+  foreignKey: 'tipoCategoriaId',
+  as: 'tipoCategoria'
 });
 
 // ConfigTipoAtleta -> Atleta (One-to-Many)

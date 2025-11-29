@@ -20,7 +20,8 @@ const Categoria = sequelize.define('Categoria', {
     references: {
       model: 'competizioni',
       key: 'id'
-    }
+    },
+    field: 'competizione_id'
   },
   tipoCategoriaId: {
     type: DataTypes.INTEGER,
@@ -36,19 +37,10 @@ const Categoria = sequelize.define('Categoria', {
     allowNull: false,
     defaultValue: 'U'
   },
-  etaMinima: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 0
-    }
-  },
-  etaMassima: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    validate: {
-      min: 0
-    }
+  gruppiEtaId: {
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
+    allowNull: true,
+    field: 'gruppi_eta_id'
   },
   pesoMassimo: {
     type: DataTypes.DECIMAL(5, 2),
@@ -56,7 +48,8 @@ const Categoria = sequelize.define('Categoria', {
     validate: {
       min: 20.0,
       max: 200.0
-    }
+    }, 
+    field: 'peso_massimo'
   },
   numeroTurni: {
     type: DataTypes.INTEGER,
@@ -64,14 +57,16 @@ const Categoria = sequelize.define('Categoria', {
     defaultValue: 1,
     validate: {
       min: 1
-    }
+    }, 
+    field: 'numero_turni'
   },
   maxPartecipanti: {
     type: DataTypes.INTEGER,
     allowNull: true,
     validate: {
       min: 1
-    }
+    },
+    field: 'max_partecipanti'
   },
   stato: {
     type: DataTypes.ENUM('Aperta', 'Chiusa', 'In corso', 'Conclusa'),

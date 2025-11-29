@@ -40,6 +40,9 @@ router.delete('/:id/files/:fileType', competizioneController.deleteFile);
 // GET /api/competizioni/:competizioneId/riepilogo-costi - Riepilogo costi dettagliato per club
 router.get('/:competizioneId/riepilogo-costi', competizioneController.getCompetitionCostSummary);
 
+// GET /api/competizioni/:competizioneId/print-categories - Stampa categorie in PDF
+router.get('/:competizioneId/print-categories', competizioneController.printCategories);
+
 // GET /api/competizioni/:id/lettera
 router.get('/:id/lettera', competizioneController.getCompetizioneLetter);
 

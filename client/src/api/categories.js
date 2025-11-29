@@ -123,6 +123,28 @@ export const getGruppiEta = async () => {
   }
 };
 
+// Stampa categorie in PDF
+export const printCategories = async (competizioneId) => {
+  try {
+    const response = await axios.get(`/competizioni/${competizioneId}/print-categories`, {
+      responseType: 'blob'
+    });
+    
+    // Crea un URL blob e trigger il download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `categorie-${competizioneId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Errore nella stampa delle categorie:', error);
+    throw error;
+  }
+};
+
 // Salva la lettera estratta per una competizione
 export const saveExtractedLetter = async (competizioneId, lettera) => {
   try {
