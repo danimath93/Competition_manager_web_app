@@ -57,3 +57,23 @@ export const getSvolgimentiByCompetizione = async (competizioneId) => {
   const res = await axios.get(`/svolgimento-categorie/by-competizione/${competizioneId}`);
   return res.data;
 };
+
+// genera tabellone lato server (se vuoi che lo faccia server-side)
+export const postGenerateTabellone = async (svolgimentoId) => {
+  const res = await axios.post(`/svolgimento-categorie/${svolgimentoId}/generate-tabellone`);
+  return res.data;
+};
+
+// imposta vincitore match
+export const postSetMatchWinner = async (svolgimentoId, matchId, winnerAtletaId) => {
+  const res = await axios.post(`/svolgimento-categorie/${svolgimentoId}/match/${encodeURIComponent(matchId)}/winner`, {
+    winnerAtletaId
+  });
+  return res.data;
+};
+
+// salvataggio tabellone completo
+export const putSaveTabellone = async (svolgimentoId, tabellone) => {
+  const res = await axios.put(`/svolgimento-categorie/${svolgimentoId}/tabellone`, { tabellone });
+  return res.data;
+};

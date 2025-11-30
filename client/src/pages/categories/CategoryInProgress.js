@@ -39,7 +39,7 @@ const CategoryInProgress = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const svolgimentoId = searchParams.get('svolgimentoId');
-
+  const categoriaNome = searchParams.get('categoriaNome');
   const [letter, setLetter] = useState('');
   const [loading, setLoading] = useState(true);
   const [caseType, setCaseType] = useState('other');
@@ -50,6 +50,8 @@ const CategoryInProgress = () => {
   const [tabellone, setTabellone] = useState(null);
   const [stato, setStato] = useState('nuovo');
   const [error, setError] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const competizioneId = searchParams.get("competizioneId");
 
   useEffect(() => {
     if (!svolgimentoId) {
@@ -87,7 +89,7 @@ const CategoryInProgress = () => {
   };
 
   const handleGoBack = () => {
-    navigate(`/category-execution`);
+    navigate(`/category-execution?competizioneId=${competizioneId}`);
   };
 
   const handlePunteggioChange = (atletaId, votoIdx, value) => {
@@ -141,6 +143,336 @@ const CategoryInProgress = () => {
     // eslint-disable-next-line
   }, [punteggi, atleti, letter, caseType]);
 
+/* --- helper per nome partecipante (può essere object con id,nome...) --- */
+const renderParticipantName = (p) => {
+  if (!p) return null;
+  if (p.nome) return `${p.nome} ${p.cognome || ''}`;
+  if (p.id) {
+    const at = atleti.find(a => a.id === p.id);
+    return at ? `${at.nome} ${at.cognome}` : `#${p.id}`;
+  }
+  return null;
+};
+
+/* --- verifica se esiste almeno un vincitore (per disabilitare edit) --- */
+const isAnyWinnerEntered = (tab) => {
+  if (!tab || !tab.rounds) return false;
+  return tab.rounds.some(r => r.matches.some(m => m.winner));
+};
+
+/* --- costruzione semplice del tabellone: rounds array con matches --- */
+const generateTabelloneFromAtleti = (atletiList) => {
+  // seed in ordine attuale; gli oggetti giocatore sono { id, nome, cognome }
+  const participants = atletiList.map(a => ({
+    id: a.id,
+    nome: a.nome,
+    cognome: a.cognome,
+    club: a.club
+  }));
+  const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
+  const byes = nextPow2 - participants.length;
+
+  // round 0: matches pairing sequenzialmente; byes -> player auto-advance as winner in round0
+  const matchesRound0 = [];
+  let idx = 0;
+  while (idx < participants.length) {
+    const p1 = participants[idx] || null;
+    const p2 = participants[idx + 1] || null;
+    matchesRound0.push({
+      id: `r0m${matchesRound0.length}`,
+      players: [p1, p2],
+      scores: {}, // NEW
+      winner: null,
+      from: []
+    });
+    idx += 2;
+  }
+
+  // costruisco i rounds successivi fino alla finale
+  const rounds = [ { matches: matchesRound0 } ];
+  let prevMatches = matchesRound0;
+  let roundIdx = 1;
+  while (prevMatches.length > 1) {
+    const curMatches = [];
+    for (let i = 0; i < prevMatches.length; i += 2) {
+      const left = prevMatches[i];
+      const right = prevMatches[i + 1] || null;
+      curMatches.push({
+        id: `r${roundIdx}m${curMatches.length}`,
+        players: [ // players saranno prese dinamicamente dai vincitori delle referenced matches
+          null, null
+        ],
+        scores: {},
+        winner: null,
+        from: [ left.id, right ? right.id : null ]
+      });
+    }
+    rounds.push({ matches: curMatches });
+    prevMatches = curMatches;
+    roundIdx += 1;
+  }
+
+  // se ci sono byes: auto-advance i vincitori nelle ronde successive
+  // NON settiamo winners ora: l'utente li selezionerà o, se c'è solo un partecipante per match, lo settiamo automaticamente
+  // impostiamo struttura tabellone con metadata
+  return { rounds };
+};
+
+/* --- aggiornamento giocatore in match (solo round 0 per editing) --- */
+  const updateMatchPlayer = (rIdx, matchId, slotIdx, atletaId) => {
+    setTabellone((prev) => {
+      const copy = JSON.parse(JSON.stringify(prev));
+      const round = copy.rounds[rIdx];
+      const m = round.matches.find(x => x.id === matchId);
+      if (!m) return prev;
+
+      // 🔥 reset winner + scores quando cambio giocatore
+      m.winner = null;
+      m.scores = {};
+
+      if (!atletaId) {
+        m.players[slotIdx] = null;
+      } else {
+        const at = atleti.find(a => a.id === atletaId);
+
+        // 🔥 Inseriamo SEMPRE club nel giocatore
+        m.players[slotIdx] = {
+          id: at.id,
+          nome: at.nome,
+          cognome: at.cognome,
+          club: at.club || ""
+        };
+      }
+
+      // 🔥 Propagazione ai round successivi
+      for (let r = rIdx + 1; r < copy.rounds.length; r++) {
+        for (const next of copy.rounds[r].matches) {
+          const pos = next.from.indexOf(m.id);
+          if (pos !== -1) {
+            next.players[pos] = null;     // reset player
+            next.winner = null;           // reset winner
+            next.scores = {};             // reset score
+          }
+        }
+      }
+
+      patchSvolgimentoCategoria(svolgimentoId, {
+        tabellone: copy,
+        stato: 'in_progress'
+      });
+
+      return copy;
+    });
+  };
+
+
+
+/* --- controlla se possiamo scegliere il vincitore del match:
+   - se match ha both players present OR one player only (bye) -> possiamo scegliere
+   - oppure se winner già scelto
+--- */
+const canChooseWinnerForMatch = (match, rIdx) => {
+  // se winner già inserito lo mostriamo
+  if (match.winner) return true;
+  // se round0: se ha almeno one player, possiamo scegliere (per byes too)
+  if (rIdx === 0) {
+    return !!(match.players[0] || match.players[1]);
+  }
+  // altrimenti possiamo scegliere se i from match (precedenti) hanno winners
+  if (!match.from || match.from.length === 0) return false;
+  const prevRound = tabellone.rounds[rIdx - 1];
+  if (!prevRound) return false;
+  const leftMatch = prevRound.matches.find(m => m.id === match.from[0]);
+  const rightMatch = match.from[1] ? prevRound.matches.find(m => m.id === match.from[1]) : null;
+  const leftExists = leftMatch && leftMatch.winner;
+  const rightExists = !rightMatch || (rightMatch && rightMatch.winner);
+  return leftExists && rightExists;
+};
+
+/* --- quando seleziono un vincitore per un match, aggiorno e avanzo il vincitore nella round+1 se necessario --- */
+const handleSelectWinner = (rIdx, matchId, winnerId) => {
+  setTabellone((prev) => {
+    const copy = JSON.parse(JSON.stringify(prev));
+    const round = copy.rounds[rIdx];
+    const match = round.matches.find(m => m.id === matchId);
+    if (!match) return prev;
+    // set winner object from players
+    const winnerObj = match.players.find(p => p && p.id === winnerId) || null;
+    match.winner = winnerObj;
+    // advance winner to next round slot (find the parent match in next round that references this match)
+    const nextRound = copy.rounds[rIdx + 1];
+    if (nextRound) {
+      // find the match that has this match.id in 'from'
+      for (const nm of nextRound.matches) {
+        if (nm.from && nm.from.includes(match.id)) {
+          // determine index (0 left, 1 right)
+          const idx = nm.from.indexOf(match.id);
+          nm.players[idx] = winnerObj;
+        }
+      }
+    }
+    // se finale: aggiorna classifica (podio)
+    const finalRound = copy.rounds[copy.rounds.length - 1];
+    const finalMatch = finalRound.matches[0];
+    let newClassifica = classifica;
+    if (finalMatch && finalMatch.winner) {
+      // primo = final winner; secondo = final loser
+      const finalWinner = finalMatch.winner;
+      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
+      // prendo semifinali (se esistono)
+      const semiRound = copy.rounds[copy.rounds.length - 2];
+      let semisLosers = [];
+      if (semiRound) {
+        for (const sm of semiRound.matches) {
+          // loser = player that lost (the one present in match.players but not winner)
+          if (sm.winner) {
+            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+            if (loser) semisLosers.push({ nome: loser.nome, cognome: loser.cognome, id: loser.id });
+          } else {
+            // if no winner declared, but both players present and didn't progress, treat as third as earlier req:
+            const loser = sm.players.find(p => p && !(sm.winner && sm.winner.id === p.id));
+            if (loser) semisLosers.push({ nome: loser.nome, cognome: loser.cognome, id: loser.id });
+          }
+        }
+      }
+      // costruisco classifica: primo, secondo, per terzo prendo primo elem di semisLosers (se non bastassero, il requisito dice che 4° viene contato come 3° -> quindi mostriamo solo 1° 2° 3° come prima semplificazione)
+      const podio = [
+        { nome: finalWinner.nome, cognome: finalWinner.cognome, id: finalWinner.id },
+        finalLoser ? { nome: finalLoser.nome, cognome: finalLoser.cognome, id: finalLoser.id } : null,
+        semisLosers[0] || null
+      ].filter(Boolean);
+      newClassifica = podio;
+    }
+    // salvo sul server e nello stato
+    patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, classifica: newClassifica, stato: (finalMatch && finalMatch.winner) ? 'completato' : 'in_progress' });
+    setClassifica(newClassifica);
+    return copy;
+  });
+};
+
+const handleScoreChange = (rIdx, matchId, atletaId, val) => {
+    const score = parseInt(val);
+
+    setTabellone((prev) => {
+      const copy = JSON.parse(JSON.stringify(prev));
+      const round = copy.rounds[rIdx];
+      const match = round.matches.find(m => m.id === matchId);
+      if (!match) return prev;
+
+      match.scores = match.scores || {};
+      match.scores[atletaId] = isNaN(score) ? null : score;
+
+      const p1 = match.players[0]?.id;
+      const p2 = match.players[1]?.id;
+
+      if (p1 && p2) {
+        const s1 = match.scores[p1];
+        const s2 = match.scores[p2];
+
+        if (s1 != null && s2 != null) {
+          if (s1 > s2) {
+            match.winner = match.players[0];
+          } else if (s2 > s1) {
+            match.winner = match.players[1];
+          } else {
+            match.winner = null;
+          }
+        }
+      }
+
+      // propaga il vincitore al turno successivo
+      if (match.winner) {
+        const nextRound = copy.rounds[rIdx + 1];
+        if (nextRound) {
+          nextRound.matches.forEach(nm => {
+            const pos = nm.from.indexOf(match.id);
+            if (pos !== -1) {
+              nm.players[pos] = match.winner;
+            }
+          });
+        }
+      }
+
+      // --- CALCOLO PODIO AUTOMATICO SE È LA FINALE ---
+      const finalRound = copy.rounds[copy.rounds.length - 1];
+      const finalMatch = finalRound.matches[0];
+
+      let newClassifica = classifica;
+
+      if (finalMatch && finalMatch.winner) {
+
+        // Primo e secondo
+        const finalWinner = finalMatch.winner;
+        const finalLoser = finalMatch.players.find(
+          p => p && p.id !== finalWinner.id
+        ) || null;
+
+        // Semifinali → individuare i due "terzi a pari merito"
+        const semiRound = copy.rounds[copy.rounds.length - 2];
+        let semisLosers = [];
+
+        if (semiRound) {
+          for (const sm of semiRound.matches) {
+            if (sm.winner) {
+              const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+              if (loser) semisLosers.push(loser);
+            }
+          }
+        }
+
+        // Se per qualche motivo manca uno dei losers → fallback
+        if (semisLosers.length < 2) {
+          const allPlayers = atleti.map(a => ({ id: a.id, nome: a.nome, cognome: a.cognome }));
+          const used = [finalWinner.id, finalLoser?.id];
+          const remaining = allPlayers.filter(p => !used.includes(p.id));
+          semisLosers = remaining.slice(0, 2);
+        }
+
+        newClassifica = [
+          { ...finalWinner },
+          finalLoser ? { ...finalLoser } : null,
+          semisLosers[0] || null,
+          semisLosers[1] || null
+        ].filter(Boolean);
+
+        // salva su server
+        patchSvolgimentoCategoria(
+          svolgimentoId,
+          { classifica: newClassifica, stato: "completato" }
+        );
+        setClassifica(newClassifica);
+      }
+
+
+      // Caso BYE: un solo giocatore
+    if (match.players[0] && !match.players[1]) {
+        match.winner = match.players[0];
+
+        // Propaga automaticamente il vincitore
+        const nextRound = copy.rounds[rIdx + 1];
+        if (nextRound) {
+          nextRound.matches.forEach(nm => {
+            const pos = nm.from.indexOf(match.id);
+            if (pos !== -1) {
+              nm.players[pos] = match.winner;
+            }
+        });
+        }
+    }
+
+    patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "in_progress" });
+    return copy;
+  });
+};
+
+const getRoundName = (roundIndex, totalRounds, matchesCount) => {
+  if (roundIndex === totalRounds - 1) return "Finale";
+  if (roundIndex === totalRounds - 2) return "Semifinale";
+  if (matchesCount === 8) return "Ottavi di finale";
+  if (matchesCount === 4) return "Quarti di finale";
+  return `Turno ${roundIndex + 1}`;
+};
+
   if (loading) {
     return (
       <Container maxWidth="xl" sx={{ mt: 4 }}>
@@ -172,6 +504,11 @@ const CategoryInProgress = () => {
           Svolgimento Categoria
         </Typography>
         <Divider sx={{ mb: 2 }} />
+        {categoriaNome && (
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            <b>{categoriaNome}</b>
+          </Typography>
+        )}
       </Box>
 
       {caseType === 'quyen' && (
@@ -289,12 +626,200 @@ const CategoryInProgress = () => {
           <Typography variant="h6" gutterBottom>
             Tabellone Light Contact
           </Typography>
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Visualizzazione e gestione tabellone a scontri diretti in fase di sviluppo.
-          </Alert>
-          {/* Qui andrà la visualizzazione del bracket */}
+
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                // genera tabellone se non esiste
+                if (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0) {
+                  const novo = generateTabelloneFromAtleti(atleti);
+                  setTabellone(novo);
+                  patchSvolgimentoCategoria(svolgimentoId, { tabellone: novo, stato: 'in_progress' });
+                }
+              }}
+            >
+              Genera Tabellone
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() => setEditing((e) => !e)}
+            >
+              {editing ? 'Fine modifica' : 'Modifica'}
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() => {
+                // forza salvataggio manuale
+                patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: 'in_progress' });
+              }}
+            >
+              Salva tabellone
+            </Button>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', overflowX: 'auto' }}>
+            {tabellone && tabellone.rounds && tabellone.rounds.map((round, rIdx) => (
+              <Paper key={`round-${rIdx}`} sx={{ p: 2, minWidth: 220 }}>
+                <Typography variant="subtitle1">
+                  {getRoundName(rIdx, tabellone.rounds.length, round.matches.length)}
+                </Typography>
+                <Divider sx={{ mb: 1 }} />
+                {round.matches.map((m) => (
+                  <Box key={m.id} sx={{ mb: 1, p: 1, border: '1px dashed rgba(0,0,0,0.08)', borderRadius: 1 }}>
+                    <Typography variant="body2">Match {m.id}</Typography>
+
+                    {/* UI BRACKETS + SCORE */}
+                    {/* SE EDITING → MOSTRO I MENU A TENDINA */}
+                    {editing ? (
+                      <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+
+                        {/* PLAYER 1 SELECT */}
+                        <TextField
+                          select
+                          SelectProps={{ native: true }}
+                          size="small"
+                          value={m.players[0]?.id || ""}
+                          onChange={(e) =>
+                            updateMatchPlayer(rIdx, m.id, 0, e.target.value ? parseInt(e.target.value) : null)
+                          }
+                        >
+                          <option value="">-- vuoto --</option>
+                          {atleti.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.nome} {a.cognome}
+                            </option>
+                          ))}
+                        </TextField>
+
+                        {/* PLAYER 2 SELECT */}
+                        <TextField
+                          select
+                          SelectProps={{ native: true }}
+                          size="small"
+                          value={m.players[1]?.id || ""}
+                          onChange={(e) =>
+                            updateMatchPlayer(rIdx, m.id, 1, e.target.value ? parseInt(e.target.value) : null)
+                          }
+                        >
+                          <option value="">-- vuoto --</option>
+                          {atleti.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.nome} {a.cognome}
+                            </option>
+                          ))}
+                        </TextField>
+
+                      </Box>
+                    ) : (
+                      /* SE NON EDITING → MOSTRO I RETTANGOLI */
+                      <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+
+                        {/* PLAYER 1 - rettangolo rosso */}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Box
+                            sx={{
+                              border: "3px solid red",
+                              borderRadius: "6px",
+                              padding: "4px 8px",
+                              minWidth: 160,
+                              textAlign: "center",
+                              fontWeight: 600
+                            }}
+                          >
+                            <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+                              <span style={{ fontWeight: 600 }}>
+                                {renderParticipantName(m.players[0]) || <i>—</i>}
+                              </span>
+                              <span style={{ fontSize: "11px", marginTop: 2 }}>
+                                {m.players[0]?.club || ""}
+                              </span>
+                            </Box>
+                          </Box>
+
+                          {/* SCORE */}
+                          {m.players[0] ? (
+                            <TextField
+                              type="number"
+                              size="small"
+                              sx={{ width: 70 }}
+                              value={m.scores?.[m.players[0].id] ?? ""}
+                              onChange={(e) =>
+                                handleScoreChange(rIdx, m.id, m.players[0].id, e.target.value)
+                              }
+                            />
+                          ) : (rIdx === 0 ? <Typography sx={{ fontStyle: "italic" }}>BYE</Typography> : <></>)}
+                        </Box>
+
+                        {/* PLAYER 2 - rettangolo blu */}
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Box
+                            sx={{
+                              border: "3px solid blue",
+                              borderRadius: "6px",
+                              padding: "4px 8px",
+                              minWidth: 160,
+                              textAlign: "center",
+                              fontWeight: 600
+                            }}
+                          >
+                            <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+                              <span style={{ fontWeight: 600 }}>
+                                {renderParticipantName(m.players[1]) || <i>—</i>}
+                              </span>
+                              <span style={{ fontSize: "11px", marginTop: 2 }}>
+                                {m.players[1]?.club || ""}
+                              </span>
+                            </Box>
+                          </Box>
+
+                          {/* SCORE */}
+                          {m.players[1] ? (
+                            <TextField
+                              type="number"
+                              size="small"
+                              sx={{ width: 70 }}
+                              value={m.scores?.[m.players[1].id] ?? ""}
+                              onChange={(e) =>
+                                handleScoreChange(rIdx, m.id, m.players[1].id, e.target.value)
+                              }
+                            />
+                          ) : (rIdx === 0 ? <Typography sx={{ fontStyle: "italic" }}>BYE</Typography> : <></>)}
+                        </Box>
+
+                      </Box>
+                    )}
+
+
+                      {/* Visualizzazione vincitore */}
+                      {m.winner && (
+                        <Typography variant="caption" sx={{ mt: 1 }}>
+                          Vincitore: {m.winner.nome} {m.winner.cognome}
+                        </Typography>
+                      )}
+
+                    </Box>
+                ))}
+              </Paper>
+            ))}
+
+            {/* classifica a destra */}
+            <Paper sx={{ p: 2, minWidth: 260 }}>
+              <Typography variant="h6">PODIO</Typography>
+              <Divider sx={{ mb: 1 }} />
+              <Box>
+                <Typography><b>1°</b> {classifica[0] ? `${classifica[0].nome} ${classifica[0].cognome}` : ''}</Typography>
+                <Typography><b>2°</b> {classifica[1] ? `${classifica[1].nome} ${classifica[1].cognome}` : ''}</Typography>
+                <Typography><b>3°</b> {classifica[2] ? `${classifica[2].nome} ${classifica[2].cognome}` : ''}
+                                      {classifica[3] ? `, ${classifica[3].nome} ${classifica[3].cognome}` : ''}</Typography>
+              </Box>
+            </Paper>
+          </Box>
         </Paper>
       )}
+
 
       {caseType === 'other' && (
         <Paper sx={{ p: 3 }}>

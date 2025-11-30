@@ -129,15 +129,18 @@ const CategoryExecution = () => {
     setLetter(randomLetter);
   };
 
-const handlePlay = async (categoriaId) => {
+const handlePlay = async (cat) => {
   const res = await startSvolgimentoCategoria({
-    categoriaId,
+    categoriaId: cat.id,
     competizioneId,
-    letteraEstratta: letter  // server la userà solo se la competizione non ne ha già una
+    letteraEstratta: letter
   });
 
-  navigate(`/category-execution/${categoriaId}/category-in-progress?svolgimentoId=${res.svolgimentoId}`);
+  navigate(
+    `/category-execution/${cat.id}/category-in-progress?svolgimentoId=${res.svolgimentoId}&categoriaNome=${encodeURIComponent(cat.nome)}`
+  );
 };
+
 
   const handleGoBack = () => {
     navigate('/categories');
@@ -263,7 +266,7 @@ const handlePlay = async (categoriaId) => {
                     {cat.etaMinima} - {cat.etaMassima}
                   </TableCell>
                   <TableCell>
-                    <IconButton color="primary" onClick={() => handlePlay(cat.id)}>
+                    <IconButton color="primary" onClick={() => handlePlay(cat)}>
                       <PlayArrow />
                     </IconButton>
                     <IconButton color="secondary" onClick={handleDownloadExcel}>

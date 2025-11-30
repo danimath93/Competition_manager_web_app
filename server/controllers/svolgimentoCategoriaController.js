@@ -182,3 +182,166 @@ exports.getSvolgimentiByCompetizione = async (req, res) => {
     res.status(500).json({ error: "Errore nel recupero svolgimenti" });
   }
 };
+
+// genera tabellone server-side (semplice seeding)
+exports.generateTabellone = async (req, res) => {
+  try {
+    const { id } = req.params; // svolgimentoId
+    const svolg = await SvolgimentoCategoria.findByPk(id);
+    if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
+
+    // prendi atleti snapshot
+    const SvolgimentoCategoriaAtleta = require('../models').SvolgimentoCategoriaAtleta;
+    const atletiSnap = await SvolgimentoCategoriaAtleta.findAll({ where: { svolgimentoCategoriaId: id }, order: [['id', 'ASC']] });
+    const participants = atletiSnap.map(a => ({ id: a.atletaId, nome: a.nome, cognome: a.cognome }));
+
+    // genera tabellone (stessa logica frontend)
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
+    const matchesRound0 = [];
+    let idx = 0;
+    while (idx < participants.length) {
+      const p1 = participants[idx] || null;
+      const p2 = participants[idx + 1] || null;
+      matchesRound0.push({
+        id: `r0m${matchesRound0.length}`,
+        players: [p1, p2],
+        winner: null,
+        from: []
+      });
+      idx += 2;
+    }
+    const rounds = [{ matches: matchesRound0 }];
+    let prev = matchesRound0;
+    let roundIdx = 1;
+    while (prev.length > 1) {
+      const cur = [];
+      for (let i = 0; i < prev.length; i += 2) {
+        const left = prev[i];
+        const right = prev[i + 1] || null;
+        cur.push({
+          id: `r${roundIdx}m${cur.length}`,
+          players: [null, null],
+          winner: null,
+          from: [left.id, right ? right.id : null]
+        });
+      }
+      rounds.push({ matches: cur });
+      prev = cur;
+      roundIdx++;
+    }
+
+    const tabellone = { rounds };
+    svolg.tabellone = tabellone;
+    svolg.stato = 'in_progress';
+    await svolg.save();
+    return res.json(tabellone);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Errore generazione tabellone', details: err.message });
+  }
+};
+
+// salva intero tabellone
+exports.saveTabellone = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tabellone } = req.body;
+    const svolg = await SvolgimentoCategoria.findByPk(id);
+    if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
+    svolg.tabellone = tabellone;
+    svolg.stato = 'in_progress';
+    await svolg.save();
+    return res.json(svolg);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Errore salvataggio tabellone', details: err.message });
+  }
+};
+
+// setta il vincitore di un match (matchId è stringa come 'r0m1')
+exports.setMatchWinner = async (req, res) => {
+  try {
+    const { id, matchId } = req.params;
+    const { winnerAtletaId } = req.body;
+    const svolg = await SvolgimentoCategoria.findByPk(id);
+    if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
+    const tab = svolg.tabellone || { rounds: [] };
+
+    // trova match e imposta winner
+    let found = false;
+    for (let r = 0; r < tab.rounds.length; r++) {
+      for (let mi = 0; mi < tab.rounds[r].matches.length; mi++) {
+        const m = tab.rounds[r].matches[mi];
+        if (m.id === matchId) {
+          // trova l'oggetto atleta tra i players
+          const winnerObj = (m.players || []).find(p => p && p.id === winnerAtletaId);
+          if (!winnerObj) return res.status(400).json({ error: 'Atleta non presente nel match' });
+          m.winner = winnerObj;
+          found = true;
+
+          // advance winner to next round
+          if (r + 1 < tab.rounds.length) {
+            const nextRound = tab.rounds[r + 1];
+            for (const nm of nextRound.matches) {
+              const idxFrom = nm.from ? nm.from.indexOf(m.id) : -1;
+              if (idxFrom >= 0) {
+                nm.players[idxFrom] = winnerObj;
+              }
+            }
+          }
+        }
+      }
+    }
+    if (!found) return res.status(404).json({ error: 'Match non trovato' });
+
+    // se finale ha winner => calcola classifica e stato completato
+    const finalRound = tab.rounds[tab.rounds.length - 1];
+    let finalWinner = null;
+    if (finalRound && finalRound.matches && finalRound.matches[0] && finalRound.matches[0].winner) {
+      finalWinner = finalRound.matches[0].winner;
+    }
+
+    let computedClassifica = svolg.classifica || [];
+    if (finalWinner) {
+      const finalMatch = finalRound.matches[0];
+      const finalLoser = (finalMatch.players || []).find(p => p && p.id !== finalWinner.id) || null;
+      // semis
+      const semiRound = tab.rounds[tab.rounds.length - 2];
+      let semisLosers = [];
+      if (semiRound) {
+        for (const sm of semiRound.matches) {
+          if (sm.winner) {
+            const loser = (sm.players || []).find(p => p && p.id !== sm.winner.id);
+            if (loser) semisLosers.push(loser);
+          } else {
+            // se non c'è winner, consideriamo il "non vincente" come terzo
+            const loser = (sm.players || []).find(p => p);
+            if (loser) semisLosers.push(loser);
+          }
+        }
+      }
+      // Podio: primo, secondo, terzo (primo semis loser). Requisito: "quarto posto viene contato come terzo posto" -> mostriamo un solo campo 3° (se vuoi mostrare entrambi, possiamo cambiare)
+      computedClassifica = [
+        { id: finalWinner.id, nome: finalWinner.nome, cognome: finalWinner.cognome },
+        finalLoser && { id: finalLoser.id, nome: finalLoser.nome, cognome: finalLoser.cognome },
+        ...semisLosers.map(l => ({
+          id: l.id,
+          nome: l.nome,
+          cognome: l.cognome
+        }))
+      ].filter(Boolean);
+      svolg.stato = 'completato';
+    } else {
+      svolg.stato = 'in_progress';
+    }
+
+    svolg.tabellone = tab;
+    svolg.classifica = computedClassifica;
+    await svolg.save();
+
+    return res.json({ tabellone: tab, classifica: computedClassifica, stato: svolg.stato });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Errore impostazione vincitore', details: err.message });
+  }
+};
