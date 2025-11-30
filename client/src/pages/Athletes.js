@@ -31,11 +31,14 @@ const Athletes = () => {
     name: '',
     type: '',
     club: '',
+    insurance: ''
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
+
+  const insurances = ['N/A', 'ASI', 'FIWUK'];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +84,14 @@ const Athletes = () => {
     
     if (filters.club) {
       result = result.filter((athlete) => athlete.clubId === filters.club);
+    }
+
+    if (filters.insurance) {
+      if (filters.insurance === 'N/A') {
+        result = result.filter((athlete) => !athlete.tesseramento);
+      } else {
+        result = result.filter((athlete) => athlete.tesseramento === filters.insurance);
+      }
     }
 
     setFilteredAthletes(result);
@@ -185,6 +196,26 @@ const Athletes = () => {
                 {athleteTypes.map((type) => (
                   <MenuItem key={type.id} value={type.id}>
                     {type.nome}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+              <InputLabel>Filtra per Tesseramento</InputLabel>
+              <Select
+                name="insurance"
+                label="Filtra per Tesseramento"
+                value={filters.insurance}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">
+                  <em>Tutti</em>
+                </MenuItem>
+                {insurances.map((insurance) => (
+                  <MenuItem key={insurance} value={insurance}>
+                    {insurance}
                   </MenuItem>
                 ))}
               </Select>
