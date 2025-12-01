@@ -89,6 +89,7 @@ const CategoryDefinition = () => {
   const [filters, setFilters] = useState({
     tipoAtletaId: '',
     tipoCategoriaId: '',
+    nomeCategoria: '',
     genere: '',
     gruppoEtaId: ''
   });
@@ -487,6 +488,7 @@ const CategoryDefinition = () => {
   // Funzione per filtrare le categorie
   const getFilteredCategories = (categoriesList) => {
     return categoriesList.filter(categoria => {
+      if (filters.nomeCategoria && !categoria.nome.toLowerCase().includes(filters.nomeCategoria.toLowerCase())) return false;
       if (filters.tipoAtletaId && !categoria.tipiAtletaId.includes(filters.tipoAtletaId)) return false;
       if (filters.tipoCategoriaId && categoria.tipoCategoriaId !== filters.tipoCategoriaId) return false;
       if (filters.genere && categoria.genere !== filters.genere) return false;
@@ -1171,8 +1173,21 @@ const CategoryDefinition = () => {
           </Box>
 
           {/* Filtri per categorie salvate */}
-          <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+          <Paper elevation={0} sx={{ py: 2 }}>
             <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                  <TextField
+                    name="name"
+                    label="Cerca nome categoria"
+                    placeholder="Inserisci categoria..."
+                    variant="outlined"
+                    fullWidth
+                    value={filters.nomeCategoria}
+                    onChange={(e) => handleFilterChange('nomeCategoria', e.target.value)}
+                  />
+                </FormControl>
+              </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Categoria</InputLabel>
@@ -1222,6 +1237,8 @@ const CategoryDefinition = () => {
               </Grid>
             </Grid>
           </Paper>
+
+          <Divider sx={{ mb: 2 }} />
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
             {getPaginatedCategories(categories).items.map((categoria, index) => (

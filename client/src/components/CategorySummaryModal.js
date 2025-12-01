@@ -71,7 +71,7 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
 
         if (category.tipoCategoria?.tipoCompetizione?.id !== TIPO_COMPETIZIONE_ATT_COMPLEMENTARI) {
           // Medal calculation based on number of athletes, only for non dimonstrative categories
-          if (athleteCount >= 3) {
+          if (athleteCount > 3) {
             goldMedals += 1;
             silverMedals += 1;
             if (category.tipoCategoria?.tipoCompetizione?.id === TIPO_COMPETIZIONE_COMBATTIMENTO) {
@@ -79,10 +79,13 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
             } else {
               bronzeMedals += 1;
             }
+          } else if (athleteCount === 3) { 
+            goldMedals += 1;
+            silverMedals += 1;
+            bronzeMedals += 1;
           } else if (athleteCount === 2) { // No bronze medals
             goldMedals += 1;
             silverMedals += 1;
-            
           } else if (athleteCount === 1) { // No silver or bronze medals
             goldMedals += 1;
           }
@@ -111,12 +114,14 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
 
   const getMedalInfo = (athleteCount, competitionTypeId) => {
     if (competitionTypeId !== TIPO_COMPETIZIONE_ATT_COMPLEMENTARI) {
-      if (athleteCount >= 3) {
+      if (athleteCount > 3) {
         if (competitionTypeId === TIPO_COMPETIZIONE_COMBATTIMENTO) {
           return { gold: 1, silver: 1, bronze: 2 };
         } else {
           return { gold: 1, silver: 1, bronze: 1 };
         }
+      } else if (athleteCount === 3) {
+        return { gold: 1, silver: 1, bronze: 1 };
       } else if (athleteCount === 2) {
         return { gold: 1, silver: 1, bronze: 0 };
       } else if (athleteCount === 1) {
