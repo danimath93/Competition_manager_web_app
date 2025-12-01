@@ -1,4 +1,5 @@
-const { Categoria, IscrizioneAtleta, Atleta, Competizione, ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione, Club } = require('../models');
+const { Categoria, IscrizioneAtleta, Atleta, Competizione, SvolgimentoCategoria, Club } = require('../models');
+const { ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
 
@@ -620,7 +621,113 @@ exports.splitCategoria = async (req, res) => {
     });
   }
 };
-const SvolgimentoCategoria = require('../models/SvolgimentoCategoria');
+
+// Ottieni le categorie di una competizione filtrate per club
+exports.getCategoriesByClub = async (req, res) => {
+  try {
+    const { competizioneId, clubId } = req.params;
+
+    // Prima trova le categorie che hanno almeno un atleta del club specificato
+    const categorieConAtletiClub = await Categoria.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: IscrizioneAtleta,
+          as: 'iscrizioni',
+          required: true,
+          include: [{
+            model: Atleta,
+            as: 'atleta',
+            where: { clubId },
+            attributes: ['id']
+          }],
+          attributes: ['id']
+        }
+      ],
+      attributes: ['id']
+    });
+
+    const categorieIds = categorieConAtletiClub.map(cat => cat.id);
+
+    if (categorieIds.length === 0) {
+      return res.json([]);
+    }
+
+    // Ora recupera le categorie complete con TUTTI gli atleti
+    const categorie = await Categoria.findAll({
+      where: {
+        id: { [Op.in]: categorieIds }
+      },
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome'],
+          include: [{
+            model: ConfigTipoCompetizione,
+            as: 'tipoCompetizione',
+            attributes: ['id', 'nome']
+          }]
+        },
+        {
+          model: IscrizioneAtleta,
+          as: 'iscrizioni',
+          required: false,
+          include: [{
+            model: Atleta,
+            as: 'atleta',
+            attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso', 'clubId'],
+          }],
+          attributes: ['id', 'atletaId', 'tipoCategoriaId', 'categoriaId', 'peso']
+        }
+      ]
+    });
+
+    // Ordina le categorie alfabeticamente in modo intelligente
+    categorie.sort((a, b) => {
+      return a.nome.localeCompare(b.nome, undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      });
+    });
+
+    // Trasforma i dati per una struttura più pulita
+    const categorieFormatted = categorie.map(categoria => ({
+      id: categoria.id,
+      nome: categoria.nome,
+      competizioneId: categoria.competizioneId,
+      tipoCategoriaId: categoria.tipoCategoriaId,
+      genere: categoria.genere,
+      gruppiEtaId: categoria.gruppiEtaId,
+      pesoMassimo: categoria.pesoMassimo,
+      numeroTurni: categoria.numeroTurni,
+      maxPartecipanti: categoria.maxPartecipanti,
+      stato: categoria.stato,
+      descrizione: categoria.descrizione,
+      tipoCategoria: categoria.tipoCategoria,
+      atleti: categoria.iscrizioni.map(iscrizione => ({
+        id: iscrizione.atleta.id,
+        nome: iscrizione.atleta.nome,
+        cognome: iscrizione.atleta.cognome,
+        dataNascita: iscrizione.atleta.dataNascita,
+        sesso: iscrizione.atleta.sesso,
+        peso: iscrizione.peso,
+        isMyClub: iscrizione.atleta.clubId === parseInt(clubId),
+        iscrizioneId: iscrizione.id
+      }))
+    }));
+
+    logger.info(`Recuperate ${categorieFormatted.length} categorie per club ${clubId} nella competizione ${competizioneId}`);
+    res.json(categorieFormatted);
+
+  } catch (error) {
+    logger.error(`Errore nel recupero delle categorie per club ${req.params.clubId} in competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore durante il recupero delle categorie del club',
+      details: error.message
+    });
+  }
+};
 
 // Salva la lettera estratta per una competizione
 exports.saveExtractedLetter = async (req, res) => {
@@ -635,8 +742,12 @@ exports.saveExtractedLetter = async (req, res) => {
       await record.save();
     }
     res.json({ lettera: record.letteraEstratta });
-  } catch (err) {
-    res.status(500).json({ error: 'Errore nel salvataggio della lettera estratta' });
+  } catch (error) {
+    logger.error(`Errore nel salvataggio della lettera estratta per competizione ${competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel salvataggio della lettera estratta',
+      details: error.message
+    });
   }
 };
 
@@ -646,8 +757,12 @@ exports.getExtractedLetter = async (req, res) => {
   try {
     const record = await SvolgimentoCategoria.findOne({ where: { competizioneId } });
     res.json({ lettera: record ? record.letteraEstratta : null });
-  } catch (err) {
-    res.status(500).json({ error: 'Errore nel recupero della lettera estratta' });
+  } catch (error) {
+    logger.error(`Errore nel recupero della lettera estratta per competizione ${competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel recupero della lettera estratta',
+      details: error.message
+    });
   }
 };
 
@@ -675,8 +790,12 @@ exports.saveCategoryExecution = async (req, res) => {
       await record.save();
     }
     res.json(record);
-  } catch (err) {
-    res.status(500).json({ error: 'Errore nel salvataggio dello svolgimento categoria' });
+  } catch (error) {
+    logger.error(`Errore nel salvataggio dello svolgimento categoria ${id}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel salvataggio dello svolgimento categoria',
+      details: error.message
+    });
   }
 };
 
@@ -686,8 +805,11 @@ exports.getCategoryExecution = async (req, res) => {
   try {
     const record = await SvolgimentoCategoria.findOne({ where: { categoriaId: id } });
     res.json(record || {});
-  } catch (err) {
-    res.status(500).json({ error: 'Errore nel recupero dello svolgimento categoria' });
+  } catch (error) {
+    logger.error(`Errore nel recupero dello svolgimento categoria ${id}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel recupero dello svolgimento categoria',
+      details: error.message
+    });
   }
 };
-
