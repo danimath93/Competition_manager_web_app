@@ -141,6 +141,10 @@ const Competitions = () => {
     navigate(`/competitions/${competitionId}/summary`);
   };
 
+  const handleOpenCategories = (competitionId) => {
+    navigate(`/competitions/${competitionId}/categories`);
+  };
+
   const handleOpenDocumentsModal = (competition) => {
     setSelectedCompetition(competition);
     setIsDocumentsModalOpen(true);
@@ -186,6 +190,7 @@ const Competitions = () => {
             onDetails={handleOpenDetailsModal}
             onSummary={handleOpenSummaryModal}
             onDocuments={handleOpenDocumentsModal}
+            onCategories={handleOpenCategories}
             userClubId={user?.clubId}
             userPermissions={user?.permissions}
           />

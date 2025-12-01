@@ -10,6 +10,7 @@ import ResetPasswordConfirm from './components/ResetPasswordConfirm';
 import AuthGate from './components/AuthGate';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/Competitions';
+import ClubCategories from './pages/competitions/ClubCategories';
 import CompetitionRegistration from './pages/CompetitionRegistration';
 import CompetitionSummary from './pages/CompetitionSummary';
 import Athletes from './pages/Athletes';
@@ -96,6 +97,13 @@ const AppContent = () => {
         <Route path="/competitions/:competitionId/summary" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <CompetitionSummary />
+          </AuthGate>
+        } />
+
+        {/* Categorie Competizione - superAdmin, admin, club */}
+        <Route path="/competitions/:competitionId/categories" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <ClubCategories />
           </AuthGate>
         } />
 

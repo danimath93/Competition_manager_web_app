@@ -11,12 +11,16 @@ import {
   Tooltip
 } from '@mui/material';
 import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
+import { FaTags } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 import AuthComponent from './AuthComponent';
 
-const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onSummary, onEditClubOrganizer, onDocuments, userClubId }) => {
-  const isActive = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
+const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onSummary, onEditClubOrganizer, onDocuments, onCategories, userClubId }) => {
+  const isCompOpen = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
+  const isCompInPreparation = (competition.stato === CompetitionStatus.IN_PREPARATION);
+  const isCompOngoing = (competition.stato === CompetitionStatus.ONGOING)
+  const isCompCompleted = (competition.stato === CompetitionStatus.COMPLETED);
   const isClubRegistered = competition?.clubIscritti?.includes(userClubId) || false;
 
   const getStatusColor = (status) => {
@@ -128,7 +132,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                 <Button
                   variant="contained"
                   onClick={() => onRegister(competition.id)}
-                  disabled={!isActive}
+                  disabled={!isCompOpen}
                 >
                   <AppRegistration />
                 </Button>
@@ -142,13 +146,22 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                 <InfoOutline />
               </Button>
             </Tooltip>
-            <Tooltip title="Inserisci Documenti Competizione" arrow>
+            <Tooltip title="Visualizza documenti competizione" arrow>
               <Button
                 variant="contained"
                 onClick={() => onDocuments(competition)}
-                disabled={!isActive}
+                disabled={!(isCompOpen || isCompInPreparation)}
               >
                 <Description />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Visualizza categorie iscritti" arrow>
+              <Button
+                variant="contained"
+                onClick={() => onCategories(competition.id)}
+                disabled={!isCompInPreparation}
+              >
+                <FaTags size={24} />
               </Button>
             </Tooltip>
           </Box>

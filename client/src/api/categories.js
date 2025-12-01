@@ -33,6 +33,17 @@ export const getCategoriesByCompetizione = async (competizioneId) => {
   }
 };
 
+// Ottieni le categorie di una competizione filtrate per club
+export const getCategoriesByClub = async (competizioneId, clubId) => {
+  try {
+    const response = await axios.get(`/categorie/competizioni/${competizioneId}/club/${clubId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel recupero delle categorie del club:', error);
+    throw error;
+  }
+};
+
 // Aggiorna una categoria
 export const updateCategoria = async (id, data) => {
   try {
