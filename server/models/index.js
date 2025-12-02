@@ -8,14 +8,12 @@ const Competizione = require('./Competizione');
 const Categoria = require('./Categoria');
 const IscrizioneAtleta = require('./IscrizioneAtleta');
 const IscrizioneClub = require('./IscrizioneClub');
-const AssegnazioneGiudice = require('./AssegnazioneGiudice');
 const UtentiLogin = require('./UtentiLogin');
 const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
 const ConfigTipoCategoria = require('./ConfigTipoCategoria');
 const ConfigGruppoEta = require('./ConfigGruppoEta');
 const ConfigTipoAtleta = require('./ConfigTipoAtleta');
 const ConfigEsperienza = require('./ConfigEsperienza');
-const SvolgimentoCategoriaAtleta = require('./SvolgimentoCategoriaAtleta');
 const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 // Definisci le associazioni
 
@@ -126,39 +124,6 @@ Categoria.hasMany(IscrizioneAtleta, {
   onDelete: 'SET NULL'
 });
 
-// Giudice -> Categorie (Many-to-Many attraverso AssegnazioneGiudice)
-Giudice.belongsToMany(Categoria, {
-  through: AssegnazioneGiudice,
-  foreignKey: 'giudiceId',
-  otherKey: 'categoriaId',
-  as: 'categorie'
-});
-Categoria.belongsToMany(Giudice, {
-  through: AssegnazioneGiudice,
-  foreignKey: 'categoriaId',
-  otherKey: 'giudiceId',
-  as: 'giudici'
-});
-
-// Associazioni dirette per AssegnazioneGiudice
-AssegnazioneGiudice.belongsTo(Giudice, {
-  foreignKey: 'giudiceId',
-  as: 'giudice'
-});
-AssegnazioneGiudice.belongsTo(Categoria, {
-  foreignKey: 'categoriaId',
-  as: 'categoria'
-});
-
-Giudice.hasMany(AssegnazioneGiudice, {
-  foreignKey: 'giudiceId',
-  as: 'assegnamenti'
-});
-Categoria.hasMany(AssegnazioneGiudice, {
-  foreignKey: 'categoriaId',
-  as: 'assegnamenti'
-});
-
 // ConfigTipoCompetizione -> ConfigTipoCategoria (One-to-Many)
 ConfigTipoCompetizione.hasMany(ConfigTipoCategoria, {
   foreignKey: 'tipoCompetizioneId',
@@ -246,13 +211,11 @@ module.exports = {
   Categoria,
   IscrizioneAtleta,
   IscrizioneClub,
-  AssegnazioneGiudice,
   UtentiLogin,
   ConfigTipoCompetizione,
   ConfigTipoCategoria,
   ConfigGruppoEta,
   ConfigTipoAtleta,
   ConfigEsperienza,
-  SvolgimentoCategoriaAtleta,
   SvolgimentoCategoria
 };

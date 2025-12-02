@@ -7,7 +7,7 @@ const Categoria = sequelize.define('Categoria', {
     primaryKey: true,
     autoIncrement: true
   },
-  nome: {
+  nome: { 
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
@@ -67,11 +67,6 @@ const Categoria = sequelize.define('Categoria', {
       min: 1
     },
     field: 'max_partecipanti'
-  },
-  stato: {
-    type: DataTypes.ENUM('Aperta', 'Chiusa', 'In corso', 'Conclusa'),
-    allowNull: false,
-    defaultValue: 'Aperta'
   },
   descrizione: {
     type: DataTypes.TEXT,

@@ -85,9 +85,9 @@ npm run seed
 - Tipologia (Kata o Kumite)
 - Limiti di partecipanti
 
-### Iscrizioni e Assegnamenti
+### Iscrizioni
 - **IscrizioneAtleta**: Relazione many-to-many tra atleti e categorie
-- **AssegnazioneGiudice**: Relazione many-to-many tra giudici e categorie
+
 
 ## 🔗 Endpoints API
 

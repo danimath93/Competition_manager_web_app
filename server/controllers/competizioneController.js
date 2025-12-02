@@ -80,7 +80,7 @@ const getCompetizioneById = async (req, res) => {
         {
           model: Categoria,
           as: 'categorie',
-          include: ['atleti', 'giudici']
+          include: ['atleti']
         },
         {
           model: Club,
@@ -753,22 +753,6 @@ const printCategories = async (req, res) => {
   }
 };
 
-const getCompetizioneLetter = async (req, res) => {
-  try {
-    // Uniforma: la rotta ora passa :id
-    const { id } = req.params;
-    const competizione = await Competizione.findByPk(id);
-
-    if (!competizione) {
-      return res.status(404).json({ error: "Competizione non trovata" });
-    }
-
-    return res.json({ letteraEstratta: competizione.letteraEstratta });
-  } catch (err) {
-    res.status(500).json({ error: "Errore lettura lettera" });
-  }
-};
-
 module.exports = {
   getAllCompetizioni,
   getTipoCategorieByCompetizione,
@@ -782,6 +766,5 @@ module.exports = {
   downloadFile,
   deleteFile,
   getCompetitionCostSummary,
-  printCategories,
-  getCompetizioneLetter
+  printCategories
 };

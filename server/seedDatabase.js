@@ -5,7 +5,6 @@ const {
   Competizione, 
   Categoria, 
   IscrizioneAtleta,
-  AssegnazioneGiudice,
   UtentiLogin,
   sequelize 
 } = require('./models');

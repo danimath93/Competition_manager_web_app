@@ -43,7 +43,4 @@ router.get('/:competizioneId/riepilogo-costi', competizioneController.getCompeti
 // GET /api/competizioni/:competizioneId/print-categories - Stampa categorie in PDF
 router.get('/:competizioneId/print-categories', competizioneController.printCategories);
 
-// GET /api/competizioni/:id/lettera
-router.get('/:id/lettera', competizioneController.getCompetizioneLetter);
-
 module.exports = router;

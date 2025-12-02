@@ -1,12 +1,10 @@
 import axios from './axios';
 
-// Avvia lo svolgimento di una categoria (idempotente)
-export const startSvolgimentoCategoria = async ({ categoriaId, competizioneId, letteraEstratta }) => {
+export const startSvolgimentoCategoria = async ({ categoriaId, competizioneId }) => {
   try {
     const response = await axios.post('/svolgimento-categorie/start', {
       categoriaId,
-      competizioneId,
-      letteraEstratta
+      competizioneId
     });
     return response.data;
   } catch (error) {
@@ -26,17 +24,6 @@ export const getSvolgimentoCategoria = async (svolgimentoId) => {
   }
 };
 
-// Ottieni atleti snapshot
-export const getSvolgimentoCategoriaAtleti = async (svolgimentoId) => {
-  try {
-    const response = await axios.get(`/svolgimento-categorie/${svolgimentoId}/atleti`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore get atleti svolgimento:', error);
-    throw error;
-  }
-};
-
 // Autosave svolgimento categoria
 export const patchSvolgimentoCategoria = async (svolgimentoId, data) => {
   try {
@@ -47,11 +34,6 @@ export const patchSvolgimentoCategoria = async (svolgimentoId, data) => {
     throw error;
   }
 };
-/*
-export const startSvolgimento = async (payload) => {
-  const res = await axios.post('/svolgimento-categorie/start', payload);
-  return res.data;
-};*/
 
 export const getSvolgimentiByCompetizione = async (competizioneId) => {
   const res = await axios.get(`/svolgimento-categorie/by-competizione/${competizioneId}`);

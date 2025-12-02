@@ -25,19 +25,19 @@ import {
 } from '@mui/material';
 import { PlayArrow, Download, Autorenew, ArrowBack } from '@mui/icons-material';
 import { getCategoriesByCompetizione } from '../../api/categories';
-import { startSvolgimentoCategoria, getSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
-import { getCompetitionDetails, getCompetizioneLetter } from '../../api/competitions';
+import { startSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
+import { getCompetitionDetails } from '../../api/competitions';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { loadAllCategoryTypes } from '../../api/config';
-import { startSvolgimento,  getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
+import { startSvolgimento, getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const CategoryExecution = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const competizioneId = searchParams.get('competizioneId');
 
@@ -50,7 +50,6 @@ const CategoryExecution = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [workDialogOpen, setWorkDialogOpen] = useState(false);
   const [allCategorie, setAllCategorie] = useState([]);
-  const [letterLocked, setLetterLocked] = useState(false);
 
   useEffect(() => {
     if (!competizioneId) {
@@ -61,28 +60,13 @@ const CategoryExecution = () => {
     loadCompetition();
     loadCategories();
     loadCategoryType();
-    setLetter(''); // reset lettera all'apertura
-    const loadLetter = async () => {
-      const res = await getCompetizioneLetter(competizioneId);
-      setLetter(res.letteraEstratta || '');
-    };
-    loadLetter();
-    // eslint-disable-next-line
   }, [competizioneId]);
-/*
-  useEffect(() => {
-    const loadLetter = async () => {
-      const res = await getCompetizioneLetter(competizioneId);
-      setLetter(res.letteraEstratta || '');
-    };
-    loadLetter();
-  }, [competizioneId]);*/
-  
+
   useEffect(() => {
     const controllaSvolgimenti = async () => {
       const svolg = await getSvolgimentiByCompetizione(competizioneId);
-      const locked = svolg.some(s => s.stato !== 'nuovo');
-      setLetterLocked(locked);
+      // const locked = svolg.some(s => s.stato !== 'nuovo');
+      // setLetterLocked(locked);
     };
     controllaSvolgimenti();
   }, []);
@@ -91,7 +75,6 @@ const CategoryExecution = () => {
     try {
       const data = await getCompetitionDetails(competizioneId);
       setCompetition(data);
-      setLetter(data.letteraEstratta);
     } catch (e) {
       setError('Impossibile caricare la competizione');
     }
@@ -118,42 +101,35 @@ const CategoryExecution = () => {
     }
   };
 
-   const getName = (id) => {
+  const getName = (id) => {
     const tipo = allCategorie.find((cat) => cat.id === id);
     if (tipo) return tipo.nome;
     return null;
   };
 
-  const handleGenerateLetter = () => {
-    const randomLetter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-    setLetter(randomLetter);
+  const handlePlay = async (cat) => {
+
+    // DETERMINA CASE TYPE DAL TIPOLOGIA DELLA CATEGORIA
+    const tipoCompleto = getName(cat.tipoCategoriaId) || "";
+    const primaParola = tipoCompleto.split(" ")[0].toLowerCase();
+
+    let caseType = "other";
+    if (primaParola === "quyen") caseType = "quyen";
+    else if (primaParola === "light") caseType = "light";
+    else if (primaParola === "fighting") caseType = "fighting";
+
+    const res = await startSvolgimentoCategoria({
+      categoriaId: cat.id,
+      competizioneId
+    });
+
+    navigate(
+      `/category-execution/${cat.id}/category-in-progress?svolgimentoId=${res.svolgimentoId}&categoriaNome=${encodeURIComponent(cat.nome)}&competizioneId=${competizioneId}`,
+      {
+        state: { caseType }   // 🔥 PASSIAMO IL CASE TYPE SENZA URL
+      }
+    );
   };
-
-const handlePlay = async (cat) => {
-
-  // DETERMINA CASE TYPE DAL TIPOLOGIA DELLA CATEGORIA
-  const tipoCompleto = getName(cat.tipoCategoriaId) || "";
-  const primaParola = tipoCompleto.split(" ")[0].toLowerCase();
-
-  let caseType = "other";
-  if (primaParola === "quyen") caseType = "quyen";
-  else if (primaParola === "light") caseType = "light";
-  else if (primaParola === "fighting") caseType = "fighting";
-
-  const res = await startSvolgimentoCategoria({
-    categoriaId: cat.id,
-    competizioneId,
-    letteraEstratta: letter
-  });
-
-  navigate(
-    `/category-execution/${cat.id}/category-in-progress?svolgimentoId=${res.svolgimentoId}&categoriaNome=${encodeURIComponent(cat.nome)}&competizioneId=${competizioneId}`,
-    {
-      state: { caseType }   // 🔥 PASSIAMO IL CASE TYPE SENZA URL
-    }
-  );
-};
-
 
   const handleGoBack = () => {
     navigate('/categories');
@@ -196,8 +172,8 @@ const handlePlay = async (cat) => {
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 3 }}>
-        <Button 
-          startIcon={<ArrowBack />} 
+        <Button
+          startIcon={<ArrowBack />}
           onClick={handleGoBack}
           sx={{ mb: 2 }}
         >
@@ -227,31 +203,6 @@ const handlePlay = async (cat) => {
       </Box>
 
       <Divider sx={{ mb: 3 }} />
-
-      {/* Sezione Lettera estratta */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="h6" sx={{ mr: 2 }}>
-            Lettera estratta:
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', letterSpacing: 2 }}>
-            {letter || '-'}
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Autorenew />}
-            disabled={letterLocked}
-            onClick={handleGenerateLetter}
-            sx={{ ml: 2 }}
-          >
-            Estrai nuova lettera
-          </Button>
-        </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          La lettera verrà salvata solo all'avvio dello svolgimento della categoria.
-        </Typography>
-      </Paper>
 
       {/* Lista categorie */}
       <Paper sx={{ p: 3 }}>

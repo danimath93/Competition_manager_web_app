@@ -45,7 +45,6 @@ Una volta connesso, troverai queste tabelle:
 - **`competizioni`** - Gare organizzate
 - **`categorie`** - Categorie di gara
 - **`iscrizioni_atleti`** - Iscrizioni atleti alle categorie
-- **`assegnamenti_giudici`** - Assegnamenti giudici alle categorie
 
 ### 📊 Query di Esempio
 

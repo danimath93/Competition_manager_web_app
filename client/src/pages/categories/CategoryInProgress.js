@@ -19,7 +19,7 @@ import {
   TextField
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import { getSvolgimentoCategoria, getSvolgimentoCategoriaAtleti, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
+import { getSvolgimentoCategoria, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { useLocation } from "react-router-dom";
 
 const COMMISSIONE_LABELS = [
@@ -37,14 +37,15 @@ const COMMISSIONE_LABELS = [
 
 const CategoryInProgress = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const svolgimentoId = searchParams.get('svolgimentoId');
   const categoriaNome = searchParams.get('categoriaNome');
+  const competizioneId = searchParams.get("competizioneId");
+  const initialCaseType = location.state?.caseType || "other";
+
   const [letter, setLetter] = useState('');
   const [loading, setLoading] = useState(true);
- const location = useLocation();
-  const initialCaseType = location.state?.caseType || "other";
   const [caseType, setCaseType] = useState(initialCaseType);
   const [atleti, setAtleti] = useState([]);
   const [punteggi, setPunteggi] = useState({});
@@ -54,7 +55,6 @@ const CategoryInProgress = () => {
   const [stato, setStato] = useState('nuovo');
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
-  const competizioneId = searchParams.get("competizioneId");
 
   useEffect(() => {
     if (!svolgimentoId) {
@@ -63,7 +63,6 @@ const CategoryInProgress = () => {
       return;
     }
     loadSvolgimento();
-    // eslint-disable-next-line
   }, [svolgimentoId]);
 
   const loadSvolgimento = async () => {
@@ -76,8 +75,7 @@ const CategoryInProgress = () => {
       setClassifica(svolg.classifica || []);
       setTabellone(svolg.tabellone || null);
       setStato(svolg.stato || 'nuovo');
-      const atletiSnap = await getSvolgimentoCategoriaAtleti(svolgimentoId);
-      setAtleti(atletiSnap || []);
+      setAtleti(svolg.atleti || []);
     } catch (e) {
       setError('Errore nel caricamento dati');
     } finally {

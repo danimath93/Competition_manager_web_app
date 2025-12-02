@@ -1,13 +1,14 @@
-const { SvolgimentoCategoria, SvolgimentoCategoriaAtleta, Categoria, Atleta, Club, ConfigTipoCategoria, Competizione } = require('../models');
-const { Op } = require('sequelize');
-
-// Avvia lo svolgimento di una categoria (idempotente)
+const { SvolgimentoCategoria, Categoria, Atleta, Club, ConfigTipoCategoria, Competizione, IscrizioneAtleta } = require('../models');
 
 exports.startSvolgimentoCategoria = async (req, res) => {
   try {
-    const { categoriaId, competizioneId, letteraEstratta } = req.body;
-    if (!categoriaId || !competizioneId || !letteraEstratta) {
-      return res.status(400).json({ error: 'Dati mancanti' });
+    const { categoriaId, competizioneId } = req.body;
+
+    if (!categoriaId) {
+      return res.status(400).json({ error: "categoriaId è richiesto" });
+    }
+    if (!competizioneId) {
+      return res.status(400).json({ error: "competizioneId è richiesto" });
     }
 
     const competizione = await Competizione.findByPk(competizioneId);
@@ -16,14 +17,8 @@ exports.startSvolgimentoCategoria = async (req, res) => {
       return res.status(404).json({ error: "Competizione non trovata" });
     }
 
-    // 2. Determina la lettera DEFINITIVA
-    let lettera = competizione.letteraEstratta;
-
-    if (!lettera) {
-      // nessuna categoria è ancora partita → posso salvare nuova lettera
-      lettera = letteraEstratta;
-      await competizione.update({ letteraEstratta: lettera });
-    }
+    // 2. Sceglie casualmente una lettera da A a Z
+    const categoryLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
 
     // Cerca se già esiste
     let svolg = await SvolgimentoCategoria.findOne({ where: { categoriaId, competizioneId } });
@@ -31,36 +26,20 @@ exports.startSvolgimentoCategoria = async (req, res) => {
       svolg = await SvolgimentoCategoria.create({
         categoriaId,
         competizioneId,
-        letteraEstratta,
-        stato: 'nuovo'
+        letteraEstratta: categoryLetter,
+        stato: 'In definizione'
       });
+
       // Prendi atleti dalla categoria
       const categoria = await Categoria.findByPk(categoriaId, {
-        include: [{
-          model: Atleta,
-          as: 'atleti',
-          through: { attributes: [] },
-          include: [{ model: Club, as: 'club', attributes: ['denominazione'] }]
-        }]
+        attributes: ['id', 'nome', 'tipoCategoriaId']
       });
       if (!categoria) return res.status(404).json({ error: 'Categoria non trovata' });
-      // Crea snapshot atleti
-      for (const atleta of categoria.atleti) {
-        await SvolgimentoCategoriaAtleta.create({
-          svolgimentoCategoriaId: svolg.id,
-          atletaId: atleta.id,
-          nome: atleta.nome,
-          cognome: atleta.cognome,
-          club: atleta.club ? atleta.club.denominazione : '',
-          grado: atleta.grado || '',
-          ordine: null,
-          seed: null
-        });
-      }
-      // Se tipo categoria = light contact, genera tabellone (semplificato)
+
+      // Per le categorie di combattimento, genera un tabellone base
+      // TODO: gestire correttamente con gli ID specifici per combattimenti
       const tipoCat = await ConfigTipoCategoria.findByPk(categoria.tipoCategoriaId);
       if (tipoCat && /light\s*contact/i.test(tipoCat.nome)) {
-        // Genera tabellone base (mock)
         svolg.tabellone = { rounds: [] };
         await svolg.save();
       }
@@ -69,64 +48,8 @@ exports.startSvolgimentoCategoria = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Errore avvio svolgimento categoria', details: err.message });
   }
-};/*
-exports.startSvolgimentoCategoria = async (req, res) => {
-  try {
-    const { categoriaId, competizioneId, letteraEstratta } = req.body;
+};
 
-    const competizione = await Competizione.findByPk(competizioneId);
-    if (!competizione)
-      return res.status(404).json({ error: "Competizione non trovata" });
-
-    // LETTERA DEFINITIVA PER L'INTERA COMPETIZIONE
-    let lettera = competizione.letteraEstratta;
-
-    // se la lettera non esiste, la imposto ora
-    if (!lettera) {
-      lettera = letteraEstratta;
-      await competizione.update({ letteraEstratta: lettera });
-    }
-
-
-    // controllo se esiste già lo svolgimento
-    let svolg = await SvolgimentoCategoria.findOne({
-      where: { categoriaId, competizioneId }
-    });
-
-    if (!svolg) {
-      svolg = await SvolgimentoCategoria.create({
-        categoriaId,
-        competizioneId,
-        letteraEstratta: lettera,
-        stato: 'nuovo'
-      });
-
-      // CREAZIONE SNAPSHOT ATLETI
-      // Prendi tutti gli IscrizioneAtleta per questa categoria e competizione
-      const iscritti = await require('../models').IscrizioneAtleta.findAll({
-        where: { categoriaId, competizioneId },
-        include: [{ model: require('../models').Atleta, as: 'atleta', include: [{ model: require('../models').Club, as: 'club', attributes: ['denominazione'] }] }]
-      });
-
-      for (const i of iscritti) {
-        const atleta = i.atleta;
-        await SvolgimentoCategoriaAtleta.create({
-          svolgimentoCategoriaId: svolg.id,
-          atletaId: atleta.id,
-          nome: atleta.nome,
-          cognome: atleta.cognome,
-          club: atleta.club ? atleta.club.denominazione : '',
-          grado: atleta.grado || ''
-        });
-      }
-    }
-
-    return res.json({ svolgimentoId: svolg.id, lettera });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Errore avvio svolgimento" });
-  }
-};*/
 // GET svolgimento categoria
 exports.getSvolgimentoCategoria = async (req, res) => {
   try {
@@ -136,17 +59,6 @@ exports.getSvolgimentoCategoria = async (req, res) => {
     res.json(svolg);
   } catch (err) {
     res.status(500).json({ error: 'Errore get svolgimento categoria', details: err.message });
-  }
-};
-
-// GET atleti snapshot
-exports.getSvolgimentoCategoriaAtleti = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const atleti = await SvolgimentoCategoriaAtleta.findAll({ where: { svolgimentoCategoriaId: id } });
-    res.json(atleti);
-  } catch (err) {
-    res.status(500).json({ error: 'Errore get atleti svolgimento', details: err.message });
   }
 };
 
@@ -191,8 +103,7 @@ exports.generateTabellone = async (req, res) => {
     if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
 
     // prendi atleti snapshot
-    const SvolgimentoCategoriaAtleta = require('../models').SvolgimentoCategoriaAtleta;
-    const atletiSnap = await SvolgimentoCategoriaAtleta.findAll({ where: { svolgimentoCategoriaId: id }, order: [['id', 'ASC']] });
+    const atletiSnap = {};
     const participants = atletiSnap.map(a => ({ id: a.atletaId, nome: a.nome, cognome: a.cognome }));
 
     // genera tabellone (stessa logica frontend)

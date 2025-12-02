@@ -702,7 +702,6 @@ exports.getCategoriesByClub = async (req, res) => {
       pesoMassimo: categoria.pesoMassimo,
       numeroTurni: categoria.numeroTurni,
       maxPartecipanti: categoria.maxPartecipanti,
-      stato: categoria.stato,
       descrizione: categoria.descrizione,
       tipoCategoria: categoria.tipoCategoria,
       atleti: categoria.iscrizioni.map(iscrizione => ({
