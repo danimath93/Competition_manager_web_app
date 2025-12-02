@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { getSvolgimentoCategoria, getSvolgimentoCategoriaAtleti, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
+import { useLocation } from "react-router-dom";
 
 const COMMISSIONE_LABELS = [
   'Capo Commissione',
@@ -42,7 +43,9 @@ const CategoryInProgress = () => {
   const categoriaNome = searchParams.get('categoriaNome');
   const [letter, setLetter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [caseType, setCaseType] = useState('other');
+ const location = useLocation();
+  const initialCaseType = location.state?.caseType || "other";
+  const [caseType, setCaseType] = useState(initialCaseType);
   const [atleti, setAtleti] = useState([]);
   const [punteggi, setPunteggi] = useState({});
   const [commissione, setCommissione] = useState(Array(10).fill(''));
@@ -62,12 +65,6 @@ const CategoryInProgress = () => {
     loadSvolgimento();
     // eslint-disable-next-line
   }, [svolgimentoId]);
-
-  useEffect(() => {
-    if (!tabellone && !caseType) return;
-    if (tabellone) setCaseType('light');
-    else setCaseType('quyen');
-  }, [tabellone]);
 
   const loadSvolgimento = async () => {
     try {
@@ -89,7 +86,7 @@ const CategoryInProgress = () => {
   };
 
   const handleGoBack = () => {
-    navigate(`/category-execution?competizioneId=${competizioneId}`);
+    navigate(`/categories/execution?competizioneId=${competizioneId}`);
   };
 
   const handlePunteggioChange = (atletaId, votoIdx, value) => {
@@ -130,18 +127,42 @@ const CategoryInProgress = () => {
 
   useEffect(() => {
     if (caseType !== 'quyen') return;
-    const arr = getOrdinatiPerLettera().map((a) => ({
-      atleta: a,
-      media: parseFloat(getMedia(punteggi[a.id]))
-    }));
-    const sorted = arr
-      .filter((x) => !isNaN(x.media))
-      .sort((a, b) => b.media - a.media)
-      .slice(0, 3);
-    setClassifica(sorted);
-    patchSvolgimentoCategoria(svolgimentoId, { classifica: sorted });
+
+    // costruiamo un array con { media, atleta: { id, nome, cognome, club } }
+    const listaQuyen = getOrdinatiPerLettera().map(a => ({
+      media: parseFloat(getMedia(punteggi[a.id])),
+      atleta: {
+        id: a.id,
+        nome: a.nome,
+        cognome: a.cognome,
+        club: a.club || ''
+      }
+    })).filter(x => !isNaN(x.media));
+
+    // chiamiamo lo helper che costruisce il podio (computeQuyenPodium si aspetta questo formato)
+    const nuovaClassifica = computeQuyenPodium(listaQuyen);
+
+    // salviamo (formato: [{pos, atletaId}, ...]) nello stato e sul server
+    setClassifica(nuovaClassifica);
+    patchSvolgimentoCategoria(svolgimentoId, { classifica: nuovaClassifica });
+
     // eslint-disable-next-line
   }, [punteggi, atleti, letter, caseType]);
+
+  function computeQuyenPodium(listaQuyen) {
+  if (!Array.isArray(listaQuyen)) return [];
+
+  // Ordina per media decrescente
+  const ordinati = [...listaQuyen].sort((a, b) => b.media - a.media);
+
+  const classifica = [];
+
+  if (ordinati[0]) classifica.push({ pos: 1, atletaId: ordinati[0].atleta.id });
+  if (ordinati[1]) classifica.push({ pos: 2, atletaId: ordinati[1].atleta.id });
+  if (ordinati[2]) classifica.push({ pos: 3, atletaId: ordinati[2].atleta.id });
+
+  return classifica;
+}
 
 /* --- helper per nome partecipante (può essere object con id,nome...) --- */
 const renderParticipantName = (p) => {
@@ -296,56 +317,76 @@ const handleSelectWinner = (rIdx, matchId, winnerId) => {
     const round = copy.rounds[rIdx];
     const match = round.matches.find(m => m.id === matchId);
     if (!match) return prev;
-    // set winner object from players
+
+    // assegna winner
     const winnerObj = match.players.find(p => p && p.id === winnerId) || null;
     match.winner = winnerObj;
-    // advance winner to next round slot (find the parent match in next round that references this match)
+
+    // propagation to next round
     const nextRound = copy.rounds[rIdx + 1];
     if (nextRound) {
-      // find the match that has this match.id in 'from'
       for (const nm of nextRound.matches) {
-        if (nm.from && nm.from.includes(match.id)) {
-          // determine index (0 left, 1 right)
+        if (nm.from.includes(match.id)) {
           const idx = nm.from.indexOf(match.id);
           nm.players[idx] = winnerObj;
         }
       }
     }
-    // se finale: aggiorna classifica (podio)
-    const finalRound = copy.rounds[copy.rounds.length - 1];
-    const finalMatch = finalRound.matches[0];
-    let newClassifica = classifica;
-    if (finalMatch && finalMatch.winner) {
-      // primo = final winner; secondo = final loser
-      const finalWinner = finalMatch.winner;
-      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
-      // prendo semifinali (se esistono)
-      const semiRound = copy.rounds[copy.rounds.length - 2];
-      let semisLosers = [];
-      if (semiRound) {
-        for (const sm of semiRound.matches) {
-          // loser = player that lost (the one present in match.players but not winner)
-          if (sm.winner) {
-            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
-            if (loser) semisLosers.push({ nome: loser.nome, cognome: loser.cognome, id: loser.id });
-          } else {
-            // if no winner declared, but both players present and didn't progress, treat as third as earlier req:
-            const loser = sm.players.find(p => p && !(sm.winner && sm.winner.id === p.id));
-            if (loser) semisLosers.push({ nome: loser.nome, cognome: loser.cognome, id: loser.id });
-          }
+
+    /* ============================
+       CALCOLO CLASSIFICA SE FINALE
+       ============================ */
+if (caseType === "light" || caseType === "fighting") {
+  const finalRound = copy.rounds[copy.rounds.length - 1];
+  const finalMatch = finalRound.matches[0];
+
+  if (finalMatch && finalMatch.winner) {
+    const finalWinner = finalMatch.winner;
+    const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
+
+    // semifinal losers
+    const semiRound = copy.rounds[copy.rounds.length - 2];
+    let semisLosers = [];
+
+    if (semiRound) {
+      for (const sm of semiRound.matches) {
+        if (sm.winner) {
+          const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+          if (loser) semisLosers.push(loser);
         }
       }
-      // costruisco classifica: primo, secondo, per terzo prendo primo elem di semisLosers (se non bastassero, il requisito dice che 4° viene contato come 3° -> quindi mostriamo solo 1° 2° 3° come prima semplificazione)
-      const podio = [
-        { nome: finalWinner.nome, cognome: finalWinner.cognome, id: finalWinner.id },
-        finalLoser ? { nome: finalLoser.nome, cognome: finalLoser.cognome, id: finalLoser.id } : null,
-        semisLosers[0] || null
-      ].filter(Boolean);
-      newClassifica = podio;
     }
-    // salvo sul server e nello stato
-    patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, classifica: newClassifica, stato: (finalMatch && finalMatch.winner) ? 'completato' : 'in_progress' });
-    setClassifica(newClassifica);
+
+    // fallback
+    if (semisLosers.length < 2) {
+      const allPlayers = atleti.map(a => ({ id: a.id }));
+      const used = [finalWinner.id, finalLoser?.id];
+      const remaining = allPlayers.filter(p => !used.includes(p.id));
+      semisLosers = semisLosers.concat(remaining.slice(0, 2 - semisLosers.length));
+    }
+
+    const classificaToSave = [
+      { pos: 1, atletaId: finalWinner.id },
+      finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
+      semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
+      semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
+    ].filter(Boolean);
+
+      patchSvolgimentoCategoria(svolgimentoId, {
+        tabellone: copy,
+        classifica: classificaToSave,
+        stato: "completato"
+      });
+
+      setClassifica(classificaToSave);
+    }} else {
+      // no finale → solo salvataggio tabellone in_progress
+      patchSvolgimentoCategoria(svolgimentoId, {
+        tabellone: copy,
+        stato: "in_progress"
+      });
+    }
+
     return copy;
   });
 };
@@ -399,49 +440,54 @@ const handleScoreChange = (rIdx, matchId, atletaId, val) => {
 
       let newClassifica = classifica;
 
-      if (finalMatch && finalMatch.winner) {
+    if (finalMatch && finalMatch.winner) {
+      // Primo e secondo
+      const finalWinner = finalMatch.winner;
+      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
 
-        // Primo e secondo
-        const finalWinner = finalMatch.winner;
-        const finalLoser = finalMatch.players.find(
-          p => p && p.id !== finalWinner.id
-        ) || null;
+      // Semifinali -> losers
+      const semiRound = copy.rounds[copy.rounds.length - 2];
+      let semisLosers = [];
 
-        // Semifinali → individuare i due "terzi a pari merito"
-        const semiRound = copy.rounds[copy.rounds.length - 2];
-        let semisLosers = [];
-
-        if (semiRound) {
-          for (const sm of semiRound.matches) {
-            if (sm.winner) {
-              const loser = sm.players.find(p => p && p.id !== sm.winner.id);
-              if (loser) semisLosers.push(loser);
-            }
+      if (semiRound) {
+        for (const sm of semiRound.matches) {
+          if (sm.winner) {
+            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+            if (loser) semisLosers.push(loser);
           }
         }
-
-        // Se per qualche motivo manca uno dei losers → fallback
-        if (semisLosers.length < 2) {
-          const allPlayers = atleti.map(a => ({ id: a.id, nome: a.nome, cognome: a.cognome }));
-          const used = [finalWinner.id, finalLoser?.id];
-          const remaining = allPlayers.filter(p => !used.includes(p.id));
-          semisLosers = remaining.slice(0, 2);
-        }
-
-        newClassifica = [
-          { ...finalWinner },
-          finalLoser ? { ...finalLoser } : null,
-          semisLosers[0] || null,
-          semisLosers[1] || null
-        ].filter(Boolean);
-
-        // salva su server
-        patchSvolgimentoCategoria(
-          svolgimentoId,
-          { classifica: newClassifica, stato: "completato" }
-        );
-        setClassifica(newClassifica);
       }
+
+      // fallback se necessario
+      if (semisLosers.length < 2) {
+        const allPlayers = atleti.map(a => ({ id: a.id, nome: a.nome, cognome: a.cognome }));
+        const used = [finalWinner.id, finalLoser?.id];
+        const remaining = allPlayers.filter(p => !used.includes(p.id));
+        semisLosers = semisLosers.concat(remaining.slice(0, Math.max(0, 2 - semisLosers.length)));
+      }
+
+      // Ora costruisco la classifica nel nuovo formato
+      if (caseType === 'light' || caseType === 'fighting') {
+        // se abbiamo 2 losers li considero entrambi terzi (pos:3)
+        const classificaToSave = [
+          { pos: 1, atletaId: finalWinner.id },
+          finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
+          semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
+          semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
+        ].filter(Boolean);
+        patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+        setClassifica(classificaToSave);
+      } else {
+        // quyen o altri: solo 1 terzo
+        const classificaToSave = [
+          { pos: 1, atletaId: finalWinner.id },
+          finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
+          semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null
+        ].filter(Boolean);
+        patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+        setClassifica(classificaToSave);
+      }
+    }
 
 
       // Caso BYE: un solo giocatore
@@ -468,8 +514,8 @@ const handleScoreChange = (rIdx, matchId, atletaId, val) => {
 const getRoundName = (roundIndex, totalRounds, matchesCount) => {
   if (roundIndex === totalRounds - 1) return "Finale";
   if (roundIndex === totalRounds - 2) return "Semifinale";
-  if (matchesCount === 8) return "Ottavi di finale";
-  if (matchesCount === 4) return "Quarti di finale";
+  if (matchesCount >= 8) return "Ottavi di finale";
+  if (matchesCount < 8) return "Quarti di finale";
   return `Turno ${roundIndex + 1}`;
 };
 
@@ -569,21 +615,24 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                       <TableCell>Club</TableCell>
                     </TableRow>
                   </TableHead>
-                  <TableBody>
-                    {[0, 1, 2].map((idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>
-                          {classifica[idx]?.atleta
-                            ? `${classifica[idx].atleta.nome} ${classifica[idx].atleta.cognome}`
-                            : ''}
-                        </TableCell>
-                        <TableCell>
-                          {classifica[idx]?.atleta?.club || ''}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
+                    <TableBody>
+                      {[0, 1, 2].map((idx) => {
+                        const entry = classifica[idx];
+                        const atletaId = entry ? entry.atletaId : null;
+                        const atletaObj = atletaId ? atleti.find(a => a.id === atletaId || a.atletaId === atletaId) : null;
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell>{idx + 1}</TableCell>
+                            <TableCell>
+                              {atletaObj ? `${atletaObj.nome} ${atletaObj.cognome}` : ''}
+                            </TableCell>
+                            <TableCell>
+                              {atletaObj?.club || ''}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
                 </Table>
               </TableContainer>
             </Paper>
@@ -621,10 +670,11 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
         </Grid>
       )}
 
-      {caseType === 'light' && (
+      {(caseType === 'light' || caseType === 'fighting') && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Tabellone Light Contact
+            {caseType === "light" && "Tabellone Light Contact"}
+            {caseType === "fighting" && "Tabellone Fighting Ball"}
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
@@ -806,16 +856,36 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
             ))}
 
             {/* classifica a destra */}
-            <Paper sx={{ p: 2, minWidth: 260 }}>
-              <Typography variant="h6">PODIO</Typography>
-              <Divider sx={{ mb: 1 }} />
-              <Box>
-                <Typography><b>1°</b> {classifica[0] ? `${classifica[0].nome} ${classifica[0].cognome}` : ''}</Typography>
-                <Typography><b>2°</b> {classifica[1] ? `${classifica[1].nome} ${classifica[1].cognome}` : ''}</Typography>
-                <Typography><b>3°</b> {classifica[2] ? `${classifica[2].nome} ${classifica[2].cognome}` : ''}
-                                      {classifica[3] ? `, ${classifica[3].nome} ${classifica[3].cognome}` : ''}</Typography>
-              </Box>
-            </Paper>
+          <Paper sx={{ p: 2, minWidth: 260 }}>
+            <Typography variant="h6">PODIO</Typography>
+            <Divider sx={{ mb: 1 }} />
+            <Box>
+              {(() => {
+                // helper per risolvere atletaId -> oggetto atleta snapshot
+                const findAtleta = (id) => atleti.find(a => a.atletaId === id || a.id === id || a.atleta_id === id) || atleti.find(a => a.id === id) || null;
+
+                const primo = classifica.find(c => c.pos === 1);
+                const secondo = classifica.find(c => c.pos === 2);
+                const terzi = classifica.filter(c => c.pos === 3);
+
+                const renderAt = (c) => {
+                  if (!c) return '';
+                  const a = findAtleta(c.atletaId);
+                  return a ? `${a.nome} ${a.cognome}` : `#${c.atletaId}`;
+                };
+
+                return (
+                  <>
+                    <Typography><b>1°</b> {primo ? renderAt(primo) : ''}</Typography>
+                    <Typography><b>2°</b> {secondo ? renderAt(secondo) : ''}</Typography>
+                    <Typography>
+                      <b>3°</b> {terzi.length ? terzi.map((t, i) => (i === 0 ? renderAt(t) : `, ${renderAt(t)}`)).join('') : ''}
+                    </Typography>
+                  </>
+                );
+              })()}
+            </Box>
+          </Paper>
           </Box>
         </Paper>
       )}

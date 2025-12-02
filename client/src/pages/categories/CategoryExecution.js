@@ -130,6 +130,16 @@ const CategoryExecution = () => {
   };
 
 const handlePlay = async (cat) => {
+
+  // DETERMINA CASE TYPE DAL TIPOLOGIA DELLA CATEGORIA
+  const tipoCompleto = getName(cat.tipoCategoriaId) || "";
+  const primaParola = tipoCompleto.split(" ")[0].toLowerCase();
+
+  let caseType = "other";
+  if (primaParola === "quyen") caseType = "quyen";
+  else if (primaParola === "light") caseType = "light";
+  else if (primaParola === "fighting") caseType = "fighting";
+
   const res = await startSvolgimentoCategoria({
     categoriaId: cat.id,
     competizioneId,
@@ -137,7 +147,10 @@ const handlePlay = async (cat) => {
   });
 
   navigate(
-    `/category-execution/${cat.id}/category-in-progress?svolgimentoId=${res.svolgimentoId}&categoriaNome=${encodeURIComponent(cat.nome)}`
+    `/category-execution/${cat.id}/category-in-progress?svolgimentoId=${res.svolgimentoId}&categoriaNome=${encodeURIComponent(cat.nome)}&competizioneId=${competizioneId}`,
+    {
+      state: { caseType }   // 🔥 PASSIAMO IL CASE TYPE SENZA URL
+    }
   );
 };
 

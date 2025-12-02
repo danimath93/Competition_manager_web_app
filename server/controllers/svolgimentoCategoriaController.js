@@ -293,51 +293,76 @@ exports.setMatchWinner = async (req, res) => {
       }
     }
     if (!found) return res.status(404).json({ error: 'Match non trovato' });
-
-    // se finale ha winner => calcola classifica e stato completato
+    
+    // --- NUOVA VERSIONE SALVATAGGIO CLASSIFICA ---
     const finalRound = tab.rounds[tab.rounds.length - 1];
-    let finalWinner = null;
-    if (finalRound && finalRound.matches && finalRound.matches[0] && finalRound.matches[0].winner) {
-      finalWinner = finalRound.matches[0].winner;
-    }
+    const finalMatch = finalRound.matches[0];
+    const finalWinner = finalMatch.winner;
 
-    let computedClassifica = svolg.classifica || [];
     if (finalWinner) {
-      const finalMatch = finalRound.matches[0];
-      const finalLoser = (finalMatch.players || []).find(p => p && p.id !== finalWinner.id) || null;
-      // semis
+        
+      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id);
+
+      // ---- Preleva semifinali ----
       const semiRound = tab.rounds[tab.rounds.length - 2];
       let semisLosers = [];
+
       if (semiRound) {
         for (const sm of semiRound.matches) {
           if (sm.winner) {
-            const loser = (sm.players || []).find(p => p && p.id !== sm.winner.id);
+            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
             if (loser) semisLosers.push(loser);
           } else {
-            // se non c'è winner, consideriamo il "non vincente" come terzo
-            const loser = (sm.players || []).find(p => p);
+            const loser = sm.players.find(p => p);
             if (loser) semisLosers.push(loser);
           }
         }
       }
-      // Podio: primo, secondo, terzo (primo semis loser). Requisito: "quarto posto viene contato come terzo posto" -> mostriamo un solo campo 3° (se vuoi mostrare entrambi, possiamo cambiare)
-      computedClassifica = [
-        { id: finalWinner.id, nome: finalWinner.nome, cognome: finalWinner.cognome },
-        finalLoser && { id: finalLoser.id, nome: finalLoser.nome, cognome: finalLoser.cognome },
-        ...semisLosers.map(l => ({
-          id: l.id,
-          nome: l.nome,
-          cognome: l.cognome
-        }))
-      ].filter(Boolean);
-      svolg.stato = 'completato';
+
+      // ---- Determina tipo categoria ----
+      const categoria = await Categoria.findByPk(svolg.categoriaId);
+      const nomeCat = categoria.nome || "";
+      const isQuyen = nomeCat.toLowerCase().startsWith("quyen");
+
+      // ---- Costruisci nuova classifica finale ----
+      let newClassifica = [];
+
+      // 1° posto
+      newClassifica.push({ pos: 1, atletaId: finalWinner.id });
+
+      // 2° posto
+      if (finalLoser) {
+        newClassifica.push({ pos: 2, atletaId: finalLoser.id });
+      }
+
+      // 3° posto (quyen = 1 solo bronzo)
+      if (isQuyen) {
+        if (semisLosers.length > 0) {
+          newClassifica.push({
+            pos: 3,
+            atletaId: semisLosers[0].id
+          });
+        }
+      } else {
+        // light/fighting = 2 bronzi ex aequo
+        for (const l of semisLosers) {
+          newClassifica.push({ pos: 3, atletaId: l.id });
+        }
+      }
+
+      svolg.classifica = newClassifica;
+      svolg.stato = "completato";
+
     } else {
-      svolg.stato = 'in_progress';
+      svolg.stato = "in_progress";
     }
 
+
     svolg.tabellone = tab;
+    console.log(">> CLASSIFICA SALVATA:", JSON.stringify(computedClassifica, null, 2));
     svolg.classifica = computedClassifica;
     await svolg.save();
+
 
     return res.json({ tabellone: tab, classifica: computedClassifica, stato: svolg.stato });
   } catch (err) {
