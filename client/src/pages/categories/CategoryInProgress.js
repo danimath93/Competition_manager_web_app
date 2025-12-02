@@ -148,96 +148,96 @@ const CategoryInProgress = () => {
   }, [punteggi, atleti, letter, caseType]);
 
   function computeQuyenPodium(listaQuyen) {
-  if (!Array.isArray(listaQuyen)) return [];
+    if (!Array.isArray(listaQuyen)) return [];
 
-  // Ordina per media decrescente
-  const ordinati = [...listaQuyen].sort((a, b) => b.media - a.media);
+    // Ordina per media decrescente
+    const ordinati = [...listaQuyen].sort((a, b) => b.media - a.media);
 
-  const classifica = [];
+    const classifica = [];
 
-  if (ordinati[0]) classifica.push({ pos: 1, atletaId: ordinati[0].atleta.id });
-  if (ordinati[1]) classifica.push({ pos: 2, atletaId: ordinati[1].atleta.id });
-  if (ordinati[2]) classifica.push({ pos: 3, atletaId: ordinati[2].atleta.id });
+    if (ordinati[0]) classifica.push({ pos: 1, atletaId: ordinati[0].atleta.id });
+    if (ordinati[1]) classifica.push({ pos: 2, atletaId: ordinati[1].atleta.id });
+    if (ordinati[2]) classifica.push({ pos: 3, atletaId: ordinati[2].atleta.id });
 
-  return classifica;
-}
-
-/* --- helper per nome partecipante (può essere object con id,nome...) --- */
-const renderParticipantName = (p) => {
-  if (!p) return null;
-  if (p.nome) return `${p.nome} ${p.cognome || ''}`;
-  if (p.id) {
-    const at = atleti.find(a => a.id === p.id);
-    return at ? `${at.nome} ${at.cognome}` : `#${p.id}`;
-  }
-  return null;
-};
-
-/* --- verifica se esiste almeno un vincitore (per disabilitare edit) --- */
-const isAnyWinnerEntered = (tab) => {
-  if (!tab || !tab.rounds) return false;
-  return tab.rounds.some(r => r.matches.some(m => m.winner));
-};
-
-/* --- costruzione semplice del tabellone: rounds array con matches --- */
-const generateTabelloneFromAtleti = (atletiList) => {
-  // seed in ordine attuale; gli oggetti giocatore sono { id, nome, cognome }
-  const participants = atletiList.map(a => ({
-    id: a.id,
-    nome: a.nome,
-    cognome: a.cognome,
-    club: a.club
-  }));
-  const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
-  const byes = nextPow2 - participants.length;
-
-  // round 0: matches pairing sequenzialmente; byes -> player auto-advance as winner in round0
-  const matchesRound0 = [];
-  let idx = 0;
-  while (idx < participants.length) {
-    const p1 = participants[idx] || null;
-    const p2 = participants[idx + 1] || null;
-    matchesRound0.push({
-      id: `r0m${matchesRound0.length}`,
-      players: [p1, p2],
-      scores: {}, // NEW
-      winner: null,
-      from: []
-    });
-    idx += 2;
+    return classifica;
   }
 
-  // costruisco i rounds successivi fino alla finale
-  const rounds = [ { matches: matchesRound0 } ];
-  let prevMatches = matchesRound0;
-  let roundIdx = 1;
-  while (prevMatches.length > 1) {
-    const curMatches = [];
-    for (let i = 0; i < prevMatches.length; i += 2) {
-      const left = prevMatches[i];
-      const right = prevMatches[i + 1] || null;
-      curMatches.push({
-        id: `r${roundIdx}m${curMatches.length}`,
-        players: [ // players saranno prese dinamicamente dai vincitori delle referenced matches
-          null, null
-        ],
-        scores: {},
-        winner: null,
-        from: [ left.id, right ? right.id : null ]
-      });
+  /* --- helper per nome partecipante (può essere object con id,nome...) --- */
+  const renderParticipantName = (p) => {
+    if (!p) return null;
+    if (p.nome) return `${p.nome} ${p.cognome || ''}`;
+    if (p.id) {
+      const at = atleti.find(a => a.id === p.id);
+      return at ? `${at.nome} ${at.cognome}` : `#${p.id}`;
     }
-    rounds.push({ matches: curMatches });
-    prevMatches = curMatches;
-    roundIdx += 1;
-  }
+    return null;
+  };
 
-  // se ci sono byes: auto-advance i vincitori nelle ronde successive
-  // NON settiamo winners ora: l'utente li selezionerà o, se c'è solo un partecipante per match, lo settiamo automaticamente
-  // impostiamo struttura tabellone con metadata
-  return { rounds };
-};
+  /* --- verifica se esiste almeno un vincitore (per disabilitare edit) --- */
+  const isAnyWinnerEntered = (tab) => {
+    if (!tab || !tab.rounds) return false;
+    return tab.rounds.some(r => r.matches.some(m => m.winner));
+  };
 
-/* --- aggiornamento giocatore in match (solo round 0 per editing) --- */
+  /* --- costruzione semplice del tabellone: rounds array con matches --- */
+  const generateTabelloneFromAtleti = (atletiList) => {
+    // seed in ordine attuale; gli oggetti giocatore sono { id, nome, cognome }
+    const participants = atletiList.map(a => ({
+      id: a.id,
+      nome: a.nome,
+      cognome: a.cognome,
+      club: a.club
+    }));
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
+    const byes = nextPow2 - participants.length;
+
+    // round 0: matches pairing sequenzialmente; byes -> player auto-advance as winner in round0
+    const matchesRound0 = [];
+    let idx = 0;
+    while (idx < participants.length) {
+      const p1 = participants[idx] || null;
+      const p2 = participants[idx + 1] || null;
+      matchesRound0.push({
+        id: `r0m${matchesRound0.length}`,
+        players: [p1, p2],
+        scores: {}, // NEW
+        winner: null,
+        from: []
+      });
+      idx += 2;
+    }
+
+    // costruisco i rounds successivi fino alla finale
+    const rounds = [{ matches: matchesRound0 }];
+    let prevMatches = matchesRound0;
+    let roundIdx = 1;
+    while (prevMatches.length > 1) {
+      const curMatches = [];
+      for (let i = 0; i < prevMatches.length; i += 2) {
+        const left = prevMatches[i];
+        const right = prevMatches[i + 1] || null;
+        curMatches.push({
+          id: `r${roundIdx}m${curMatches.length}`,
+          players: [ // players saranno prese dinamicamente dai vincitori delle referenced matches
+            null, null
+          ],
+          scores: {},
+          winner: null,
+          from: [left.id, right ? right.id : null]
+        });
+      }
+      rounds.push({ matches: curMatches });
+      prevMatches = curMatches;
+      roundIdx += 1;
+    }
+
+    // se ci sono byes: auto-advance i vincitori nelle ronde successive
+    // NON settiamo winners ora: l'utente li selezionerà o, se c'è solo un partecipante per match, lo settiamo automaticamente
+    // impostiamo struttura tabellone con metadata
+    return { rounds };
+  };
+
+  /* --- aggiornamento giocatore in match (solo round 0 per editing) --- */
   const updateMatchPlayer = (rIdx, matchId, slotIdx, atletaId) => {
     setTabellone((prev) => {
       const copy = JSON.parse(JSON.stringify(prev));
@@ -286,110 +286,111 @@ const generateTabelloneFromAtleti = (atletiList) => {
 
 
 
-/* --- controlla se possiamo scegliere il vincitore del match:
-   - se match ha both players present OR one player only (bye) -> possiamo scegliere
-   - oppure se winner già scelto
---- */
-const canChooseWinnerForMatch = (match, rIdx) => {
-  // se winner già inserito lo mostriamo
-  if (match.winner) return true;
-  // se round0: se ha almeno one player, possiamo scegliere (per byes too)
-  if (rIdx === 0) {
-    return !!(match.players[0] || match.players[1]);
-  }
-  // altrimenti possiamo scegliere se i from match (precedenti) hanno winners
-  if (!match.from || match.from.length === 0) return false;
-  const prevRound = tabellone.rounds[rIdx - 1];
-  if (!prevRound) return false;
-  const leftMatch = prevRound.matches.find(m => m.id === match.from[0]);
-  const rightMatch = match.from[1] ? prevRound.matches.find(m => m.id === match.from[1]) : null;
-  const leftExists = leftMatch && leftMatch.winner;
-  const rightExists = !rightMatch || (rightMatch && rightMatch.winner);
-  return leftExists && rightExists;
-};
+  /* --- controlla se possiamo scegliere il vincitore del match:
+     - se match ha both players present OR one player only (bye) -> possiamo scegliere
+     - oppure se winner già scelto
+  --- */
+  const canChooseWinnerForMatch = (match, rIdx) => {
+    // se winner già inserito lo mostriamo
+    if (match.winner) return true;
+    // se round0: se ha almeno one player, possiamo scegliere (per byes too)
+    if (rIdx === 0) {
+      return !!(match.players[0] || match.players[1]);
+    }
+    // altrimenti possiamo scegliere se i from match (precedenti) hanno winners
+    if (!match.from || match.from.length === 0) return false;
+    const prevRound = tabellone.rounds[rIdx - 1];
+    if (!prevRound) return false;
+    const leftMatch = prevRound.matches.find(m => m.id === match.from[0]);
+    const rightMatch = match.from[1] ? prevRound.matches.find(m => m.id === match.from[1]) : null;
+    const leftExists = leftMatch && leftMatch.winner;
+    const rightExists = !rightMatch || (rightMatch && rightMatch.winner);
+    return leftExists && rightExists;
+  };
 
-/* --- quando seleziono un vincitore per un match, aggiorno e avanzo il vincitore nella round+1 se necessario --- */
-const handleSelectWinner = (rIdx, matchId, winnerId) => {
-  setTabellone((prev) => {
-    const copy = JSON.parse(JSON.stringify(prev));
-    const round = copy.rounds[rIdx];
-    const match = round.matches.find(m => m.id === matchId);
-    if (!match) return prev;
+  /* --- quando seleziono un vincitore per un match, aggiorno e avanzo il vincitore nella round+1 se necessario --- */
+  const handleSelectWinner = (rIdx, matchId, winnerId) => {
+    setTabellone((prev) => {
+      const copy = JSON.parse(JSON.stringify(prev));
+      const round = copy.rounds[rIdx];
+      const match = round.matches.find(m => m.id === matchId);
+      if (!match) return prev;
 
-    // assegna winner
-    const winnerObj = match.players.find(p => p && p.id === winnerId) || null;
-    match.winner = winnerObj;
+      // assegna winner
+      const winnerObj = match.players.find(p => p && p.id === winnerId) || null;
+      match.winner = winnerObj;
 
-    // propagation to next round
-    const nextRound = copy.rounds[rIdx + 1];
-    if (nextRound) {
-      for (const nm of nextRound.matches) {
-        if (nm.from.includes(match.id)) {
-          const idx = nm.from.indexOf(match.id);
-          nm.players[idx] = winnerObj;
+      // propagation to next round
+      const nextRound = copy.rounds[rIdx + 1];
+      if (nextRound) {
+        for (const nm of nextRound.matches) {
+          if (nm.from.includes(match.id)) {
+            const idx = nm.from.indexOf(match.id);
+            nm.players[idx] = winnerObj;
+          }
         }
       }
-    }
 
-    /* ============================
-       CALCOLO CLASSIFICA SE FINALE
-       ============================ */
-if (caseType === "light" || caseType === "fighting") {
-  const finalRound = copy.rounds[copy.rounds.length - 1];
-  const finalMatch = finalRound.matches[0];
+      /* ============================
+         CALCOLO CLASSIFICA SE FINALE
+         ============================ */
+      if (caseType === "light" || caseType === "fighting") {
+        const finalRound = copy.rounds[copy.rounds.length - 1];
+        const finalMatch = finalRound.matches[0];
 
-  if (finalMatch && finalMatch.winner) {
-    const finalWinner = finalMatch.winner;
-    const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
+        if (finalMatch && finalMatch.winner) {
+          const finalWinner = finalMatch.winner;
+          const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
 
-    // semifinal losers
-    const semiRound = copy.rounds[copy.rounds.length - 2];
-    let semisLosers = [];
+          // semifinal losers
+          const semiRound = copy.rounds[copy.rounds.length - 2];
+          let semisLosers = [];
 
-    if (semiRound) {
-      for (const sm of semiRound.matches) {
-        if (sm.winner) {
-          const loser = sm.players.find(p => p && p.id !== sm.winner.id);
-          if (loser) semisLosers.push(loser);
+          if (semiRound) {
+            for (const sm of semiRound.matches) {
+              if (sm.winner) {
+                const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+                if (loser) semisLosers.push(loser);
+              }
+            }
+          }
+
+          // fallback
+          if (semisLosers.length < 2) {
+            const allPlayers = atleti.map(a => ({ id: a.id }));
+            const used = [finalWinner.id, finalLoser?.id];
+            const remaining = allPlayers.filter(p => !used.includes(p.id));
+            semisLosers = semisLosers.concat(remaining.slice(0, 2 - semisLosers.length));
+          }
+
+          const classificaToSave = [
+            { pos: 1, atletaId: finalWinner.id },
+            finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
+            semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
+            semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
+          ].filter(Boolean);
+
+          patchSvolgimentoCategoria(svolgimentoId, {
+            tabellone: copy,
+            classifica: classificaToSave,
+            stato: "completato"
+          });
+
+          setClassifica(classificaToSave);
         }
+      } else {
+        // no finale → solo salvataggio tabellone in_progress
+        patchSvolgimentoCategoria(svolgimentoId, {
+          tabellone: copy,
+          stato: "in_progress"
+        });
       }
-    }
 
-    // fallback
-    if (semisLosers.length < 2) {
-      const allPlayers = atleti.map(a => ({ id: a.id }));
-      const used = [finalWinner.id, finalLoser?.id];
-      const remaining = allPlayers.filter(p => !used.includes(p.id));
-      semisLosers = semisLosers.concat(remaining.slice(0, 2 - semisLosers.length));
-    }
+      return copy;
+    });
+  };
 
-    const classificaToSave = [
-      { pos: 1, atletaId: finalWinner.id },
-      finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
-      semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
-      semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
-    ].filter(Boolean);
-
-      patchSvolgimentoCategoria(svolgimentoId, {
-        tabellone: copy,
-        classifica: classificaToSave,
-        stato: "completato"
-      });
-
-      setClassifica(classificaToSave);
-    }} else {
-      // no finale → solo salvataggio tabellone in_progress
-      patchSvolgimentoCategoria(svolgimentoId, {
-        tabellone: copy,
-        stato: "in_progress"
-      });
-    }
-
-    return copy;
-  });
-};
-
-const handleScoreChange = (rIdx, matchId, atletaId, val) => {
+  const handleScoreChange = (rIdx, matchId, atletaId, val) => {
     const score = parseInt(val);
 
     setTabellone((prev) => {
@@ -438,58 +439,58 @@ const handleScoreChange = (rIdx, matchId, atletaId, val) => {
 
       let newClassifica = classifica;
 
-    if (finalMatch && finalMatch.winner) {
-      // Primo e secondo
-      const finalWinner = finalMatch.winner;
-      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
+      if (finalMatch && finalMatch.winner) {
+        // Primo e secondo
+        const finalWinner = finalMatch.winner;
+        const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
 
-      // Semifinali -> losers
-      const semiRound = copy.rounds[copy.rounds.length - 2];
-      let semisLosers = [];
+        // Semifinali -> losers
+        const semiRound = copy.rounds[copy.rounds.length - 2];
+        let semisLosers = [];
 
-      if (semiRound) {
-        for (const sm of semiRound.matches) {
-          if (sm.winner) {
-            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
-            if (loser) semisLosers.push(loser);
+        if (semiRound) {
+          for (const sm of semiRound.matches) {
+            if (sm.winner) {
+              const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+              if (loser) semisLosers.push(loser);
+            }
           }
+        }
+
+        // fallback se necessario
+        if (semisLosers.length < 2) {
+          const allPlayers = atleti.map(a => ({ id: a.id, nome: a.nome, cognome: a.cognome }));
+          const used = [finalWinner.id, finalLoser?.id];
+          const remaining = allPlayers.filter(p => !used.includes(p.id));
+          semisLosers = semisLosers.concat(remaining.slice(0, Math.max(0, 2 - semisLosers.length)));
+        }
+
+        // Ora costruisco la classifica nel nuovo formato
+        if (caseType === 'light' || caseType === 'fighting') {
+          // se abbiamo 2 losers li considero entrambi terzi (pos:3)
+          const classificaToSave = [
+            { pos: 1, atletaId: finalWinner.id },
+            finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
+            semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
+            semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
+          ].filter(Boolean);
+          patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+          setClassifica(classificaToSave);
+        } else {
+          // quyen o altri: solo 1 terzo
+          const classificaToSave = [
+            { pos: 1, atletaId: finalWinner.id },
+            finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
+            semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null
+          ].filter(Boolean);
+          patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+          setClassifica(classificaToSave);
         }
       }
 
-      // fallback se necessario
-      if (semisLosers.length < 2) {
-        const allPlayers = atleti.map(a => ({ id: a.id, nome: a.nome, cognome: a.cognome }));
-        const used = [finalWinner.id, finalLoser?.id];
-        const remaining = allPlayers.filter(p => !used.includes(p.id));
-        semisLosers = semisLosers.concat(remaining.slice(0, Math.max(0, 2 - semisLosers.length)));
-      }
-
-      // Ora costruisco la classifica nel nuovo formato
-      if (caseType === 'light' || caseType === 'fighting') {
-        // se abbiamo 2 losers li considero entrambi terzi (pos:3)
-        const classificaToSave = [
-          { pos: 1, atletaId: finalWinner.id },
-          finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
-          semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
-          semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
-        ].filter(Boolean);
-        patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
-        setClassifica(classificaToSave);
-      } else {
-        // quyen o altri: solo 1 terzo
-        const classificaToSave = [
-          { pos: 1, atletaId: finalWinner.id },
-          finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
-          semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null
-        ].filter(Boolean);
-        patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
-        setClassifica(classificaToSave);
-      }
-    }
-
 
       // Caso BYE: un solo giocatore
-    if (match.players[0] && !match.players[1]) {
+      if (match.players[0] && !match.players[1]) {
         match.winner = match.players[0];
 
         // Propaga automaticamente il vincitore
@@ -500,22 +501,22 @@ const handleScoreChange = (rIdx, matchId, atletaId, val) => {
             if (pos !== -1) {
               nm.players[pos] = match.winner;
             }
-        });
+          });
         }
-    }
+      }
 
-    patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "in_progress" });
-    return copy;
-  });
-};
+      patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "in_progress" });
+      return copy;
+    });
+  };
 
-const getRoundName = (roundIndex, totalRounds, matchesCount) => {
-  if (roundIndex === totalRounds - 1) return "Finale";
-  if (roundIndex === totalRounds - 2) return "Semifinale";
-  if (matchesCount >= 8) return "Ottavi di finale";
-  if (matchesCount < 8) return "Quarti di finale";
-  return `Turno ${roundIndex + 1}`;
-};
+  const getRoundName = (roundIndex, totalRounds, matchesCount) => {
+    if (roundIndex === totalRounds - 1) return "Finale";
+    if (roundIndex === totalRounds - 2) return "Semifinale";
+    if (matchesCount >= 8) return "Ottavi di finale";
+    if (matchesCount < 8) return "Quarti di finale";
+    return `Turno ${roundIndex + 1}`;
+  };
 
   if (loading) {
     return (
@@ -613,24 +614,24 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                       <TableCell>Club</TableCell>
                     </TableRow>
                   </TableHead>
-                    <TableBody>
-                      {[0, 1, 2].map((idx) => {
-                        const entry = classifica[idx];
-                        const atletaId = entry ? entry.atletaId : null;
-                        const atletaObj = atletaId ? atleti.find(a => a.id === atletaId || a.atletaId === atletaId) : null;
-                        return (
-                          <TableRow key={idx}>
-                            <TableCell>{idx + 1}</TableCell>
-                            <TableCell>
-                              {atletaObj ? `${atletaObj.nome} ${atletaObj.cognome}` : ''}
-                            </TableCell>
-                            <TableCell>
-                              {atletaObj?.club || ''}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
+                  <TableBody>
+                    {[0, 1, 2].map((idx) => {
+                      const entry = classifica[idx];
+                      const atletaId = entry ? entry.atletaId : null;
+                      const atletaObj = atletaId ? atleti.find(a => a.id === atletaId || a.atletaId === atletaId) : null;
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            {atletaObj ? `${atletaObj.nome} ${atletaObj.cognome}` : ''}
+                          </TableCell>
+                          <TableCell>
+                            {atletaObj?.club || ''}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
                 </Table>
               </TableContainer>
             </Paper>
@@ -841,49 +842,49 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                     )}
 
 
-                      {/* Visualizzazione vincitore */}
-                      {m.winner && (
-                        <Typography variant="caption" sx={{ mt: 1 }}>
-                          Vincitore: {m.winner.nome} {m.winner.cognome}
-                        </Typography>
-                      )}
+                    {/* Visualizzazione vincitore */}
+                    {m.winner && (
+                      <Typography variant="caption" sx={{ mt: 1 }}>
+                        Vincitore: {m.winner.nome} {m.winner.cognome}
+                      </Typography>
+                    )}
 
-                    </Box>
+                  </Box>
                 ))}
               </Paper>
             ))}
 
             {/* classifica a destra */}
-          <Paper sx={{ p: 2, minWidth: 260 }}>
-            <Typography variant="h6">PODIO</Typography>
-            <Divider sx={{ mb: 1 }} />
-            <Box>
-              {(() => {
-                // helper per risolvere atletaId -> oggetto atleta snapshot
-                const findAtleta = (id) => atleti.find(a => a.atletaId === id || a.id === id || a.atleta_id === id) || atleti.find(a => a.id === id) || null;
+            <Paper sx={{ p: 2, minWidth: 260 }}>
+              <Typography variant="h6">PODIO</Typography>
+              <Divider sx={{ mb: 1 }} />
+              <Box>
+                {(() => {
+                  // helper per risolvere atletaId -> oggetto atleta snapshot
+                  const findAtleta = (id) => atleti.find(a => a.atletaId === id || a.id === id || a.atleta_id === id) || atleti.find(a => a.id === id) || null;
 
-                const primo = classifica.find(c => c.pos === 1);
-                const secondo = classifica.find(c => c.pos === 2);
-                const terzi = classifica.filter(c => c.pos === 3);
+                  const primo = classifica.find(c => c.pos === 1);
+                  const secondo = classifica.find(c => c.pos === 2);
+                  const terzi = classifica.filter(c => c.pos === 3);
 
-                const renderAt = (c) => {
-                  if (!c) return '';
-                  const a = findAtleta(c.atletaId);
-                  return a ? `${a.nome} ${a.cognome}` : `#${c.atletaId}`;
-                };
+                  const renderAt = (c) => {
+                    if (!c) return '';
+                    const a = findAtleta(c.atletaId);
+                    return a ? `${a.nome} ${a.cognome}` : `#${c.atletaId}`;
+                  };
 
-                return (
-                  <>
-                    <Typography><b>1°</b> {primo ? renderAt(primo) : ''}</Typography>
-                    <Typography><b>2°</b> {secondo ? renderAt(secondo) : ''}</Typography>
-                    <Typography>
-                      <b>3°</b> {terzi.length ? terzi.map((t, i) => (i === 0 ? renderAt(t) : `, ${renderAt(t)}`)).join('') : ''}
-                    </Typography>
-                  </>
-                );
-              })()}
-            </Box>
-          </Paper>
+                  return (
+                    <>
+                      <Typography><b>1°</b> {primo ? renderAt(primo) : ''}</Typography>
+                      <Typography><b>2°</b> {secondo ? renderAt(secondo) : ''}</Typography>
+                      <Typography>
+                        <b>3°</b> {terzi.length ? terzi.map((t, i) => (i === 0 ? renderAt(t) : `, ${renderAt(t)}`)).join('') : ''}
+                      </Typography>
+                    </>
+                  );
+                })()}
+              </Box>
+            </Paper>
           </Box>
         </Paper>
       )}
