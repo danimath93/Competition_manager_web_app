@@ -1,40 +1,45 @@
 // Controller per risultati generali (atleti e club)
 const { SvolgimentoCategoria } = require('../models');
 const { Op } = require('sequelize');
-const { calcolaRisultatiAtleti, calcolaRisultatiClub, dettagliMedaglieClub } = require('../utils/resultsHelpers');
+const { buildGlobalAthleteList, buildClubRanking } = require('../utils/resultsHelpers');
 
 // GET /results/atleti
-// Restituisce la classifica atleti per fascia di età e genere
+// GET /results/atleti
 exports.getAtletiResults = async (req, res) => {
   try {
-    // Recupera tutte le classifiche svolgimento categorie
     const svolgimenti = await SvolgimentoCategoria.findAll({
-    attributes: ['id', 'categoriaId', 'classifica'],
-    raw: true
+      attributes: ['id', 'categoriaId', 'classifica'],
+      raw: true
     });
 
-    const risultati = calcolaRisultatiAtleti(svolgimenti);
-    res.json(risultati);
+    const lista = await buildGlobalAthleteList(svolgimenti);
+
+    res.json(lista);
   } catch (err) {
-    res.status(500).json({ error: 'Errore calcolo risultati atleti', details: err.message });
+    console.error("ERRORE getAtletiResults:", err);
+    res.status(500).json({ error: "Errore calcolo risultati atleti" });
   }
 };
 
+
 // GET /results/club
-// Restituisce la classifica club aggregata
 exports.getClubResults = async (req, res) => {
   try {
     const svolgimenti = await SvolgimentoCategoria.findAll({
-    attributes: ['id', 'categoriaId', 'classifica'],
-    raw: true
+      attributes: ['id', 'categoriaId', 'classifica'],
+      raw: true
     });
 
-    const risultati = calcolaRisultatiClub(svolgimenti);
-    res.json(risultati);
+    const listaAtleti = await buildGlobalAthleteList(svolgimenti);
+    const classificaClub = await buildClubRanking(listaAtleti);
+
+    res.json(classificaClub);
   } catch (err) {
-    res.status(500).json({ error: 'Errore calcolo risultati club', details: err.message });
+    console.error("ERRORE getClubResults:", err);
+    res.status(500).json({ error: "Errore calcolo classifica club" });
   }
 };
+
 
 // GET /results/club/:id
 // Restituisce il dettaglio delle medaglie per un club

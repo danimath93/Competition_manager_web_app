@@ -1,3 +1,4 @@
+// CategoryInProgress.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -43,7 +44,7 @@ const CategoryInProgress = () => {
   const categoriaNome = searchParams.get('categoriaNome');
   const [letter, setLetter] = useState('');
   const [loading, setLoading] = useState(true);
- const location = useLocation();
+  const location = useLocation();
   const initialCaseType = location.state?.caseType || "other";
   const [caseType, setCaseType] = useState(initialCaseType);
   const [atleti, setAtleti] = useState([]);
@@ -125,6 +126,35 @@ const CategoryInProgress = () => {
     ];
   };
 
+  // -------------------------
+  // HELPERS per risolvere id reali / snapshot
+  // -------------------------
+  // player può essere: snapshot-like ({ id: snapshotId, scId, nome... }), oppure oggetto con id reale
+  const resolvePlayerRealId = (player) => {
+    if (!player) return null;
+    // se player ha campo 'scId' usalo come snapshot id
+    if (player.scId) {
+      const snap = atleti.find(a => a.id === player.scId);
+      if (snap) return snap.atletaId || snap.atleta_id || snap.id || null;
+    }
+    // se esiste snapshot con stessa id (player.id è snapshot id)
+    const snapById = atleti.find(a => a.id === player.id);
+    if (snapById) return snapById.atletaId || snapById.atleta_id || snapById.id || null;
+    // se player ha atletaId
+    if (player.atletaId) return player.atletaId;
+    // fallback: se player.id potrebbe già essere reale
+    return player.id || null;
+  };
+
+  const findSnapshotByRealId = (realId) => {
+    if (!realId) return null;
+    return atleti.find(a => (a.atletaId === realId || a.atleta_id === realId || a.id === realId)) || null;
+  };
+
+  // -------------------------
+  // FINE HELPERS
+  // -------------------------
+
   useEffect(() => {
     if (caseType !== 'quyen') return;
 
@@ -132,7 +162,7 @@ const CategoryInProgress = () => {
     const listaQuyen = getOrdinatiPerLettera().map(a => ({
       media: parseFloat(getMedia(punteggi[a.id])),
       atleta: {
-        id: a.id,
+        id: a.atletaId || a.atleta_id,
         nome: a.nome,
         cognome: a.cognome,
         club: a.club || ''
@@ -150,96 +180,94 @@ const CategoryInProgress = () => {
   }, [punteggi, atleti, letter, caseType]);
 
   function computeQuyenPodium(listaQuyen) {
-  if (!Array.isArray(listaQuyen)) return [];
+    if (!Array.isArray(listaQuyen)) return [];
 
-  // Ordina per media decrescente
-  const ordinati = [...listaQuyen].sort((a, b) => b.media - a.media);
+    // Ordina per media decrescente
+    const ordinati = [...listaQuyen].sort((a, b) => b.media - a.media);
 
-  const classifica = [];
+    const classifica = [];
 
-  if (ordinati[0]) classifica.push({ pos: 1, atletaId: ordinati[0].atleta.id });
-  if (ordinati[1]) classifica.push({ pos: 2, atletaId: ordinati[1].atleta.id });
-  if (ordinati[2]) classifica.push({ pos: 3, atletaId: ordinati[2].atleta.id });
+    if (ordinati[0]) classifica.push({ pos: 1, atletaId: ordinati[0].atleta.id });
+    if (ordinati[1]) classifica.push({ pos: 2, atletaId: ordinati[1].atleta.id });
+    if (ordinati[2]) classifica.push({ pos: 3, atletaId: ordinati[2].atleta.id });
 
-  return classifica;
-}
-
-/* --- helper per nome partecipante (può essere object con id,nome...) --- */
-const renderParticipantName = (p) => {
-  if (!p) return null;
-  if (p.nome) return `${p.nome} ${p.cognome || ''}`;
-  if (p.id) {
-    const at = atleti.find(a => a.id === p.id);
-    return at ? `${at.nome} ${at.cognome}` : `#${p.id}`;
-  }
-  return null;
-};
-
-/* --- verifica se esiste almeno un vincitore (per disabilitare edit) --- */
-const isAnyWinnerEntered = (tab) => {
-  if (!tab || !tab.rounds) return false;
-  return tab.rounds.some(r => r.matches.some(m => m.winner));
-};
-
-/* --- costruzione semplice del tabellone: rounds array con matches --- */
-const generateTabelloneFromAtleti = (atletiList) => {
-  // seed in ordine attuale; gli oggetti giocatore sono { id, nome, cognome }
-  const participants = atletiList.map(a => ({
-    id: a.id,
-    nome: a.nome,
-    cognome: a.cognome,
-    club: a.club
-  }));
-  const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
-  const byes = nextPow2 - participants.length;
-
-  // round 0: matches pairing sequenzialmente; byes -> player auto-advance as winner in round0
-  const matchesRound0 = [];
-  let idx = 0;
-  while (idx < participants.length) {
-    const p1 = participants[idx] || null;
-    const p2 = participants[idx + 1] || null;
-    matchesRound0.push({
-      id: `r0m${matchesRound0.length}`,
-      players: [p1, p2],
-      scores: {}, // NEW
-      winner: null,
-      from: []
-    });
-    idx += 2;
+    return classifica;
   }
 
-  // costruisco i rounds successivi fino alla finale
-  const rounds = [ { matches: matchesRound0 } ];
-  let prevMatches = matchesRound0;
-  let roundIdx = 1;
-  while (prevMatches.length > 1) {
-    const curMatches = [];
-    for (let i = 0; i < prevMatches.length; i += 2) {
-      const left = prevMatches[i];
-      const right = prevMatches[i + 1] || null;
-      curMatches.push({
-        id: `r${roundIdx}m${curMatches.length}`,
-        players: [ // players saranno prese dinamicamente dai vincitori delle referenced matches
-          null, null
-        ],
+  /* --- helper per nome partecipante (può essere object con id,nome...) --- */
+  const renderParticipantName = (p) => {
+    if (!p) return null;
+    // p può essere snapshot-like con scId oppure object con id reale oppure snapshot id
+    // cerchiamo snapshot che corrisponde:
+    const snap = atleti.find(a =>
+      a.id === p.scId ||
+      a.id === p.id ||
+      a.atletaId === p.id ||
+      a.atleta_id === p.id
+    );
+    if (p.nome) return `${p.nome} ${p.cognome || ''}`;
+    if (snap) return `${snap.nome || ''} ${snap.cognome || ''}`.trim();
+    if (p.id) return `#${p.id}`;
+    return null;
+  };
+
+  /* --- verifica se esiste almeno un vincitore (per disabilitare edit) --- */
+  const isAnyWinnerEntered = (tab) => {
+    if (!tab || !tab.rounds) return false;
+    return tab.rounds.some(r => r.matches.some(m => m.winner));
+  };
+
+  /* --- costruzione semplice del tabellone: rounds array con matches --- */
+  const generateTabelloneFromAtleti = (atletiList) => {
+    // seed in ordine attuale; gli oggetti giocatore sono { id, nome, cognome }
+    const participants = atletiList.map(a => ({
+      id: a.atletaId || a.atleta_id || a.id,
+      nome: a.nome,
+      cognome: a.cognome,
+      club: a.club
+    }));
+    const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
+    // round 0: matches pairing sequenzialmente
+    const matchesRound0 = [];
+    let idx = 0;
+    while (idx < participants.length) {
+      const p1 = participants[idx] || null;
+      const p2 = participants[idx + 1] || null;
+      matchesRound0.push({
+        id: `r0m${matchesRound0.length}`,
+        players: [p1, p2],
         scores: {},
         winner: null,
-        from: [ left.id, right ? right.id : null ]
+        from: []
       });
+      idx += 2;
     }
-    rounds.push({ matches: curMatches });
-    prevMatches = curMatches;
-    roundIdx += 1;
-  }
 
-  // se ci sono byes: auto-advance i vincitori nelle ronde successive
-  // NON settiamo winners ora: l'utente li selezionerà o, se c'è solo un partecipante per match, lo settiamo automaticamente
-  // impostiamo struttura tabellone con metadata
-  return { rounds };
-};
+    // rounds successivi
+    const rounds = [{ matches: matchesRound0 }];
+    let prevMatches = matchesRound0;
+    let roundIdx = 1;
+    while (prevMatches.length > 1) {
+      const curMatches = [];
+      for (let i = 0; i < prevMatches.length; i += 2) {
+        const left = prevMatches[i];
+        const right = prevMatches[i + 1] || null;
+        curMatches.push({
+          id: `r${roundIdx}m${curMatches.length}`,
+          players: [null, null],
+          scores: {},
+          winner: null,
+          from: [left.id, right ? right.id : null]
+        });
+      }
+      rounds.push({ matches: curMatches });
+      prevMatches = curMatches;
+      roundIdx += 1;
+    }
+    return { rounds };
+  };
 
-/* --- aggiornamento giocatore in match (solo round 0 per editing) --- */
+  /* --- aggiornamento giocatore in match (solo round 0 per editing) --- */
   const updateMatchPlayer = (rIdx, matchId, slotIdx, atletaId) => {
     setTabellone((prev) => {
       const copy = JSON.parse(JSON.stringify(prev));
@@ -247,7 +275,7 @@ const generateTabelloneFromAtleti = (atletiList) => {
       const m = round.matches.find(x => x.id === matchId);
       if (!m) return prev;
 
-      // 🔥 reset winner + scores quando cambio giocatore
+      // reset winner + scores
       m.winner = null;
       m.scores = {};
 
@@ -255,24 +283,24 @@ const generateTabelloneFromAtleti = (atletiList) => {
         m.players[slotIdx] = null;
       } else {
         const at = atleti.find(a => a.id === atletaId);
-
-        // 🔥 Inseriamo SEMPRE club nel giocatore
+        // setto player con id = reale (at.atletaId) e scId = snapshot id
         m.players[slotIdx] = {
-          id: at.id,
+          id: at.atletaId || at.atleta_id || at.id,   // ID reale atleta (se disponibile)
+          scId: at.id,                                 // ID snapshot svolgimento_categoria_atleti
           nome: at.nome,
           cognome: at.cognome,
           club: at.club || ""
         };
       }
 
-      // 🔥 Propagazione ai round successivi
+      // Propagazione ai round successivi: reset players che dipendono da questo match
       for (let r = rIdx + 1; r < copy.rounds.length; r++) {
         for (const next of copy.rounds[r].matches) {
           const pos = next.from.indexOf(m.id);
           if (pos !== -1) {
-            next.players[pos] = null;     // reset player
-            next.winner = null;           // reset winner
-            next.scores = {};             // reset score
+            next.players[pos] = null;
+            next.winner = null;
+            next.scores = {};
           }
         }
       }
@@ -286,112 +314,117 @@ const generateTabelloneFromAtleti = (atletiList) => {
     });
   };
 
+  /* --- controlla se possiamo scegliere il vincitore del match --- */
+  const canChooseWinnerForMatch = (match, rIdx) => {
+    if (match.winner) return true;
+    if (rIdx === 0) {
+      return !!(match.players[0] || match.players[1]);
+    }
+    if (!match.from || match.from.length === 0) return false;
+    const prevRound = tabellone.rounds[rIdx - 1];
+    if (!prevRound) return false;
+    const leftMatch = prevRound.matches.find(m => m.id === match.from[0]);
+    const rightMatch = match.from[1] ? prevRound.matches.find(m => m.id === match.from[1]) : null;
+    const leftExists = leftMatch && leftMatch.winner;
+    const rightExists = !rightMatch || (rightMatch && rightMatch.winner);
+    return leftExists && rightExists;
+  };
 
+  /* --- handleSelectWinner (menu a tendina) --- */
+  const handleSelectWinner = (rIdx, matchId, winnerId) => {
+    setTabellone((prev) => {
+      const copy = JSON.parse(JSON.stringify(prev));
+      const round = copy.rounds[rIdx];
+      const match = round.matches.find(m => m.id === matchId);
+      if (!match) return prev;
 
-/* --- controlla se possiamo scegliere il vincitore del match:
-   - se match ha both players present OR one player only (bye) -> possiamo scegliere
-   - oppure se winner già scelto
---- */
-const canChooseWinnerForMatch = (match, rIdx) => {
-  // se winner già inserito lo mostriamo
-  if (match.winner) return true;
-  // se round0: se ha almeno one player, possiamo scegliere (per byes too)
-  if (rIdx === 0) {
-    return !!(match.players[0] || match.players[1]);
-  }
-  // altrimenti possiamo scegliere se i from match (precedenti) hanno winners
-  if (!match.from || match.from.length === 0) return false;
-  const prevRound = tabellone.rounds[rIdx - 1];
-  if (!prevRound) return false;
-  const leftMatch = prevRound.matches.find(m => m.id === match.from[0]);
-  const rightMatch = match.from[1] ? prevRound.matches.find(m => m.id === match.from[1]) : null;
-  const leftExists = leftMatch && leftMatch.winner;
-  const rightExists = !rightMatch || (rightMatch && rightMatch.winner);
-  return leftExists && rightExists;
-};
+      // assegna winner (player object) cercando nel match.players
+      const winnerObj = match.players.find(p => p && (p.id === winnerId || p.scId === winnerId)) || null;
+      match.winner = winnerObj;
 
-/* --- quando seleziono un vincitore per un match, aggiorno e avanzo il vincitore nella round+1 se necessario --- */
-const handleSelectWinner = (rIdx, matchId, winnerId) => {
-  setTabellone((prev) => {
-    const copy = JSON.parse(JSON.stringify(prev));
-    const round = copy.rounds[rIdx];
-    const match = round.matches.find(m => m.id === matchId);
-    if (!match) return prev;
-
-    // assegna winner
-    const winnerObj = match.players.find(p => p && p.id === winnerId) || null;
-    match.winner = winnerObj;
-
-    // propagation to next round
-    const nextRound = copy.rounds[rIdx + 1];
-    if (nextRound) {
-      for (const nm of nextRound.matches) {
-        if (nm.from.includes(match.id)) {
-          const idx = nm.from.indexOf(match.id);
-          nm.players[idx] = winnerObj;
+      // propagation to next round
+      const nextRound = copy.rounds[rIdx + 1];
+      if (nextRound) {
+        for (const nm of nextRound.matches) {
+          if (nm.from.includes(match.id)) {
+            const idx = nm.from.indexOf(match.id);
+            nm.players[idx] = winnerObj;
+          }
         }
       }
-    }
 
-    /* ============================
-       CALCOLO CLASSIFICA SE FINALE
-       ============================ */
-if (caseType === "light" || caseType === "fighting") {
-  const finalRound = copy.rounds[copy.rounds.length - 1];
-  const finalMatch = finalRound.matches[0];
+      // se ho finale completo calcolo classifica
+      if (caseType === "light" || caseType === "fighting") {
+        const finalRound = copy.rounds[copy.rounds.length - 1];
+        const finalMatch = finalRound.matches[0];
+        if (finalMatch && finalMatch.winner) {
+          // resolve real ids
+          const finalWinnerReal = resolvePlayerRealId(finalMatch.winner);
+          const finalLoserPlayer = finalMatch.players.find(p => p && p.id !== finalMatch.winner.id);
+          const finalLoserReal = finalLoserPlayer ? resolvePlayerRealId(finalLoserPlayer) : null;
 
-  if (finalMatch && finalMatch.winner) {
-    const finalWinner = finalMatch.winner;
-    const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
+          // raccogli losers semifinali (resolving)
+          const semiRound = copy.rounds.length > 1 ? copy.rounds[copy.rounds.length - 2] : null;
+          let semisReal = [];
+          if (semiRound) {
+            for (const sm of semiRound.matches) {
+              if (sm.winner) {
+                const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+                if (loser) {
+                  const rid = resolvePlayerRealId(loser);
+                  if (rid) semisReal.push(rid);
+                }
+              }
+            }
+          }
 
-    // semifinal losers
-    const semiRound = copy.rounds[copy.rounds.length - 2];
-    let semisLosers = [];
+          // fallback: fill semisReal with other participants (real ids) excluding used
+          const used = new Set([finalWinnerReal, finalLoserReal].filter(Boolean));
+          semisReal = semisReal.filter(rid => rid && !used.has(rid));
+          if (semisReal.length < 2) {
+            const allReal = atleti.map(a => a.atletaId || a.atleta_id || a.id).filter(Boolean);
+            for (const rid of allReal) {
+              if (semisReal.length >= 2) break;
+              if (!used.has(rid) && !semisReal.includes(rid)) semisReal.push(rid);
+            }
+          }
 
-    if (semiRound) {
-      for (const sm of semiRound.matches) {
-        if (sm.winner) {
-          const loser = sm.players.find(p => p && p.id !== sm.winner.id);
-          if (loser) semisLosers.push(loser);
+          // dedup e limit
+          const uniqueSemis = [];
+          for (const rid of semisReal) {
+            if (!uniqueSemis.includes(rid)) uniqueSemis.push(rid);
+            if (uniqueSemis.length >= 2) break;
+          }
+
+          const classificaToSave = [
+            finalWinnerReal ? { pos: 1, atletaId: finalWinnerReal } : null,
+            finalLoserReal ? { pos: 2, atletaId: finalLoserReal } : null,
+            uniqueSemis[0] ? { pos: 3, atletaId: uniqueSemis[0] } : null,
+            (caseType === "light" || caseType === "fighting") && uniqueSemis[1] ? { pos: 3, atletaId: uniqueSemis[1] } : null
+          ].filter(Boolean);
+
+          // salvataggio
+          patchSvolgimentoCategoria(svolgimentoId, {
+            tabellone: copy,
+            classifica: classificaToSave,
+            stato: "completato"
+          });
+          setClassifica(classificaToSave);
         }
+      } else {
+        // solo salvataggio tabellone
+        patchSvolgimentoCategoria(svolgimentoId, {
+          tabellone: copy,
+          stato: "in_progress"
+        });
       }
-    }
 
-    // fallback
-    if (semisLosers.length < 2) {
-      const allPlayers = atleti.map(a => ({ id: a.id }));
-      const used = [finalWinner.id, finalLoser?.id];
-      const remaining = allPlayers.filter(p => !used.includes(p.id));
-      semisLosers = semisLosers.concat(remaining.slice(0, 2 - semisLosers.length));
-    }
+      return copy;
+    });
+  };
 
-    const classificaToSave = [
-      { pos: 1, atletaId: finalWinner.id },
-      finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
-      semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
-      semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
-    ].filter(Boolean);
-
-      patchSvolgimentoCategoria(svolgimentoId, {
-        tabellone: copy,
-        classifica: classificaToSave,
-        stato: "completato"
-      });
-
-      setClassifica(classificaToSave);
-    }} else {
-      // no finale → solo salvataggio tabellone in_progress
-      patchSvolgimentoCategoria(svolgimentoId, {
-        tabellone: copy,
-        stato: "in_progress"
-      });
-    }
-
-    return copy;
-  });
-};
-
-const handleScoreChange = (rIdx, matchId, atletaId, val) => {
+  /* --- handleScoreChange (numero di round, calcolo automatico winner) --- */
+  const handleScoreChange = (rIdx, matchId, atletaId, val) => {
     const score = parseInt(val);
 
     setTabellone((prev) => {
@@ -438,63 +471,77 @@ const handleScoreChange = (rIdx, matchId, atletaId, val) => {
       const finalRound = copy.rounds[copy.rounds.length - 1];
       const finalMatch = finalRound.matches[0];
 
-      let newClassifica = classifica;
+      if (finalMatch && finalMatch.winner) {
+        // Resolve real ids per winner/loser e semis
+        const finalWinnerReal = resolvePlayerRealId(finalMatch.winner);
+        const finalLoserPlayer = finalMatch.players.find(p => p && p.id !== finalMatch.winner.id);
+        const finalLoserReal = finalLoserPlayer ? resolvePlayerRealId(finalLoserPlayer) : null;
 
-    if (finalMatch && finalMatch.winner) {
-      // Primo e secondo
-      const finalWinner = finalMatch.winner;
-      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id) || null;
-
-      // Semifinali -> losers
-      const semiRound = copy.rounds[copy.rounds.length - 2];
-      let semisLosers = [];
-
-      if (semiRound) {
-        for (const sm of semiRound.matches) {
-          if (sm.winner) {
-            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
-            if (loser) semisLosers.push(loser);
+        // semiclassificati: losers delle semifinali
+        const semiRound = copy.rounds.length > 1 ? copy.rounds[copy.rounds.length - 2] : null;
+        let semisReal = [];
+        if (semiRound) {
+          for (const sm of semiRound.matches) {
+            if (sm.winner) {
+              const loserSnapshot = sm.players.find(p => p && p.id !== sm.winner.id);
+              if (loserSnapshot) {
+                const rid = resolvePlayerRealId(loserSnapshot);
+                if (rid) semisReal.push(rid);
+              }
+            }
           }
         }
-      }
 
-      // fallback se necessario
-      if (semisLosers.length < 2) {
-        const allPlayers = atleti.map(a => ({ id: a.id, nome: a.nome, cognome: a.cognome }));
-        const used = [finalWinner.id, finalLoser?.id];
-        const remaining = allPlayers.filter(p => !used.includes(p.id));
-        semisLosers = semisLosers.concat(remaining.slice(0, Math.max(0, 2 - semisLosers.length)));
-      }
+        // fallback quando pochi partecipanti: prendo real ids rimanenti che non sono primi/secondi
+        const used = new Set([finalWinnerReal, finalLoserReal].filter(Boolean));
+        semisReal = semisReal.filter(rid => rid && !used.has(rid));
+        if (semisReal.length < 2) {
+          const allReal = atleti.map(a => a.atletaId || a.atleta_id || a.id).filter(Boolean);
+          for (const rid of allReal) {
+            if (semisReal.length >= 2) break;
+            if (!used.has(rid) && !semisReal.includes(rid)) semisReal.push(rid);
+          }
+        }
 
-      // Ora costruisco la classifica nel nuovo formato
-      if (caseType === 'light' || caseType === 'fighting') {
-        // se abbiamo 2 losers li considero entrambi terzi (pos:3)
-        const classificaToSave = [
-          { pos: 1, atletaId: finalWinner.id },
-          finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
-          semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
-          semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
-        ].filter(Boolean);
-        patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+        // dedup e limit
+        const uniqueSemis = [];
+        for (const rid of semisReal) {
+          if (!uniqueSemis.includes(rid)) uniqueSemis.push(rid);
+          if (uniqueSemis.length >= 2) break;
+        }
+
+        // costruzione classifica usando sempre realId
+        let classificaToSave = [];
+        if (caseType === "light" || caseType === "fighting") {
+          classificaToSave = [
+            finalWinnerReal ? { pos: 1, atletaId: finalWinnerReal } : null,
+            finalLoserReal ? { pos: 2, atletaId: finalLoserReal } : null,
+            uniqueSemis[0] ? { pos: 3, atletaId: uniqueSemis[0] } : null,
+            uniqueSemis[1] ? { pos: 3, atletaId: uniqueSemis[1] } : null,
+          ].filter(Boolean);
+        } else {
+          // quyen / other: solo 1 terzo
+          classificaToSave = [
+            finalWinnerReal ? { pos: 1, atletaId: finalWinnerReal } : null,
+            finalLoserReal ? { pos: 2, atletaId: finalLoserReal } : null,
+            uniqueSemis[0] ? { pos: 3, atletaId: uniqueSemis[0] } : null,
+          ].filter(Boolean);
+        }
+
+        console.log("Classifica finale salvata:", classificaToSave);
+
+        patchSvolgimentoCategoria(svolgimentoId, {
+          classifica: classificaToSave,
+          stato: "completato"
+        });
+
         setClassifica(classificaToSave);
-      } else {
-        // quyen o altri: solo 1 terzo
-        const classificaToSave = [
-          { pos: 1, atletaId: finalWinner.id },
-          finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
-          semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null
-        ].filter(Boolean);
-        patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
-        setClassifica(classificaToSave);
       }
-    }
 
-
-      // Caso BYE: un solo giocatore
-    if (match.players[0] && !match.players[1]) {
+      // Caso BYE: un solo giocatore -> auto-winner e propagate
+      if (match.players[0] && !match.players[1]) {
         match.winner = match.players[0];
 
-        // Propaga automaticamente il vincitore
         const nextRound = copy.rounds[rIdx + 1];
         if (nextRound) {
           nextRound.matches.forEach(nm => {
@@ -502,22 +549,22 @@ const handleScoreChange = (rIdx, matchId, atletaId, val) => {
             if (pos !== -1) {
               nm.players[pos] = match.winner;
             }
-        });
+          });
         }
-    }
+      }
 
-    patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "in_progress" });
-    return copy;
-  });
-};
+      patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "in_progress" });
+      return copy;
+    });
+  };
 
-const getRoundName = (roundIndex, totalRounds, matchesCount) => {
-  if (roundIndex === totalRounds - 1) return "Finale";
-  if (roundIndex === totalRounds - 2) return "Semifinale";
-  if (matchesCount >= 8) return "Ottavi di finale";
-  if (matchesCount < 8) return "Quarti di finale";
-  return `Turno ${roundIndex + 1}`;
-};
+  const getRoundName = (roundIndex, totalRounds, matchesCount) => {
+    if (roundIndex === totalRounds - 1) return "Finale";
+    if (roundIndex === totalRounds - 2) return "Semifinale";
+    if (matchesCount >= 8) return "Ottavi di finale";
+    if (matchesCount < 8) return "Quarti di finale";
+    return `Turno ${roundIndex + 1}`;
+  };
 
   if (loading) {
     return (
@@ -615,24 +662,24 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                       <TableCell>Club</TableCell>
                     </TableRow>
                   </TableHead>
-                    <TableBody>
-                      {[0, 1, 2].map((idx) => {
-                        const entry = classifica[idx];
-                        const atletaId = entry ? entry.atletaId : null;
-                        const atletaObj = atletaId ? atleti.find(a => a.id === atletaId || a.atletaId === atletaId) : null;
-                        return (
-                          <TableRow key={idx}>
-                            <TableCell>{idx + 1}</TableCell>
-                            <TableCell>
-                              {atletaObj ? `${atletaObj.nome} ${atletaObj.cognome}` : ''}
-                            </TableCell>
-                            <TableCell>
-                              {atletaObj?.club || ''}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
+                  <TableBody>
+                    {[0, 1, 2].map((idx) => {
+                      const entry = classifica[idx];
+                      const atletaId = entry ? entry.atletaId : null;
+                      const atletaObj = atletaId ? findSnapshotByRealId(atletaId) : null;
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            {atletaObj ? `${atletaObj.nome} ${atletaObj.cognome}` : ''}
+                          </TableCell>
+                          <TableCell>
+                            {atletaObj?.club || ''}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
                 </Table>
               </TableContainer>
             </Paper>
@@ -681,7 +728,6 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
             <Button
               variant="contained"
               onClick={() => {
-                // genera tabellone se non esiste
                 if (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0) {
                   const novo = generateTabelloneFromAtleti(atleti);
                   setTabellone(novo);
@@ -702,7 +748,6 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
             <Button
               variant="outlined"
               onClick={() => {
-                // forza salvataggio manuale
                 patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: 'in_progress' });
               }}
             >
@@ -721,12 +766,8 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                   <Box key={m.id} sx={{ mb: 1, p: 1, border: '1px dashed rgba(0,0,0,0.08)', borderRadius: 1 }}>
                     <Typography variant="body2">Match {m.id}</Typography>
 
-                    {/* UI BRACKETS + SCORE */}
-                    {/* SE EDITING → MOSTRO I MENU A TENDINA */}
                     {editing ? (
                       <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-
-                        {/* PLAYER 1 SELECT */}
                         <TextField
                           select
                           SelectProps={{ native: true }}
@@ -744,7 +785,6 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                           ))}
                         </TextField>
 
-                        {/* PLAYER 2 SELECT */}
                         <TextField
                           select
                           SelectProps={{ native: true }}
@@ -761,13 +801,10 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                             </option>
                           ))}
                         </TextField>
-
                       </Box>
                     ) : (
-                      /* SE NON EDITING → MOSTRO I RETTANGOLI */
                       <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
 
-                        {/* PLAYER 1 - rettangolo rosso */}
                         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                           <Box
                             sx={{
@@ -789,7 +826,6 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                             </Box>
                           </Box>
 
-                          {/* SCORE */}
                           {m.players[0] ? (
                             <TextField
                               type="number"
@@ -803,7 +839,6 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                           ) : (rIdx === 0 ? <Typography sx={{ fontStyle: "italic" }}>BYE</Typography> : <></>)}
                         </Box>
 
-                        {/* PLAYER 2 - rettangolo blu */}
                         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                           <Box
                             sx={{
@@ -825,7 +860,6 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                             </Box>
                           </Box>
 
-                          {/* SCORE */}
                           {m.players[1] ? (
                             <TextField
                               type="number"
@@ -842,54 +876,50 @@ const getRoundName = (roundIndex, totalRounds, matchesCount) => {
                       </Box>
                     )}
 
+                    {m.winner && (
+                      <Typography variant="caption" sx={{ mt: 1 }}>
+                        Vincitore: {m.winner.nome} {m.winner.cognome}
+                      </Typography>
+                    )}
 
-                      {/* Visualizzazione vincitore */}
-                      {m.winner && (
-                        <Typography variant="caption" sx={{ mt: 1 }}>
-                          Vincitore: {m.winner.nome} {m.winner.cognome}
-                        </Typography>
-                      )}
-
-                    </Box>
+                  </Box>
                 ))}
               </Paper>
             ))}
 
-            {/* classifica a destra */}
-          <Paper sx={{ p: 2, minWidth: 260 }}>
-            <Typography variant="h6">PODIO</Typography>
-            <Divider sx={{ mb: 1 }} />
-            <Box>
-              {(() => {
-                // helper per risolvere atletaId -> oggetto atleta snapshot
-                const findAtleta = (id) => atleti.find(a => a.atletaId === id || a.id === id || a.atleta_id === id) || atleti.find(a => a.id === id) || null;
+            <Paper sx={{ p: 2, minWidth: 260 }}>
+              <Typography variant="h6">PODIO</Typography>
+              <Divider sx={{ mb: 1 }} />
+              <Box>
+                {(() => {
+                  // helper per risolvere atletaId -> oggetto atleta snapshot
+                  const findAtleta = (id) => findSnapshotByRealId(id);
 
-                const primo = classifica.find(c => c.pos === 1);
-                const secondo = classifica.find(c => c.pos === 2);
-                const terzi = classifica.filter(c => c.pos === 3);
+                  const primo = classifica.find(c => c.pos === 1);
+                  const secondo = classifica.find(c => c.pos === 2);
+                  const terzi = classifica.filter(c => c.pos === 3);
 
-                const renderAt = (c) => {
-                  if (!c) return '';
-                  const a = findAtleta(c.atletaId);
-                  return a ? `${a.nome} ${a.cognome}` : `#${c.atletaId}`;
-                };
+                  const renderAt = (c) => {
+                    if (!c) return '';
+                    const a = findAtleta(c.atletaId);
+                    return a ? `${a.nome} ${a.cognome}` : `#${c.atletaId}`;
+                  };
 
-                return (
-                  <>
-                    <Typography><b>1°</b> {primo ? renderAt(primo) : ''}</Typography>
-                    <Typography><b>2°</b> {secondo ? renderAt(secondo) : ''}</Typography>
-                    <Typography>
-                      <b>3°</b> {terzi.length ? terzi.map((t, i) => (i === 0 ? renderAt(t) : `, ${renderAt(t)}`)).join('') : ''}
-                    </Typography>
-                  </>
-                );
-              })()}
-            </Box>
-          </Paper>
+                  return (
+                    <>
+                      <Typography><b>1°</b> {primo ? renderAt(primo) : ''}</Typography>
+                      <Typography><b>2°</b> {secondo ? renderAt(secondo) : ''}</Typography>
+                      <Typography>
+                        <b>3°</b> {terzi.length ? terzi.map((t, i) => (i === 0 ? renderAt(t) : `, ${renderAt(t)}`)).join('') : ''}
+                      </Typography>
+                    </>
+                  );
+                })()}
+              </Box>
+            </Paper>
           </Box>
         </Paper>
       )}
-
 
       {caseType === 'other' && (
         <Paper sx={{ p: 3 }}>

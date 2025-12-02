@@ -22,16 +22,26 @@ const CategoryResults = () => {
   const [error, setError] = useState(null);
   const [clubDetails, setClubDetails] = useState({});
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([getAtletiResults(), getClubResults()])
-      .then(([a, c]) => {
-        setAtleti(a);
-        setClub(c);
-        setLoading(false);
-      })
-      .catch(e => { setError('Errore caricamento risultati'); setLoading(false); });
-  }, []);
+useEffect(() => {
+  setLoading(true);
+
+  Promise.all([getAtletiResults(), getClubResults()])
+    .then(([atletiRes, clubRes]) => {
+
+      // atletiRes è un array di:
+      // { atletaId, nome, cognome, club, medaglie:{oro,argento,bronzo} }
+
+      setAtleti(atletiRes);
+      setClub(clubRes);
+
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Errore risultati:", err);
+      setError("Errore caricamento risultati");
+      setLoading(false);
+    });
+}, []);
 
   const handleTab = (e, v) => setTab(v);
 
@@ -53,53 +63,37 @@ const CategoryResults = () => {
           <Tab label="Miglior Club per Medaglie" />
         </Tabs>
       </Paper>
-      {tab === 0 && atleti && (
-        <Box>
-          <Typography variant="h6" gutterBottom>Migliori per fascia di età e genere </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-            {Object.entries(atleti.migliori).map(([fascia, arr]) => (
-              <Paper key={fascia} sx={{ p: 2, minWidth: 250 }}>
-                <Typography variant="subtitle1">{fascia}</Typography>
-                {arr.map(a => (
-                  <Box key={a.id}>
-                    <b>{a.nome} {a.cognome}</b> ({a.club})<br />
-                    <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
-                  </Box>
-                ))}
-              </Paper>
-            ))}
-          </Box>
-          <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
-          <TableContainer component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Atleta</TableCell>
-                  <TableCell>Club</TableCell>
-                  <TableCell>Fascia</TableCell>
-                  <TableCell>Punti</TableCell>
-                  <TableCell>🥇</TableCell>
-                  <TableCell>🥈</TableCell>
-                  <TableCell>🥉</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {atleti.classifica.map(a => (
-                  <TableRow key={a.id}>
-                    <TableCell>{a.nome} {a.cognome}</TableCell>
-                    <TableCell>{a.club}</TableCell>
-                    <TableCell>{a.fascia}</TableCell>
-                    <TableCell>{a.punti}</TableCell>
-                    <TableCell>{a.ori}</TableCell>
-                    <TableCell>{a.argenti}</TableCell>
-                    <TableCell>{a.bronzi}</TableCell>
+        {tab === 0 && atleti && (
+          <Box>
+            <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
+
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Atleta</TableCell>
+                    <TableCell>Club</TableCell>
+                    <TableCell>🥇</TableCell>
+                    <TableCell>🥈</TableCell>
+                    <TableCell>🥉</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                </TableHead>
+                <TableBody>
+                  {atleti.map(a => (
+                    <TableRow key={a.atletaId}>
+                      <TableCell>{a.nome} {a.cognome}</TableCell>
+                      <TableCell>{a.club}</TableCell>
+                      <TableCell>{a.medaglie.oro}</TableCell>
+                      <TableCell>{a.medaglie.argento}</TableCell>
+                      <TableCell>{a.medaglie.bronzo}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
       )}
+
       {tab === 1 && club && (
         <Box>
           <Typography variant="h6" gutterBottom>Podio Club</Typography>
