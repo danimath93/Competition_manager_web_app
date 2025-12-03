@@ -328,11 +328,11 @@ exports.setMatchWinner = async (req, res) => {
       let newClassifica = [];
 
       // 1° posto
-      newClassifica.push({ pos: 1, atletaId: finalWinner.id });
+      newClassifica.push({ pos: 1, atletaId: finalWinner.nome });
 
       // 2° posto
       if (finalLoser) {
-        newClassifica.push({ pos: 2, atletaId: finalLoser.id });
+        newClassifica.push({ pos: 2, atletaId: finalLoser.atletaId });
       }
 
       // 3° posto (quyen = 1 solo bronzo)
@@ -340,13 +340,13 @@ exports.setMatchWinner = async (req, res) => {
         if (semisLosers.length > 0) {
           newClassifica.push({
             pos: 3,
-            atletaId: semisLosers[0].id
+            atletaId: semisLosers[0].atletaId
           });
         }
       } else {
         // light/fighting = 2 bronzi ex aequo
         for (const l of semisLosers) {
-          newClassifica.push({ pos: 3, atletaId: l.id });
+          newClassifica.push({ pos: 3, atletaId: l.atletaId });
         }
       }
 

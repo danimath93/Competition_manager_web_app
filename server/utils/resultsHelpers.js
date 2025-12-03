@@ -1,5 +1,5 @@
 // server/helpers/resultsHelpers.js
-const { Atleta } = require("../models");
+const { Atleta, Club } = require("../models");
 
 /**
  * Ritorna tutte le medaglie aggregate per atleta
@@ -44,6 +44,13 @@ async function buildGlobalAthleteList(svolgimenti) {
   // Recupero i dati reali dell’atleta dal DB
   const athleteIds = Object.keys(medalMap);
   const athletes = await Atleta.findAll({
+      include: [
+    {
+      model: Club,
+      as: "club",
+      attributes: ["denominazione"]
+    }
+  ],
     where: { id: athleteIds },
   });
 
@@ -52,7 +59,8 @@ async function buildGlobalAthleteList(svolgimenti) {
     atletaId: a.id,
     nome: a.nome,
     cognome: a.cognome,
-    club: a.club,
+    club: a.club?.denominazione,
+    sesso: a.sesso,
     medaglie: medalMap[a.id],
   }));
 }
@@ -100,7 +108,56 @@ async function buildClubRanking(athleteMedals) {
     });
 }
 
+function computeAthletePoints(athletes) {
+  return athletes.map(a => {
+    const gold = a.medaglie?.oro || 0;
+    const silver = a.medaglie?.argento || 0;
+    const bronze = a.medaglie?.bronzo || 0;
+
+    const punti = gold * 7 + silver * 4 + bronze * 2;
+
+    return { ...a, punti };
+  });
+}
+
+function findBestAthletesByGender(athletes) {
+  // Normalizziamo eventuali undefined
+  const safe = athletes.map(a => ({
+    ...a,
+    punti: Number(a.punti) || 0
+  }));
+
+  const males = safe.filter(a => a.sesso === "M");
+  const females = safe.filter(a => a.sesso === "F");
+
+  const bestM = [];
+  const bestF = [];
+
+  // --- MASCHI ---
+  if (males.length > 0) {
+    const maxM = Math.max(...males.map(a => a.punti));
+    males.forEach(a => {
+      if (a.punti === maxM) bestM.push(a);
+    });
+  }
+
+  // --- FEMMINE ---
+  if (females.length > 0) {
+    const maxF = Math.max(...females.map(a => a.punti));
+    females.forEach(a => {
+      if (a.punti === maxF) bestF.push(a);
+    });
+  }
+
+  return {
+    maschi: bestM,
+    femmine: bestF
+  };
+}
+
 module.exports = {
   buildGlobalAthleteList,
   buildClubRanking,
+  computeAthletePoints,
+  findBestAthletesByGender
 };

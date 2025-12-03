@@ -21,6 +21,8 @@ const CategoryResults = () => {
   const [club, setClub] = useState(null);
   const [error, setError] = useState(null);
   const [clubDetails, setClubDetails] = useState({});
+  const [bestMale, setBestMale] = useState(null);
+  const [bestFemale, setBestFemale] = useState(null);
 
 useEffect(() => {
   setLoading(true);
@@ -28,13 +30,16 @@ useEffect(() => {
   Promise.all([getAtletiResults(), getClubResults()])
     .then(([atletiRes, clubRes]) => {
 
-      // atletiRes è un array di:
-      // { atletaId, nome, cognome, club, medaglie:{oro,argento,bronzo} }
+      const listaAtleti = atletiRes.atleti;
+      const migliori = atletiRes.migliori;
 
-      setAtleti(atletiRes);
+      setAtleti(listaAtleti);
       setClub(clubRes);
-
       setLoading(false);
+
+      setBestMale(migliori.maschi || []);
+      setBestFemale(migliori.femmine || []);
+
     })
     .catch((err) => {
       console.error("Errore risultati:", err);
@@ -65,6 +70,43 @@ useEffect(() => {
       </Paper>
         {tab === 0 && atleti && (
           <Box>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>Miglior Atleta Maschile</Typography>
+              {bestMale.length > 0 ? (
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+                  {bestMale.map(a => (
+                    <Paper key={a.atletaId} sx={{ p: 2, minWidth: 220 }}>
+                      <Typography variant="subtitle1"><b>{a.nome} {a.cognome}</b></Typography>
+                      <Typography variant="body2">{a.club}</Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {"🥇".repeat(a.medaglie.oro)}
+                        {"🥈".repeat(a.medaglie.argento)}
+                        {"🥉".repeat(a.medaglie.bronzo)}
+                      </Typography>
+                      <Typography variant="body2"><b>{a.punti} punti</b></Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              ) : <Typography sx={{ mb: 3 }}>Nessun atleta maschile presente</Typography>}
+
+              <Typography variant="h6" sx={{ mb: 1 }}>Miglior Atleta Femminile</Typography>
+              {bestFemale.length > 0 ? (
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+                  {bestFemale.map(a => (
+                    <Paper key={a.atletaId} sx={{ p: 2, minWidth: 220 }}>
+                      <Typography variant="subtitle1"><b>{a.nome} {a.cognome}</b></Typography>
+                      <Typography variant="body2">{a.club}</Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        {"🥇".repeat(a.medaglie.oro)}
+                        {"🥈".repeat(a.medaglie.argento)}
+                        {"🥉".repeat(a.medaglie.bronzo)}
+                      </Typography>
+                      <Typography variant="body2"><b>{a.punti} punti</b></Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              ) : <Typography>Nessun atleta femminile presente</Typography>}
+            </Box>
             <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
 
             <TableContainer component={Paper}>
@@ -73,6 +115,7 @@ useEffect(() => {
                   <TableRow>
                     <TableCell>Atleta</TableCell>
                     <TableCell>Club</TableCell>
+                    <TableCell>Punteggio</TableCell>
                     <TableCell>🥇</TableCell>
                     <TableCell>🥈</TableCell>
                     <TableCell>🥉</TableCell>
@@ -83,6 +126,7 @@ useEffect(() => {
                     <TableRow key={a.atletaId}>
                       <TableCell>{a.nome} {a.cognome}</TableCell>
                       <TableCell>{a.club}</TableCell>
+                      <TableCell>{a.punti}</TableCell>
                       <TableCell>{a.medaglie.oro}</TableCell>
                       <TableCell>{a.medaglie.argento}</TableCell>
                       <TableCell>{a.medaglie.bronzo}</TableCell>
@@ -136,15 +180,20 @@ useEffect(() => {
                           Dettagli medaglie
                         </AccordionSummary>
                         <AccordionDetails>
-                          {clubDetails[c.clubId] ? (
-                            <Box>
-                              {clubDetails[c.clubId].atleti.map(a => (
-                                <Box key={a.id} sx={{ mb: 1 }}>
-                                  <b>{a.nome} {a.cognome}</b>: <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
-                                </Box>
-                              ))}
-                            </Box>
-                          ) : <CircularProgress size={20} />}
+                          {clubDetails[c.clubId] && clubDetails[c.clubId].atleti ? (
+                              clubDetails[c.clubId].atleti.length > 0 ? (
+                                  clubDetails[c.clubId].atleti.map(a => (
+                                      <Box key={a.atletaId} sx={{ mb: 1 }}>
+                                        <b>{a.nome} {a.cognome}</b>: 
+                                        <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
+                                      </Box>
+                                  ))
+                              ) : (
+                                  <Typography>Nessun atleta con medaglie</Typography>
+                              )
+                          ) : (
+                              <CircularProgress size={20} />
+                          )}
                         </AccordionDetails>
                       </Accordion>
                     </TableCell>
