@@ -1,5 +1,5 @@
 // server/helpers/resultsHelpers.js
-const { Atleta, Club } = require("../models");
+const { Atleta, Club, ConfigGruppoEta, ConfigTipoAtleta } = require("../models");
 
 /**
  * Ritorna tutte le medaglie aggregate per atleta
@@ -56,12 +56,14 @@ async function buildGlobalAthleteList(svolgimenti) {
 
   // Creo l’output finale
   return athletes.map((a) => ({
-    atletaId: a.id,
-    nome: a.nome,
-    cognome: a.cognome,
-    club: a.club?.denominazione,
-    sesso: a.sesso,
-    medaglie: medalMap[a.id],
+      atletaId: a.id,
+      nome: a.nome,
+      cognome: a.cognome,
+      club: a.club?.denominazione,
+      sesso: a.sesso,
+      dataNascita: a.dataNascita,
+      tipoAtletaId: a.tipoAtletaId,
+      medaglie: medalMap[a.id]
   }));
 }
 
@@ -155,9 +157,77 @@ function findBestAthletesByGender(athletes) {
   };
 }
 
+async function assignAgeGroupAndTipo(athletes) {
+
+  const gruppi = await ConfigGruppoEta.findAll();
+  const tipi = await ConfigTipoAtleta.findAll();
+
+  const tipoMap = {};
+  tipi.forEach(t => tipoMap[t.id] = t.nome);
+
+  return athletes.map(a => {
+    const nascita = new Date(a.dataNascita);
+    let fascia = null;
+
+    for (const g of gruppi) {
+      const start = g.inizioValidita ? new Date(g.inizioValidita) : null;
+      const end   = g.fineValidita   ? new Date(g.fineValidita) : null;
+
+      if ((!start || nascita >= start) && (!end || nascita <= end)) {
+        fascia = g.nome;
+        break;
+      }
+    }
+
+    return {
+      ...a,
+      tipoAtleta: tipoMap[a.tipoAtletaId] || "Sconosciuto",
+      fasciaEta: fascia || "Non Definita"
+    };
+  });
+}
+
+function bestAthletesByTipoFascia(athletes) {
+
+  // Raggruppo struttura:
+  // tipoAtleta -> fasciaEta -> sesso -> array di atleti
+  const groups = {};
+
+  for (const a of athletes) {
+
+    if (!groups[a.tipoAtleta]) groups[a.tipoAtleta] = {};
+    if (!groups[a.tipoAtleta][a.fasciaEta]) groups[a.tipoAtleta][a.fasciaEta] = { M: [], F: [] };
+
+    groups[a.tipoAtleta][a.fasciaEta][a.sesso].push(a);
+  }
+
+  // Prendo il migliore per ogni gruppo
+  const final = {};
+
+  for (const tipo in groups) {
+    final[tipo] = {};
+
+    for (const fascia in groups[tipo]) {
+      final[tipo][fascia] = {};
+
+      ["M", "F"].forEach(sex => {
+        const arr = groups[tipo][fascia][sex];
+        if (arr.length === 0) return final[tipo][fascia][sex] = [];
+
+        const max = Math.max(...arr.map(a => a.punti));
+        final[tipo][fascia][sex] = arr.filter(a => a.punti === max);
+      });
+    }
+  }
+
+  return final;
+}
+
 module.exports = {
   buildGlobalAthleteList,
   buildClubRanking,
   computeAthletePoints,
-  findBestAthletesByGender
+  findBestAthletesByGender,
+  assignAgeGroupAndTipo,
+  bestAthletesByTipoFascia
 };

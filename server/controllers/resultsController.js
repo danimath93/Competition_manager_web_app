@@ -1,31 +1,35 @@
 // Controller per risultati generali (atleti e club)
 const { SvolgimentoCategoria } = require('../models');
 const { Op } = require('sequelize');
-const { buildGlobalAthleteList, buildClubRanking, computeAthletePoints, findBestAthletesByGender } = require('../utils/resultsHelpers');
+const { buildGlobalAthleteList, buildClubRanking, computeAthletePoints, assignAgeGroupAndTipo, bestAthletesByTipoFascia } = require('../utils/resultsHelpers');
 
-// GET /results/atleti
 // GET /results/atleti
 exports.getAtletiResults = async (req, res) => {
   try {
     const svolgimenti = await SvolgimentoCategoria.findAll({
-      attributes: ['id', 'categoriaId', 'classifica'],
+      attributes: ["id", "categoriaId", "classifica"],
       raw: true
     });
 
-    // costruisci la lista aggregata degli atleti con le loro medaglie
-    const lista = await buildGlobalAthleteList(svolgimenti);
+    // lista con medaglie
+    let lista = await buildGlobalAthleteList(svolgimenti);
 
-    // calcola i punti per ciascun atleta (oro=7, argento=4, bronzo=2)
-    const listaConPunti = computeAthletePoints(lista);
-    const best = findBestAthletesByGender(listaConPunti);
-    // restituisci la lista con i punti al client
+    // punti
+    lista = computeAthletePoints(lista);
+
+    // aggiungo tipo e fascia
+    lista = await assignAgeGroupAndTipo(lista);
+
+    // migliori raggruppati
+    const miglioriPerFasce = bestAthletesByTipoFascia(lista);
+
     res.json({
-      atleti: listaConPunti,
-      migliori: best
+      atleti: lista,
+      miglioriPerFasce
     });
+
   } catch (err) {
-    console.error("ERRORE getAtletiResults:", err);
-    res.status(500).json({ error: "Errore calcolo risultati atleti", details: err.message });
+    res.status(500).json({ error: "Errore calcolo risultati per fasce", details: err.message });
   }
 };
 

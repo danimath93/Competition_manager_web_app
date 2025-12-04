@@ -21,8 +21,7 @@ const CategoryResults = () => {
   const [club, setClub] = useState(null);
   const [error, setError] = useState(null);
   const [clubDetails, setClubDetails] = useState({});
-  const [bestMale, setBestMale] = useState(null);
-  const [bestFemale, setBestFemale] = useState(null);
+  const [bestByFascia, setBestByFascia] = useState(null);
 
 useEffect(() => {
   setLoading(true);
@@ -31,14 +30,12 @@ useEffect(() => {
     .then(([atletiRes, clubRes]) => {
 
       const listaAtleti = atletiRes.atleti;
-      const migliori = atletiRes.migliori;
 
       setAtleti(listaAtleti);
       setClub(clubRes);
       setLoading(false);
 
-      setBestMale(migliori.maschi || []);
-      setBestFemale(migliori.femmine || []);
+      setBestByFascia(atletiRes.miglioriPerFasce);
 
     })
     .catch((err) => {
@@ -70,43 +67,70 @@ useEffect(() => {
       </Paper>
         {tab === 0 && atleti && (
           <Box>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>Miglior Atleta Maschile</Typography>
-              {bestMale.length > 0 ? (
-                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-                  {bestMale.map(a => (
-                    <Paper key={a.atletaId} sx={{ p: 2, minWidth: 220 }}>
-                      <Typography variant="subtitle1"><b>{a.nome} {a.cognome}</b></Typography>
-                      <Typography variant="body2">{a.club}</Typography>
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        {"🥇".repeat(a.medaglie.oro)}
-                        {"🥈".repeat(a.medaglie.argento)}
-                        {"🥉".repeat(a.medaglie.bronzo)}
-                      </Typography>
-                      <Typography variant="body2"><b>{a.punti} punti</b></Typography>
-                    </Paper>
-                  ))}
-                </Box>
-              ) : <Typography sx={{ mb: 3 }}>Nessun atleta maschile presente</Typography>}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2 }}>
+                Migliori per Fascia di Età
+              </Typography>
 
-              <Typography variant="h6" sx={{ mb: 1 }}>Miglior Atleta Femminile</Typography>
-              {bestFemale.length > 0 ? (
-                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-                  {bestFemale.map(a => (
-                    <Paper key={a.atletaId} sx={{ p: 2, minWidth: 220 }}>
-                      <Typography variant="subtitle1"><b>{a.nome} {a.cognome}</b></Typography>
-                      <Typography variant="body2">{a.club}</Typography>
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        {"🥇".repeat(a.medaglie.oro)}
-                        {"🥈".repeat(a.medaglie.argento)}
-                        {"🥉".repeat(a.medaglie.bronzo)}
-                      </Typography>
-                      <Typography variant="body2"><b>{a.punti} punti</b></Typography>
-                    </Paper>
-                  ))}
-                </Box>
-              ) : <Typography>Nessun atleta femminile presente</Typography>}
+              {!bestByFascia ? (
+                <Typography>Caricamento...</Typography>
+              ) : (
+                Object.entries(bestByFascia).map(([tipo, fasce]) => (
+                  <Accordion key={tipo} sx={{ mb: 2 }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="h6">{tipo}</Typography>
+                    </AccordionSummary>
+
+                    <AccordionDetails>
+                      {Object.entries(fasce).map(([fascia, sesso]) => (
+                        <Accordion key={fascia} sx={{ mb: 1, ml: 2 }}>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography>{fascia}</Typography>
+                          </AccordionSummary>
+
+                          <AccordionDetails>
+                            {/* Maschi */}
+                            <Typography variant="subtitle1">Maschile</Typography>
+                            {sesso.M.length > 0 ? (
+                              sesso.M.map(a => (
+                                <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
+                                  <b>{a.nome} {a.cognome}</b> – {a.club}
+                                  <Box sx={{ ml: 1 }}>
+                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
+                                  </Box>
+                                  <Typography>Punti: {a.punti}</Typography>
+                                </Box>
+                              ))
+                            ) : (
+                              <Typography sx={{ ml: 2, color: "gray" }}>Nessun atleta</Typography>
+                            )}
+
+                            {/* Femmine */}
+                            <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                              Femminile
+                            </Typography>
+                            {sesso.F.length > 0 ? (
+                              sesso.F.map(a => (
+                                <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
+                                  <b>{a.nome} {a.cognome}</b> – {a.club}
+                                  <Box sx={{ ml: 1 }}>
+                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
+                                  </Box>
+                                  <Typography>Punti: {a.punti}</Typography>
+                                </Box>
+                              ))
+                            ) : (
+                              <Typography sx={{ ml: 2, color: "gray" }}>Nessuna atleta</Typography>
+                            )}
+                          </AccordionDetails>
+                        </Accordion>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ))
+              )}
             </Box>
+
             <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
 
             <TableContainer component={Paper}>
@@ -122,7 +146,9 @@ useEffect(() => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {atleti.map(a => (
+                  {[...atleti]
+                      .sort((a, b) => b.punti - a.punti)
+                      .map(a => (
                     <TableRow key={a.atletaId}>
                       <TableCell>{a.nome} {a.cognome}</TableCell>
                       <TableCell>{a.club}</TableCell>
