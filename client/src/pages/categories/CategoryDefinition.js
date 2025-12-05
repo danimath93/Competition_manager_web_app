@@ -42,7 +42,7 @@ import {
   FormControlLabel,
   Switch
 } from '@mui/material';
-import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep, Settings, Summarize, Print } from '@mui/icons-material';
+import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep, Settings, Summarize } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCompetitionDetails } from '../../api/competitions';
@@ -59,7 +59,6 @@ import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
 import { loadAllJudges } from '../../api/judges';
 import CategorySplit from './CategorySplit';
 import CategorySummaryModal from '../../components/CategorySummaryModal';
-import CompetitionNotebookPrint from '../../components/CompetitionNotebookPrint';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -112,9 +111,6 @@ const CategoryDefinition = () => {
 
   // Modals for summary and print
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-  const [showPrintModal, setShowPrintModal] = useState(false);
-  const [selectedCategoryForPrint, setSelectedCategoryForPrint] = useState(null);
-  const [judges, setJudges] = useState([]);
 
   useEffect(() => {
     if (!competizioneId) {
@@ -166,16 +162,14 @@ const CategoryDefinition = () => {
 
   const loadConfigData = async () => {
     try {
-      const [tipiAtleta, categorie, gruppiEta, judgesData] = await Promise.all([
+      const [tipiAtleta, categorie, gruppiEta] = await Promise.all([
         loadAthleteTypes(),
         loadAllCategoryTypes(),
-        getGruppiEta(),
-        loadAllJudges()
+        getGruppiEta()
       ]);
       setAllTipiAtleta(tipiAtleta || []);
       setAllCategorie(categorie || []);
       setAllGruppiEta(gruppiEta || []);
-      setJudges(judgesData || []);
     } catch (error) {
       console.error('Errore nel caricamento dei config:', error);
     }
@@ -662,17 +656,6 @@ const CategoryDefinition = () => {
                   </>
                 ) : (
                   <>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => {
-                        setSelectedCategoryForPrint(categoria);
-                        setShowPrintModal(true);
-                      }} 
-                      title="Stampa Quaderno di Gara"
-                      color="info"
-                    >
-                      <Print fontSize="small" />
-                    </IconButton>
                     <IconButton size="small" onClick={() => handleEditCategoria(categoria, false)} title="Modifica">
                       <Edit fontSize="small" />
                     </IconButton>
@@ -1369,17 +1352,6 @@ const CategoryDefinition = () => {
         open={showSummaryModal}
         onClose={() => setShowSummaryModal(false)}
         competitionId={competizioneId}
-      />
-
-      {/* Competition Notebook Print Modal */}
-      <CompetitionNotebookPrint
-        open={showPrintModal}
-        onClose={() => {
-          setShowPrintModal(false);
-          setSelectedCategoryForPrint(null);
-        }}
-        category={selectedCategoryForPrint}
-        judges={judges}
       />
     </Container>
   );

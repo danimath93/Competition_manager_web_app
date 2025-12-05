@@ -287,6 +287,7 @@ exports.saveCategories = async (req, res) => {
 exports.getCategoriesByCompetizione = async (req, res) => {
   try {
     const { competizioneId } = req.params;
+    const { includiIscrizioni } = req.query;
 
     const categorie = await Categoria.findAll({
       where: { competizioneId },
@@ -312,27 +313,27 @@ exports.getCategoriesByCompetizione = async (req, res) => {
       });
     });
 
-    for (const categoria of categorie) {
-      const iscrizioni = await IscrizioneAtleta.findAll({
-        where: { categoriaId: categoria.id },
-        attributes: ['id', 'atletaId', 'tipoCategoriaId', 'categoriaId', 'peso'],
-        include: [{
-          model: Atleta,
-          as: 'atleta',
-          attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso'],
+    if (includiIscrizioni) {
+      for (const categoria of categorie) {
+        const iscrizioni = await IscrizioneAtleta.findAll({
+          where: { categoriaId: categoria.id },
+          attributes: ['id', 'atletaId', 'tipoCategoriaId', 'categoriaId', 'peso'],
           include: [{
-            model: Club,
-            as: 'club',
-            attributes: ['id', 'denominazione']
+            model: Atleta,
+            as: 'atleta',
+            attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso'],
+            include: [{
+              model: Club,
+              as: 'club',
+              attributes: ['id', 'denominazione']
+            }]
           }]
-        }]
-      });
-      categoria.dataValues.iscrizioni = iscrizioni;
+        });
+        categoria.dataValues.iscrizioni = iscrizioni;
+      }
     }
 
-
     res.json(categorie);
-
   } catch (error) {
     logger.error(`Errore nel recupero delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 

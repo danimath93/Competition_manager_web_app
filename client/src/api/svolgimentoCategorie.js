@@ -24,6 +24,17 @@ export const getSvolgimentoCategoria = async (svolgimentoId) => {
   }
 };
 
+// Ottieni dati svolgimento categoria tramite categoriaId
+export const getSvolgimentoByCategoriaId = async (categoriaId) => {
+  try {
+    const response = await axios.get(`/svolgimento-categorie/by-categoria/${categoriaId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore get svolgimento per categoriaId:', error);
+    throw error;
+  }
+};
+
 // Autosave svolgimento categoria
 export const patchSvolgimentoCategoria = async (svolgimentoId, data) => {
   try {

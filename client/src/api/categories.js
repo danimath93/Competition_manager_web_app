@@ -23,9 +23,11 @@ export const saveCategories = async (competizioneId, data) => {
 };
 
 // Ottieni le categorie di una competizione
-export const getCategoriesByCompetizione = async (competizioneId) => {
+export const getCategoriesByCompetizione = async (competizioneId, includiIscrizioni = true) => {
   try {
-    const response = await axios.get(`/categorie/competizioni/${competizioneId}`);
+    const response = await axios.get(`/categorie/competizioni/${competizioneId}`, {
+      params: { includiIscrizioni }
+    });
     return response.data;
   } catch (error) {
     console.error('Errore nel recupero delle categorie:', error);

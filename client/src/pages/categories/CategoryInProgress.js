@@ -18,9 +18,12 @@ import {
   Grid,
   TextField
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Print } from '@mui/icons-material';
 import { getSvolgimentoCategoria, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { useLocation } from "react-router-dom";
+import { loadAllJudges } from '../../api/judges';
+import { getCategoriesByCompetizione } from '../../api/categories';
+import CompetitionNotebookPrint from '../../components/CompetitionNotebookPrint';
 
 const COMMISSIONE_LABELS = [
   'Capo Commissione',
@@ -52,9 +55,12 @@ const CategoryInProgress = () => {
   const [commissione, setCommissione] = useState(Array(10).fill(''));
   const [classifica, setClassifica] = useState([]);
   const [tabellone, setTabellone] = useState(null);
-  const [stato, setStato] = useState('nuovo');
+  const [stato, setStato] = useState('In definizione');
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState(null);
+  const [judges, setJudges] = useState([]);
 
   useEffect(() => {
     if (!svolgimentoId) {
@@ -63,6 +69,7 @@ const CategoryInProgress = () => {
       return;
     }
     loadSvolgimento();
+    loadJudgesAndCategory();
   }, [svolgimentoId]);
 
   const loadSvolgimento = async () => {
@@ -74,12 +81,36 @@ const CategoryInProgress = () => {
       setCommissione(svolg.commissione || Array(10).fill(''));
       setClassifica(svolg.classifica || []);
       setTabellone(svolg.tabellone || null);
-      setStato(svolg.stato || 'nuovo');
-      setAtleti(svolg.atleti || []);
+      setStato(svolg.stato || 'In definizione');
+
+      if (svolg.letteraEstratta) {
+        const orderedAthletes = orderAthletesByKeyLetter(svolg.atleti || [], svolg.letteraEstratta);
+        setAtleti(orderedAthletes);
+      } else {
+        setAtleti(svolg.atleti || []);
+      }
     } catch (e) {
       setError('Errore nel caricamento dati');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadJudgesAndCategory = async () => {
+    try {
+      const [judgesData, categoriesData] = await Promise.all([
+        loadAllJudges(),
+        getCategoriesByCompetizione(competizioneId)
+      ]);
+      setJudges(judgesData || []);
+      
+      // Trova la categoria corrente dai dati caricati
+      const categoryMatch = categoriesData.find(cat => cat.nome === decodeURIComponent(categoriaNome));
+      if (categoryMatch) {
+        setCurrentCategory(categoryMatch);
+      }
+    } catch (error) {
+      console.error('Errore nel caricamento di judges e categoria:', error);
     }
   };
 
@@ -88,21 +119,24 @@ const CategoryInProgress = () => {
   };
 
   const handlePunteggioChange = (atletaId, votoIdx, value) => {
-    setPunteggi((prev) => {
-      const prevAtleta = prev[atletaId] || [null, null, null, null, null];
-      const newAtleta = [...prevAtleta];
-      newAtleta[votoIdx] = value;
-      const updated = { ...prev, [atletaId]: newAtleta };
-      patchSvolgimentoCategoria(svolgimentoId, { punteggi: updated, stato: 'in_progress' });
-      return updated;
-    });
+    const punteggiAtleti = punteggi;
+    const prevAtleta = punteggiAtleti[atletaId] || [null, null, null, null, null];
+    const newAtleta = [...prevAtleta];
+    newAtleta[votoIdx] = value;
+    const updated = { ...punteggiAtleti, [atletaId]: newAtleta };
+    try {
+      patchSvolgimentoCategoria(svolgimentoId, { punteggi: updated, stato: 'In corso' });
+    } catch (e) {
+      console.error('Errore salvataggio punteggi:', e);
+    }
+    setPunteggi(updated);
   };
 
   const handleCommissioneChange = (idx, value) => {
     setCommissione((prev) => {
       const arr = [...prev];
       arr[idx] = value;
-      patchSvolgimentoCategoria(svolgimentoId, { commissione: arr, stato: 'in_progress' });
+      patchSvolgimentoCategoria(svolgimentoId, { commissione: arr, stato: 'In corso' });
       return arr;
     });
   };
@@ -113,27 +147,47 @@ const CategoryInProgress = () => {
     return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2);
   };
 
-  const getOrdinatiPerLettera = () => {
-    if (!letter || !atleti.length) return atleti;
-    const idx = atleti.findIndex((a) => (a.nome || '').toUpperCase().startsWith(letter));
-    if (idx === -1) return [...atleti].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    return [
-      ...atleti.slice(idx),
-      ...atleti.slice(0, idx)
-    ];
+  const orderAthletesByKeyLetter = (atleti, keyLetter) => {
+    if (!keyLetter) return atleti;
+
+    // Ordina gli atleti alfabeticamente per cognome
+    const orderedAthletes = [...(atleti || [])].sort((a, b) => {
+      const nameA = (a.cognome || '').toUpperCase();
+      const nameB = (b.cognome || '').toUpperCase();
+      return nameA.localeCompare(nameB);
+    });
+
+    // Ruota l'array in modo che i primi atleti siano quelli con la lettera estratta
+    let orderedByLetter = [];
+    let orderIdx = orderedAthletes.findIndex(a => (a.cognome || '').toUpperCase().startsWith(keyLetter.toUpperCase()));
+    if (orderIdx !== -1) {
+      orderedByLetter = [
+        ...orderedAthletes.slice(orderIdx),
+        ...orderedAthletes.slice(0, orderIdx)
+      ];
+    } else {
+      // Se la lettera non corrisponde a nessun atleta, prende il primo cognome successivo con la lettera più vicina
+      orderIdx = orderedAthletes.findIndex(a => (a.cognome || '').toUpperCase() > keyLetter.toUpperCase());
+      orderedByLetter = orderIdx !== -1
+        ? [
+          ...orderedAthletes.slice(orderIdx),
+          ...orderedAthletes.slice(0, orderIdx)
+        ] : orderedAthletes;
+    }
+    return orderedByLetter;
   };
 
   useEffect(() => {
     if (caseType !== 'quyen') return;
 
     // costruiamo un array con { media, atleta: { id, nome, cognome, club } }
-    const listaQuyen = getOrdinatiPerLettera().map(a => ({
+    const listaQuyen = orderAthletesByKeyLetter(atleti, letter).map(a => ({
       media: parseFloat(getMedia(punteggi[a.id])),
       atleta: {
-        id: a.id,
-        nome: a.nome,
-        cognome: a.cognome,
-        club: a.club || ''
+        id: a?.id,
+        nome: a?.nome,
+        cognome: a?.cognome,
+        club: a?.club || null
       }
     })).filter(x => !isNaN(x.media));
 
@@ -186,7 +240,7 @@ const CategoryInProgress = () => {
       id: a.id,
       nome: a.nome,
       cognome: a.cognome,
-      club: a.club
+      club: a.club || null
     }));
     const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
     const byes = nextPow2 - participants.length;
@@ -259,7 +313,7 @@ const CategoryInProgress = () => {
           id: at.id,
           nome: at.nome,
           cognome: at.cognome,
-          club: at.club || ""
+          club: at.club || null
         };
       }
 
@@ -277,7 +331,7 @@ const CategoryInProgress = () => {
 
       patchSvolgimentoCategoria(svolgimentoId, {
         tabellone: copy,
-        stato: 'in_progress'
+        stato: 'In corso'
       });
 
       return copy;
@@ -373,16 +427,16 @@ const CategoryInProgress = () => {
           patchSvolgimentoCategoria(svolgimentoId, {
             tabellone: copy,
             classifica: classificaToSave,
-            stato: "completato"
+            stato: "Conclusa"
           });
 
           setClassifica(classificaToSave);
         }
       } else {
-        // no finale → solo salvataggio tabellone in_progress
+        // no finale → solo salvataggio tabellone In corso
         patchSvolgimentoCategoria(svolgimentoId, {
           tabellone: copy,
-          stato: "in_progress"
+          stato: "In corso"
         });
       }
 
@@ -474,7 +528,7 @@ const CategoryInProgress = () => {
             semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null,
             semisLosers[1] ? { pos: 3, atletaId: semisLosers[1].id } : null
           ].filter(Boolean);
-          patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+          patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "Conclusa" });
           setClassifica(classificaToSave);
         } else {
           // quyen o altri: solo 1 terzo
@@ -483,7 +537,7 @@ const CategoryInProgress = () => {
             finalLoser ? { pos: 2, atletaId: finalLoser.id } : null,
             semisLosers[0] ? { pos: 3, atletaId: semisLosers[0].id } : null
           ].filter(Boolean);
-          patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "completato" });
+          patchSvolgimentoCategoria(svolgimentoId, { classifica: classificaToSave, stato: "Conclusa" });
           setClassifica(classificaToSave);
         }
       }
@@ -505,7 +559,7 @@ const CategoryInProgress = () => {
         }
       }
 
-      patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "in_progress" });
+      patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "In corso" });
       return copy;
     });
   };
@@ -542,9 +596,19 @@ const CategoryInProgress = () => {
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 3 }}>
-        <Button startIcon={<ArrowBack />} onClick={handleGoBack} sx={{ mb: 2 }}>
-          Indietro
-        </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Button startIcon={<ArrowBack />} onClick={handleGoBack}>
+            Indietro
+          </Button>
+          <Button 
+            variant="contained" 
+            color="info" 
+            startIcon={<Print />}
+            onClick={() => setShowPrintModal(true)}
+          >
+            Stampa Quaderno di Gara
+          </Button>
+        </Box>
         <Typography variant="h4" gutterBottom>
           Svolgimento Categoria
         </Typography>
@@ -575,7 +639,7 @@ const CategoryInProgress = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {getOrdinatiPerLettera().map((atleta) => (
+                    {orderAthletesByKeyLetter(atleti, letter).map((atleta) => (
                       <TableRow key={atleta.id}>
                         <TableCell>{atleta.nome} {atleta.cognome}</TableCell>
                         {[0, 1, 2, 3, 4].map((vIdx) => (
@@ -623,10 +687,10 @@ const CategoryInProgress = () => {
                         <TableRow key={idx}>
                           <TableCell>{idx + 1}</TableCell>
                           <TableCell>
-                            {atletaObj ? `${atletaObj.nome} ${atletaObj.cognome}` : ''}
+                            {atletaObj ? `${atletaObj?.nome} ${atletaObj?.cognome}` : ''}
                           </TableCell>
                           <TableCell>
-                            {atletaObj?.club || ''}
+                            {atletaObj?.club?.denominazione || ''}
                           </TableCell>
                         </TableRow>
                       );
@@ -684,7 +748,7 @@ const CategoryInProgress = () => {
                 if (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0) {
                   const novo = generateTabelloneFromAtleti(atleti);
                   setTabellone(novo);
-                  patchSvolgimentoCategoria(svolgimentoId, { tabellone: novo, stato: 'in_progress' });
+                  patchSvolgimentoCategoria(svolgimentoId, { tabellone: novo, stato: 'In corso' });
                 }
               }}
             >
@@ -702,7 +766,7 @@ const CategoryInProgress = () => {
               variant="outlined"
               onClick={() => {
                 // forza salvataggio manuale
-                patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: 'in_progress' });
+                patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: 'In corso' });
               }}
             >
               Salva tabellone
@@ -783,7 +847,7 @@ const CategoryInProgress = () => {
                                 {renderParticipantName(m.players[0]) || <i>—</i>}
                               </span>
                               <span style={{ fontSize: "11px", marginTop: 2 }}>
-                                {m.players[0]?.club || ""}
+                                {m.players[0]?.club?.denominazione || ""}
                               </span>
                             </Box>
                           </Box>
@@ -819,7 +883,7 @@ const CategoryInProgress = () => {
                                 {renderParticipantName(m.players[1]) || <i>—</i>}
                               </span>
                               <span style={{ fontSize: "11px", marginTop: 2 }}>
-                                {m.players[1]?.club || ""}
+                                {m.players[1]?.club?.denominazione || ""}
                               </span>
                             </Box>
                           </Box>
@@ -897,6 +961,14 @@ const CategoryInProgress = () => {
           </Alert>
         </Paper>
       )}
+
+      {/* Competition Notebook Print Modal */}
+      <CompetitionNotebookPrint
+        open={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        category={currentCategory}
+        judges={judges}
+      />
     </Container>
   );
 };

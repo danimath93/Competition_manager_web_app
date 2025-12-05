@@ -56,9 +56,63 @@ exports.getSvolgimentoCategoria = async (req, res) => {
     const { id } = req.params;
     const svolg = await SvolgimentoCategoria.findByPk(id);
     if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
+    if (svolg.categoriaId) {
+      // Se la categoria è definita, aggiungo le caratteristiche degli atleti che mi servono
+      const iscrizioni = await IscrizioneAtleta.findAll({
+        where: { categoriaId: svolg.categoriaId, competizioneId: svolg.competizioneId },
+        include: [
+          {
+            model: Atleta,
+            as: 'atleta',
+            attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso'],
+            include: [
+              {
+                model: Club,
+                as: 'club',
+                attributes: ['id', 'denominazione']
+              }
+            ]
+          }
+        ]
+      });
+      const atleti = iscrizioni.map(ia => ia.atleta);
+      svolg.dataValues.atleti = atleti;
+    }
     res.json(svolg);
   } catch (err) {
     res.status(500).json({ error: 'Errore get svolgimento categoria', details: err.message });
+  }
+};
+
+// GET svolgimento categoria tramite categoriaId
+exports.getSvolgimentoByCategoriaId = async (req, res) => {
+  try {
+    const { categoriaId } = req.params;
+    const svolg = await SvolgimentoCategoria.findOne({ where: { categoriaId } });
+    if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
+    // Aggiungo le caratteristiche degli atleti che mi servono
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { categoriaId: svolg.categoriaId, competizioneId: svolg.competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso'],
+          include: [
+            {
+              model: Club,
+              as: 'club',
+              attributes: ['id', 'denominazione']
+            }
+          ]
+        }
+      ]
+    });
+    const atleti = iscrizioni.map(ia => ia.atleta);
+    svolg.dataValues.atleti = atleti;
+    res.json(svolg);
+  } catch (err) {
+    res.status(500).json({ error: 'Errore get svolgimento per categoriaId', details: err.message });
   }
 };
 
@@ -88,7 +142,7 @@ exports.getSvolgimentiByCompetizione = async (req, res) => {
     const svolg = await SvolgimentoCategoria.findAll({
       where: { competizioneId: req.params.id }
     });
-    
+
     return res.json(svolg);
   } catch (err) {
     res.status(500).json({ error: "Errore nel recupero svolgimenti" });
@@ -143,7 +197,7 @@ exports.generateTabellone = async (req, res) => {
 
     const tabellone = { rounds };
     svolg.tabellone = tabellone;
-    svolg.stato = 'in_progress';
+    svolg.stato = 'In corso';
     await svolg.save();
     return res.json(tabellone);
   } catch (err) {
@@ -160,7 +214,7 @@ exports.saveTabellone = async (req, res) => {
     const svolg = await SvolgimentoCategoria.findByPk(id);
     if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
     svolg.tabellone = tabellone;
-    svolg.stato = 'in_progress';
+    svolg.stato = 'In corso';
     await svolg.save();
     return res.json(svolg);
   } catch (err) {
@@ -262,10 +316,10 @@ exports.setMatchWinner = async (req, res) => {
       }
 
       svolg.classifica = newClassifica;
-      svolg.stato = "completato";
+      svolg.stato = "Conclusa";
 
     } else {
-      svolg.stato = "in_progress";
+      svolg.stato = "In corso";
     }
 
 

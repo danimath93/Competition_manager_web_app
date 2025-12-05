@@ -8,6 +8,9 @@ router.post('/start', svolgimentoController.startSvolgimentoCategoria);
 // Ottieni dati svolgimento categoria
 router.get('/:id', svolgimentoController.getSvolgimentoCategoria);
 
+// Ottieni dati svolgimento categoria tramite categoriaId
+router.get('/by-categoria/:categoriaId', svolgimentoController.getSvolgimentoByCategoriaId);
+
 // Aggiorna svolgimento categoria (autosave)
 router.patch('/:id', svolgimentoController.patchSvolgimentoCategoria);
 

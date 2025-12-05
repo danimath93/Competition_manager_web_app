@@ -16,23 +16,19 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Divider,
   Chip
 } from '@mui/material';
-import { PlayArrow, Download, Autorenew, ArrowBack } from '@mui/icons-material';
+import { PlayArrow, Print, ArrowBack } from '@mui/icons-material';
 import { getCategoriesByCompetizione } from '../../api/categories';
 import { startSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { getCompetitionDetails } from '../../api/competitions';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { loadAllCategoryTypes } from '../../api/config';
-import { startSvolgimento, getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
-
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+import { getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
+import { loadAllJudges } from '../../api/judges';
+import CompetitionNotebookPrint from '../../components/CompetitionNotebookPrint';
 
 const CategoryExecution = () => {
   const { t } = useLanguage();
@@ -44,12 +40,13 @@ const CategoryExecution = () => {
   const [competition, setCompetition] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [letter, setLetter] = useState('');
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [workDialogOpen, setWorkDialogOpen] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printCategory, setPrintCategory] = useState(null);
   const [allCategorie, setAllCategorie] = useState([]);
+  const [categoryStates, setCategoryStates] = useState({});
 
   useEffect(() => {
     if (!competizioneId) {
@@ -60,16 +57,8 @@ const CategoryExecution = () => {
     loadCompetition();
     loadCategories();
     loadCategoryType();
+    loadCategoryStates();
   }, [competizioneId]);
-
-  useEffect(() => {
-    const controllaSvolgimenti = async () => {
-      const svolg = await getSvolgimentiByCompetizione(competizioneId);
-      // const locked = svolg.some(s => s.stato !== 'nuovo');
-      // setLetterLocked(locked);
-    };
-    controllaSvolgimenti();
-  }, []);
 
   const loadCompetition = async () => {
     try {
@@ -83,7 +72,7 @@ const CategoryExecution = () => {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const data = await getCategoriesByCompetizione(competizioneId);
+      const data = await getCategoriesByCompetizione(competizioneId, false);
       setCategories(data);
     } catch (e) {
       setError('Impossibile caricare le categorie');
@@ -94,10 +83,27 @@ const CategoryExecution = () => {
 
   const loadCategoryType = async () => {
     try {
-      const categorie = await loadAllCategoryTypes();
+      const [categorie] = await Promise.all([
+        loadAllCategoryTypes(),
+      ]);
       setAllCategorie(categorie || []);
     } catch (error) {
       console.error('Errore nel caricamento dei config:', error);
+    }
+  };
+
+  const loadCategoryStates = async () => {
+    try {
+      const svolgimenti = await getSvolgimentiByCompetizione(competizioneId);
+      const statesMap = {};
+      svolgimenti.forEach(svolg => {
+        if (svolg.categoriaId) {
+          statesMap[svolg.categoriaId] = svolg.stato || 'In definizione';
+        }
+      });
+      setCategoryStates(statesMap);
+    } catch (error) {
+      console.error('Errore nel caricamento degli stati:', error);
     }
   };
 
@@ -105,6 +111,18 @@ const CategoryExecution = () => {
     const tipo = allCategorie.find((cat) => cat.id === id);
     if (tipo) return tipo.nome;
     return null;
+  };
+
+  const getStatusColor = (stato) => {
+    switch (stato) {
+      case 'In corso':
+        return 'warning';
+      case 'Conclusa':
+        return 'success';
+      case 'In definizione':
+      default:
+        return 'default';
+    }
   };
 
   const handlePlay = async (cat) => {
@@ -131,15 +149,18 @@ const CategoryExecution = () => {
     );
   };
 
-  const handleGoBack = () => {
-    navigate('/categories');
-  };
-  const handleDownloadExcel = () => {
-    setWorkDialogOpen(true);
+  const handlePrintCategory = (cat) => {
+    setPrintCategory(cat);
+    setShowPrintModal(true);
   };
 
-  const handleCloseDialog = () => {
-    setWorkDialogOpen(false);
+  const handleClosePrintModal = () => {
+    setShowPrintModal(false);
+    setPrintCategory(null);
+  };
+
+  const handleGoBack = () => {
+    navigate('/categories');
   };
 
   const handleChangePage = (event, newPage) => {
@@ -216,7 +237,7 @@ const CategoryExecution = () => {
                 <TableCell>Nome</TableCell>
                 <TableCell>Tipologia</TableCell>
                 <TableCell>Genere</TableCell>
-                <TableCell>Età</TableCell>
+                <TableCell>Stato</TableCell>
                 <TableCell>Azioni</TableCell>
               </TableRow>
             </TableHead>
@@ -227,14 +248,22 @@ const CategoryExecution = () => {
                   <TableCell>{cat.tipoCategoriaId && cat.tipoCategoriaId ? getName(cat.tipoCategoriaId) : '-'}</TableCell>
                   <TableCell>{cat.genere}</TableCell>
                   <TableCell>
-                    {cat.etaMinima} - {cat.etaMassima}
+                    <Chip 
+                      label={categoryStates[cat.id] || 'In definizione'} 
+                      color={getStatusColor(categoryStates[cat.id] || 'In definizione')}
+                      size="small"
+                    />
                   </TableCell>
                   <TableCell>
                     <IconButton color="primary" onClick={() => handlePlay(cat)}>
                       <PlayArrow />
                     </IconButton>
-                    <IconButton color="secondary" onClick={handleDownloadExcel}>
-                      <Download />
+                    <IconButton 
+                      color="info" 
+                      onClick={() => { handlePrintCategory(cat); }}
+                      title="Stampa Quaderno di Gara"
+                    >
+                      <Print />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -262,18 +291,12 @@ const CategoryExecution = () => {
         />
       </Paper>
 
-      {/* Modale WORK IN PROGRESS */}
-      <Dialog open={workDialogOpen} onClose={handleCloseDialog}>
-        <DialogTitle>WORK IN PROGRESS</DialogTitle>
-        <DialogContent>
-          <Typography>La funzione di download Excel sarà disponibile prossimamente.</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} variant="contained" color="primary">
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Competition Notebook Print Modal */}
+      <CompetitionNotebookPrint
+        open={showPrintModal}
+        onClose={() => { handleClosePrintModal(); }}
+        category={printCategory}
+      />
     </Container>
   );
 };
