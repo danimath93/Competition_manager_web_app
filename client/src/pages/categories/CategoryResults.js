@@ -21,17 +21,29 @@ const CategoryResults = () => {
   const [club, setClub] = useState(null);
   const [error, setError] = useState(null);
   const [clubDetails, setClubDetails] = useState({});
+  const [bestByFascia, setBestByFascia] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([getAtletiResults(), getClubResults()])
-      .then(([a, c]) => {
-        setAtleti(a);
-        setClub(c);
-        setLoading(false);
-      })
-      .catch(e => { setError('Errore caricamento risultati'); setLoading(false); });
-  }, []);
+useEffect(() => {
+  setLoading(true);
+
+  Promise.all([getAtletiResults(), getClubResults()])
+    .then(([atletiRes, clubRes]) => {
+
+      const listaAtleti = atletiRes.atleti;
+
+      setAtleti(listaAtleti);
+      setClub(clubRes);
+      setLoading(false);
+
+      setBestByFascia(atletiRes.miglioriPerFasce);
+
+    })
+    .catch((err) => {
+      console.error("Errore risultati:", err);
+      setError("Errore caricamento risultati");
+      setLoading(false);
+    });
+}, []);
 
   const handleTab = (e, v) => setTab(v);
 
@@ -53,53 +65,105 @@ const CategoryResults = () => {
           <Tab label="Miglior Club per Medaglie" />
         </Tabs>
       </Paper>
-      {tab === 0 && atleti && (
-        <Box>
-          <Typography variant="h6" gutterBottom>Migliori per fascia di età e genere </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-            {Object.entries(atleti.migliori).map(([fascia, arr]) => (
-              <Paper key={fascia} sx={{ p: 2, minWidth: 250 }}>
-                <Typography variant="subtitle1">{fascia}</Typography>
-                {arr.map(a => (
-                  <Box key={a.id}>
-                    <b>{a.nome} {a.cognome}</b> ({a.club})<br />
-                    <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
-                  </Box>
-                ))}
-              </Paper>
-            ))}
-          </Box>
-          <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
-          <TableContainer component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Atleta</TableCell>
-                  <TableCell>Club</TableCell>
-                  <TableCell>Fascia</TableCell>
-                  <TableCell>Punti</TableCell>
-                  <TableCell>🥇</TableCell>
-                  <TableCell>🥈</TableCell>
-                  <TableCell>🥉</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {atleti.classifica.map(a => (
-                  <TableRow key={a.id}>
-                    <TableCell>{a.nome} {a.cognome}</TableCell>
-                    <TableCell>{a.club}</TableCell>
-                    <TableCell>{a.fascia}</TableCell>
-                    <TableCell>{a.punti}</TableCell>
-                    <TableCell>{a.ori}</TableCell>
-                    <TableCell>{a.argenti}</TableCell>
-                    <TableCell>{a.bronzi}</TableCell>
+        {tab === 0 && atleti && (
+          <Box>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2 }}>
+                Migliori per Fascia di Età
+              </Typography>
+
+              {!bestByFascia ? (
+                <Typography>Caricamento...</Typography>
+              ) : (
+                Object.entries(bestByFascia).map(([tipo, fasce]) => (
+                  <Accordion key={tipo} sx={{ mb: 2 }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="h6">{tipo}</Typography>
+                    </AccordionSummary>
+
+                    <AccordionDetails>
+                      {Object.entries(fasce).map(([fascia, sesso]) => (
+                        <Accordion key={fascia} sx={{ mb: 1, ml: 2 }}>
+                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography>{fascia}</Typography>
+                          </AccordionSummary>
+
+                          <AccordionDetails>
+                            {/* Maschi */}
+                            <Typography variant="subtitle1">Maschile</Typography>
+                            {sesso.M.length > 0 ? (
+                              sesso.M.map(a => (
+                                <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
+                                  <b>{a.nome} {a.cognome}</b> – {a.club}
+                                  <Box sx={{ ml: 1 }}>
+                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
+                                  </Box>
+                                  <Typography>Punti: {a.punti}</Typography>
+                                </Box>
+                              ))
+                            ) : (
+                              <Typography sx={{ ml: 2, color: "gray" }}>Nessun atleta</Typography>
+                            )}
+
+                            {/* Femmine */}
+                            <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                              Femminile
+                            </Typography>
+                            {sesso.F.length > 0 ? (
+                              sesso.F.map(a => (
+                                <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
+                                  <b>{a.nome} {a.cognome}</b> – {a.club}
+                                  <Box sx={{ ml: 1 }}>
+                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
+                                  </Box>
+                                  <Typography>Punti: {a.punti}</Typography>
+                                </Box>
+                              ))
+                            ) : (
+                              <Typography sx={{ ml: 2, color: "gray" }}>Nessuna atleta</Typography>
+                            )}
+                          </AccordionDetails>
+                        </Accordion>
+                      ))}
+                    </AccordionDetails>
+                  </Accordion>
+                ))
+              )}
+            </Box>
+
+            <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
+
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Atleta</TableCell>
+                    <TableCell>Club</TableCell>
+                    <TableCell>Punteggio</TableCell>
+                    <TableCell>🥇</TableCell>
+                    <TableCell>🥈</TableCell>
+                    <TableCell>🥉</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
+                </TableHead>
+                <TableBody>
+                  {[...atleti]
+                      .sort((a, b) => b.punti - a.punti)
+                      .map(a => (
+                    <TableRow key={a.atletaId}>
+                      <TableCell>{a.nome} {a.cognome}</TableCell>
+                      <TableCell>{a.club}</TableCell>
+                      <TableCell>{a.punti}</TableCell>
+                      <TableCell>{a.medaglie.oro}</TableCell>
+                      <TableCell>{a.medaglie.argento}</TableCell>
+                      <TableCell>{a.medaglie.bronzo}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
       )}
+
       {tab === 1 && club && (
         <Box>
           <Typography variant="h6" gutterBottom>Podio Club</Typography>
@@ -142,15 +206,20 @@ const CategoryResults = () => {
                           Dettagli medaglie
                         </AccordionSummary>
                         <AccordionDetails>
-                          {clubDetails[c.clubId] ? (
-                            <Box>
-                              {clubDetails[c.clubId].atleti.map(a => (
-                                <Box key={a.id} sx={{ mb: 1 }}>
-                                  <b>{a.nome} {a.cognome}</b>: <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
-                                </Box>
-                              ))}
-                            </Box>
-                          ) : <CircularProgress size={20} />}
+                          {clubDetails[c.clubId] && clubDetails[c.clubId].atleti ? (
+                              clubDetails[c.clubId].atleti.length > 0 ? (
+                                  clubDetails[c.clubId].atleti.map(a => (
+                                      <Box key={a.atletaId} sx={{ mb: 1 }}>
+                                        <b>{a.nome} {a.cognome}</b>: 
+                                        <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
+                                      </Box>
+                                  ))
+                              ) : (
+                                  <Typography>Nessun atleta con medaglie</Typography>
+                              )
+                          ) : (
+                              <CircularProgress size={20} />
+                          )}
                         </AccordionDetails>
                       </Accordion>
                     </TableCell>
