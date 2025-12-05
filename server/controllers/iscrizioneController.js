@@ -621,6 +621,10 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
       fileBuffer = iscrizioneClub.autorizzazioni;
       fileName = iscrizioneClub.autorizzazioniNome;
       fileType = iscrizioneClub.autorizzazioniTipo;
+    } else if (tipoDocumento === 'confermaPresidente') {
+      fileBuffer = iscrizioneClub.confermaPresidente;
+      fileName = iscrizioneClub.confermaPresidenteNome;
+      fileType = iscrizioneClub.confermaPresidenteTipo;
     } else {
       return res.status(400).json({ error: 'Tipo di documento non valido' });
     }

@@ -21,6 +21,7 @@ import {
   Collapse,
   Tooltip,
 } from '@mui/material';
+import { Grid, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import {
   ArrowBack,
   Euro as EuroIcon,
@@ -49,6 +50,7 @@ const CompetitionSummary = () => {
   const [expandedClubs, setExpandedClubs] = useState({});
   const [clubCostSummaries, setClubCostSummaries] = useState({});
   const [loadingCosts, setLoadingCosts] = useState({});
+  const [athleteFilters, setAthleteFilters] = useState({ name: '', club: '' });
 
   useEffect(() => {
     fetchData();
@@ -92,6 +94,10 @@ const CompetitionSummary = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAthleteFilterChange = (e) => {
+    setAthleteFilters({ ...athleteFilters, [e.target.name]: e.target.value });
   };
 
   const handleGoBack = () => {
@@ -153,7 +159,7 @@ const CompetitionSummary = () => {
   };
 
   // Raggruppa gli atleti per club
-  const athletesByClub = athleteRegistrations.reduce((acc, reg) => {
+  let athletesByClub = athleteRegistrations.reduce((acc, reg) => {
     const clubId = reg.atleta?.club?.id;
     const clubName = reg.atleta?.club?.denominazione || 'Sconosciuto';
 
@@ -175,6 +181,35 @@ const CompetitionSummary = () => {
     acc[clubId].athletes[athleteId].registrations.push(reg);
     return acc;
   }, {});
+
+  // Applica i filtri agli atleti
+  if (athleteFilters.name || athleteFilters.club) {
+    athletesByClub = Object.entries(athletesByClub).reduce((acc, [clubId, clubData]) => {
+      if (athleteFilters.club && clubId !== athleteFilters.club.toString()) {
+        return acc;
+      }
+
+      const filteredAthletes = Object.values(clubData.athletes).filter((athlete) => {
+        if (athleteFilters.name) {
+          const fullName = `${athlete.nome} ${athlete.cognome}`.toLowerCase();
+          return fullName.includes(athleteFilters.name.toLowerCase());
+        }
+        return true;
+      });
+
+      if (filteredAthletes.length > 0) {
+        acc[clubId] = {
+          ...clubData,
+          athletes: filteredAthletes.reduce((athletesAcc, athlete) => {
+            athletesAcc[athlete.id] = athlete;
+            return athletesAcc;
+          }, {}),
+        };
+      }
+
+      return acc;
+    }, {});
+  }
 
   // Calcola il costo iscrizione di un atleta
   const getRegistrationCosts = (registrations) => {
@@ -605,6 +640,43 @@ const CompetitionSummary = () => {
           <Typography variant="h6" gutterBottom>
             Atleti Iscritti
           </Typography>
+
+          {/* Filtri */}
+          <Box sx={{ mb: 3 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  name="name"
+                  label="Filtra per Nome/Cognome"
+                  variant="outlined"
+                  sx={{ minWidth: 200 }}
+                  fullWidth
+                  value={athleteFilters.name}
+                  onChange={handleAthleteFilterChange}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                  <InputLabel>Filtra per Club</InputLabel>
+                  <Select
+                    name="club"
+                    label="Filtra per Club"
+                    value={athleteFilters.club}
+                    onChange={handleAthleteFilterChange}
+                  >
+                    <MenuItem value="">
+                      <em>Tutti</em>
+                    </MenuItem>
+                    {clubRegistrations.map((clubReg) => (
+                      <MenuItem key={clubReg.clubId} value={clubReg.clubId}>
+                        {clubReg.club?.denominazione || 'N/A'}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
 
           {Object.keys(athletesByClub).length === 0 ? (
             <Alert severity="info">Nessun atleta iscritto a questa competizione</Alert>
