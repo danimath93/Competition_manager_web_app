@@ -15,7 +15,7 @@ import { Add } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
 import { loadAllClubs } from '../api/clubs';
-import { loadAthleteTypes } from '../api/config';
+import { loadAthleteTypes, loadAgeGroups } from '../api/config';
 import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
 import AthleteInfoModal from '../components/AthleteInfoModal';
@@ -27,11 +27,14 @@ const Athletes = () => {
   const [filteredAthletes, setFilteredAthletes] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [athleteTypes, setAthleteTypes] = useState([]);
+  const [ageGroups, setAgeGroups] = useState([]);
   const [filters, setFilters] = useState({
     name: '',
     type: '',
     club: '',
-    insurance: ''
+    insurance: '',
+    gender: '',
+    ageGroup: ''
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -55,6 +58,9 @@ const Athletes = () => {
         if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
           const clubsData = await loadAllClubs();
           setClubs(clubsData);
+          
+          const ageGroupsData = await loadAgeGroups();
+          setAgeGroups(ageGroupsData);
         }
       } catch (error) {
         console.error('Errore nel caricamento dei tipi di atleta o dei club:', error);
@@ -94,8 +100,38 @@ const Athletes = () => {
       }
     }
 
+    if (filters.gender) {
+      result = result.filter((athlete) => athlete.sesso === filters.gender);
+    }
+
+    if (filters.ageGroup) {
+      const selectedAgeGroup = ageGroups.find(ag => ag.id === parseInt(filters.ageGroup));
+      if (selectedAgeGroup) {
+        result = result.filter((athlete) => {
+          const birthDate = new Date(athlete.dataNascita);
+          const today = new Date();
+          
+          // Se sono presenti inizioValidita e fineValidita, filtra per anno di nascita
+          if (selectedAgeGroup.inizioValidita && selectedAgeGroup.fineValidita) {
+            const startValidity = new Date(selectedAgeGroup.inizioValidita);
+            const endValidity = new Date(selectedAgeGroup.fineValidita);
+            return birthDate >= startValidity && birthDate <= endValidity;
+          } 
+          // Altrimenti filtra per età compiuta
+          else {
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            return age >= selectedAgeGroup.etaMinima && age <= selectedAgeGroup.etaMassima;
+          }
+        });
+      }
+    }
+
     setFilteredAthletes(result);
-  }, [filters, athletes, user]);
+  }, [filters, athletes, ageGroups, user]);
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -182,7 +218,7 @@ const Athletes = () => {
             />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200}}>
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
               <InputLabel>Filtra per Tipo Atleta</InputLabel>
               <Select
                 name="type"
@@ -221,6 +257,23 @@ const Athletes = () => {
               </Select>
             </FormControl>
           </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+              <InputLabel>Filtra per Sesso</InputLabel>
+              <Select
+                name="gender"
+                label="Filtra per Sesso"
+                value={filters.gender}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">
+                  <em>Tutti</em>
+                </MenuItem>
+                <MenuItem value="M">Maschio</MenuItem>
+                <MenuItem value="F">Femmina</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
           <AuthComponent requiredRoles={['admin', 'superAdmin']}>
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
@@ -237,6 +290,26 @@ const Athletes = () => {
                   {clubs.map((club) => (
                     <MenuItem key={club.id} value={club.id}>
                       {club.denominazione}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                <InputLabel>Filtra per Gruppo Età</InputLabel>
+                <Select
+                  name="ageGroup"
+                  label="Filtra per Gruppo Età"
+                  value={filters.ageGroup}
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">
+                    <em>Tutti</em>
+                  </MenuItem>
+                  {ageGroups.map((group) => (
+                    <MenuItem key={group.id} value={group.id}>
+                      {group.nome}
                     </MenuItem>
                   ))}
                 </Select>

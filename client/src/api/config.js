@@ -109,3 +109,14 @@ export const loadExperiencesByAthleteType = async (tipoAtletaId) => {
     throw error;
   }
 };
+
+// Funzione per ottenere tutti i gruppi età
+export const loadAgeGroups = async () => {
+  try {
+    const response = await axios.get('/config/gruppi-eta');
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dei gruppi età:', error);
+    throw error;
+  }
+};
