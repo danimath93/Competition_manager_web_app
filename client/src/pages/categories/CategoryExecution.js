@@ -28,7 +28,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { loadAllCategoryTypes } from '../../api/config';
 import { getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
 import { loadAllJudges } from '../../api/judges';
-import CompetitionNotebookPrint from '../../components/CompetitionNotebookPrint';
+import CategoryNotebookPrint from './print/CategoryNotebookPrint';
 
 const CategoryExecution = () => {
   const { t } = useLanguage();
@@ -292,7 +292,7 @@ const CategoryExecution = () => {
       </Paper>
 
       {/* Competition Notebook Print Modal */}
-      <CompetitionNotebookPrint
+      <CategoryNotebookPrint
         open={showPrintModal}
         onClose={() => { handleClosePrintModal(); }}
         category={printCategory}

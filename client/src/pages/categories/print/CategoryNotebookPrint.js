@@ -21,10 +21,13 @@ import {
   Close as CloseIcon 
 } from '@mui/icons-material';
 import { useReactToPrint } from 'react-to-print';
-import { getCompetitionDetails } from '../api/competitions';
-import { getSvolgimentoByCategoriaId } from '../api/svolgimentoCategorie';
+import { getCompetitionDetails } from '../../../api/competitions';
+import { getSvolgimentoByCategoriaId } from '../../../api/svolgimentoCategorie';
+import { CompetitionTipology } from '../../../constants/enums/CompetitionEnums';
+import CategoryNotebookPrintBracketView from './CategoryNotebookPrintBracketView';
+import CategoryNotebookPrintTableView from './CategoryNotebookPrintTableView';
 
-const CompetitionNotebookPrint = ({ open, onClose, category }) => {
+const CategoryNotebookPrint = ({ open, onClose, category }) => {
   const printRef = useRef(null);
 
   const [competition, setCompetition] = React.useState(null);
@@ -32,6 +35,8 @@ const CompetitionNotebookPrint = ({ open, onClose, category }) => {
   const [orderedAthletes, setOrderedAthletes] = React.useState([]);
   const [commission, setCommission] = React.useState({});
   const [startLetter, setStartLetter] = React.useState('N/A');
+  const [competitionTipology, setCompetitionTipology] = React.useState(CompetitionTipology.MANI_NUDE);
+  const [tabellone, setTabellone] = React.useState(null);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -54,11 +59,24 @@ const CompetitionNotebookPrint = ({ open, onClose, category }) => {
         });
         setAthletes(sortedAthletes);
         setStartLetter(svolgimento.letteraEstratta || 'N/A');
+        setCompetitionTipology(category.tipoCategoria?.tipoCompetizione?.id || CompetitionTipology.MANI_NUDE);
 
         // Ordina atleti per cognome
         if (svolgimento.letteraEstratta && svolgimento?.atleti.length > 0) {
           const ordered = orderAthletesByKeyLetter(svolgimento.atleti, svolgimento.letteraEstratta);
           setOrderedAthletes(ordered);
+        }
+
+        // Parse tabellone se è una categoria di combattimento
+        if (category.tipoCategoria?.tipoCompetizione?.id === CompetitionTipology.COMBATTIMENTO && category.tabellone) {
+          try {
+            const parsedTabellone = typeof category.tabellone === 'string' 
+              ? JSON.parse(category.tabellone) 
+              : category.tabellone;
+            setTabellone(parsedTabellone);
+          } catch (error) {
+            console.error('Errore nel parsing del tabellone:', error);
+          }
         }
       } catch (error) {
         console.error('Errore caricamento dati quaderno di gara:', error);
@@ -339,90 +357,29 @@ const CompetitionNotebookPrint = ({ open, onClose, category }) => {
             </Box>
           </Box>
 
-          {/* SECONDA PAGINA - Tabelle Punteggi */}
+          {/* SECONDA PAGINA - Tabelle Punteggi o Tabellone Combattimenti */}
           <Box className="page-break" sx={{ pt: 3 }}>
             {/* Intestazione seconda pagina */}
             <Box sx={{ textAlign: 'center', mb: 2 }}>
               <Typography variant="h5" sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
-                {category.nome} - Tabella Punteggi
+                {category.nome} - {competitionTipology === CompetitionTipology.COMBATTIMENTO ? 'Tabellone Combattimenti' : 'Tabella Punteggi'}
               </Typography>
               <Divider sx={{ my: 1 }} />
             </Box>
 
-            {/* TABELLA UNICA CON ENTRAMBI I TURNI */}
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'grey.300' }}>
-                    <TableCell rowSpan={2} align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>ID</TableCell>
-                    <TableCell rowSpan={2} sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>Atleta</TableCell>
-                    
-                    {/* PRIMO TURNO */}
-                    <TableCell colSpan={7} align="center" sx={{ fontWeight: 'bold', border: '1px solid black', bgcolor: 'grey.200', fontSize: '0.7rem', p: 0.3 }}>
-                      PRIMO TURNO
-                    </TableCell>
-                    
-                    {/* SECONDO TURNO */}
-                    <TableCell colSpan={7} align="center" sx={{ fontWeight: 'bold', border: '1px solid black', bgcolor: 'grey.400', fontSize: '0.7rem', p: 0.3 }}>
-                      SECONDO TURNO
-                    </TableCell>
-                    <TableCell rowSpan={2} colSpan={1} align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.7rem', p: 0.3 }}>
-                      TOTALE FINALE
-                    </TableCell>
-                  </TableRow>
-                  
-                  <TableRow sx={{ bgcolor: 'grey.200' }}>
-                    {/* Colonne Primo Turno */}
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G1</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G2</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G3</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G4</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G5</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', bgcolor: 'grey.100', fontSize: '0.6rem', p: 0.2 }}>TOT</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', bgcolor: 'grey.100', fontSize: '0.6rem', p: 0.2 }}>PREF</TableCell>
-                    
-                    {/* Colonne Secondo Turno */}
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G1</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G2</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G3</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G4</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>G5</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', bgcolor: 'grey.100', fontSize: '0.6rem', p: 0.2 }}>TOT</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold', border: '1px solid black', bgcolor: 'grey.100', fontSize: '0.6rem', p: 0.2 }}>PREF</TableCell>
-                  </TableRow>
-                </TableHead>
-                
-                <TableBody>
-                  {orderedAthletes.map((athlete, index) => (
-                    <TableRow key={athlete.id}>
-                      <TableCell align="center" sx={{ border: '1px solid black', fontWeight: 'bold', fontSize: '0.6rem', p: 0.2 }}>{index + 1}</TableCell>
-                      <TableCell sx={{ border: '1px solid black', fontSize: '0.6rem', p: 0.2 }}>
-                        {getUppercase(athlete.cognome)} {getUpperLowerCase(athlete.nome)}
-                      </TableCell>
-                      
-                      {/* Primo Turno - 7 celle */}
-                      <TableCell sx={{ border: '1px solid black', height: 25, p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', bgcolor: 'grey.50', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', bgcolor: 'grey.50', p: 0.2 }}>&nbsp;</TableCell>
-                      
-                      {/* Secondo Turno - 8 celle */}
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', bgcolor: 'grey.50', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', bgcolor: 'grey.50', p: 0.2 }}>&nbsp;</TableCell>
-                      <TableCell sx={{ border: '1px solid black', bgcolor: 'primary.light', fontWeight: 'bold', p: 0.2 }}>&nbsp;</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {/* Visualizzazione condizionale: Tabellone o Griglia */}
+            {competitionTipology === CompetitionTipology.COMBATTIMENTO ? (
+              <CategoryNotebookPrintBracketView
+                tabellone={tabellone}
+                athletes={athletes}
+              />
+            ) : (
+              <CategoryNotebookPrintTableView 
+                orderedAthletes={orderedAthletes}
+                getUppercase={getUppercase}
+                getUpperLowerCase={getUpperLowerCase}
+              />
+            )}
           </Box>
         </Box>
       </DialogContent>
@@ -442,4 +399,4 @@ const CompetitionNotebookPrint = ({ open, onClose, category }) => {
   );
 };
 
-export default CompetitionNotebookPrint;
+export default CategoryNotebookPrint;

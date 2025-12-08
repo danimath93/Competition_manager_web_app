@@ -24,7 +24,7 @@ import { getSvolgimentoCategoria, patchSvolgimentoCategoria } from '../../api/sv
 import { useLocation } from "react-router-dom";
 import { loadAllJudges } from '../../api/judges';
 import { getCategoriesByCompetizione } from '../../api/categories';
-import CompetitionNotebookPrint from '../../components/CompetitionNotebookPrint';
+import CategoryNotebookPrint from './print/CategoryNotebookPrint';
 
 const COMMISSIONE_LABELS = [
   'Capo Commissione',
@@ -201,6 +201,17 @@ const CategoryInProgress = () => {
 
     // eslint-disable-next-line
   }, [punteggi, atleti, letter, caseType]);
+
+  useEffect(() => {
+    if (currentCategory) {
+      if (caseType === 'light' || caseType === 'fighting') {
+        // Aggiorno la categoria con il tabellone generato, per gestirlo nella stampa
+        const categoria = currentCategory;
+        categoria.tabellone = tabellone;
+        setCurrentCategory(categoria);
+      }
+    }
+  }, [tabellone, caseType]);
 
   function computeQuyenPodium(listaQuyen) {
     if (!Array.isArray(listaQuyen)) return [];
@@ -822,7 +833,7 @@ const CategoryInProgress = () => {
       )}
 
       {/* Competition Notebook Print Modal */}
-      <CompetitionNotebookPrint
+      <CategoryNotebookPrint
         open={showPrintModal}
         onClose={() => setShowPrintModal(false)}
         category={currentCategory}
