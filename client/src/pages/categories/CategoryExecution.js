@@ -29,6 +29,7 @@ import { loadAllCategoryTypes } from '../../api/config';
 import { getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
 import { loadAllJudges } from '../../api/judges';
 import CategoryNotebookPrint from './print/CategoryNotebookPrint';
+import { CategoryStates } from '../../constants/enums/CategoryEnums';
 
 const CategoryExecution = () => {
   const { t } = useLanguage();
@@ -98,7 +99,7 @@ const CategoryExecution = () => {
       const statesMap = {};
       svolgimenti.forEach(svolg => {
         if (svolg.categoriaId) {
-          statesMap[svolg.categoriaId] = svolg.stato || 'In definizione';
+          statesMap[svolg.categoriaId] = svolg.stato || CategoryStates.DA_DEFINIRE;
         }
       });
       setCategoryStates(statesMap);
@@ -115,41 +116,40 @@ const CategoryExecution = () => {
 
   const getStatusColor = (stato) => {
     switch (stato) {
-      case 'In corso':
+      case CategoryStates.DA_DEFINIRE:
+        return 'default';
+      case CategoryStates.IN_DEFINIZIONE:
+        return 'info';
+      case CategoryStates.IN_ATTESA_DI_AVVIO:
+        return 'primary';
+      case CategoryStates.IN_CORSO:
         return 'warning';
-      case 'Conclusa':
+      case CategoryStates.CONCLUSA:
         return 'success';
-      case 'In definizione':
       default:
         return 'default';
     }
   };
 
+  const updateCategoryState = (categoriaId, newState) => {
+    setCategoryStates((prevStates) => ({
+      ...prevStates,
+      [categoriaId]: newState
+    }));
+  }
+
   const handlePlay = async (cat) => {
-
-    // DETERMINA CASE TYPE DAL TIPOLOGIA DELLA CATEGORIA
-    const tipoCompleto = getName(cat.tipoCategoriaId) || "";
-    const primaParola = tipoCompleto.split(" ")[0].toLowerCase();
-
-    let caseType = "other";
-    if (primaParola === "quyen") caseType = "quyen";
-    else if (primaParola === "light") caseType = "light";
-    else if (primaParola === "fighting") caseType = "fighting";
-
-    const res = await startSvolgimentoCategoria({
-      categoriaId: cat.id,
-      competizioneId
-    });
-
-    navigate(
-      `/category-execution/${cat.id}/category-in-progress?svolgimentoId=${res.svolgimentoId}&categoriaNome=${encodeURIComponent(cat.nome)}&competizioneId=${competizioneId}`,
-      {
-        state: { caseType }   // 🔥 PASSIAMO IL CASE TYPE SENZA URL
-      }
-    );
+    const res = await startSvolgimentoCategoria({categoriaId: cat.id, competizioneId});
+    const pageParameters = "svolgimentoId=" + res?.svolgimentoId +
+      "&categoriaNome=" + encodeURIComponent(cat?.nome) +
+      "&competizioneId=" + competizioneId +
+      "&tipoCompetizioneId=" + cat?.tipoCategoria?.tipoCompetizione?.id;
+    navigate(`/category-execution/${cat.id}/category-in-progress?${pageParameters}`);
   };
 
-  const handlePrintCategory = (cat) => {
+  const handlePrintCategory = async (cat) => {
+    const res = await startSvolgimentoCategoria({ categoriaId: cat.id, competizioneId });
+    updateCategoryState(cat.id, res?.stato);
     setPrintCategory(cat);
     setShowPrintModal(true);
   };
@@ -249,8 +249,8 @@ const CategoryExecution = () => {
                   <TableCell>{cat.genere}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={categoryStates[cat.id] || 'In definizione'} 
-                      color={getStatusColor(categoryStates[cat.id] || 'In definizione')}
+                      label={categoryStates[cat.id] || CategoryStates.DA_DEFINIRE}
+                      color={getStatusColor(categoryStates[cat.id] || CategoryStates.DA_DEFINIRE)}
                       size="small"
                     />
                   </TableCell>

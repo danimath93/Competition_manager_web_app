@@ -27,7 +27,7 @@ import { CompetitionTipology } from '../../../constants/enums/CompetitionEnums';
 import CategoryNotebookPrintBracketView from './CategoryNotebookPrintBracketView';
 import CategoryNotebookPrintTableView from './CategoryNotebookPrintTableView';
 
-const CategoryNotebookPrint = ({ open, onClose, category }) => {
+const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
   const printRef = useRef(null);
 
   const [competition, setCompetition] = React.useState(null);
@@ -36,7 +36,6 @@ const CategoryNotebookPrint = ({ open, onClose, category }) => {
   const [commission, setCommission] = React.useState({});
   const [startLetter, setStartLetter] = React.useState('N/A');
   const [competitionTipology, setCompetitionTipology] = React.useState(CompetitionTipology.MANI_NUDE);
-  const [tabellone, setTabellone] = React.useState(null);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -50,6 +49,8 @@ const CategoryNotebookPrint = ({ open, onClose, category }) => {
         // Carica dettagli competizione
         const compDetails = await getCompetitionDetails(category.competizioneId);
         setCompetition(compDetails);
+        setCompetitionTipology(category.tipoCategoria?.tipoCompetizione?.id || CompetitionTipology.MANI_NUDE);
+
         // Carica svolgimento categoria per ottenere atleti
         const svolgimento = await getSvolgimentoByCategoriaId(category.id);
         const sortedAthletes = (svolgimento.atleti || []).sort((a, b) => {
@@ -59,27 +60,17 @@ const CategoryNotebookPrint = ({ open, onClose, category }) => {
         });
         setAthletes(sortedAthletes);
         setStartLetter(svolgimento.letteraEstratta || 'N/A');
-        setCompetitionTipology(category.tipoCategoria?.tipoCompetizione?.id || CompetitionTipology.MANI_NUDE);
 
         // Ordina atleti per cognome
         if (svolgimento.letteraEstratta && svolgimento?.atleti.length > 0) {
           const ordered = orderAthletesByKeyLetter(svolgimento.atleti, svolgimento.letteraEstratta);
           setOrderedAthletes(ordered);
         }
-
-        // Parse tabellone se è una categoria di combattimento
-        if (category.tipoCategoria?.tipoCompetizione?.id === CompetitionTipology.COMBATTIMENTO && category.tabellone) {
-          try {
-            const parsedTabellone = typeof category.tabellone === 'string' 
-              ? JSON.parse(category.tabellone) 
-              : category.tabellone;
-            setTabellone(parsedTabellone);
-          } catch (error) {
-            console.error('Errore nel parsing del tabellone:', error);
-          }
-        }
       } catch (error) {
         console.error('Errore caricamento dati quaderno di gara:', error);
+        setAthletes([]);
+        setOrderedAthletes([]);
+        setStartLetter('N/A');
       }
     };
     loadData();

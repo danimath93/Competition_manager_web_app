@@ -54,9 +54,9 @@ const SvolgimentoCategoria = sequelize.define('SvolgimentoCategoria', {
     allowNull: true
   },
   stato: {
-    type: DataTypes.ENUM('In definizione', 'In corso', 'Conclusa'),
+    type: DataTypes.ENUM('Da definire', 'In definizione', 'In attesa di avvio', 'In corso', 'Conclusa'),
     allowNull: false,
-    defaultValue: 'In definizione'
+    defaultValue: 'Da definire'
   }
 }, {
   tableName: 'svolgimento_categorie',

@@ -25,6 +25,8 @@ import { useLocation } from "react-router-dom";
 import { loadAllJudges } from '../../api/judges';
 import { getCategoriesByCompetizione } from '../../api/categories';
 import CategoryNotebookPrint from './print/CategoryNotebookPrint';
+import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
+import { CategoryStates } from '../../constants/enums/CategoryEnums';
 
 const COMMISSIONE_LABELS = [
   'Capo Commissione',
@@ -46,17 +48,15 @@ const CategoryInProgress = () => {
   const svolgimentoId = searchParams.get('svolgimentoId');
   const categoriaNome = searchParams.get('categoriaNome');
   const competizioneId = searchParams.get("competizioneId");
-  const initialCaseType = location.state?.caseType || "other";
+  const tipoCompetizioneId = searchParams.get("tipoCompetizioneId");
 
   const [letter, setLetter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [caseType, setCaseType] = useState(initialCaseType);
   const [atleti, setAtleti] = useState([]);
   const [punteggi, setPunteggi] = useState({});
   const [commissione, setCommissione] = useState(Array(10).fill(''));
   const [classifica, setClassifica] = useState([]);
   const [tabellone, setTabellone] = useState(null);
-  const [stato, setStato] = useState('In definizione');
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -82,7 +82,6 @@ const CategoryInProgress = () => {
       setCommissione(svolg.commissione || Array(10).fill(''));
       setClassifica(svolg.classifica || []);
       setTabellone(svolg.tabellone || null);
-      setStato(svolg.stato || 'In definizione');
 
       if (svolg.letteraEstratta) {
         const orderedAthletes = orderAthletesByKeyLetter(svolg.atleti || [], svolg.letteraEstratta);
@@ -126,7 +125,7 @@ const CategoryInProgress = () => {
     newAtleta[votoIdx] = value;
     const updated = { ...punteggiAtleti, [atletaId]: newAtleta };
     try {
-      patchSvolgimentoCategoria(svolgimentoId, { punteggi: updated, stato: 'In corso' });
+      patchSvolgimentoCategoria(svolgimentoId, { punteggi: updated, stato: CategoryStates.IN_CORSO });
     } catch (e) {
       console.error('Errore salvataggio punteggi:', e);
     }
@@ -137,7 +136,7 @@ const CategoryInProgress = () => {
     setCommissione((prev) => {
       const arr = [...prev];
       arr[idx] = value;
-      patchSvolgimentoCategoria(svolgimentoId, { commissione: arr, stato: 'In corso' });
+      patchSvolgimentoCategoria(svolgimentoId, { commissione: arr, stato: CategoryStates.IN_CORSO });
       return arr;
     });
   };
@@ -179,7 +178,9 @@ const CategoryInProgress = () => {
   };
 
   useEffect(() => {
-    if (caseType !== 'quyen') return;
+    if (tipoCompetizioneId != CompetitionTipology.MANI_NUDE && 
+        tipoCompetizioneId != CompetitionTipology.ARMI)
+        return;
 
     // costruiamo un array con { media, atleta: { id, nome, cognome, club } }
     const listaQuyen = orderAthletesByKeyLetter(atleti, letter).map(a => ({
@@ -200,18 +201,7 @@ const CategoryInProgress = () => {
     patchSvolgimentoCategoria(svolgimentoId, { classifica: nuovaClassifica });
 
     // eslint-disable-next-line
-  }, [punteggi, atleti, letter, caseType]);
-
-  useEffect(() => {
-    if (currentCategory) {
-      if (caseType === 'light' || caseType === 'fighting') {
-        // Aggiorno la categoria con il tabellone generato, per gestirlo nella stampa
-        const categoria = currentCategory;
-        categoria.tabellone = tabellone;
-        setCurrentCategory(categoria);
-      }
-    }
-  }, [tabellone, caseType]);
+  }, [punteggi, atleti, letter, tipoCompetizioneId]);
 
   function computeQuyenPodium(listaQuyen) {
     if (!Array.isArray(listaQuyen)) return [];
@@ -303,7 +293,7 @@ const CategoryInProgress = () => {
 
       patchSvolgimentoCategoria(svolgimentoId, {
         tabellone: copy,
-        stato: 'In corso'
+        stato: CategoryStates.IN_CORSO
       });
 
       return copy;
@@ -314,7 +304,7 @@ const CategoryInProgress = () => {
     if (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0) {
       const novo = generateTabelloneFromAtleti(atleti);
       setTabellone(novo);
-      patchSvolgimentoCategoria(svolgimentoId, { tabellone: novo, stato: 'In corso' });
+      patchSvolgimentoCategoria(svolgimentoId, { tabellone: novo, stato: CategoryStates.IN_DEFINIZIONE });
     }
   };
 
@@ -407,7 +397,7 @@ const CategoryInProgress = () => {
 
         // costruzione classifica usando sempre realId
         let classificaToSave = [];
-        if (caseType === "light" || caseType === "fighting") {
+        if (tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO) {
           classificaToSave = [
             finalWinnerReal ? { pos: 1, atletaId: finalWinnerReal } : null,
             finalLoserReal ? { pos: 2, atletaId: finalLoserReal } : null,
@@ -427,7 +417,7 @@ const CategoryInProgress = () => {
 
         patchSvolgimentoCategoria(svolgimentoId, {
           classifica: classificaToSave,
-          stato: "completato"
+          stato: CategoryStates.CONCLUSA
         });
 
         setClassifica(classificaToSave);
@@ -448,7 +438,7 @@ const CategoryInProgress = () => {
         }
       }
 
-      patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: "In corso" });
+      patchSvolgimentoCategoria(svolgimentoId, { tabellone: copy, stato: CategoryStates.IN_CORSO });
       return copy;
     });
   };
@@ -533,7 +523,7 @@ const CategoryInProgress = () => {
         )}
       </Box>
 
-      {caseType === 'quyen' && (
+      {(tipoCompetizioneId == CompetitionTipology.MANI_NUDE || tipoCompetizioneId == CompetitionTipology.ARMI) && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={7}>
             <Paper sx={{ p: 2, mb: 2 }}>
@@ -646,11 +636,10 @@ const CategoryInProgress = () => {
         </Grid>
       )}
 
-      {(caseType === 'light' || caseType === 'fighting') && (
+      {(tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO) && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            {caseType === "light" && "Tabellone Light Contact"}
-            {caseType === "fighting" && "Tabellone Fighting Ball"}
+            Tabellone Incontri
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
@@ -671,7 +660,7 @@ const CategoryInProgress = () => {
             <Button
               variant="outlined"
               onClick={() => {
-                patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: 'In corso' });
+                patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: CategoryStates.IN_CORSO });
               }}
             >
               Salva tabellone
@@ -824,10 +813,12 @@ const CategoryInProgress = () => {
         </Paper>
       )}
 
-      {caseType === 'other' && (
+      {(tipoCompetizioneId != CompetitionTipology.MANI_NUDE && 
+        tipoCompetizioneId != CompetitionTipology.ARMI && 
+        tipoCompetizioneId !=  CompetitionTipology.COMBATTIMENTO) && (
         <Paper sx={{ p: 3 }}>
           <Alert severity="info">
-            WORK IN PROGRESS
+            La gestione dello svolgimento per questa tipologia di competizione non è ancora attiva.
           </Alert>
         </Paper>
       )}
@@ -837,6 +828,7 @@ const CategoryInProgress = () => {
         open={showPrintModal}
         onClose={() => setShowPrintModal(false)}
         category={currentCategory}
+        tabellone={tabellone}
         judges={judges}
       />
     </Container>

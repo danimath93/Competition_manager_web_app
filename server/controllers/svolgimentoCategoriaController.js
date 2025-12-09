@@ -44,7 +44,7 @@ exports.startSvolgimentoCategoria = async (req, res) => {
         await svolg.save();
       }
     }
-    res.json({ svolgimentoId: svolg.id });
+    res.json({ svolgimentoId: svolg.id, stato: svolg.stato });
   } catch (err) {
     res.status(500).json({ error: 'Errore avvio svolgimento categoria', details: err.message });
   }
