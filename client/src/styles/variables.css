@@ -1,0 +1,170 @@
+/* ========================================
+   VARIABILI CSS GLOBALI - TEMA APPLICAZIONE
+   ======================================== */
+
+:root {
+  /* === COLORI PRIMARI === */
+  --color-primary: rgba(166,11,0,1);               /* Rosso principale */
+  --color-primary-dark: rgba(139,9,0,1);           /* Rosso scuro (hover) */
+  --color-primary-light: rgba(220, 53, 69, 0.1);   /* Rosso chiaro (focus shadow) */
+  
+  /* === COLORI SECONDARI === */
+  --color-secondary: rgba(35, 35, 35, 1);         /* Grigio scuro */
+  --color-secondary-light: rgba(35, 35, 35, 0.9); /* Grigio scuro semi-trasparente */
+  
+  /* === COLORI TESTI === */
+  --text-primary: #333333;                        /* Testo principale standard */
+  --text-secondary: #666666;                      /* Testo secondario/sottotitoli */
+  --text-tertiary: #999999;                       /* Testo terziario/placeholder */
+  --text-accent: var(--color-primary);            /* Testo importante/accento */
+  --text-white: #ffffff;                          /* Testo bianco */
+  --text-dark: #1a1a1a;                           /* Testo molto scuro */
+  
+  /* === COLORI BACKGROUND === */
+  --bg-primary: #ffffff;                          /* Background principale */
+  --bg-secondary: #f8f9fa;                        /* Background secondario */
+  --bg-tertiary: #e0e0e0;                         /* Background terziario */
+  --bg-dark: rgba(35, 35, 35, 1);                 /* Background scuro */
+  
+  /* === COLORI BORDI === */
+  --border-light: #e0e0e0;                        /* Bordo chiaro */
+  --border-medium: #cccccc;                       /* Bordo medio */
+  --border-dark: #999999;                         /* Bordo scuro */
+  --border-primary: var(--color-primary);         /* Bordo primario */
+  
+  /* === COLORI STATI === */
+  --color-success: #28a745;                       /* Verde successo */
+  --color-warning: #ffc107;                       /* Giallo warning */
+  --color-error: #dc3545;                         /* Rosso errore */
+  --color-info: #17a2b8;                          /* Azzurro info */
+  
+  /* === COLORI INTERAZIONE === */
+  --color-hover: var(--color-primary-dark);       /* Colore hover */
+  --color-focus: var(--color-primary);            /* Colore focus */
+  --color-disabled: #cccccc;                    /* Colore disabilitato */
+
+  --color-info-hover: rgba(30, 64, 175, 1);    /* Colore hover info */
+  --color-info-focus: rgba(37, 99, 235, 1);   /* Colore focus info */
+
+  /* === COLORI BOTTONI E LINK === */
+  --color-primary-button: var(--bg-dark);
+  --color-info-button: rgba(37, 99, 235, 1);
+  
+  /* === OMBRE === */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);     /* Ombra piccola */
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);     /* Ombra media */
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);    /* Ombra grande */
+  --shadow-primary: 0 4px 12px rgba(220, 53, 69, 0.3); /* Ombra primaria */
+  --shadow-focus: 0 0 0 3px var(--color-primary-light); /* Ombra focus */
+  
+  /* === BORDER RADIUS === */
+  --radius-sm: 4px;                               /* Raggio piccolo */
+  --radius-md: 8px;                               /* Raggio medio */
+  --radius-lg: 12px;                              /* Raggio grande */
+  --radius-full: 50%;                             /* Raggio completo (circolare) */
+  
+  /* === SPAZIATURE === */
+  --spacing-xs: 0.25rem;                          /* 4px */
+  --spacing-sm: 0.5rem;                           /* 8px */
+  --spacing-md: 1rem;                             /* 16px */
+  --spacing-lg: 1.5rem;                           /* 24px */
+  --spacing-xl: 2rem;                             /* 32px */
+  --spacing-2xl: 3rem;                            /* 48px */
+  
+  /* === TRANSIZIONI === */
+  --transition-fast: 0.2s ease;                   /* Transizione veloce */
+  --transition-normal: 0.3s ease;                 /* Transizione normale */
+  --transition-slow: 0.5s ease;                   /* Transizione lenta */
+  
+  /* === DIMENSIONI FONT === */
+  --font-xs: 0.75rem;                             /* 12px */
+  --font-sm: 0.875rem;                            /* 14px */
+  --font-base: 1rem;                              /* 16px */
+  --font-lg: 1.125rem;                            /* 18px */
+  --font-xl: 1.25rem;                             /* 20px */
+  --font-2xl: 1.5rem;                             /* 24px */
+  --font-3xl: 1.875rem;                           /* 30px */
+  --font-4xl: 2.25rem;                            /* 36px */
+  
+  /* === PESO FONT === */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  
+  /* === Z-INDEX === */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ========================================
+   CLASSI UTILITY PER COLORI TESTI
+   ======================================== */
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.text-tertiary {
+  color: var(--text-tertiary) !important;
+}
+
+.text-accent,
+.text-red {
+  color: var(--text-accent) !important;
+}
+
+.text-white {
+  color: var(--text-white) !important;
+}
+
+.text-dark {
+  color: var(--text-dark) !important;
+}
+
+.text-success {
+  color: var(--color-success) !important;
+}
+
+.text-warning {
+  color: var(--color-warning) !important;
+}
+
+.text-error {
+  color: var(--color-error) !important;
+}
+
+.text-info {
+  color: var(--color-info) !important;
+}
+
+/* ========================================
+   CLASSI UTILITY PER BACKGROUND
+   ======================================== */
+
+.bg-primary {
+  background-color: var(--bg-primary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-dark {
+  background-color: var(--bg-dark) !important;
+}
+
+.bg-accent {
+  background-color: var(--color-primary) !important;
+}

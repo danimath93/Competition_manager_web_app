@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import './styles/Login.css';
+import Header from '../components/Header';
+import { TextInput, PasswordInput } from '../components/common';
+import '../components/styles/Login.css';
+import '../components/styles/Layout.css';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -45,95 +46,81 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <img 
-            src="/logo_ufficiale.png" 
-            alt="Logo" 
-            className="login-logo"
-          />
-          <h1 className="login-title">{t('signIn')}</h1>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="username" className="form-label">
-              {t('username')}
-            </label>
-            <div className="input-wrapper">
-              <FaUser className="input-icon" />
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={t('username')}
-                className="form-input"
-                disabled={loading}
-              />
-            </div>
-          </div>
+    <div className="layout">
+      <Header />
+      <div className='layout-content'>
+        <div className="login-container">
+          <div className="login-left">
+            <div className="login-card">
+              <form onSubmit={handleSubmit} className="login-form">
+                <h5 className="text-red text-center">{t('loginIntro')}</h5>
+                
+                <TextInput
+                  id="username"
+                  label={t('username')}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={t('username')}
+                  disabled={loading}
+                  name="username"
+                  autoComplete="username"
+                />
 
-          <div className="form-group">
-            <div className="form-label-row">
-              <label htmlFor="password" className="form-label">
-                {t('password')}
-              </label>
-              <div className="forgot-password-link">
-                <a href="#" onClick={(e) => { e.preventDefault(); handleResetPWClick(); }}>
-                  {t('forgotPassword')}
-                </a>
+                <div className="password-field-wrapper">
+                  <PasswordInput
+                    id="password"
+                    label={t('password')}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t('password')}
+                    disabled={loading}
+                    name="password"
+                    autoComplete="current-password"
+                  />
+                  <div className="forgot-password-link">
+                    <a href="#" onClick={(e) => { e.preventDefault(); handleResetPWClick(); }}>
+                      {t('forgotPassword')}
+                    </a>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="login-button"
+                  disabled={loading}
+                >
+                  {loading ? t('signingIn') : t('signInButton')}
+                </button>
+
+                {error && (
+                  <div className="error-message">
+                    {error}
+                  </div>
+                )}
+              </form>
+
+              <div className="login-footer">
+                <span className="register-text">
+                  {t('noAccount')}
+                  <a
+                    href="#"
+                    className="register-link"
+                    onClick={(e) => { e.preventDefault(); handleRegisterClick(); }}
+                  >
+                    {t('registerNow')}
+                  </a>
+                </span>
               </div>
             </div>
-            <div className="input-wrapper">
-              <FaLock className="input-icon" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t('password')}
-                className="form-input"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
           </div>
 
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? t('signingIn') : t('signInButton')}
-          </button>
-
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
-        </form>
-
-        <div className="login-footer">
-          <span className="register-text">
-            {t('noAccount')}
-            <a 
-              href="#" 
-              className="register-link"
-              onClick={(e) => { e.preventDefault(); handleRegisterClick(); }}
-            >
-              {t('registerNow')}
-            </a>
-          </span>
+          <div className="login-right">
+            <img
+              src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop"
+              alt="Sports background"
+              className="login-image"
+            />
+          </div>
         </div>
       </div>
     </div>

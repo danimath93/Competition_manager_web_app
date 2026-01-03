@@ -1,74 +1,98 @@
 .layout {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color:rgba(255, 255, 255, 1);
+  display: flex;
+  flex-direction: column;
 }
 
 .layout-content {
-  margin-top: 70px; /* Altezza dell'header */
+  margin-top: 100px;
   margin-left: 0;
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 100px);
   transition: margin-left 0.3s ease;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-toggle {
   position: fixed;
-  top: 85px;
-  left: 2rem;
+  top: 100px;
+  left: 1.5rem;
   z-index: 1001;
-  background-color: #dc3545;
+  background-color: rgba(35, 35, 35, 0.9);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 0.75rem;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
   cursor: pointer;
   font-size: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-  background-color: #c82333;
+  background-color: rgba(35, 35, 35, 1);
   transform: scale(1.05);
 }
 
 .main-content {
-  padding: 2rem;
   max-width: 1800px;
   margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Stili per desktop - sidebar sempre visibile */
-@media (min-width: 769px) {
-  .layout-content {
+@media (min-width: 1025px) {
+  .layout-content.with-sidebar {
     margin-left: 250px; /* Larghezza della sidebar */
   }
   
   .sidebar-toggle {
     display: none;
   }
-  
-  .main-content {
-    padding: 2rem 3rem;
-  }
 }
 
 /* Stili responsive per tablet */
 @media (max-width: 1024px) and (min-width: 769px) {
-  .main-content {
-    padding: 2rem;
+  .layout-content {
+    margin-top: 80px; /* Header ridotto per tablet */
+    min-height: calc(100vh - 80px);
+  }
+
+  .sidebar-toggle {
+    top: 95px;
   }
 }
 
 /* Stili responsive per mobile */
 @media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
+  .layout-content {
+    margin-top: 80px; /* Header ridotto per mobile */
+    min-height: calc(100vh - 80px);
   }
   
   .sidebar-toggle {
-    top: 80px;
-    left: 0.5rem;
-    padding: 0.5rem;
+    top: 95px;
+    left: 1rem;
+    padding: 0.6rem 0.8rem;
+    font-size: 1.1rem;
+  }
+}
+
+/* Stili responsive per schermi molto piccoli */
+@media (max-width: 480px) {
+  .layout-content {
+    margin-top: 70px;
+    min-height: calc(100vh - 70px);
+  }
+  
+  .sidebar-toggle {
+    top: 85px;
+    left: 0.75rem;
+    padding: 0.5rem 0.7rem;
     font-size: 1rem;
   }
 }

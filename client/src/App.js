@@ -40,9 +40,8 @@ const AppContent = () => {
   const defaultRoute = (() => {
     console.log("user:", user);
     console.log("loading:", loading);
-
-    
-    if (!user) return '/login';
+    const isAuthenticated = user && typeof user === "object" && user.permissions && !loading;
+    if (!isAuthenticated) return '/login';
 
     const role = user.permissions;
     switch (role) {

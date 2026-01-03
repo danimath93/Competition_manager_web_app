@@ -1,13 +1,253 @@
+/* Import font Outfit da Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* Import variabili CSS globali */
+@import './styles/variables.css';
+
+/* Reset e stili globali */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  line-height: 1.6;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.App {
+  min-height: 100vh;
+}
+
+/* Stili comuni per i testi */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.3;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: var(--font-bold);
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: var(--font-bold);
+}
+
+h3 {
+  font-size: 1.75rem;
+  font-weight: var(--font-semibold);
+}
+
+h4 {
+  font-size: 1.5rem;
+  font-weight: var(--font-semibold);
+}
+
+h5 {
+  font-size: 1.25rem;
+  font-weight: var(--font-medium);
+}
+
+h6 {
+  font-size: 1rem;
+  font-weight: var(--font-medium);
+}
+
+p {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: var(--font-normal);
+  line-height: 1.6;
+  margin-bottom: 1em;
+  color: var(--text-primary);
+}
+
+/* Classi utility per i testi */
+.text-xs {
+  font-size: var(--font-xs);
+}
+
+.text-sm {
+  font-size: var(--font-sm);
+}
+
+.text-base {
+  font-size: var(--font-base);
+}
+
+.text-lg {
+  font-size: var(--font-lg);
+}
+
+.text-xl {
+  font-size: var(--font-xl);
+}
+
+.text-2xl {
+  font-size: var(--font-2xl);
+}
+
+.text-3xl {
+  font-size: var(--font-3xl);
+}
+
+.text-4xl {
+  font-size: var(--font-4xl);
+}
+
+.text-light {
+  font-weight: var(--font-light);
+}
+
+.text-normal {
+  font-weight: var(--font-normal);
+}
+
+.text-medium {
+  font-weight: var(--font-medium);
+}
+
+.text-semibold {
+  font-weight: var(--font-semibold);
+}
+
+.text-bold {
+  font-weight: var(--font-bold);
+}
+
+.text-extrabold {
+  font-weight: var(--font-extrabold);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Stili per scrollbar personalizzata */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hover);
+}
+
+/* Utilities comuni */
+.border-red {
+  border: 1px solid var(--border-primary);
+}
+
+.rounded {
+  border-radius: var(--radius-md);
+}
+
+.shadow {
+  box-shadow: var(--shadow-sm);
+}
+
+.p-2 {
+  padding: var(--spacing-md);
+}
+
+.p-3 {
+  padding: var(--spacing-lg);
+}
+
+.mb-2 {
+  margin-bottom: var(--spacing-md);
+}
+
+.mb-3 {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Focus outline personalizzato */
+*:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Stili per elementi disabilitati */
+*:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Media queries per responsive design */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  h4 {
+    font-size: 1.125rem;
+  }
 }
