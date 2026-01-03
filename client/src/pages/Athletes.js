@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Button,
   Box,
   Grid,
   TextField,
@@ -11,6 +8,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import { FaUsers } from 'react-icons/fa';
 import { Add } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
@@ -20,6 +18,9 @@ import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
 import AthleteInfoModal from '../components/AthleteInfoModal';
 import AuthComponent from '../components/AuthComponent';
+import PageHeader from '../components/PageHeader';
+import { Button } from '../components/common';
+import '../pages/styles/CommonPageStyles.css';
 
 const Athletes = () => {
   const { user } = useAuth();
@@ -54,11 +55,11 @@ const Athletes = () => {
       try {
         const athleteTypesData = await loadAthleteTypes();
         setAthleteTypes(athleteTypesData);
-        
+
         if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
           const clubsData = await loadAllClubs();
           setClubs(clubsData);
-          
+
           const ageGroupsData = await loadAgeGroups();
           setAgeGroups(ageGroupsData);
         }
@@ -83,11 +84,11 @@ const Athletes = () => {
     }
 
     if (filters.type) {
-      result = result.filter((athlete) => 
+      result = result.filter((athlete) =>
         athlete.tipoAtletaId === parseInt(filters.type)
       );
     }
-    
+
     if (filters.club) {
       result = result.filter((athlete) => athlete.clubId === filters.club);
     }
@@ -110,13 +111,13 @@ const Athletes = () => {
         result = result.filter((athlete) => {
           const birthDate = new Date(athlete.dataNascita);
           const today = new Date();
-          
+
           // Se sono presenti inizioValidita e fineValidita, filtra per anno di nascita
           if (selectedAgeGroup.inizioValidita && selectedAgeGroup.fineValidita) {
             const startValidity = new Date(selectedAgeGroup.inizioValidita);
             const endValidity = new Date(selectedAgeGroup.fineValidita);
             return birthDate >= startValidity && birthDate <= endValidity;
-          } 
+          }
           // Altrimenti filtra per età compiuta
           else {
             let age = today.getFullYear() - birthDate.getFullYear();
@@ -196,166 +197,183 @@ const Athletes = () => {
   };
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        Gestione Atleti
-      </Typography>
-      {user && !user.permissions && (
-        <Typography variant="h6" gutterBottom>
-          Club: {user.club_name}
-        </Typography>
-      )}
-
-      <Box sx={{ mb: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="name"
-              label="Filtra per Nome/Cognome"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-              <InputLabel>Filtra per Tipo Atleta</InputLabel>
-              <Select
-                name="type"
-                label="Filtra per Tipo Atleta"
-                value={filters.type}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">
-                  <em>Tutti</em>
-                </MenuItem>
-                {athleteTypes.map((type) => (
-                  <MenuItem key={type.id} value={type.id}>
-                    {type.nome}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-              <InputLabel>Filtra per Tesseramento</InputLabel>
-              <Select
-                name="insurance"
-                label="Filtra per Tesseramento"
-                value={filters.insurance}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">
-                  <em>Tutti</em>
-                </MenuItem>
-                {insurances.map((insurance) => (
-                  <MenuItem key={insurance} value={insurance}>
-                    {insurance}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-              <InputLabel>Filtra per Sesso</InputLabel>
-              <Select
-                name="gender"
-                label="Filtra per Sesso"
-                value={filters.gender}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">
-                  <em>Tutti</em>
-                </MenuItem>
-                <MenuItem value="M">Maschio</MenuItem>
-                <MenuItem value="F">Femmina</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-                <InputLabel>Filtra per Club</InputLabel>
-                <Select
-                  name="club"
-                  label="Filtra per Club"
-                  value={filters.club}
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">
-                    <em>Tutti</em>
-                  </MenuItem>
-                  {clubs.map((club) => (
-                    <MenuItem key={club.id} value={club.id}>
-                      {club.denominazione}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-                <InputLabel>Filtra per Gruppo Età</InputLabel>
-                <Select
-                  name="ageGroup"
-                  label="Filtra per Gruppo Età"
-                  value={filters.ageGroup}
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">
-                    <em>Tutti</em>
-                  </MenuItem>
-                  {ageGroups.map((group) => (
-                    <MenuItem key={group.id} value={group.id}>
-                      {group.nome}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </AuthComponent>
-        </Grid>
-      </Box>
-
-      <Box sx={{ mb: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenModal()}
-        >
-          Aggiungi Atleta
-        </Button>
-      </Box>
-
-      <AthletesTable
-        athletes={filteredAthletes}
-        onInfo={handleOpenInfoModal}
-        onEdit={handleOpenModal}
-        onDelete={handleDeleteAthlete}
+    <div className="page-container">
+      <PageHeader
+        icon={FaUsers}
+        title="Gestione Atleti"
       />
 
-      {isModalOpen && (
-        <AthleteModal
-          open={isModalOpen}
-          onClose={handleCloseModal}
-          onSubmit={handleSaveAthlete}
-          isEditMode={isEditMode}
-          athlete={selectedAthlete}
-          clubs={clubs}
-          userClubId={user?.clubId}
-        />
-      )}
+      {/* Contenuto della pagina */}
+      <div className="page-content">
 
-      {isInfoModalOpen && (
-        <AthleteInfoModal
-          open={isInfoModalOpen}
-          onClose={handleCloseInfoModal}
-          athlete={selectedAthlete}
-        />
-      )}
-    </Container>
+        <div className="page-card">
+          {/* <div className="page-card-header">
+            <Typography variant="h6" className="page-card-title">
+              Filtri
+            </Typography>
+          </div> */}
+          <div className="page-card-body">
+            <Box sx={{ mb: 2 }} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+              <TextField
+                name="name"
+                label="Filtra per Nome/Cognome"
+                variant="outlined"
+                onChange={handleFilterChange}
+              />
+              <Button
+                variant="primary"
+                icon={Add}
+                onClick={() => handleOpenModal()}
+              >
+                Aggiungi Atleta
+              </Button>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <InputLabel>Filtra per Tipo Atleta</InputLabel>
+                    <Select
+                      name="type"
+                      label="Filtra per Tipo Atleta"
+                      value={filters.type}
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value="">
+                        <em>Tutti</em>
+                      </MenuItem>
+                      {athleteTypes.map((type) => (
+                        <MenuItem key={type.id} value={type.id}>
+                          {type.nome}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <InputLabel>Filtra per Tesseramento</InputLabel>
+                    <Select
+                      name="insurance"
+                      label="Filtra per Tesseramento"
+                      value={filters.insurance}
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value="">
+                        <em>Tutti</em>
+                      </MenuItem>
+                      {insurances.map((insurance) => (
+                        <MenuItem key={insurance} value={insurance}>
+                          {insurance}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <InputLabel>Filtra per Sesso</InputLabel>
+                    <Select
+                      name="gender"
+                      label="Filtra per Sesso"
+                      value={filters.gender}
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value="">
+                        <em>Tutti</em>
+                      </MenuItem>
+                      <MenuItem value="M">Maschio</MenuItem>
+                      <MenuItem value="F">Femmina</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+                  <Grid item xs={12} sm={4}>
+                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                      <InputLabel>Filtra per Club</InputLabel>
+                      <Select
+                        name="club"
+                        label="Filtra per Club"
+                        value={filters.club}
+                        onChange={handleFilterChange}
+                      >
+                        <MenuItem value="">
+                          <em>Tutti</em>
+                        </MenuItem>
+                        {clubs.map((club) => (
+                          <MenuItem key={club.id} value={club.id}>
+                            {club.denominazione}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                      <InputLabel>Filtra per Gruppo Età</InputLabel>
+                      <Select
+                        name="ageGroup"
+                        label="Filtra per Gruppo Età"
+                        value={filters.ageGroup}
+                        onChange={handleFilterChange}
+                      >
+                        <MenuItem value="">
+                          <em>Tutti</em>
+                        </MenuItem>
+                        {ageGroups.map((group) => (
+                          <MenuItem key={group.id} value={group.id}>
+                            {group.nome}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </AuthComponent>
+              </Grid>
+            </Box>
+
+          </div>
+        </div>
+
+        <div className="page-card">
+          {/* <div className="page-card-header">
+            <h2 className="page-card-title">Titolo Card</h2>
+          </div> */}
+          <div className="page-card-body">
+
+            <AthletesTable
+              athletes={filteredAthletes}
+              onInfo={handleOpenInfoModal}
+              onEdit={handleOpenModal}
+              onDelete={handleDeleteAthlete}
+            />
+
+            {isModalOpen && (
+              <AthleteModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onSubmit={handleSaveAthlete}
+                isEditMode={isEditMode}
+                athlete={selectedAthlete}
+                clubs={clubs}
+                userClubId={user?.clubId}
+              />
+            )}
+
+            {isInfoModalOpen && (
+              <AthleteInfoModal
+                open={isInfoModalOpen}
+                onClose={handleCloseInfoModal}
+                athlete={selectedAthlete}
+              />
+            )}
+          </div>
+        </div>
+
+
+      </div>
+    </div>
   );
 };
 

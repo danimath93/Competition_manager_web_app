@@ -1,98 +1,115 @@
+/* ========================================
+   LAYOUT PRINCIPALE
+   ======================================== */
+
 .layout {
   min-height: 100vh;
-  background-color:rgba(255, 255, 255, 1);
+  background-color: var(--bg-primary, #ffffff);
   display: flex;
   flex-direction: column;
 }
 
 .layout-content {
-  margin-top: 100px;
+  margin-top: 0;
   margin-left: 0;
-  min-height: calc(100vh - 100px);
+  min-height: auto;
   transition: margin-left 0.3s ease;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.sidebar-toggle {
-  position: fixed;
-  top: 100px;
-  left: 1.5rem;
-  z-index: 1001;
-  background-color: rgba(35, 35, 35, 0.9);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  font-size: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-}
-
-.sidebar-toggle:hover {
-  background-color: rgba(35, 35, 35, 1);
-  transform: scale(1.05);
+/* Quando utente NON è loggato */
+.layout-content:not(.with-sidebar-open):not(.with-sidebar-closed) {
+  margin-top: 100px;
+  min-height: calc(100vh - 100px);
 }
 
 .main-content {
-  max-width: 1800px;
+  max-width: 2400px;
   margin: 0 auto;
   width: 100%;
   flex: 1;
   min-height: 0;
+  padding: 1rem 2rem;
 }
 
-/* Stili per desktop - sidebar sempre visibile */
+/* ========================================
+   LAYOUT CON SIDEBAR (DESKTOP)
+   ======================================== */
+
 @media (min-width: 1025px) {
-  .layout-content.with-sidebar {
-    margin-left: 250px; /* Larghezza della sidebar */
+  /* Sidebar aperta - 255px */
+  .layout-content.with-sidebar-open {
+    margin-left: 255px;
   }
   
-  .sidebar-toggle {
-    display: none;
+  /* Sidebar chiusa - 105px */
+  .layout-content.with-sidebar-closed {
+    margin-left: 105px;
   }
 }
 
-/* Stili responsive per tablet */
+/* ========================================
+   LAYOUT TABLET
+   ======================================== */
+
 @media (max-width: 1024px) and (min-width: 769px) {
-  .layout-content {
-    margin-top: 80px; /* Header ridotto per tablet */
+  .layout-content:not(.with-sidebar-open):not(.with-sidebar-closed) {
+    margin-top: 80px;
     min-height: calc(100vh - 80px);
   }
 
-  .sidebar-toggle {
-    top: 95px;
+  /* Su tablet la sidebar è sempre visibile a 105px */
+  .layout-content.with-sidebar-open,
+  .layout-content.with-sidebar-closed {
+    margin-left: 105px;
+  }
+
+  .main-content {
+    padding: 1.5rem;
   }
 }
 
-/* Stili responsive per mobile */
+/* ========================================
+   LAYOUT MOBILE
+   ======================================== */
+
 @media (max-width: 768px) {
-  .layout-content {
-    margin-top: 80px; /* Header ridotto per mobile */
+  .layout-content:not(.with-sidebar-open):not(.with-sidebar-closed) {
+    margin-top: 80px;
     min-height: calc(100vh - 80px);
   }
   
-  .sidebar-toggle {
-    top: 95px;
-    left: 1rem;
-    padding: 0.6rem 0.8rem;
-    font-size: 1.1rem;
+  /* Su mobile la sidebar è sempre visibile a 105px */
+  .layout-content.with-sidebar-open,
+  .layout-content.with-sidebar-closed {
+    margin-left: 105px;
+  }
+
+  .main-content {
+    padding: 1rem;
   }
 }
 
-/* Stili responsive per schermi molto piccoli */
+/* ========================================
+   LAYOUT MOBILE PICCOLO
+   ======================================== */
+
 @media (max-width: 480px) {
-  .layout-content {
+  .layout-content:not(.with-sidebar-open):not(.with-sidebar-closed) {
     margin-top: 70px;
     min-height: calc(100vh - 70px);
   }
   
-  .sidebar-toggle {
-    top: 85px;
-    left: 0.75rem;
-    padding: 0.5rem 0.7rem;
-    font-size: 1rem;
+  /* Anche su schermi piccoli mantieni sidebar a 105px */
+  .layout-content.with-sidebar-open,
+  .layout-content.with-sidebar-closed {
+    margin-left: 105px;
+  }
+
+  .main-content {
+    padding: 0.75rem;
   }
 }
+

@@ -41,8 +41,17 @@ const loginUser = async (req, res) => {
       username: user.username,
       email: user.email,
       permissions: user.permissions,
-      clubId: user.clubId,
+      clubId: user.clubId
     };
+
+    if (user.clubId) {
+      const club = await db.Club.findByPk(user.clubId);
+      if (club) {
+        outUser.clubName = club.denominazione;
+        // Da capire come gestire l'url del badge oppure se inviare un base64
+        // outUser.clubBadge = club.badgeUrl;
+      }
+    }
 
     res.status(200).json({ ok: true, user: outUser, token });
   } catch (error) {

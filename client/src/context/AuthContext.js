@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
 
       // Salvo su localStorage solo le info essenziali
       localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify({username: response.user.username, email: response.user.email}) );
+      localStorage.setItem('user', JSON.stringify({username: response.user.username, email: response.user.email, clubName: response.user.clubName, clubBadge: response.user.clubBadge}) );
 
       return { success: true, user: response.user, token: response.token };
     } catch (error) {

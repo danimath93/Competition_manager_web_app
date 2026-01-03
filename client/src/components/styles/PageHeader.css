@@ -1,0 +1,154 @@
+/* ========================================
+   PAGE HEADER - INTESTAZIONE PAGINE
+   ======================================== */
+
+.page-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-light, #e0e0e0);
+}
+
+.page-header-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.page-header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Icona */
+.page-header-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary, #333333);
+  border-radius: var(--radius-md, 8px);
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+/* Contenuto testuale */
+.page-header-text {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0.25rem;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary, #333333);
+  line-height: 1.2;
+}
+
+.page-header-subtitle {
+  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-secondary, #666666);
+  line-height: 1.5;
+}
+
+/* Azioni (pulsanti, ecc.) */
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .page-header-icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    font-size: 1.3rem;
+  }
+
+  .page-header-title {
+    font-size: 1.75rem;
+  }
+
+  .page-header-subtitle {
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .page-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+  }
+
+  .page-header-main {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .page-header-content {
+    gap: 1rem;
+  }
+
+  .page-header-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    font-size: 1.2rem;
+  }
+
+  .page-header-title {
+    font-size: 1.5rem;
+  }
+
+  .page-header-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .page-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Mobile piccolo */
+@media (max-width: 480px) {
+  .page-header {
+    margin-bottom: 1rem;
+  }
+
+  .page-header-content {
+    gap: 0.75rem;
+  }
+
+  .page-header-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 1.1rem;
+  }
+
+  .page-header-title {
+    font-size: 1.3rem;
+  }
+
+  .page-header-subtitle {
+    font-size: 0.85rem;
+  }
+}

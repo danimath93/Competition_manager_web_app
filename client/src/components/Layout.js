@@ -1,40 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { FaBars } from 'react-icons/fa';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import './styles/Layout.css';
 
 const Layout = ({ user }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 1024;
+      setIsMobile(mobile);
+      // Su mobile forza chiusura sidebar
+      if (mobile) {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const closeSidebar = () => {
-    setSidebarOpen(false);
+    // Permetti toggle solo su desktop
+    if (!isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    }
   };
 
   return (
     <div className="layout">
-      <Header />
+      {!user && (
+        <Header />
+      )}
       
       {user && (
-        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       )}
 
-      <div className={`layout-content ${user ? 'with-sidebar' : ''}`}>
-        {user && (
-          <button 
-            className="sidebar-toggle"
-            onClick={toggleSidebar}
-            aria-label="Toggle menu"
-          >
-            <FaBars />
-          </button>
-        )}
-        
+      <div className={`layout-content ${user ? (sidebarOpen ? 'with-sidebar-open' : 'with-sidebar-closed') : ''}`}>
         <main className="main-content">
           <Outlet />
         </main>

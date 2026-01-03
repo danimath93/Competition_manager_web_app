@@ -1,0 +1,277 @@
+/* ========================================
+   BUTTON COMPONENT - STILI COMUNI
+   ======================================== */
+
+/* Base button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-weight: var(--font-semibold, 600);
+  cursor: pointer;
+  transition: all var(--transition-normal, 0.3s ease);
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-focus, #a60b00);
+  outline-offset: 2px;
+}
+
+/* Icon e text */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Full width */
+.btn-full-width {
+  width: 100%;
+}
+
+/* ========================================
+   DIMENSIONI BUTTON
+   ======================================== */
+
+/* Extra Small */
+.btn-xs {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.btn-xs .btn-icon {
+  font-size: 0.875rem;
+}
+
+/* Small */
+.btn-s {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-s .btn-icon {
+  font-size: 1rem;
+}
+
+/* Medium (default - simile a login-button) */
+.btn-m {
+  padding: var(--spacing-md, 1rem) var(--spacing-xl, 1.5rem);
+  font-size: var(--font-lg, 1rem);
+}
+
+.btn-m .btn-icon {
+  font-size: 1.25rem;
+}
+
+/* Large */
+.btn-l {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}
+
+.btn-l .btn-icon {
+  font-size: 1.5rem;
+}
+
+/* Extra Large */
+.btn-xl {
+  padding: 1.25rem 2.5rem;
+  font-size: 1.25rem;
+}
+
+.btn-xl .btn-icon {
+  font-size: 1.75rem;
+}
+
+/* ========================================
+   VARIANTI BUTTON
+   ======================================== */
+
+/* Primary - Stile del login-button */
+.btn-primary {
+  background-color: var(--color-primary-button, #232323);
+  color: var(--text-white, #ffffff);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-hover, #8b0900);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary, 0 4px 12px rgba(220, 53, 69, 0.3));
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Secondary */
+.btn-secondary {
+  background-color: var(--color-secondary, #232323);
+  color: var(--text-white, #ffffff);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary-light, rgba(35, 35, 35, 0.9));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Info - Stile del reset-password-button */
+.btn-info {
+  background-color: var(--color-info-button, #2563eb);
+  color: var(--text-white, #ffffff);
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: var(--color-info-hover, #1e40af);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-info:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Success */
+.btn-success {
+  background-color: var(--color-success, #28a745);
+  color: var(--text-white, #ffffff);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Warning */
+.btn-warning {
+  background-color: var(--color-warning, #ffc107);
+  color: var(--text-dark, #1a1a1a);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #e0a800;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.btn-warning:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Danger */
+.btn-danger {
+  background-color: var(--color-error, #dc3545);
+  color: var(--text-white, #ffffff);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Outline */
+.btn-outline {
+  background-color: transparent;
+  color: var(--color-primary, #a60b00);
+  border: 2px solid var(--color-primary, #a60b00);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--color-primary, #a60b00);
+  color: var(--text-white, #ffffff);
+  transform: translateY(-2px);
+}
+
+.btn-outline:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Outline Secondary */
+.btn-outline-secondary {
+  background-color: transparent;
+  color: var(--color-secondary, #232323);
+  border: 2px solid var(--color-secondary, #232323);
+}
+
+.btn-outline-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary, #232323);
+  color: var(--text-white, #ffffff);
+  transform: translateY(-2px);
+}
+
+.btn-outline-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* ========================================
+   STATO DISABLED
+   ======================================== */
+
+.btn:disabled {
+  background-color: var(--color-disabled, #cccccc);
+  color: var(--text-tertiary, #999999);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.btn-outline:disabled,
+.btn-outline-secondary:disabled {
+  background-color: transparent;
+  border-color: var(--color-disabled, #cccccc);
+  color: var(--text-tertiary, #999999);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+/* Mobile */
+@media (max-width: 768px) {
+  /* Riduci padding su mobile per dimensioni più grandi */
+  .btn-l {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .btn-xl {
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
+  }
+}
+
+/* Mobile piccolo */
+@media (max-width: 480px) {
+  /* Su schermi molto piccoli, forza full-width per bottoni grandi */
+  .btn-l,
+  .btn-xl {
+    width: 100%;
+  }
+}
