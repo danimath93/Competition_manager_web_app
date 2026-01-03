@@ -75,7 +75,16 @@ exports.getSvolgimentoCategoria = async (req, res) => {
           }
         ]
       });
-      const atleti = iscrizioni.map(ia => ia.atleta);
+      // Creo l'array di atleti e aggiungo il peso preso dall'iscrizione
+      const atleti = iscrizioni.map(
+        ia => {
+          const atletaData = ia.atleta ? ia.atleta.get({ plain: true }) : null;
+          if (atletaData) {
+            atletaData.peso = ia.peso || null;
+          }
+          return atletaData;
+        }
+      );
       svolg.dataValues.atleti = atleti;
     }
     res.json(svolg);

@@ -189,7 +189,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
             {/* DUE COLONNE */}
             <Box sx={{ display: 'flex', gap: 3 }}>
               {/* COLONNA SINISTRA - Atleti */}
-              <Box sx={{ flex: 1 }}>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1, fontSize: '0.95rem', textAlign: 'center' }}>
                   Iscrizioni ({athletes.length})
                 </Typography>
@@ -217,6 +217,15 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+
+                {/* Lettera Estratta - Solo per competizioni non di combattimento */}
+                {competitionTipology !== CompetitionTipology.COMBATTIMENTO && (
+                  <Box sx={{ mt: 'auto', pt: 2, textAlign: 'center' }}>
+                    <Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>
+                      Lettera di esecuzione estratta: <span style={{ fontSize: '1rem' }}>{startLetter}</span>
+                    </Typography>
+                  </Box>
+                )}
               </Box>
 
               {/* COLONNA DESTRA - Podio e Commissione */}

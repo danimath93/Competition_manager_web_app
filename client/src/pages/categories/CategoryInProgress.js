@@ -17,9 +17,14 @@ import {
   TableRow,
   Divider,
   Grid,
-  TextField
+  TextField,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  Chip
 } from '@mui/material';
-import { ArrowBack, Print } from '@mui/icons-material';
+import { ArrowBack, Print, ArrowUpward, ArrowDownward, Shuffle } from '@mui/icons-material';
 import { getSvolgimentoCategoria, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { useLocation } from "react-router-dom";
 import { loadAllJudges } from '../../api/judges';
@@ -62,6 +67,9 @@ const CategoryInProgress = () => {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(null);
   const [judges, setJudges] = useState([]);
+  const [stato, setStato] = useState(CategoryStates.IN_DEFINIZIONE);
+  const [manualLetter, setManualLetter] = useState('');
+  const [orderedFightingAthletes, setOrderedFightingAthletes] = useState([]);
 
   useEffect(() => {
     if (!svolgimentoId) {
@@ -78,16 +86,30 @@ const CategoryInProgress = () => {
       setLoading(true);
       const svolg = await getSvolgimentoCategoria(svolgimentoId);
       setLetter(svolg.letteraEstratta || '');
+      setStato(svolg.stato || CategoryStates.IN_DEFINIZIONE);
       setPunteggi(svolg.punteggi || {});
       setCommissione(svolg.commissione || Array(10).fill(''));
       setClassifica(svolg.classifica || []);
       setTabellone(svolg.tabellone || null);
 
+      const loadedAthletes = svolg.atleti || [];
+      
       if (svolg.letteraEstratta) {
-        const orderedAthletes = orderAthletesByKeyLetter(svolg.atleti || [], svolg.letteraEstratta);
+        const orderedAthletes = orderAthletesByKeyLetter(loadedAthletes, svolg.letteraEstratta);
         setAtleti(orderedAthletes);
       } else {
-        setAtleti(svolg.atleti || []);
+        setAtleti(loadedAthletes);
+      }
+
+      // Per combattimenti: inizializza l'ordine degli atleti e genera tabellone default se non presente
+      if (tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO) {
+        setOrderedFightingAthletes(loadedAthletes);
+        
+        // Genera tabellone di default se non esiste
+        if (!svolg.tabellone || !svolg.tabellone.rounds || svolg.tabellone.rounds.length === 0) {
+          const defaultBracket = generateTabelloneFromAtleti(loadedAthletes);
+          setTabellone(defaultBracket);
+        }
       }
     } catch (e) {
       setError('Errore nel caricamento dati');
@@ -177,6 +199,57 @@ const CategoryInProgress = () => {
     return orderedByLetter;
   };
 
+  // Handler per generare lettera casuale
+  const handleGenerateRandomLetter = async () => {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const randomLetter = letters[Math.floor(Math.random() * letters.length)];
+    setLetter(randomLetter);
+    const orderedAthletes = orderAthletesByKeyLetter(atleti, randomLetter);
+    setAtleti(orderedAthletes);
+    await patchSvolgimentoCategoria(svolgimentoId, { 
+      letteraEstratta: randomLetter, 
+      stato: CategoryStates.IN_DEFINIZIONE 
+    });
+  };
+
+  // Handler per impostare lettera manuale
+  const handleSetManualLetter = async () => {
+    if (!manualLetter || manualLetter.length !== 1) {
+      alert('Inserisci una lettera valida');
+      return;
+    }
+    const upperLetter = manualLetter.toUpperCase();
+    setLetter(upperLetter);
+    const orderedAthletes = orderAthletesByKeyLetter(atleti, upperLetter);
+    setAtleti(orderedAthletes);
+    await patchSvolgimentoCategoria(svolgimentoId, { 
+      letteraEstratta: upperLetter, 
+      stato: CategoryStates.IN_DEFINIZIONE 
+    });
+    setManualLetter('');
+  };
+
+  // Handler per confermare la definizione e passare allo stato IN_ATTESA_DI_AVVIO
+  const handleConfirmDefinition = async () => {
+    if ((tipoCompetizioneId == CompetitionTipology.MANI_NUDE || tipoCompetizioneId == CompetitionTipology.ARMI) && !letter) {
+      alert('Devi prima estrarre o impostare una lettera');
+      return;
+    }
+    if (tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO && (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0)) {
+      alert('Devi prima generare il tabellone');
+      return;
+    }
+    
+    await patchSvolgimentoCategoria(svolgimentoId, { stato: CategoryStates.IN_ATTESA_DI_AVVIO });
+    setStato(CategoryStates.IN_ATTESA_DI_AVVIO);
+  };
+
+  // Handler per avviare la categoria
+  const handleStartCategory = async () => {
+    await patchSvolgimentoCategoria(svolgimentoId, { stato: CategoryStates.IN_CORSO });
+    setStato(CategoryStates.IN_CORSO);
+  };
+
   useEffect(() => {
     if (tipoCompetizioneId != CompetitionTipology.MANI_NUDE && 
         tipoCompetizioneId != CompetitionTipology.ARMI)
@@ -261,6 +334,40 @@ const CategoryInProgress = () => {
     return { rounds };
   };
 
+  const handleGenerateFightingTable = () => {
+    const novo = generateTabelloneFromAtleti(orderedFightingAthletes);
+    setTabellone(novo);
+  };
+
+  // Handler per spostare atleta su/giù nella lista di accoppiamenti
+  const handleMoveFightingAthlete = (index, direction) => {
+    const newList = [...orderedFightingAthletes];
+    if (direction === 'up' && index > 0) {
+      [newList[index], newList[index - 1]] = [newList[index - 1], newList[index]];
+    } else if (direction === 'down' && index < newList.length - 1) {
+      [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+    }
+    setOrderedFightingAthletes(newList);
+    
+    // Rigenera automaticamente il tabellone con il nuovo ordine
+    const updatedBracket = generateTabelloneFromAtleti(newList);
+    setTabellone(updatedBracket);
+  };
+
+  // Handler per salvare il tabellone definitivo
+  const handleSaveBracket = async () => {
+    try {
+      await patchSvolgimentoCategoria(svolgimentoId, { 
+        tabellone, 
+        stato: CategoryStates.IN_DEFINIZIONE 
+      });
+      alert('Tabellone salvato con successo');
+    } catch (e) {
+      console.error('Errore nel salvataggio del tabellone:', e);
+      alert('Errore nel salvataggio del tabellone');
+    }
+  };
+
   /* --- aggiornamento giocatore in match (solo round 0 per editing) --- */
   const updateMatchPlayer = (rIdx, matchId, slotIdx, atletaId) => {
     setTabellone((prev) => {
@@ -298,14 +405,6 @@ const CategoryInProgress = () => {
 
       return copy;
     });
-  };
-
-  const handleGenerateFightingTable = () => {
-    if (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0) {
-      const novo = generateTabelloneFromAtleti(atleti);
-      setTabellone(novo);
-      patchSvolgimentoCategoria(svolgimentoId, { tabellone: novo, stato: CategoryStates.IN_DEFINIZIONE });
-    }
   };
 
   /* --- handleScoreChange (numero di round, calcolo automatico winner) --- */
@@ -521,9 +620,355 @@ const CategoryInProgress = () => {
             <b>{categoriaNome}</b>
           </Typography>
         )}
+        
+        {/* Status indicator */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body1"><b>Stato:</b></Typography>
+          <Chip 
+            label={stato} 
+            color={
+              stato === CategoryStates.IN_DEFINIZIONE ? 'warning' :
+              stato === CategoryStates.IN_ATTESA_DI_AVVIO ? 'info' :
+              stato === CategoryStates.IN_CORSO ? 'primary' : 'default'
+            }
+          />
+        </Box>
+
+        {/* State transition buttons */}
+        <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+          {stato === CategoryStates.IN_DEFINIZIONE && (
+            <Button 
+              variant="contained" 
+              color="success"
+              onClick={handleConfirmDefinition}
+            >
+              Conferma Definizione
+            </Button>
+          )}
+          {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={handleStartCategory}
+            >
+              Avvia Categoria
+            </Button>
+          )}
+        </Box>
       </Box>
 
-      {(tipoCompetizioneId == CompetitionTipology.MANI_NUDE || tipoCompetizioneId == CompetitionTipology.ARMI) && (
+      {/* IN_DEFINIZIONE: MANI_NUDE / ARMI */}
+      {stato === CategoryStates.IN_DEFINIZIONE && 
+       (tipoCompetizioneId == CompetitionTipology.MANI_NUDE || tipoCompetizioneId == CompetitionTipology.ARMI) && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Definizione Ordine di Esecuzione
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+            <Typography variant="body1">
+              <b>Lettera estratta:</b> {letter || 'Non ancora estratta'}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+            <Button 
+              variant="contained" 
+              startIcon={<Shuffle />}
+              onClick={handleGenerateRandomLetter}
+            >
+              Estrai Lettera Casuale
+            </Button>
+            
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                label="Lettera Manuale"
+                value={manualLetter}
+                onChange={(e) => setManualLetter(e.target.value.toUpperCase())}
+                size="small"
+                sx={{ width: 100 }}
+                inputProps={{ maxLength: 1 }}
+              />
+              <Button 
+                variant="outlined"
+                onClick={handleSetManualLetter}
+              >
+                Imposta
+              </Button>
+            </Box>
+          </Box>
+
+          <Typography variant="subtitle1" gutterBottom>
+            <b>Ordine di Esecuzione Atleti:</b>
+          </Typography>
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><b>#</b></TableCell>
+                  <TableCell><b>Cognome</b></TableCell>
+                  <TableCell><b>Nome</b></TableCell>
+                  <TableCell><b>Club</b></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {orderAthletesByKeyLetter(atleti, letter).map((atleta, idx) => (
+                  <TableRow key={atleta.id}>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>{atleta.cognome}</TableCell>
+                    <TableCell>{atleta.nome}</TableCell>
+                    <TableCell>{atleta.club?.denominazione || '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
+
+      {/* IN_DEFINIZIONE: COMBATTIMENTO */}
+      {stato === CategoryStates.IN_DEFINIZIONE && tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO && (
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Ordine Accoppiamenti
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Modifica l'ordine degli atleti per definire gli accoppiamenti del tabellone. 
+                Il tabellone si aggiorna automaticamente.
+              </Typography>
+
+              <List dense>
+                {orderedFightingAthletes.map((atleta, idx) => (
+                  <ListItem 
+                    key={atleta.id}
+                    sx={{ 
+                      bgcolor: idx % 2 === 0 ? 'action.hover' : 'background.paper',
+                      borderRadius: 1,
+                      mb: 0.5
+                    }}
+                    secondaryAction={
+                      <Box>
+                        <IconButton 
+                          size="small"
+                          onClick={() => handleMoveFightingAthlete(idx, 'up')}
+                          disabled={idx === 0}
+                        >
+                          <ArrowUpward />
+                        </IconButton>
+                        <IconButton 
+                          size="small"
+                          onClick={() => handleMoveFightingAthlete(idx, 'down')}
+                          disabled={idx === orderedFightingAthletes.length - 1}
+                        >
+                          <ArrowDownward />
+                        </IconButton>
+                      </Box>
+                    }
+                  >
+                    <ListItemText
+                      primary={`${idx + 1}. ${atleta.cognome} ${atleta.nome}`}
+                      secondary={
+                        <>
+                          {atleta.club?.denominazione || '-'}
+                          {atleta.peso && ` • Peso: ${atleta.peso} kg`}
+                        </>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+
+              <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                <Button 
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSaveBracket}
+                  fullWidth
+                >
+                  Salva Tabellone
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} md={8}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Anteprima Tabellone
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              
+              {/* Bracket visualization */}
+              {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
+                <Box sx={{ overflowX: 'auto', overflowY: 'hidden' }}>
+                  <Box sx={{ display: 'flex', gap: 2, minWidth: 'fit-content', pb: 2 }}>
+                    {tabellone.rounds.map((round, roundIndex) => {
+                      const matchHeight = 60 * Math.pow(2, roundIndex);
+                      
+                      return (
+                        <Box key={roundIndex} sx={{ display: 'flex', flexDirection: 'column', minWidth: 200 }}>
+                          {/* Round label */}
+                          <Typography
+                            sx={{
+                              fontWeight: 'bold',
+                              fontSize: '0.75rem',
+                              textAlign: 'center',
+                              mb: 1,
+                              bgcolor: 'primary.main',
+                              color: 'white',
+                              py: 0.5,
+                              borderRadius: 1
+                            }}
+                          >
+                            {getRoundName(roundIndex, tabellone.rounds.length, round.matches.length)}
+                          </Typography>
+
+                          {/* Matches */}
+                          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-around' }}>
+                            {round.matches.map((match, matchIndex) => {
+                              const player1 = getAthleteById(match.players[0]);
+                              const player2 = getAthleteById(match.players[1]);
+
+                              return (
+                                <Box
+                                  key={match.id}
+                                  sx={{
+                                    height: `${matchHeight}px`,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    position: 'relative',
+                                    mb: roundIndex === 0 ? 1 : 0
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      border: '2px solid',
+                                      borderColor: 'grey.400',
+                                      borderRadius: 1,
+                                      overflow: 'hidden',
+                                      bgcolor: 'white',
+                                      height: '100%',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      boxShadow: 1
+                                    }}
+                                  >
+                                    {/* Player 1 */}
+                                    <Box
+                                      sx={{
+                                        height: '50%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        p: 1,
+                                        borderBottom: '1px solid',
+                                        borderColor: 'grey.300',
+                                        bgcolor: player1 ? 'white' : 'grey.50'
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          fontSize: '0.7rem',
+                                          fontWeight: player1 ? 'bold' : 'normal',
+                                          lineHeight: 1.2,
+                                          color: player1 ? 'text.primary' : 'text.disabled'
+                                        }}
+                                      >
+                                        {player1 ? `${player1.cognome} ${player1.nome}` : 'TBD'}
+                                      </Typography>
+                                      {player1?.club?.denominazione && (
+                                        <Typography
+                                          sx={{
+                                            fontSize: '0.6rem',
+                                            color: 'text.secondary',
+                                            fontStyle: 'italic',
+                                            lineHeight: 1.1,
+                                            mt: 0.3
+                                          }}
+                                        >
+                                          {player1.club.denominazione}
+                                        </Typography>
+                                      )}
+                                    </Box>
+
+                                    {/* Player 2 */}
+                                    <Box
+                                      sx={{
+                                        height: '50%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        p: 1,
+                                        bgcolor: player2 ? 'white' : 'grey.50'
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          fontSize: '0.7rem',
+                                          fontWeight: player2 ? 'bold' : 'normal',
+                                          lineHeight: 1.2,
+                                          color: player2 ? 'text.primary' : 'text.disabled'
+                                        }}
+                                      >
+                                        {player2 ? `${player2.cognome} ${player2.nome}` : 'TBD'}
+                                      </Typography>
+                                      {player2?.club?.denominazione && (
+                                        <Typography
+                                          sx={{
+                                            fontSize: '0.6rem',
+                                            color: 'text.secondary',
+                                            fontStyle: 'italic',
+                                            lineHeight: 1.1,
+                                            mt: 0.3
+                                          }}
+                                        >
+                                          {player2.club.denominazione}
+                                        </Typography>
+                                      )}
+                                    </Box>
+                                  </Box>
+
+                                  {/* Connection line to next round */}
+                                  {roundIndex < tabellone.rounds.length - 1 && (
+                                    <Box
+                                      sx={{
+                                        position: 'absolute',
+                                        right: -16,
+                                        top: '50%',
+                                        width: 16,
+                                        height: 2,
+                                        bgcolor: 'grey.400',
+                                        transform: 'translateY(-50%)'
+                                      }}
+                                    />
+                                  )}
+                                </Box>
+                              );
+                            })}
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ) : (
+                <Alert severity="info">
+                  Nessun tabellone disponibile. Carica gli atleti per generare il tabellone automaticamente.
+                </Alert>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* IN_ATTESA_DI_AVVIO / IN_CORSO: MANI_NUDE / ARMI */}
+      {(stato === CategoryStates.IN_ATTESA_DI_AVVIO || stato === CategoryStates.IN_CORSO) &&
+       (tipoCompetizioneId == CompetitionTipology.MANI_NUDE || tipoCompetizioneId == CompetitionTipology.ARMI) && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={7}>
             <Paper sx={{ p: 2, mb: 2 }}>
@@ -554,6 +999,7 @@ const CategoryInProgress = () => {
                               onChange={(e) => handlePunteggioChange(atleta.id, vIdx, e.target.value)}
                               size="small"
                               sx={{ width: 70 }}
+                              disabled={stato !== CategoryStates.IN_CORSO}
                             />
                           </TableCell>
                         ))}
@@ -624,6 +1070,7 @@ const CategoryInProgress = () => {
                             onChange={(e) => handleCommissioneChange(idx, e.target.value)}
                             size="small"
                             sx={{ width: 180 }}
+                            disabled={stato !== CategoryStates.IN_CORSO}
                           />
                         </TableCell>
                       </TableRow>
@@ -636,36 +1083,33 @@ const CategoryInProgress = () => {
         </Grid>
       )}
 
-      {(tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO) && (
+      {/* IN_ATTESA_DI_AVVIO / IN_CORSO: COMBATTIMENTO */}
+      {(stato === CategoryStates.IN_ATTESA_DI_AVVIO || stato === CategoryStates.IN_CORSO) &&
+       tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom>
             Tabellone Incontri
           </Typography>
 
-          <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-            <Button
-              variant="contained"
-              onClick={handleGenerateFightingTable}
-            >
-              Genera Tabellone
-            </Button>
+          {stato === CategoryStates.IN_CORSO && (
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+              <Button
+                variant="outlined"
+                onClick={() => setEditing((e) => !e)}
+              >
+                {editing ? 'Fine modifica' : 'Modifica'}
+              </Button>
 
-            <Button
-              variant="outlined"
-              onClick={() => setEditing((e) => !e)}
-            >
-              {editing ? 'Fine modifica' : 'Modifica'}
-            </Button>
-
-            <Button
-              variant="outlined"
-              onClick={() => {
-                patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: CategoryStates.IN_CORSO });
-              }}
-            >
-              Salva tabellone
-            </Button>
-          </Box>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  patchSvolgimentoCategoria(svolgimentoId, { tabellone, stato: CategoryStates.IN_CORSO });
+                }}
+              >
+                Salva tabellone
+              </Button>
+            </Box>
+          )}
 
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', overflowX: 'auto' }}>
             {tabellone && tabellone.rounds && tabellone.rounds.map((round, rIdx) => (
@@ -747,6 +1191,7 @@ const CategoryInProgress = () => {
                               onChange={(e) =>
                                 handleScoreChange(rIdx, m.id, m.players[0], e.target.value)
                               }
+                              disabled={stato !== CategoryStates.IN_CORSO}
                             />
                           ) : (rIdx === 0 ? <Typography sx={{ fontStyle: "italic" }}>BYE</Typography> : <></>)}
                         </Box>
@@ -781,6 +1226,7 @@ const CategoryInProgress = () => {
                               onChange={(e) =>
                                 handleScoreChange(rIdx, m.id, m.players[1], e.target.value)
                               }
+                              disabled={stato !== CategoryStates.IN_CORSO}
                             />
                           ) : (rIdx === 0 ? <Typography sx={{ fontStyle: "italic" }}>BYE</Typography> : <></>)}
                         </Box>
