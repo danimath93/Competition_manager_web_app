@@ -44,18 +44,6 @@ const Atleta = sequelize.define('Atleta', {
     },
     field: 'codice_fiscale'
   },
-  tesseramento: {
-    type: DataTypes.ENUM('FIWUK', 'ASI'),
-    allowNull: true,
-  },
-  peso: {
-    type: DataTypes.DECIMAL(5, 2),
-    allowNull: true,
-    validate: {
-      min: 20.0,
-      max: 200.0
-    }
-  },
   tipoAtletaId: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -81,7 +69,26 @@ const Atleta = sequelize.define('Atleta', {
       key: 'id'
     },
     field: 'club_id'
-  }
+  },
+  numeroTessera: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'numero_tessera'
+  },
+  scadenzaCertificato: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+    field: 'scadenza_certificato'
+  },
+  certificatoId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'certificati_medici',
+      key: 'id'
+    },
+    field: 'certificato_id'
+  },
 }, {
   tableName: 'atleti',
   timestamps: true

@@ -16,7 +16,7 @@ import { loadAllClubs } from '../api/clubs';
 import { loadAthleteTypes, loadAgeGroups } from '../api/config';
 import AthletesTable from '../components/AthletesTable';
 import AthleteModal from '../components/AthleteModal';
-import AthleteInfoModal from '../components/AthleteInfoModal';
+import CertificatoModal from '../components/CertificatoModal';
 import AuthComponent from '../components/AuthComponent';
 import PageHeader from '../components/PageHeader';
 import { Button } from '../components/common';
@@ -33,16 +33,14 @@ const Athletes = () => {
     name: '',
     type: '',
     club: '',
-    insurance: '',
     gender: '',
     ageGroup: ''
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [isCertificatoModalOpen, setIsCertificatoModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
-
-  const insurances = ['N/A', 'ASI', 'FIWUK'];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,14 +89,6 @@ const Athletes = () => {
 
     if (filters.club) {
       result = result.filter((athlete) => athlete.clubId === filters.club);
-    }
-
-    if (filters.insurance) {
-      if (filters.insurance === 'N/A') {
-        result = result.filter((athlete) => !athlete.tesseramento);
-      } else {
-        result = result.filter((athlete) => athlete.tesseramento === filters.insurance);
-      }
     }
 
     if (filters.gender) {
@@ -157,6 +147,20 @@ const Athletes = () => {
   const handleCloseInfoModal = () => {
     setIsInfoModalOpen(false);
     setSelectedAthlete(null);
+  };
+
+  const handleOpenCertificatoModal = (athlete) => {
+    setSelectedAthlete(athlete);
+    setIsCertificatoModalOpen(true);
+  };
+
+  const handleCloseCertificatoModal = () => {
+    setIsCertificatoModalOpen(false);
+    setSelectedAthlete(null);
+  };
+
+  const handleCertificatoSuccess = async () => {
+    await loadAthleteByUserPermissions();
   };
 
   const handleSaveAthlete = async (athleteData) => {
@@ -221,7 +225,6 @@ const Athletes = () => {
                 onChange={handleFilterChange}
               />
               <Button
-                variant="primary"
                 icon={Add}
                 onClick={() => handleOpenModal()}
               >
@@ -231,63 +234,6 @@ const Athletes = () => {
 
             <Box sx={{ mb: 2 }}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-                    <InputLabel>Filtra per Tipo Atleta</InputLabel>
-                    <Select
-                      name="type"
-                      label="Filtra per Tipo Atleta"
-                      value={filters.type}
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">
-                        <em>Tutti</em>
-                      </MenuItem>
-                      {athleteTypes.map((type) => (
-                        <MenuItem key={type.id} value={type.id}>
-                          {type.nome}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-                    <InputLabel>Filtra per Tesseramento</InputLabel>
-                    <Select
-                      name="insurance"
-                      label="Filtra per Tesseramento"
-                      value={filters.insurance}
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">
-                        <em>Tutti</em>
-                      </MenuItem>
-                      {insurances.map((insurance) => (
-                        <MenuItem key={insurance} value={insurance}>
-                          {insurance}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-                    <InputLabel>Filtra per Sesso</InputLabel>
-                    <Select
-                      name="gender"
-                      label="Filtra per Sesso"
-                      value={filters.gender}
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">
-                        <em>Tutti</em>
-                      </MenuItem>
-                      <MenuItem value="M">Maschio</MenuItem>
-                      <MenuItem value="F">Femmina</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
                 <AuthComponent requiredRoles={['admin', 'superAdmin']}>
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
@@ -343,7 +289,11 @@ const Athletes = () => {
           <div className="page-card-body">
 
             <AthletesTable
-              athletes={filteredAthletes}
+              athletes={filteredAthletes.map(athlete => ({
+                ...athlete,
+                onUploadCertificato: handleOpenCertificatoModal,
+                onDownloadCertificato: handleOpenCertificatoModal
+              }))}
               onInfo={handleOpenInfoModal}
               onEdit={handleOpenModal}
               onDelete={handleDeleteAthlete}
@@ -361,11 +311,12 @@ const Athletes = () => {
               />
             )}
 
-            {isInfoModalOpen && (
-              <AthleteInfoModal
-                open={isInfoModalOpen}
-                onClose={handleCloseInfoModal}
-                athlete={selectedAthlete}
+            {isCertificatoModalOpen && (
+              <CertificatoModal
+                open={isCertificatoModalOpen}
+                onClose={handleCloseCertificatoModal}
+                atleta={selectedAthlete}
+                onSuccess={handleCertificatoSuccess}
               />
             )}
           </div>

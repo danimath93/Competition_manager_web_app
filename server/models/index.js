@@ -15,6 +15,7 @@ const ConfigGruppoEta = require('./ConfigGruppoEta');
 const ConfigTipoAtleta = require('./ConfigTipoAtleta');
 const ConfigEsperienza = require('./ConfigEsperienza');
 const SvolgimentoCategoria = require('./SvolgimentoCategoria');
+const CertificatoMedico = require('./CertificatoMedico');
 // Definisci le associazioni
 
 // Club -> Atleti (One-to-Many)
@@ -157,6 +158,17 @@ Atleta.belongsTo(ConfigTipoAtleta, {
   as: 'tipoAtleta'
 });
 
+// Atleta -> CertificatoMedico (One-to-One)
+Atleta.hasOne(CertificatoMedico, {
+  foreignKey: 'certificatoId',
+  as: 'certificato',
+  onDelete: 'CASCADE'
+});
+CertificatoMedico.belongsTo(Atleta, {
+  foreignKey: 'certificatoId',
+  as: 'atleta'
+});
+
 // ConfigTipoAtleta -> ConfigEsperienza (One-to-Many)
 ConfigTipoAtleta.hasMany(ConfigEsperienza, {
   foreignKey: 'idConfigTipoAtleta',
@@ -217,5 +229,6 @@ module.exports = {
   ConfigGruppoEta,
   ConfigTipoAtleta,
   ConfigEsperienza,
-  SvolgimentoCategoria
+  SvolgimentoCategoria,
+  CertificatoMedico
 };

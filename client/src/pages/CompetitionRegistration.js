@@ -588,6 +588,7 @@ const CompetitionRegistration = () => {
           open={isAthleteModalOpen}
           onClose={handleCloseAthleteModal}
           onSubmit={handleSaveAthlete}
+          onDelete={null}
           isEditMode={isEditMode}
           athlete={selectedAthlete}
           userClubId={user?.clubId}

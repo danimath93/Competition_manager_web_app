@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -23,6 +24,8 @@ import CategoryExecution from './pages/categories/CategoryExecution';
 import CategoryResults from './pages/categories/CategoryResults';
 import CategoryInProgress from './pages/categories/CategoryInProgress';
 import './App.css';
+import muiCustomTheme from './styles/muiTheme';
+
 
 // Componente principale dell'app
 const AppContent = () => {
@@ -189,9 +192,11 @@ function App() {
       <AuthProvider>
         <Router>
           <ErrorBoundary>
-            <div className="App">
-              <AppContent />
-            </div>
+            <ThemeProvider theme={muiCustomTheme}>
+              <div className="App">
+                <AppContent />
+              </div>
+            </ThemeProvider>
           </ErrorBoundary>
         </Router>
       </AuthProvider>

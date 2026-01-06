@@ -1,42 +1,23 @@
-import React, { use } from 'react';
+import React from 'react';
 import {
-  Modal,
-  Box,
-  Typography,
   TextField,
   Button,
-  Grid,
   Autocomplete,
   Alert,
+  Box,
 } from '@mui/material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllClubs } from '../api/clubs';
 import { loadAthleteTypes } from '../api/config';
 import AuthComponent from './AuthComponent';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '35%',
-  minWidth: 400,
-  maxHeight: '90vh',
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-  overflow: 'auto',
-  '&::-webkit-scrollbar': {
-    display: 'none',
-  },
-  msOverflowStyle: 'none',
-  scrollbarWidth: 'none',
-};
+import DrawerModal from './common/DrawerModal';
+import './common/DrawerModal.css';
 
 const AthleteModal = ({
   open,
   onClose,
   onSubmit,
+  onDelete,
   athlete,
   isEditMode,
   userClubId,
@@ -66,13 +47,10 @@ const AthleteModal = ({
         tipoAtletaId: null,
         sesso: '',
         codiceFiscale: null,
-        luogoNascita: null,
         club: club,
         clubId: club ? club.id : null,
-        tesseramento: null,
-        peso: null,
-        email: null,
-        telefono: null,
+        numeroTessera: null,
+        scadenzaCertificato: null,
       });
     }
   }, [open, isEditMode, athlete, clubs, userClubId]);
@@ -122,10 +100,6 @@ const AthleteModal = ({
     setFormData({ ...formData, sesso: value || '' });
   }
 
-  const handleTesseramentoChange = (value) => {
-    setFormData({ ...formData, tesseramento: value || null });
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -135,74 +109,96 @@ const AthleteModal = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Sei sicuro di voler eliminare questo atleta?')) {
+      try {
+        if (onDelete) {
+          await onDelete(athlete.id);
+          onClose();
+        }
+      } catch (error) {
+        setError(error.message || "Errore nell'eliminazione dell'atleta");
+      }
+    }
+  };
+
   return (
-    <Modal open={open}>
-      <Box sx={style} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          {isEditMode ? 'Modifica Atleta' : 'Aggiungi Atleta'}
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+    <DrawerModal
+      open={open}
+      onClose={onClose}
+      title="Atleta"
+      badge={formData.eta || athlete?.eta}
+      footer={
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Box>
+            {isEditMode && onDelete && (
+              <Button
+                onClick={handleDelete}
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+              >
+                Elimina profilo
+              </Button>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button onClick={onClose} variant="outlined">
+              Annulla
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              variant="contained"
+            >
+              {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
+            </Button>
+          </Box>
+        </Box>
+      }
+    >
+      {/* Informazioni generali */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni generali</h3>
+        <div className="drawer-section-content">
+          <div className="drawer-fields-row-2">
             <TextField
               name="nome"
               label="Nome"
-              sx={{ minWidth: 250 }}
               value={formData.nome || ''}
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
             <TextField
               name="cognome"
               label="Cognome"
-              sx={{ minWidth: 250 }}
               value={formData.cognome || ''}
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </div>
+
+          <div className="drawer-fields-row-2">
             <TextField
               name="dataNascita"
               label="Data di Nascita"
               type="date"
-              sx={{ minWidth: 250 }}
               value={formData.dataNascita || ''}
               onChange={handleChange}
               fullWidth
               required
+              size="small"
               InputLabelProps={{
                 shrink: true,
               }}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Autocomplete
-              id="athlete-type-select"
-              value={formData.tipoAtleta || null}
-              sx={{ minWidth: 250 }}
-              getOptionLabel={(option) => option.nome || ''}
-              onChange={handleAthleteTypeChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Tipo Atleta"
-                  variant="outlined"
-                  required
-                  fullWidth
-                />
-              )}
-              options={athleteTypes}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+
             <Autocomplete
               id="gender-select"
               value={formData.sesso || ''}
-              sx={{ minWidth: 150 }}
               getOptionLabel={(sesso) => sesso}
               onChange={(event, value) => handleGenderChange(value)}
               isOptionEqualToValue={(option, value) => option === value}
@@ -210,133 +206,122 @@ const AthleteModal = ({
                 <TextField
                   {...params}
                   label="Sesso"
-                  fullWidth
+                  size="small"
                   required
                 />
               )}
               options={['M', 'F']}
             />
-          </Grid>
-          <Grid item xs={12}>
-            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-              <Autocomplete
-                id="club-select"
-                value={clubName}
-                sx={{ minWidth: 350 }}
-                groupBy={(club) => club.charAt(0).toUpperCase()}
-                getOptionLabel={(club) => club}
-                onChange={(event, value) => handleClubSelectChange(value)}
-                isOptionEqualToValue={(option, value) => option === value}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Club"
-                    fullWidth
-                    required
-                  />
-                )}
-                options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
-              />
-            </AuthComponent>
-            <AuthComponent requiredRoles={['club']}>
-              <TextField
-                id="club-select"
-                label="Club"
-                value={clubName}
-                sx={{ minWidth: 350 }}
-                fullWidth
-                required
-                InputProps={{
-                  readOnly: true,
-                }}
-                disabled={false}
-              />
-            </AuthComponent>
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </div>
+          <TextField
+            name="codiceFiscale"
+            label="Codice Fiscale"
+            value={formData.codiceFiscale || ''}
+            onChange={handleChange}
+            required
+            fullWidth
+            size="small"
+          />
+        </div>
+      </div>
+
+      {/* Informazioni federazione */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni federazione</h3>
+        <div className="drawer-section-content">
+          <div className="drawer-fields-row-2">
             <TextField
-              name="codiceFiscale"
-              label="Codice Fiscale"
-              sx={{ minWidth: 250 }}
-              value={formData.codiceFiscale || ''}
+              name="numeroTessera"
+              label="Numero Tessera"
+              value={formData.numeroTessera || ''}
               onChange={handleChange}
               required
               fullWidth
+              size="small"
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              name="luogoNascita"
-              label="Luogo di Nascita"
-              sx={{ minWidth: 250 }}
-              value={formData.luogoNascita || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
             <Autocomplete
-              id="tesseramento-select"
-              value={formData.tesseramento || ''}
-              sx={{ minWidth: 250 }}
-              getOptionLabel={(tesseramento) => tesseramento}
-              onChange={(event, value) => handleTesseramentoChange(value)}
+              id="grade-select"
+              value={formData.tipoAtleta || null}
+              getOptionLabel={(option) => option.nome || ''}
+              onChange={handleAthleteTypeChange}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Livello Atleta"
+                  variant="outlined"
+                  required
+                  size="small"
+                />
+              )}
+              options={athleteTypes}
+            />
+          </div>
+
+          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+            <Autocomplete
+              id="club-select"
+              value={clubName}
+              groupBy={(club) => club.charAt(0).toUpperCase()}
+              getOptionLabel={(club) => club}
+              onChange={(event, value) => handleClubSelectChange(value)}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Tesseramento"
-                  fullWidth
+                  label="Club"
+                  size="small"
+                  required
                 />
               )}
-              options={['FIWUK', 'ASI']}
+              options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
+          </AuthComponent>
+
+          <AuthComponent requiredRoles={['club']}>
             <TextField
-              name="peso"
-              label="Peso (kg)"
-              sx={{ minWidth: 250 }}
-              value={formData.peso || ''}
-              onChange={handleChange}
+              id="club-select-readonly"
+              label="Club"
+              value={clubName}
               fullWidth
+              required
+              size="small"
+              InputProps={{
+                readOnly: true,
+              }}
+              disabled={false}
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              name="email"
-              label="Email"
-              type="email"
-              sx={{ minWidth: 250 }}
-              value={formData.email || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              name="telefono"
-              label="Telefono"
-              sx={{ minWidth: 250 }}
-              value={formData.telefono || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-        </Grid>
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose}>Annulla</Button>
-          <Button type="submit" variant="contained" sx={{ ml: 2 }}>
-            {isEditMode ? 'Salva' : 'Aggiungi'}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+          </AuthComponent>
+          
+                  </div>
+      </div>
+
+      {/* Dati aggiuntivi nascosti inizialmente */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni assicurative</h3>
+        <div className="drawer-section-content">
+
+          <TextField
+            name="scadenzaCertificato"
+            label="Scadenza Certificato Medico"
+            type="date"
+            value={formData.scadenzaCertificato || ''}
+            onChange={handleChange}
+            fullWidth
+            required
+            size="small"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
+    </DrawerModal>
   );
 };
 
