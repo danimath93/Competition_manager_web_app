@@ -1,30 +1,20 @@
 import React from 'react';
 import {
-  Modal,
-  Box,
-  Typography,
   TextField,
   Button,
-  Grid,
   Alert,
+  Box,
+  Autocomplete,
 } from '@mui/material';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-};
+import { Delete as DeleteIcon } from '@mui/icons-material';
+import DrawerModal from './common/DrawerModal';
+import './common/DrawerModal.css';
 
 const ClubModal = ({
   open,
   onClose,
   onSubmit,
+  onDelete,
   club,
   isEditMode,
 }) => {
@@ -42,6 +32,7 @@ const ClubModal = ({
         direttoreTecnico: club?.direttoreTecnico,
         recapitoTelefonico: club?.recapitoTelefonico,
         email: club?.email,
+        tesseramento: club?.tesseramento,
       });
 
     } else {
@@ -54,12 +45,17 @@ const ClubModal = ({
         direttoreTecnico: '',
         recapitoTelefonico: '',
         email: '',
+        tesseramento: '',
       });
     }
   }, [open, isEditMode, club]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value === '' ? null : e.target.value });
+  };
+
+  const handleTesseramentoChange = (value) => {
+    setFormData({ ...formData, tesseramento: value });
   };
 
   const handleSubmit = async (e) => {
@@ -72,29 +68,73 @@ const ClubModal = ({
       } else {
         await onSubmit(formData);
       }
+      onClose();
     } catch (error) {
       setDisplayError(error.message || 'Errore durante la modifica del club.');
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Sei sicuro di voler eliminare questo club?')) {
+      try {
+        if (onDelete) {
+          await onDelete(club.id);
+          onClose();
+        }
+      } catch (error) {
+        setDisplayError(error.message || "Errore nell'eliminazione del club");
+      }
+    }
+  };
+
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={style} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" component="h2">
-          {isEditMode ? 'Modifica Club' : 'Aggiungi Club'}
-        </Typography>
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid item xs={12}>
-            <TextField
-              name="denominazione"
-              label="Denominazione"
-              value={formData.denominazione || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={6}>
+    <DrawerModal
+      open={open}
+      onClose={onClose}
+      title="Club"
+      footer={
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Box>
+            {isEditMode && onDelete && (
+              <Button
+                onClick={handleDelete}
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+              >
+                Elimina club
+              </Button>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button onClick={onClose} variant="outlined">
+              Annulla
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              variant="contained"
+            >
+              {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
+            </Button>
+          </Box>
+        </Box>
+      }
+    >
+      {/* Informazioni generali */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni generali</h3>
+        <div className="drawer-section-content">
+          <TextField
+            name="denominazione"
+            label="Denominazione"
+            value={formData.denominazione || ''}
+            onChange={handleChange}
+            fullWidth
+            required
+            size="small"
+          />
+
+          <div className="drawer-fields-row-2">
             <TextField
               name="codiceFiscale"
               label="Codice Fiscale"
@@ -102,9 +142,8 @@ const ClubModal = ({
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>
-          <Grid item xs={6}>
             <TextField
               name="partitaIva"
               label="Partita IVA"
@@ -112,47 +151,28 @@ const ClubModal = ({
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              name="indirizzo"
-              label="Indirizzo"
-              value={formData.indirizzo || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              name="legaleRappresentante"
-              label="Legale Rappresentante"
-              value={formData.legaleRappresentante || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              name="direttoreTecnico"
-              label="Direttore Tecnico"
-              value={formData.direttoreTecnico || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={6}>
+          </div>
+
+          <TextField
+            name="indirizzo"
+            label="Indirizzo"
+            value={formData.indirizzo || ''}
+            onChange={handleChange}
+            fullWidth
+            size="small"
+          />
+
+          <div className="drawer-fields-row-2">
             <TextField
               name="recapitoTelefonico"
               label="Recapito Telefonico"
               value={formData.recapitoTelefonico || ''}
               onChange={handleChange}
               fullWidth
+              size="small"
             />
-          </Grid>
-          <Grid item xs={6}>
             <TextField
               name="email"
               label="Email"
@@ -160,22 +180,68 @@ const ClubModal = ({
               value={formData.email || ''}
               onChange={handleChange}
               fullWidth
+              size="small"
             />
-          </Grid>
-        </Grid>
-        {displayError && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {displayError}
-          </Alert>
-        )}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose}>Annulla</Button>
-          <Button type="submit" variant="contained" sx={{ ml: 2 }}>
-            {isEditMode ? 'Salva' : 'Aggiungi'}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+          </div>
+        </div>
+      </div>
+
+      {/* Informazioni legali */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni legali e direzione</h3>
+        <div className="drawer-section-content">
+          <div className="drawer-fields-row-2">
+            <TextField
+              name="legaleRappresentante"
+              label="Legale Rappresentante"
+              value={formData.legaleRappresentante || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+              size="small"
+            />
+            <TextField
+              name="direttoreTecnico"
+              label="Direttore Tecnico"
+              value={formData.direttoreTecnico || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+              size="small"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Informazioni federazione */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni federazione</h3>
+        <div className="drawer-section-content">
+          <Autocomplete
+            id="tesseramento-select"
+            value={formData.tesseramento || ''}
+            getOptionLabel={(tesseramento) => tesseramento}
+            onChange={(event, value) => handleTesseramentoChange(value)}
+            isOptionEqualToValue={(option, value) => option === value}
+            options={['FIWUK', 'ASI', 'Altro Ente']}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Tesseramento"
+                size="small"
+                required
+              />
+            )}
+          />
+        </div>
+      </div>
+
+      {displayError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {displayError}
+        </Alert>
+      )}
+    </DrawerModal>
   );
 };
 

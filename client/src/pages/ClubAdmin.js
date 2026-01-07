@@ -12,7 +12,6 @@ import { useAuth } from '../context/AuthContext';
 import { loadAllClubs, createClub, updateClub, deleteClub } from '../api/clubs';
 import ClubsTable from '../components/ClubsTable';
 import ClubModal from '../components/ClubModal';
-import ClubInfoModal from '../components/ClubInfoModal';
 
 const ClubAdmin = () => {
   const { user } = useAuth();
@@ -21,12 +20,9 @@ const ClubAdmin = () => {
   const [filters, setFilters] = useState({
     denominazione: '',
     codiceFiscale: '',
-    partitaIva: '',
-    legaleRappresentante: '',
-    direttoreTecnico: '',
+    rappresentanti: '',
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
 
@@ -58,19 +54,10 @@ const ClubAdmin = () => {
         club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
       );
     }
-    if (filters.partitaIva) {
+    if (filters.rappresentanti) {
       result = result.filter((club) =>
-        club.partitaIva?.toLowerCase().includes(filters.partitaIva.toLowerCase())
-      );
-    }
-    if (filters.legaleRappresentante) {
-      result = result.filter((club) =>
-        club.legaleRappresentante?.toLowerCase().includes(filters.legaleRappresentante.toLowerCase())
-      );
-    }
-    if (filters.direttoreTecnico) {
-      result = result.filter((club) =>
-        club.direttoreTecnico?.toLowerCase().includes(filters.direttoreTecnico.toLowerCase())
+        club.legaleRappresentante?.toLowerCase().includes(filters.rappresentanti.toLowerCase()) ||
+        club.direttoreTecnico?.toLowerCase().includes(filters.rappresentanti.toLowerCase())
       );
     }
     setFilteredClubs(result);
@@ -88,16 +75,6 @@ const ClubAdmin = () => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedClub(null);
-  };
-
-  const handleOpenInfoModal = (club) => {
-    setSelectedClub(club);
-    setIsInfoModalOpen(true);
-  };
-
-  const handleCloseInfoModal = () => {
-    setIsInfoModalOpen(false);
     setSelectedClub(null);
   };
 
@@ -152,28 +129,10 @@ const ClubAdmin = () => {
               onChange={handleFilterChange}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="partitaIva"
-              label="Filtra per Partita IVA"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
-          </Grid>
           <Grid item xs={12} sm={6}>
             <TextField
-              name="legaleRappresentante"
-              label="Filtra per Legale Rappresentante"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              name="direttoreTecnico"
-              label="Filtra per Direttore Tecnico"
+              name="rappresentanti"
+              label="Filtra per Rappr. o Dir. Tecnico"
               variant="outlined"
               fullWidth
               onChange={handleFilterChange}
@@ -194,7 +153,6 @@ const ClubAdmin = () => {
 
       <ClubsTable
         clubs={filteredClubs || []}
-        onInfo={handleOpenInfoModal}
         onEdit={handleOpenModal}
         onDelete={handleDeleteClub}
       />
@@ -204,17 +162,10 @@ const ClubAdmin = () => {
           open={isModalOpen}
           onClose={handleCloseModal}
           onSubmit={handleSaveClub}
+          onDelete={handleDeleteClub}
           isEditMode={isEditMode}
           club={selectedClub}
           user={user}
-        />
-      )}
-
-      {isInfoModalOpen && (
-        <ClubInfoModal
-          open={isInfoModalOpen}
-          onClose={handleCloseInfoModal}
-          club={selectedClub}
         />
       )}
     </Container>
