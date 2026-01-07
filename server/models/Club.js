@@ -62,6 +62,10 @@ const Club = sequelize.define('Club', {
   logoType: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  tesseramento: {
+    type: DataTypes.STRING,
+    allowNull: false
   }
 },
   {

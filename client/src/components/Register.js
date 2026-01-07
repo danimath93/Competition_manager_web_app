@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
-import { TextInput, PasswordInput } from './common';
+import { TextInput, PasswordInput, Tabs } from './common';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 import { checkClubExists, createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
-import './styles/Login.css';
 import './styles/Layout.css';
+import './styles/Register.css';
 
 const Register = () => {
   const navigate = useNavigate();
+  
+  // Stato per il tab attivo
+  const [activeTab, setActiveTab] = useState('club');
+  
+  // Configurazione dei tabs
+  const tabs = [
+    { label: 'Come Atleta', value: 'athlete', disabled: true },
+    { label: 'Come Club', value: 'club', disabled: false }
+  ];
   
   // Sezione 1: credenziali utente
   const [username, setUsername] = useState('');
@@ -27,6 +38,7 @@ const Register = () => {
   const [direttoreTecnico, setDirettoreTecnico] = useState('');
   const [recapitoTelefonico, setRecapitoTelefonico] = useState('');
   const [clubEmail, setClubEmail] = useState('');
+  const [tesseramento, setTesseramento] = useState(null);
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -51,7 +63,7 @@ const Register = () => {
     }
     if (!denominazione.trim() || !codiceFiscale.trim() ||
       !indirizzoVia.trim() || !indirizzoComune.trim() || !indirizzoCap.trim() ||
-      !direttoreTecnico.trim() || !legaleRappresentante.trim() || !clubEmail.trim()) {
+      !direttoreTecnico.trim() || !legaleRappresentante.trim() || !clubEmail.trim() || !tesseramento) {
       setError('Tutti i campi del club contrassegnati con * sono obbligatori.');
       return false;
     }
@@ -85,7 +97,8 @@ const Register = () => {
           legaleRappresentante,
           direttoreTecnico,
           recapitoTelefonico,
-          email: clubEmail
+          email: clubEmail,
+          tesseramento
         }
       };
 
@@ -109,186 +122,215 @@ const Register = () => {
     <div className="layout">
       <Header />
       <div className="layout-content">
-        <div className="login-container-full">
+        <div className="register-container-full">
           <div className="login-left">
-            <div className="login-card">
-              <form onSubmit={handleSubmit} className="login-form">
-                <h3 className="text-accent text-center">Benvenuto! Crea il tuo account</h3>
-                
-                <h6 className="text-primary text-center" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Credenziali di accesso</h6>
-                
-                <TextInput
-                  id="username"
-                  label="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Inserisci username"
-                  disabled={loading}
-                  required
-                  name="username"
-                  autoComplete="username"
-                />
+            <div className="register-card">
+              <h3 className="text-accent text-center">Benvenuto! Crea il tuo account</h3>
+              
+              <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
+                {activeTab === 'club' && (
+                  <form onSubmit={handleSubmit} className="register-form">
+                    <h6 className="text-primary text-center register-section-title">Credenziali di accesso</h6>
+                    
+                    <div className="register-form-grid">
+                      <TextInput
+                        id="username"
+                        label="Nome utente"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Nome utente"
+                        disabled={loading}
+                        required
+                        name="username"
+                        autoComplete="username"
+                      />
 
-                <TextInput
-                  id="email"
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Inserisci email"
-                  disabled={loading}
-                  required
-                  name="email"
-                  autoComplete="email"
-                />
+                      <TextInput
+                        id="email"
+                        label="Email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="La tua email"
+                        disabled={loading}
+                        required
+                        name="email"
+                        autoComplete="email"
+                      />
 
-                <PasswordInput
-                  id="password"
-                  label="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Inserisci password"
-                  disabled={loading}
-                  required
-                  name="new-password"
-                  autoComplete="new-password"
-                />
+                      <PasswordInput
+                        id="password"
+                        label="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="La tua password"
+                        disabled={loading}
+                        required
+                        name="new-password"
+                        autoComplete="new-password"
+                      />
 
-                <PasswordInput
-                  id="confirmPassword"
-                  label="Conferma Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Conferma password"
-                  disabled={loading}
-                  required
-                  name="confirm-password"
-                  autoComplete="new-password"
-                />
+                      <PasswordInput
+                        id="confirmPassword"
+                        label="Ripeti Password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Ripeti la password"
+                        disabled={loading}
+                        required
+                        name="confirm-password"
+                        autoComplete="new-password"
+                      />
 
-                <h6 className="text-primary text-center" style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Informazioni Club</h6>
-                
-                <TextInput
-                  id="denominazione"
-                  label="Denominazione"
-                  value={denominazione}
-                  onChange={(e) => setDenominazione(e.target.value)}
-                  placeholder="Nome del club"
-                  disabled={loading}
-                  required
-                />
+                      <h6 className="text-primary text-center register-section-title">Informazioni Club</h6>
+                      
+                      <TextInput
+                        id="denominazione"
+                        label="Denominazione"
+                        value={denominazione}
+                        onChange={(e) => setDenominazione(e.target.value)}
+                        placeholder="Nome Club"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="codiceFiscale"
-                  label="Codice Fiscale"
-                  value={codiceFiscale}
-                  onChange={(e) => setCodiceFiscale(e.target.value)}
-                  placeholder="Codice Fiscale"
-                  disabled={loading}
-                  required
-                />
+                      <TextInput
+                        id="indirizzoVia"
+                        label="Indirizzo: Via"
+                        value={indirizzoVia}
+                        onChange={(e) => setIndirizzoVia(e.target.value)}
+                        placeholder="Indirizzo: Via"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="partitaIva"
-                  label="Partita IVA"
-                  value={partitaIva}
-                  onChange={(e) => setPartitaIva(e.target.value)}
-                  placeholder="Partita IVA (opzionale)"
-                  disabled={loading}
-                />
+                      <TextInput
+                        id="indirizzoComune"
+                        label="Indirizzo: Comune"
+                        value={indirizzoComune}
+                        onChange={(e) => setIndirizzoComune(e.target.value)}
+                        placeholder="Indirizzo: Comune"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="indirizzoVia"
-                  label="Sede sociale: Indirizzo"
-                  value={indirizzoVia}
-                  onChange={(e) => setIndirizzoVia(e.target.value)}
-                  placeholder="Via, numero civico"
-                  disabled={loading}
-                  required
-                />
+                      <TextInput
+                        id="indirizzoCap"
+                        label="Indirizzo: CAP"
+                        value={indirizzoCap}
+                        onChange={(e) => setIndirizzoCap(e.target.value)}
+                        placeholder="Indirizzo: CAP"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="indirizzoComune"
-                  label="Sede sociale: Comune"
-                  value={indirizzoComune}
-                  onChange={(e) => setIndirizzoComune(e.target.value)}
-                  placeholder="Comune"
-                  disabled={loading}
-                  required
-                />
+                      <TextInput
+                        id="codiceFiscale"
+                        label="Codice Fiscale"
+                        value={codiceFiscale}
+                        onChange={(e) => setCodiceFiscale(e.target.value)}
+                        placeholder="Codice fiscale"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="indirizzoCap"
-                  label="Sede sociale: CAP"
-                  value={indirizzoCap}
-                  onChange={(e) => setIndirizzoCap(e.target.value)}
-                  placeholder="CAP"
-                  disabled={loading}
-                  required
-                  maxLength={5}
-                />
+                      <TextInput
+                        id="partitaIva"
+                        label="Partita IVA"
+                        value={partitaIva}
+                        onChange={(e) => setPartitaIva(e.target.value)}
+                        placeholder="Partita IVA"
+                        disabled={loading}
+                      />
 
-                <TextInput
-                  id="legaleRappresentante"
-                  label="Legale Rappresentante"
-                  value={legaleRappresentante}
-                  onChange={(e) => setLegaleRappresentante(e.target.value)}
-                  placeholder="Nome e cognome"
-                  disabled={loading}
-                  required
-                />
+                      <TextInput
+                        id="direttoreTecnico"
+                        label="Direttore tecnico"
+                        value={direttoreTecnico}
+                        onChange={(e) => setDirettoreTecnico(e.target.value)}
+                        placeholder="Nome Direttore Tecnico"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="direttoreTecnico"
-                  label="Direttore Tecnico"
-                  value={direttoreTecnico}
-                  onChange={(e) => setDirettoreTecnico(e.target.value)}
-                  placeholder="Nome e cognome"
-                  disabled={loading}
-                  required
-                />
+                      <TextInput
+                        id="legaleRappresentante"
+                        label="Legale Rappresentante"
+                        value={legaleRappresentante}
+                        onChange={(e) => setLegaleRappresentante(e.target.value)}
+                        placeholder="Nome Legale rappresentante"
+                        disabled={loading}
+                        required
+                      />
 
-                <TextInput
-                  id="recapitoTelefonico"
-                  label="Recapito Telefonico"
-                  value={recapitoTelefonico}
-                  onChange={(e) => setRecapitoTelefonico(e.target.value)}
-                  placeholder="Numero di telefono (opzionale)"
-                  disabled={loading}
-                />
+                      <TextInput
+                        id="clubEmail"
+                        label="Email Club"
+                        type="email"
+                        value={clubEmail}
+                        onChange={(e) => setClubEmail(e.target.value)}
+                        placeholder="Email club"
+                        disabled={loading}
+                        required
+                        name="club-email"
+                        autoComplete="email"
+                      />
 
-                <TextInput
-                  id="clubEmail"
-                  label="Email Club"
-                  type="email"
-                  value={clubEmail}
-                  onChange={(e) => setClubEmail(e.target.value)}
-                  placeholder="Email del club"
-                  disabled={loading}
-                  required
-                  name="club-email"
-                  autoComplete="email"
-                />
+                      <TextInput
+                        id="recapitoTelefonico"
+                        label="Recapito telefonico"
+                        value={recapitoTelefonico}
+                        onChange={(e) => setRecapitoTelefonico(e.target.value)}
+                        placeholder="Numero di telefono"
+                        disabled={loading}
+                      />
 
-                <button
-                  type="submit"
-                  className="login-button"
-                  disabled={loading}
-                >
-                  {loading ? 'Registrazione in corso...' : 'Registrati'}
-                </button>
+                      <div className="text-input-container">
+                        <label className="text-input-label">
+                          <h6>
+                            Tesseramento
+                            <span className="required-asterisk">*</span>
+                          </h6>
+                        </label>
+                        <Autocomplete
+                          id="tesseramento"
+                          value={tesseramento}
+                          onChange={(event, value) => setTesseramento(value)}
+                          options={['FIWUK', 'ASI', 'Altro Ente']}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              placeholder="Seleziona tesseramento"
+                              size="small"
+                              required
+                            />
+                          )}
+                          disabled={loading}
+                        />
+                      </div>
 
-                {error && (
-                  <div className="error-message">
-                    {error}
-                  </div>
+                      <button
+                        type="submit"
+                        className="login-button register-submit-button"
+                        disabled={loading}
+                      >
+                        {loading ? 'Registrazione in corso...' : 'Iscriviti'}
+                      </button>
+
+                      {error && (
+                        <div className="error-message register-messages">
+                          {error}
+                        </div>
+                      )}
+                      {success && (
+                        <div className="success-message register-messages">
+                          {success}
+                        </div>
+                      )}
+                    </div>
+                  </form>
                 )}
-                {success && (
-                  <div className="success-message">
-                    {success}
-                  </div>
-                )}
-              </form>
+              </Tabs>
 
               <div className="login-footer">
                 <span className="register-text">
