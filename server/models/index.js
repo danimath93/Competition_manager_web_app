@@ -16,6 +16,7 @@ const ConfigTipoAtleta = require('./ConfigTipoAtleta');
 const ConfigEsperienza = require('./ConfigEsperienza');
 const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 const CertificatoMedico = require('./CertificatoMedico');
+const DettaglioIscrizioneAtleta = require('./DettaglioIscrizioneAtleta');
 const Documento = require('./Documento');
 // Definisci le associazioni
 
@@ -214,6 +215,10 @@ Competizione.hasMany(IscrizioneClub, {
   as: 'iscrizioniClub'
 });
 
+// Associazioni per DettaglioIscrizioneAtleta
+DettaglioIscrizioneAtleta.belongsTo(Atleta, { foreignKey: 'atletaId', as: 'atleta' });
+Atleta.hasMany(DettaglioIscrizioneAtleta, { foreignKey: 'atletaId', as: 'dettagliIscrizione' });
+
 // Club -> Documento (One-to-One per logo)
 Club.belongsTo(Documento, {
   foreignKey: 'logoId',
@@ -301,5 +306,6 @@ module.exports = {
   ConfigEsperienza,
   SvolgimentoCategoria,
   CertificatoMedico,
+  DettaglioIscrizioneAtleta,
   Documento
 };
