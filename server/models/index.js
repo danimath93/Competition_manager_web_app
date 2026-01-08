@@ -16,6 +16,7 @@ const ConfigTipoAtleta = require('./ConfigTipoAtleta');
 const ConfigEsperienza = require('./ConfigEsperienza');
 const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 const CertificatoMedico = require('./CertificatoMedico');
+const DettaglioIscrizioneAtleta = require('./DettaglioIscrizioneAtleta');
 // Definisci le associazioni
 
 // Club -> Atleti (One-to-Many)
@@ -213,6 +214,10 @@ Competizione.hasMany(IscrizioneClub, {
   as: 'iscrizioniClub'
 });
 
+// Associazioni per DettaglioIscrizioneAtleta
+DettaglioIscrizioneAtleta.belongsTo(Atleta, { foreignKey: 'atletaId', as: 'atleta' });
+Atleta.hasMany(DettaglioIscrizioneAtleta, { foreignKey: 'atletaId', as: 'dettagliIscrizione' });
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,
@@ -230,5 +235,6 @@ module.exports = {
   ConfigTipoAtleta,
   ConfigEsperienza,
   SvolgimentoCategoria,
-  CertificatoMedico
+  CertificatoMedico,
+  DettaglioIscrizioneAtleta
 };
