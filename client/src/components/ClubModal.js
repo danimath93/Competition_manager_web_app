@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import DrawerModal from './common/DrawerModal';
+import ConfirmActionModal from './common/ConfirmActionModal';
 import './common/DrawerModal.css';
 
 const ClubModal = ({
@@ -20,6 +21,7 @@ const ClubModal = ({
 }) => {
   const [formData, setFormData] = React.useState({});
   const [displayError, setDisplayError] = React.useState('');
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (isEditMode && club) {
@@ -97,7 +99,7 @@ const ClubModal = ({
           <Box>
             {isEditMode && onDelete && (
               <Button
-                onClick={handleDelete}
+                onClick={() => setConfirmDeleteModalOpen(true)}
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteIcon />}
@@ -240,6 +242,24 @@ const ClubModal = ({
         <Alert severity="error" sx={{ mt: 2 }}>
           {displayError}
         </Alert>
+      )}
+
+      {confirmDeleteModalOpen && (
+        <ConfirmActionModal
+          open={confirmDeleteModalOpen}
+          onClose={() => setConfirmDeleteModalOpen(false)}
+          title="Conferma Eliminazione"
+          message="Sei sicuro di voler eliminare questo club? Questa azione non può essere annullata."
+          primaryButton={{
+            text: 'Elimina',
+            onClick: async () => { await handleDelete(); },
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setConfirmDeleteModalOpen(false),
+          }}
+          loading={false}
+        />
       )}
     </DrawerModal>
   );

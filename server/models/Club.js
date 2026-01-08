@@ -65,6 +65,10 @@ const Club = sequelize.define('Club', {
     field: 'logo_id',
     comment: 'Riferimento al documento logo del club'
   },
+  abbreviazione: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   tesseramento: {
     type: DataTypes.STRING,
     allowNull: true

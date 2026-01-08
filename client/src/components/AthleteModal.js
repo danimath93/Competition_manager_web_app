@@ -11,6 +11,7 @@ import { loadAllClubs } from '../api/clubs';
 import { loadAthleteTypes } from '../api/config';
 import AuthComponent from './AuthComponent';
 import DrawerModal from './common/DrawerModal';
+import ConfirmActionModal from './common/ConfirmActionModal';
 import './common/DrawerModal.css';
 
 const AthleteModal = ({
@@ -27,6 +28,7 @@ const AthleteModal = ({
   const [clubName, setClubName] = React.useState(athlete?.club?.denominazione || '');
   const [clubNames, setClubNames] = React.useState([]);
   const [athleteTypes, setAthleteTypes] = React.useState([]);
+  const [isDeleteAthleteConfirmModalOpen, setIsDeleteAthleteConfirmModalOpen] = React.useState(false);
   const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
@@ -110,15 +112,13 @@ const AthleteModal = ({
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Sei sicuro di voler eliminare questo atleta?')) {
-      try {
-        if (onDelete) {
-          await onDelete(athlete.id);
-          onClose();
-        }
-      } catch (error) {
-        setError(error.message || "Errore nell'eliminazione dell'atleta");
+    try {
+      if (onDelete) {
+        await onDelete(athlete.id);
+        onClose();
       }
+    } catch (error) {
+      setError(error.message || "Errore nell'eliminazione dell'atleta");
     }
   };
 
@@ -133,7 +133,7 @@ const AthleteModal = ({
           <Box>
             {isEditMode && onDelete && (
               <Button
-                onClick={handleDelete}
+                onClick={() => setIsDeleteAthleteConfirmModalOpen(true)}
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteIcon />}
@@ -321,6 +321,24 @@ const AthleteModal = ({
           {error}
         </Alert>
       )}
+
+      {isDeleteAthleteConfirmModalOpen && (
+        <ConfirmActionModal
+          open={isDeleteAthleteConfirmModalOpen}
+          onClose={() => setIsDeleteAthleteConfirmModalOpen(false)}
+          title="Conferma Eliminazione"
+          message="Sei sicuro di voler eliminare l'atleta selezionato?"
+          primaryButton={{
+            text: 'Elimina',
+            onClick: async () => { await handleDelete(); setIsDeleteAthleteConfirmModalOpen(false); },
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setIsDeleteAthleteConfirmModalOpen(false),
+          }}
+        />
+      )}
+
     </DrawerModal>
   );
 };

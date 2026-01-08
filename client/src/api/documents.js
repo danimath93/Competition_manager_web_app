@@ -92,6 +92,22 @@ export const getDocumentoInfo = async (documentoId) => {
   }
 };
 
+/** Ottieni il BLOB di un documento
+ * @param {number} documentoId - ID del documento
+ */
+export const getBlobDocumento = async (documentoId) => {
+  try {
+    const response = await axios.get(`/documenti/${documentoId}/download`, {
+
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il recupero del BLOB del documento:', error);
+    throw error;
+  }
+};
+
 /**
  * Elimina un documento
  * @param {number} documentoId - ID del documento

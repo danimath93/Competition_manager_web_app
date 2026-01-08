@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Button,
   Box,
   Grid,
   TextField,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { FaUniversity } from 'react-icons/fa';
+
 import { useAuth } from '../context/AuthContext';
 import { loadAllClubs, createClub, updateClub, deleteClub } from '../api/clubs';
 import ClubsTable from '../components/ClubsTable';
 import ClubModal from '../components/ClubModal';
+import PageHeader from '../components/PageHeader';
+import Button from '../components/common/Button';
+import ConfirmActionModal from '../components/common/ConfirmActionModal';
 
 const ClubAdmin = () => {
   const { user } = useAuth();
@@ -25,6 +27,7 @@ const ClubAdmin = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
+  const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,6 +96,10 @@ const ClubAdmin = () => {
     }
   };
 
+  const handleDeleteClubConfirm = () => {
+    setConfirmDeleteModalOpen(true);
+  };
+
   const handleDeleteClub = async (clubId) => {
     try {
       await deleteClub(clubId);
@@ -104,58 +111,69 @@ const ClubAdmin = () => {
   };
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        Gestione Club
-      </Typography>
-
-      <Box sx={{ mb: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="denominazione"
-              label="Filtra per Denominazione"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              name="codiceFiscale"
-              label="Filtra per Codice Fiscale"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              name="rappresentanti"
-              label="Filtra per Rappr. o Dir. Tecnico"
-              variant="outlined"
-              fullWidth
-              onChange={handleFilterChange}
-            />
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Box sx={{ mb: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenModal()}
-        >
-          Aggiungi Club
-        </Button>
-      </Box>
-
-      <ClubsTable
-        clubs={filteredClubs || []}
-        onEdit={handleOpenModal}
-        onDelete={handleDeleteClub}
+    <div className="page-container">
+      <PageHeader
+        title="Gestione Club" 
+        icon={FaUniversity}
       />
+
+      {/* Contenuto della pagina */}
+      <div className="page-content">
+        <div className="page-card">
+          <div className="page-card-body">
+            <Box sx={{ mb: 2 }} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    name="denominazione"
+                    label="Filtra per Denominazione"
+                    variant="outlined"
+                    fullWidth
+                    onChange={handleFilterChange}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    name="codiceFiscale"
+                    label="Filtra per Codice Fiscale"
+                    variant="outlined"
+                    fullWidth
+                    onChange={handleFilterChange}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="rappresentanti"
+                    label="Filtra per Rappr. o Dir. Tecnico"
+                    variant="outlined"
+                    fullWidth
+                    onChange={handleFilterChange}
+                  />
+                </Grid>
+              </Grid>
+              <Button
+                icon={Add}
+                onClick={() => handleOpenModal()}
+              >
+                Aggiungi Club
+              </Button>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+            </Box>
+          </div>
+        </div>
+
+        <div className="page-card">
+          <div className="page-card-body">
+            <ClubsTable
+              clubs={filteredClubs || []}
+              onEdit={handleOpenModal}
+              onDelete={handleDeleteClubConfirm}
+            />
+          </div>
+        </div>
+      </div>
 
       {isModalOpen && (
         <ClubModal
@@ -168,7 +186,25 @@ const ClubAdmin = () => {
           user={user}
         />
       )}
-    </Container>
+
+      {confirmDeleteModalOpen && (
+        <ConfirmActionModal
+          open={confirmDeleteModalOpen}
+          onClose={() => setConfirmDeleteModalOpen(false)}
+          title="Conferma Eliminazione"
+          subtitle={selectedClub?.denominazione}
+          message="Sei sicuro di voler eliminare questo club? Questa azione non può essere annullata."
+          primaryButton={{
+            text: 'Elimina',
+            onClick: async () => { await handleDeleteClub(selectedClub.id); setConfirmDeleteModalOpen(false); },
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setConfirmDeleteModalOpen(false),
+          }}
+        />
+      )}
+    </div>
   );
 };
 

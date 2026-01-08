@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { 
   FaTachometerAlt, 
   FaTrophy, 
@@ -15,12 +16,16 @@ import { useLanguage } from '../context/LanguageContext';
 import { hasPermission } from '../utils/permissions';
 import './styles/Sidebar.css';
 import { useAuth } from '../context/AuthContext';
+import { getBlobDocumento } from '../api/documents';
+import { loadClubByID } from '../api/clubs';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const { t } = useLanguage();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const userPermissions = user ? user.permissions : [];
+  const [logoSource, setLogoSource] = useState(null);
+  const [loadingLogo, setLoadingLogo] = useState(false);
 
   const allMenuItems = [
     { path: '/dashboard', icon: FaTachometerAlt, label: t('dashboard'), permission: 'dashboard' },
@@ -36,6 +41,56 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const menuItems = allMenuItems.filter(item => 
     hasPermission(userPermissions, item.permission)
   );
+
+  // Carica il logo del club quando l'utente cambia
+  useEffect(() => {
+    let isMounted = true;
+    let currentBlobUrl = null;
+
+    const loadLogo = async () => {
+      // Revoca URL precedente
+      setLogoSource(prevUrl => {
+        if (prevUrl && prevUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(prevUrl);
+        }
+        return null;
+      });
+
+      if (user?.clubId) {
+        setLoadingLogo(true);
+        try {
+          const club = await loadClubByID(user.clubId);
+          
+          if (club?.logoId && isMounted) {
+            const blob = await getBlobDocumento(club.logoId);
+            
+            if (blob && isMounted) {
+              currentBlobUrl = URL.createObjectURL(blob);
+              setLogoSource(currentBlobUrl);
+            }
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento del logo del club:', error);
+        } finally {
+          if (isMounted) {
+            setLoadingLogo(false);
+          }
+        }
+      } else {
+        setLoadingLogo(false);
+      }
+    };
+
+    loadLogo();
+
+    // Cleanup
+    return () => {
+      isMounted = false;
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+      }
+    };
+  }, [user?.clubId]);
 
   const handleLogout = async () => {
     try {
@@ -73,18 +128,21 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           className="sidebar-club-logo"
           title={!isOpen ? `${user?.username || 'Utente'}${user?.clubName ? `\n${user.clubName}` : ''}` : ''}
         >
-          {/* Placeholder per logo club - inserire immagine reale */}
-          <img 
-            src="/path/to/club-logo.png" 
-            alt="Club Logo" 
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div className="sidebar-club-logo-placeholder">
-            <FaUniversity />
-          </div>
+          {/* Logo del club o placeholder */}
+          {logoSource ? (
+            <img 
+              src={logoSource} 
+              alt="Club Logo" 
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : (
+            <div className="sidebar-club-logo-placeholder">
+              <FaUniversity />
+            </div>
+          )}
         </div>
         {isOpen && (
           <div className="sidebar-club-info">

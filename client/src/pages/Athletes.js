@@ -20,6 +20,7 @@ import CertificatoModal from '../components/CertificatoModal';
 import AuthComponent from '../components/AuthComponent';
 import PageHeader from '../components/PageHeader';
 import { Button } from '../components/common';
+import ConfirmActionModal from '../components/common/ConfirmActionModal';
 import '../pages/styles/CommonPageStyles.css';
 
 const Athletes = () => {
@@ -37,7 +38,7 @@ const Athletes = () => {
     ageGroup: ''
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [isDeleteAthleteConfirmModalOpen, setIsDeleteAthleteConfirmModalOpen] = useState(false);
   const [isCertificatoModalOpen, setIsCertificatoModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
@@ -139,16 +140,6 @@ const Athletes = () => {
     setSelectedAthlete(null);
   };
 
-  const handleOpenInfoModal = (athlete) => {
-    setSelectedAthlete(athlete);
-    setIsInfoModalOpen(true);
-  };
-
-  const handleCloseInfoModal = () => {
-    setIsInfoModalOpen(false);
-    setSelectedAthlete(null);
-  };
-
   const handleOpenCertificatoModal = (athlete) => {
     setSelectedAthlete(athlete);
     setIsCertificatoModalOpen(true);
@@ -188,6 +179,11 @@ const Athletes = () => {
     }
   };
 
+  const handleDeleteAthleteConfirm = (athlete) => {
+    setSelectedAthlete(athlete);
+    setIsDeleteAthleteConfirmModalOpen(true);
+  };
+
   const loadAthleteByUserPermissions = async () => {
     if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
       const athletesData = await loadAllAthletes();
@@ -209,7 +205,6 @@ const Athletes = () => {
 
       {/* Contenuto della pagina */}
       <div className="page-content">
-
         <div className="page-card">
           {/* <div className="page-card-header">
             <Typography variant="h6" className="page-card-title">
@@ -294,9 +289,8 @@ const Athletes = () => {
                 onUploadCertificato: handleOpenCertificatoModal,
                 onDownloadCertificato: handleOpenCertificatoModal
               }))}
-              onInfo={handleOpenInfoModal}
               onEdit={handleOpenModal}
-              onDelete={handleDeleteAthlete}
+              onDelete={handleDeleteAthleteConfirm}
             />
 
             {isModalOpen && (
@@ -304,6 +298,7 @@ const Athletes = () => {
                 open={isModalOpen}
                 onClose={handleCloseModal}
                 onSubmit={handleSaveAthlete}
+                onDelete={handleDeleteAthlete}
                 isEditMode={isEditMode}
                 athlete={selectedAthlete}
                 clubs={clubs}
@@ -317,6 +312,23 @@ const Athletes = () => {
                 onClose={handleCloseCertificatoModal}
                 atleta={selectedAthlete}
                 onSuccess={handleCertificatoSuccess}
+              />
+            )}
+
+            {isDeleteAthleteConfirmModalOpen && (
+              <ConfirmActionModal
+                open={isDeleteAthleteConfirmModalOpen}
+                onClose={() => setIsDeleteAthleteConfirmModalOpen(false)}
+                title="Conferma Eliminazione"
+                message="Sei sicuro di voler eliminare l'atleta selezionato?"
+                primaryButton={{
+                  text: 'Elimina',
+                  onClick: async () => { await handleDeleteAthlete(selectedAthlete); setIsDeleteAthleteConfirmModalOpen(false); },
+                }}
+                secondaryButton={{
+                  text: 'Annulla',
+                  onClick: () => setIsDeleteAthleteConfirmModalOpen(false),
+                }}
               />
             )}
           </div>

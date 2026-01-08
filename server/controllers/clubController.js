@@ -1,5 +1,4 @@
 const { Club, Documento } = require('../models');
-const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutti i club
@@ -207,6 +206,8 @@ const uploadLogoClub = async (req, res) => {
     // Se esiste già un logo, elimina il vecchio documento
     if (club.logoId) {
       const vecchioLogo = await Documento.findByPk(club.logoId);
+      club.logoId = null;
+      await club.save();
       if (vecchioLogo) {
         await vecchioLogo.destroy();
       }
