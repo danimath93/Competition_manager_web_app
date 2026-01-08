@@ -1,4 +1,4 @@
-const { Club } = require('../models');
+const { Club, Documento } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
 
@@ -23,8 +23,17 @@ const getAllClubs = async (req, res) => {
 const getClubById = async (req, res) => {
   try {
     const { id } = req.params;
-    const club = await Club.scope('withLogo').findByPk(id, {
-      include: ['atleti', 'giudici', 'competizioniOrganizzate']
+    const club = await Club.findByPk(id, {
+      include: [
+        'atleti',
+        'giudici',
+        'competizioniOrganizzate',
+        {
+          model: Documento,
+          as: 'logoDocumento',
+          attributes: { exclude: ['file'] }
+        }
+      ]
     });
 
     if (!club) {
@@ -77,7 +86,15 @@ const updateClub = async (req, res) => {
       return res.status(404).json({ error: 'Club non trovato' });
     }
     
-    const updatedClub = await Club.scope('withLogo').findByPk(id);
+    const updatedClub = await Club.findByPk(id, {
+      include: [
+        {
+          model: Documento,
+          as: 'logoDocumento',
+          attributes: { exclude: ['file'] }
+        }
+      ]
+    });
     logger.info(`Club aggiornato - ID: ${id}`);
     res.json(updatedClub);
   } catch (error) {
@@ -176,8 +193,8 @@ const uploadLogoClub = async (req, res) => {
       return res.status(400).json({ error: 'Nessun file inviato.' });
     }
     const file = req.file;
-    if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
-      return res.status(400).json({ error: 'Solo file JPEG o PNG ammessi.' });
+    if (!['image/jpeg', 'image/png', 'image/svg+xml'].includes(file.mimetype)) {
+      return res.status(400).json({ error: 'Solo file JPEG, PNG o SVG ammessi.' });
     }
     if (file.size > 2 * 1024 * 1024) {
       return res.status(400).json({ error: 'File troppo grande (max 2MB).' });
@@ -186,10 +203,34 @@ const uploadLogoClub = async (req, res) => {
     if (!club) {
       return res.status(404).json({ error: 'Club non trovato.' });
     }
-    club.logo = file.buffer;
-    club.logoType = file.mimetype;
+
+    // Se esiste già un logo, elimina il vecchio documento
+    if (club.logoId) {
+      const vecchioLogo = await Documento.findByPk(club.logoId);
+      if (vecchioLogo) {
+        await vecchioLogo.destroy();
+      }
+    }
+
+    // Crea il nuovo documento logo
+    const documento = await Documento.create({
+      nomeFile: file.originalname,
+      file: file.buffer,
+      mimeType: file.mimetype,
+      dimensione: file.size,
+      tipoDocumento: 'logo_club'
+    });
+
+    // Aggiorna il riferimento nel club
+    club.logoId = documento.id;
     await club.save();
-    res.json(club);
+
+    logger.info(`Logo caricato per club ${id} - Documento ID: ${documento.id}`);
+    res.json({
+      message: 'Logo caricato con successo',
+      logoId: documento.id,
+      nomeFile: documento.nomeFile
+    });
   } catch (error) {
     logger.error(`Errore durante l'upload del logo per il club ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ error: 'Errore upload logo', details: error.message });

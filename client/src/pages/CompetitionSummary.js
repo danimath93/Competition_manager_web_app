@@ -480,38 +480,6 @@ const CompetitionSummary = () => {
                           </TableCell>
                           <TableCell align="center">
                             <Box display="flex" gap={1} justifyContent="center">
-                              {clubReg.certificatiMediciNome && (
-                                <Tooltip title="Scarica Certificati Medici">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() =>
-                                      handleDownloadDocument(
-                                        clubId,
-                                        'certificatiMedici',
-                                        clubReg.certificatiMediciNome
-                                      )
-                                    }
-                                  >
-                                    <DownloadIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {clubReg.autorizzazioniNome && (
-                                <Tooltip title="Scarica Autorizzazioni">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() =>
-                                      handleDownloadDocument(
-                                        clubId,
-                                        'autorizzazioni',
-                                        clubReg.autorizzazioniNome
-                                      )
-                                    }
-                                  >
-                                    <DownloadIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
                               {clubReg.confermaPresidenteNome && (
                                 <Tooltip title="Scarica Conferma Presidente">
                                   <IconButton
@@ -528,9 +496,7 @@ const CompetitionSummary = () => {
                                   </IconButton>
                                 </Tooltip>
                               )}
-                              {!clubReg.certificatiMediciNome &&
-                                !clubReg.autorizzazioniNome &&
-                                !clubReg.confermaPresidenteNome && '-'}
+                              {!clubReg.confermaPresidenteNome && '-'}
                             </Box>
                           </TableCell>
                         </TableRow>

@@ -55,30 +55,24 @@ const Club = sequelize.define('Club', {
       isEmail: true
     }
   },
-  logo: {
-    type: DataTypes.BLOB('long'),
-    allowNull: true
-  },
-  logoType: {
-    type: DataTypes.STRING,
-    allowNull: true
+  logoId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'documenti',
+      key: 'id'
+    },
+    field: 'logo_id',
+    comment: 'Riferimento al documento logo del club'
   },
   tesseramento: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   }
 },
   {
     tableName: 'clubs',
-    timestamps: true,
-    defaultScope: {
-      attributes: { exclude: ['logo', 'logoType'] }
-    },
-    scopes: {
-      withLogo: {
-        attributes: { include: ['logo', 'logoType'] }
-      }
-    }
+    timestamps: true
   }
 );
 

@@ -33,14 +33,10 @@ const RegistrationDocumentsUploadModal = ({
 
   // File visualizzati (caricati da clubRegistration o nuovi selezionati)
   const [displayedFiles, setDisplayedFiles] = useState({
-    certificatiMedici: null,
-    autorizzazioni: null,
     confermaPresidente: null
   });
 
   const [displayedFileNames, setDisplayedFileNames] = useState({
-    certificatiMedici: '',
-    autorizzazioni: '',
     confermaPresidente: ''
   });
 
@@ -52,15 +48,16 @@ const RegistrationDocumentsUploadModal = ({
   // Carica i file da clubRegistration quando il modal viene aperto
   useEffect(() => {
     if (open) {
+      let confermaPresidenteNome = '';
+      if (clubRegistration?.confermaPresidenteDocumento && clubRegistration?.confermaPresidenteDocumento.nomeFile) {
+        confermaPresidenteNome = clubRegistration.confermaPresidenteDocumento.nomeFile;
+      }
+
       setDisplayedFiles({
-        certificatiMedici: null,
-        autorizzazioni: null,
         confermaPresidente: null,
       });
       setDisplayedFileNames({
-        certificatiMedici: clubRegistration?.certificatiMediciNome || '',
-        autorizzazioni: clubRegistration?.autorizzazioniNome || '',
-        confermaPresidente: clubRegistration?.confermaPresidenteNome || '',
+        confermaPresidente: confermaPresidenteNome,
       });
       setUploadStatus({
         message: '',
@@ -128,22 +125,14 @@ const RegistrationDocumentsUploadModal = ({
 
   const handleResetAll = () => {
     setDisplayedFiles({
-      certificatiMedici: null,
-      autorizzazioni: null,
       confermaPresidente: null,
     });
     setDisplayedFileNames({
-      certificatiMedici: '',
-      autorizzazioni: '',
       confermaPresidente: '',
     });
     
     // Reset degli input file
-    const inputCertificati = document.getElementById('certificatiMedici-input');
-    const inputAutorizzazioni = document.getElementById('autorizzazioni-input');
     const inputConferma = document.getElementById('confermaPresidente-input');
-    if (inputCertificati) inputCertificati.value = '';
-    if (inputAutorizzazioni) inputAutorizzazioni.value = '';
     if (inputConferma) inputConferma.value = '';
   };
 
@@ -152,10 +141,10 @@ const RegistrationDocumentsUploadModal = ({
   };
 
   const handleUploadDocuments = async () => {
-    // Verifica che ci siano file da caricare (devono essere File objects, non solo nomi)
-    if (!displayedFiles.certificatiMedici || !displayedFiles.autorizzazioni || !displayedFiles.confermaPresidente) {
+    // Verifica che ci sia il file da caricare
+    if (!displayedFiles.confermaPresidente) {
       setUploadStatus({
-        message: 'Tutti e tre i documenti sono obbligatori',
+        message: 'Il documento di conferma del presidente è obbligatorio',
         error: true
       });
       return;
@@ -164,32 +153,30 @@ const RegistrationDocumentsUploadModal = ({
     try {
       setUploadingDocuments(true);
 
-      // Upload documenti
+      // Upload documento
       await uploadClubRegistrationDocuments(
         user.clubId,
         competitionId,
-        displayedFiles.certificatiMedici,
-        displayedFiles.autorizzazioni,
         displayedFiles.confermaPresidente
       );
       setError(null);
       if (onClose)
         onClose();      
     } catch (err) {
-      console.error('Errore durante il caricamento dei documenti:', err);
-      setError('Errore durante il caricamento dei documenti: ' + (err.response?.data?.error || err.message));
+      console.error('Errore durante il caricamento del documento:', err);
+      setError('Errore durante il caricamento del documento: ' + (err.response?.data?.error || err.message));
     } finally {
       setUploadingDocuments(false);
     }
   };
 
-  // Verifica se almeno un file è presente
-  const hasAnyFile = displayedFileNames.certificatiMedici || displayedFileNames.autorizzazioni || displayedFileNames.confermaPresidente;
+  // Verifica se il file è presente
+  const hasAnyFile = displayedFileNames.confermaPresidente;
   
-  // Verifica se tutti e tre i file sono File objects nuovi (non solo nomi da DB)
-  const hasAllNewFiles = displayedFiles.certificatiMedici && displayedFiles.autorizzazioni && displayedFiles.confermaPresidente;
+  // Verifica se il file è un File object nuovo (non solo nome da DB)
+  const hasAllNewFiles = displayedFiles.confermaPresidente;
   
-  // Il pulsante "Carica Documenti" è abilitato solo se ci sono tutti e tre i file NUOVI
+  // Il pulsante "Carica Documento" è abilitato solo se c'è il file NUOVO
   const canUpload = hasAllNewFiles && !uploadingDocuments;
 
   const FileUploadBox = ({ fileType, label, description }) => {
@@ -294,20 +281,9 @@ const RegistrationDocumentsUploadModal = ({
         <Box>
           <Alert severity="info" sx={{ mb: 3 }}>
             <Typography variant="body2">
-              <strong>Documenti obbligatori:</strong> Per confermare l'iscrizione è necessario caricare tutti e tre i documenti in formato PDF.
+              <strong>Documento obbligatorio:</strong> Per confermare l'iscrizione è necessario caricare la dichiarazione del presidente in formato PDF.
             </Typography>
           </Alert>
-          <FileUploadBox
-            fileType="certificatiMedici"
-            label="Certificati Medici"
-            description="Carica il PDF contenente i certificati medici di tutti gli atleti iscritti."
-          />
-
-          <FileUploadBox
-            fileType="autorizzazioni"
-            label="Autorizzazioni"
-            description="Carica il PDF contenente le autorizzazioni necessarie per la partecipazione."
-          />
 
           <FileUploadBox
             fileType="confermaPresidente"
@@ -364,7 +340,7 @@ const RegistrationDocumentsUploadModal = ({
                 Caricamento...
               </>
             ) : (
-              'Carica Documenti'
+              'Carica Documento'
             )}
           </Button>
         </Box>

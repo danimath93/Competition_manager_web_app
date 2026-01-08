@@ -1,4 +1,4 @@
-const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione } = require('../models');
+const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento } = require('../models');
 const { IscrizioneClub, IscrizioneAtleta, Atleta } = require('../models');
 
 const logger = require('../helpers/logger/logger');
@@ -18,10 +18,6 @@ const getAllCompetizioni = async (req, res) => {
     
     const competizioni = await Competizione.findAll({
       where: whereClause,
-      attributes: { 
-        // Escludiamo tutti i file BLOB per performance
-        exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']
-      },
       include: [
         {
           model: Categoria,
@@ -30,7 +26,27 @@ const getAllCompetizioni = async (req, res) => {
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logo'] }
+          attributes: { exclude: ['logoId'] }
+        },
+        {
+          model: Documento,
+          as: 'circolareGaraDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'locandinaDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'fileExtra1Documento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'fileExtra2Documento',
+          attributes: { exclude: ['file'] }
         }
       ],
       order: [['dataInizio', 'DESC']]
@@ -72,10 +88,6 @@ const getCompetizioneById = async (req, res) => {
   try {
     const { id } = req.params;
     const competizione = await Competizione.findByPk(id, {
-      attributes: { 
-        // Escludiamo tutti i file BLOB per performance
-        exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']
-      },
       include: [
         {
           model: Categoria,
@@ -85,7 +97,27 @@ const getCompetizioneById = async (req, res) => {
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logo'] }
+          attributes: { exclude: ['logoId'] }
+        },
+        {
+          model: Documento,
+          as: 'circolareGaraDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'locandinaDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'fileExtra1Documento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'fileExtra2Documento',
+          attributes: { exclude: ['file'] }
         }
       ]
     });
@@ -189,9 +221,6 @@ const getCompetizioniByStato = async (req, res) => {
     const { stato } = req.params;
     const competizioni = await Competizione.findAll({
       where: { stato },
-      attributes: { 
-        exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']
-      },
       include: [
         {
           model: Categoria,
@@ -200,7 +229,17 @@ const getCompetizioniByStato = async (req, res) => {
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logo'] }
+          attributes: { exclude: ['logoId'] }
+        },
+        {
+          model: Documento,
+          as: 'circolareGaraDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'locandinaDocumento',
+          attributes: { exclude: ['file'] }
         }
       ],
       order: [['dataInizio', 'ASC']]
@@ -238,9 +277,6 @@ const getCompetizioniByTipologia = async (req, res) => {
           [require('sequelize').Op.contains]: [tipologiaIdInt]
         }
       },
-      attributes: { 
-        exclude: ['circolareGara', 'fileExtra1', 'fileExtra2']
-      },
       include: [
         {
           model: Categoria,
@@ -249,7 +285,17 @@ const getCompetizioniByTipologia = async (req, res) => {
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logo'] }
+          attributes: { exclude: ['logoId'] }
+        },
+        {
+          model: Documento,
+          as: 'circolareGaraDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'locandinaDocumento',
+          attributes: { exclude: ['file'] }
         }
       ],
       order: [['dataInizio', 'DESC']]
@@ -264,116 +310,6 @@ const getCompetizioniByTipologia = async (req, res) => {
     });
   }
 };
-
-// Upload file per una competizione
-const uploadFiles = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const competizione = await Competizione.findByPk(id);
-    
-    if (!competizione) {
-      return res.status(404).json({ error: 'Competizione non trovata' });
-    }
-
-    const updateData = {};
-    
-    // Processa i file caricati e li converte in BLOB
-    if (req.files) {
-      if (req.files.circolareGara && req.files.circolareGara[0]) {
-        const file = req.files.circolareGara[0];
-        updateData.circolareGara = file.buffer;
-        updateData.circolareGaraNome = file.originalname;
-        updateData.circolareGaraTipo = file.mimetype;
-      }
-      if (req.files.fileExtra1 && req.files.fileExtra1[0]) {
-        const file = req.files.fileExtra1[0];
-        updateData.fileExtra1 = file.buffer;
-        updateData.fileExtra1Nome = file.originalname;
-        updateData.fileExtra1Tipo = file.mimetype;
-      }
-      if (req.files.fileExtra2 && req.files.fileExtra2[0]) {
-        const file = req.files.fileExtra2[0];
-        updateData.fileExtra2 = file.buffer;
-        updateData.fileExtra2Nome = file.originalname;
-        updateData.fileExtra2Tipo = file.mimetype;
-      }
-    }
-
-    // Aggiorna la competizione con i file BLOB
-    await Competizione.update(updateData, { where: { id } });
-    
-    const updatedCompetizione = await Competizione.findByPk(id, {
-      attributes: { exclude: ['circolareGara', 'fileExtra1', 'fileExtra2'] } // Escludi i BLOB dalla risposta
-    });
-    
-    res.json({
-      message: 'File caricati con successo',
-      competizione: updatedCompetizione
-    });
-  } catch (error) {
-    logger.error(`Errore nel caricamento dei file per competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nel caricamento dei file',
-      details: error.message 
-    });
-  }
-};
-
-// Download file di una competizione
-const downloadFile = async (req, res) => {
-  try {
-    const { id, fileType } = req.params;
-    const competizione = await Competizione.findByPk(id);
-    
-    if (!competizione) {
-      return res.status(404).json({ error: 'Competizione non trovata' });
-    }
-
-    let fileBuffer, fileName, mimeType;
-    
-    switch (fileType) {
-      case 'circolare':
-        fileBuffer = competizione.circolareGara;
-        fileName = competizione.circolareGaraNome;
-        mimeType = competizione.circolareGaraTipo;
-        break;
-      case 'extra1':
-        fileBuffer = competizione.fileExtra1;
-        fileName = competizione.fileExtra1Nome;
-        mimeType = competizione.fileExtra1Tipo;
-        break;
-      case 'extra2':
-        fileBuffer = competizione.fileExtra2;
-        fileName = competizione.fileExtra2Nome;
-        mimeType = competizione.fileExtra2Tipo;
-        break;
-      default:
-        return res.status(400).json({ error: 'Tipo di file non valido' });
-    }
-
-    if (!fileBuffer) {
-      return res.status(404).json({ error: 'File non trovato' });
-    }
-
-    // Sanitizza il filename per evitare problemi con caratteri speciali
-    const sanitizedFileName = fileName ? fileName.replace(/[^\w\s.-]/gi, '') : 'download';
-
-    res.set({
-      'Content-Type': mimeType || 'application/octet-stream',
-      'Content-Disposition': `attachment; filename="${sanitizedFileName}"`,
-      'Content-Length': fileBuffer.length
-    });
-    
-    res.send(fileBuffer);
-  } catch (error) {
-    logger.error(`Errore nel download del file ${req.params.fileType} per competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nel download del file',
-      details: error.message 
-    });
-  }
-};
-
 
 // Riepilogo costi dettagliato per una competizione e club
 const getCompetitionCostSummary = async (req, res) => {
@@ -762,9 +698,6 @@ module.exports = {
   deleteCompetizione,
   getCompetizioniByStato,
   getCompetizioniByTipologia,
-  uploadFiles,
-  downloadFile,
-  deleteFile,
   getCompetitionCostSummary,
   printCategories
 };

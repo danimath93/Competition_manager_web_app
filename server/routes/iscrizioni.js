@@ -48,15 +48,7 @@ router.get('/club-iscrizione/competizione/:competizioneId', iscrizioneController
 router.get('/club-iscrizione/:clubId/:competizioneId', iscrizioneController.getIscrizioneClub);
 
 // POST /api/iscrizioni/club-iscrizione/documenti - Upload documenti per l'iscrizione del club
-router.post(
-  '/club-iscrizione/documenti',
-  uploadDocumenti.fields([
-    { name: 'certificatiMedici', maxCount: 1 },
-    { name: 'autorizzazioni', maxCount: 1 },
-    { name: 'confermaPresidente', maxCount: 1 }
-  ]),
-  iscrizioneController.uploadDocumentiIscrizioneClub
-);
+router.post('/club-iscrizione/documenti', uploadDocumenti.fields([{ name: 'confermaPresidente', maxCount: 1 }]), iscrizioneController.uploadDocumentiIscrizioneClub);
 
 // POST /api/iscrizioni/club-iscrizione/conferma - Conferma l'iscrizione del club (dopo upload documenti)
 router.post('/club-iscrizione/conferma', iscrizioneController.confermaIscrizioneClub);

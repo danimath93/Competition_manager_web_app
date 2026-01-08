@@ -122,50 +122,45 @@ const Competizione = sequelize.define('Competizione', {
     },
     field: 'max_categorie_atleta'
   },
-  circolareGara: {
-    type: DataTypes.BLOB('long'),
+  circolareGaraId: {
+    type: DataTypes.INTEGER,
     allowNull: true,
-    field: 'circolare_gara'
+    references: {
+      model: 'documenti',
+      key: 'id'
+    },
+    field: 'circolare_gara_id',
+    comment: 'Riferimento al documento circolare di gara'
   },
-  circolareGaraNome: {
-    type: DataTypes.STRING,
+  locandinaId: {
+    type: DataTypes.INTEGER,
     allowNull: true,
-    field: 'circolare_gara_nome'
+    references: {
+      model: 'documenti',
+      key: 'id'
+    },
+    field: 'locandina_id',
+    comment: 'Riferimento al documento locandina della competizione'
   },
-  circolareGaraTipo: {
-    type: DataTypes.STRING,
+  fileExtra1Id: {
+    type: DataTypes.INTEGER,
     allowNull: true,
-    field: 'circolare_gara_tipo'
+    references: {
+      model: 'documenti',
+      key: 'id'
+    },
+    field: 'file_extra_1_id',
+    comment: 'Riferimento a documento extra 1'
   },
-  fileExtra1: {
-    type: DataTypes.BLOB('long'),
+  fileExtra2Id: {
+    type: DataTypes.INTEGER,
     allowNull: true,
-    field: 'file_extra_1'
-  },
-  fileExtra1Nome: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'file_extra_1_nome'
-  },
-  fileExtra1Tipo: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'file_extra_1_tipo'
-  },
-  fileExtra2: {
-    type: DataTypes.BLOB('long'),
-    allowNull: true,
-    field: 'file_extra_2'
-  },
-  fileExtra2Nome: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'file_extra_2_nome'
-  },
-  fileExtra2Tipo: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'file_extra_2_tipo'
+    references: {
+      model: 'documenti',
+      key: 'id'
+    },
+    field: 'file_extra_2_id',
+    comment: 'Riferimento a documento extra 2'
   }
 }, {
   tableName: 'competizioni',

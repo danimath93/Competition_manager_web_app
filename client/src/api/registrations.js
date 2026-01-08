@@ -89,14 +89,12 @@ export const getClubRegistrationsByCompetition = async (competizioneId) => {
   }
 };
 
-// Funzione per caricare i documenti dell'iscrizione del club
-export const uploadClubRegistrationDocuments = async (clubId, competizioneId, certificatiMedici, autorizzazioni, confermaPresidente) => {
+// Funzione per caricare il documento di conferma presidente dell'iscrizione del club
+export const uploadClubRegistrationDocuments = async (clubId, competizioneId, confermaPresidente) => {
   try {
     const formData = new FormData();
     formData.append('clubId', clubId);
     formData.append('competizioneId', competizioneId);
-    formData.append('certificatiMedici', certificatiMedici);
-    formData.append('autorizzazioni', autorizzazioni);
     formData.append('confermaPresidente', confermaPresidente);
 
     const response = await axios.post('/iscrizioni/club-iscrizione/documenti', formData, {
@@ -106,7 +104,7 @@ export const uploadClubRegistrationDocuments = async (clubId, competizioneId, ce
     });
     return response.data;
   } catch (error) {
-    console.error('Errore durante il caricamento dei documenti:', error);
+    console.error('Errore durante il caricamento del documento:', error);
     throw error;
   }
 };

@@ -92,77 +92,12 @@ export const deleteCompetition = async (id) => {
   }
 };
 
-// Upload file per una competizione
-export const uploadCompetitionFiles = async (id, files) => {
-  try {
-    const formData = new FormData();
-    
-    if (files.circolareGara) {
-      formData.append('circolareGara', files.circolareGara);
-    }
-    if (files.fileExtra1) {
-      formData.append('fileExtra1', files.fileExtra1);
-    }
-    if (files.fileExtra2) {
-      formData.append('fileExtra2', files.fileExtra2);
-    }
-
-    const response = await axios.post(`/competizioni/${id}/files`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante l\'upload dei file:', error);
-    throw error;
-  }
-};
-
-// Download file di una competizione
-export const downloadCompetitionFile = async (id, fileType) => {
-  try {
-    let fileInfo = null;
-    const response = await axios.get(`/competizioni/${id}/files/${fileType}`, {
-      responseType: 'blob',
-    });
-    
-    // Determina il Content-Type e crea un Blob del tipo scelto
-    let contentType = response.headers['content-type'] || 'application/octet-stream';
-    const blob = new Blob([response.data], { type: contentType });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Determina il nome del file
-    let filename = 'download';
-    const contentDisposition = response.headers['content-disposition'];
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, '');
-      }
-    }
-
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Errore durante il download del file:', error);
-    throw error;
-  }
-};
-
-// Elimina file di una competizione
-export const deleteCompetitionFile = async (id, fileType) => {
-  try {
-    const response = await axios.delete(`/competizioni/${id}/files/${fileType}`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante l\'eliminazione del file:', error);
-    throw error;
-  }
-};
+// Nota: Le funzioni di upload/download/delete file sono state migrate al file documents.js
+// Usare uploadDocumento, downloadDocumento, deleteDocumento da './documents'
+// Esempi:
+// - Upload circolare: uploadDocumento(file, 'circolare_gara', competizioneId, 'competizione')
+// - Upload locandina: uploadDocumento(file, 'locandina_competizione', competizioneId, 'competizione')
+// - Upload file extra 1: uploadDocumento(file, 'file_extra1_competizione', competizioneId, 'competizione')
+// - Upload file extra 2: uploadDocumento(file, 'file_extra2_competizione', competizioneId, 'competizione')
+// - Download: downloadDocumento(documentoId)
+// - Delete: deleteDocumento(documentoId, entitaId, entitaTipo, tipoDocumento)

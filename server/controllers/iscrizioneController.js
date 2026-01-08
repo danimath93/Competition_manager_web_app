@@ -1,4 +1,4 @@
-const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
+const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza, Documento } = require('../models');
 const { calculateAthleteCost, calculateClubTotalCost } = require('../helpers/costCalculator');
 const logger = require('../helpers/logger/logger');
 
@@ -366,6 +366,11 @@ const createOrGetIscrizioneClub = async (req, res) => {
         {
           model: Competizione,
           as: 'competizione'
+        },
+        {
+          model: Documento,
+          as: 'confermaPresidenteDocumento',
+          attributes: { exclude: ['file'] }
         }
       ]
     });
@@ -420,6 +425,11 @@ const getIscrizioneClub = async (req, res) => {
         {
           model: Competizione,
           as: 'competizione'
+        }, 
+        {
+          model: Documento,
+          as: 'confermaPresidenteDocumento',
+          attributes: { exclude: ['file'] }
         }
       ]
     });
@@ -445,7 +455,7 @@ const getClubRegistrationsByCompetition = async (req, res) => {
 
     const clubRegistrations = await IscrizioneClub.findAll({
       where: { competizioneId },
-      attributes: { exclude: ['autorizzazioni', 'certificatiMedici', 'confermaPresidente'] },
+      attributes: { exclude: ['confermaPresidenteId'] },
       include: [
         {
           model: Club,
@@ -483,56 +493,52 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
     }
 
-    // Verifica tutti i file presenti
-    if (!files || !files.certificatiMedici || !files.autorizzazioni || !files.confermaPresidente) {
+    // Verifica che il file confermaPresidente sia presente
+    if (!files || !files.confermaPresidente) {
       return res.status(400).json({
-        error: 'Entrambi i documenti (certificati medici e autorizzazioni) sono obbligatori'
+        error: 'Il documento di conferma del presidente è obbligatorio'
       });
     }
 
-    const certificatiMedici = files.certificatiMedici[0];
-    const autorizzazioni = files.autorizzazioni[0];
     const confermaPresidente = files.confermaPresidente[0];
 
-    // Verifica che siano PDF
-    if (certificatiMedici.mimetype !== 'application/pdf') {
-      return res.status(400).json({
-        error: 'I certificati medici devono essere in formato PDF'
-      });
-    }
-
-    if (autorizzazioni.mimetype !== 'application/pdf') {
-      return res.status(400).json({
-        error: 'Le autorizzazioni devono essere in formato PDF'
-      });
-    }
-
+    // Verifica che sia PDF
     if (confermaPresidente.mimetype !== 'application/pdf') {
       return res.status(400).json({
-        error: 'Le conferme autorizzazioni presidenti devono essere in formato PDF'
+        error: 'La conferma del presidente deve essere in formato PDF'
       });
     }
 
-    // Salva i file nel database
-    iscrizioneClub.certificatiMedici = certificatiMedici.buffer;
-    iscrizioneClub.certificatiMediciNome = certificatiMedici.originalname;
-    iscrizioneClub.certificatiMediciTipo = certificatiMedici.mimetype;
-    iscrizioneClub.autorizzazioni = autorizzazioni.buffer;
-    iscrizioneClub.autorizzazioniNome = autorizzazioni.originalname;
-    iscrizioneClub.autorizzazioniTipo = autorizzazioni.mimetype;
-    iscrizioneClub.confermaPresidente = confermaPresidente.buffer;
-    iscrizioneClub.confermaPresidenteNome = confermaPresidente.originalname;
-    iscrizioneClub.confermaPresidenteTipo = confermaPresidente.mimetype;
+    // Se esiste già un documento, elimino il riferimento dall'iscrizione e lo cancello
+    const oldDocId = iscrizioneClub.confermaPresidenteId;
+    if (iscrizioneClub.confermaPresidenteId) {
+      iscrizioneClub.confermaPresidenteId = null;
+      await iscrizioneClub.save();
+      const vecchioDocumento = await Documento.findByPk(oldDocId);
+      if (vecchioDocumento) {
+        await vecchioDocumento.destroy();
+      }
+    }
 
+    // Crea il nuovo documento
+    const documento = await Documento.create({
+      nomeFile: confermaPresidente.originalname,
+      file: confermaPresidente.buffer,
+      mimeType: confermaPresidente.mimetype,
+      dimensione: confermaPresidente.size,
+      tipoDocumento: 'conferma_presidente'
+    });
+
+    // Aggiorna il riferimento nell'iscrizione
+    iscrizioneClub.confermaPresidenteId = documento.id;
     await iscrizioneClub.save();
 
     res.status(200).json({
-      message: 'Documenti caricati con successo',
+      message: 'Documento caricato con successo',
       iscrizioneClub: {
         id: iscrizioneClub.id,
-        certificatiMediciNome: iscrizioneClub.certificatiMediciNome,
-        autorizzazioniNome: iscrizioneClub.autorizzazioniNome,
-        confermaPresidenteNome: iscrizioneClub.confermaPresidenteNome
+        confermaPresidenteId: documento.id,
+        confermaPresidenteNome: documento.nomeFile
       }
     });
   } catch (error) {
@@ -558,10 +564,10 @@ const confermaIscrizioneClub = async (req, res) => {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
     }
 
-    // Verifica che i documenti siano stati caricati
-    if (!iscrizioneClub.certificatiMedici || !iscrizioneClub.autorizzazioni) {
+    // Verifica che il documento confermaPresidente sia stato caricato
+    if (!iscrizioneClub.confermaPresidenteId) {
       return res.status(400).json({
-        error: 'È necessario caricare entrambi i documenti prima di confermare l\'iscrizione'
+        error: 'È necessario caricare il documento di conferma del presidente prima di confermare l\'iscrizione'
       });
     }
 

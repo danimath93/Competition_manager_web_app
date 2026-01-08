@@ -265,7 +265,7 @@ const CompetitionRegistration = () => {
   };
 
   const areDocumentsUploaded = () => {
-    return clubRegistration?.certificatiMediciNome && clubRegistration?.autorizzazioniNome;
+    return clubRegistration?.confermaPresidenteNome;
   };
 
   const canConfirmRegistration = () => {

@@ -16,6 +16,7 @@ const ConfigTipoAtleta = require('./ConfigTipoAtleta');
 const ConfigEsperienza = require('./ConfigEsperienza');
 const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 const CertificatoMedico = require('./CertificatoMedico');
+const Documento = require('./Documento');
 // Definisci le associazioni
 
 // Club -> Atleti (One-to-Many)
@@ -213,6 +214,75 @@ Competizione.hasMany(IscrizioneClub, {
   as: 'iscrizioniClub'
 });
 
+// Club -> Documento (One-to-One per logo)
+Club.belongsTo(Documento, {
+  foreignKey: 'logoId',
+  as: 'logoDocumento',
+  constraints: false
+});
+Documento.hasOne(Club, {
+  foreignKey: 'logoId',
+  as: 'clubLogo',
+  constraints: false
+});
+
+// Competizione -> Documenti (One-to-One per ciascun tipo di file)
+Competizione.belongsTo(Documento, {
+  foreignKey: 'circolareGaraId',
+  as: 'circolareGaraDocumento',
+  constraints: false
+});
+Documento.hasOne(Competizione, {
+  foreignKey: 'circolareGaraId',
+  as: 'competizioneCircolare',
+  constraints: false
+});
+
+Competizione.belongsTo(Documento, {
+  foreignKey: 'locandinaId',
+  as: 'locandinaDocumento',
+  constraints: false
+});
+Documento.hasOne(Competizione, {
+  foreignKey: 'locandinaId',
+  as: 'competizioneLocandina',
+  constraints: false
+});
+
+Competizione.belongsTo(Documento, {
+  foreignKey: 'fileExtra1Id',
+  as: 'fileExtra1Documento',
+  constraints: false
+});
+Documento.hasOne(Competizione, {
+  foreignKey: 'fileExtra1Id',
+  as: 'competizioneFileExtra1',
+  constraints: false
+});
+
+Competizione.belongsTo(Documento, {
+  foreignKey: 'fileExtra2Id',
+  as: 'fileExtra2Documento',
+  constraints: false
+});
+Documento.hasOne(Competizione, {
+  foreignKey: 'fileExtra2Id',
+  as: 'competizioneFileExtra2',
+  constraints: false
+});
+
+// IscrizioneClub -> Documento (One-to-One per conferma presidente)
+IscrizioneClub.belongsTo(Documento, {
+  foreignKey: 'confermaPresidenteId',
+  as: 'confermaPresidenteDocumento',
+  constraints: false
+});
+Documento.hasOne(IscrizioneClub, {
+  foreignKey: 'confermaPresidenteId',
+  as: 'iscrizioneClub',
+  constraints: false
+});
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,
@@ -230,5 +300,6 @@ module.exports = {
   ConfigTipoAtleta,
   ConfigEsperienza,
   SvolgimentoCategoria,
-  CertificatoMedico
+  CertificatoMedico,
+  Documento
 };

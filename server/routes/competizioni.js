@@ -27,16 +27,6 @@ router.put('/:id', competizioneController.updateCompetizione);
 // DELETE /api/competizioni/:id - Elimina una competizione
 router.delete('/:id', competizioneController.deleteCompetizione);
 
-// POST /api/competizioni/:id/files - Upload file per una competizione
-router.post('/:id/files', uploadFiles, competizioneController.uploadFiles);
-
-// GET /api/competizioni/:id/files/:fileType - Download file di una competizione
-
-router.get('/:id/files/:fileType', competizioneController.downloadFile);
-
-// DELETE /api/competizioni/:id/files/:fileType - Elimina file di una competizione
-router.delete('/:id/files/:fileType', competizioneController.deleteFile);
-
 // GET /api/competizioni/:competizioneId/riepilogo-costi - Riepilogo costi dettagliato per club
 router.get('/:competizioneId/riepilogo-costi', competizioneController.getCompetitionCostSummary);
 
