@@ -20,6 +20,7 @@ import {
   IconButton,
   Collapse,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import { Grid, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import {
@@ -36,6 +37,8 @@ import {
   downloadClubRegistrationDocument,
 } from '../api/registrations';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+import InfoIcon from '@mui/icons-material/Info';
+import DrawerModal from '../components/common/DrawerModal';
 
 const CompetitionSummary = () => {
   const { competitionId } = useParams();
@@ -48,10 +51,11 @@ const CompetitionSummary = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [expandedAthletes, setExpandedAthletes] = useState({});
-  const [expandedClubs, setExpandedClubs] = useState({});
   const [clubCostSummaries, setClubCostSummaries] = useState({});
   const [loadingCosts, setLoadingCosts] = useState({});
   const [athleteFilters, setAthleteFilters] = useState({ name: '', club: '' });
+  const [selectedClub, setSelectedClub] = useState(null);
+  const [clubDetailsOpen, setClubDetailsOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -116,17 +120,6 @@ const CompetitionSummary = () => {
     }));
   };
 
-  const handleToggleClub = (clubId) => {
-    setExpandedClubs((prev) => ({
-      ...prev,
-      [clubId]: !prev[clubId],
-    }));
-
-    // Carica i dettagli dei costi quando si espande
-    if (!expandedClubs[clubId] && !clubCostSummaries[clubId] && !loadingCosts[clubId]) {
-      loadClubCostSummary(clubId);
-    }
-  };
 
   const loadClubCostSummary = async (clubId) => {
     if (clubCostSummaries[clubId]) return; // Già caricato
@@ -158,6 +151,16 @@ const CompetitionSummary = () => {
       alert('Errore nel download del documento');
     }
   };
+
+  const handleOpenClubDetails = (club) => {
+  setSelectedClub(club);
+  setClubDetailsOpen(true);
+};
+
+const handleCloseClubDetails = () => {
+  setSelectedClub(null);
+  setClubDetailsOpen(false);
+};
 
   // Raggruppa gli atleti per club
   let athletesByClub = athleteRegistrations.reduce((acc, reg) => {
@@ -386,213 +389,304 @@ const CompetitionSummary = () => {
           {clubRegistrations.length === 0 ? (
             <Alert severity="info">Nessun club iscritto a questa competizione.</Alert>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell width="50"></TableCell>
-                    <TableCell><strong>Club</strong></TableCell>
-                    <TableCell><strong>Stato</strong></TableCell>
-                    <TableCell><strong>Data Iscrizione</strong></TableCell>
-                    <TableCell><strong>Data Conferma</strong></TableCell>
-                    <TableCell align="center"><strong>Atleti</strong></TableCell>
-                    <TableCell align="center"><strong>Categorie</strong></TableCell>
-                    <TableCell align="right"><strong>Costo Totale</strong></TableCell>
-                    <TableCell align="center"><strong>Documenti</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {clubRegistrations.map((clubReg) => {
-                    const clubId = clubReg.clubId;
-                    const costSummary = clubCostSummaries[clubId];
-                    const loadingCost = loadingCosts[clubId];
+            <Box sx={{ width: '100%', height: 650, mt: 2 }}>
+              <DataGrid
+                rows={clubRegistrations.map((clubReg) => {
+                  const clubId = clubReg.clubId;
+                  const costSummary = clubCostSummaries[clubId];
+                  const loadingCost = loadingCosts[clubId];
 
-                    return (
-                      <React.Fragment key={clubReg.id}>
-                        <TableRow hover>
-                          <TableCell>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleToggleClub(clubId)}
-                            >
-                              {expandedClubs[clubId] ? (
-                                <ExpandLess />
-                              ) : (
-                                <ExpandMore />
-                              )}
-                            </IconButton>
-                          </TableCell>
-                          <TableCell>{clubReg.club?.denominazione || 'N/A'}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={clubReg.stato}
-                              color={
-                                clubReg.stato === 'Confermata'
-                                  ? 'success'
-                                  : clubReg.stato === 'In attesa'
-                                    ? 'warning'
-                                    : 'default'
-                              }
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {clubReg.dataIscrizione
-                              ? new Date(clubReg.dataIscrizione).toLocaleDateString()
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell>
-                            {clubReg.dataConferma
-                              ? new Date(clubReg.dataConferma).toLocaleDateString()
-                              : '-'}
-                          </TableCell>
-                          <TableCell align="center">
-                            {loadingCost ? (
-                              <CircularProgress size={20} />
-                            ) : (
-                              costSummary?.totals?.totalAthletes || '-'
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            {loadingCost ? (
-                              <CircularProgress size={20} />
-                            ) : (
-                              costSummary?.totals?.totalCategories || '-'
-                            )}
-                          </TableCell>
-                          <TableCell align="right">
-                            {loadingCost ? (
-                              <CircularProgress size={20} />
-                            ) : costSummary && costSummary?.totals?.totalCost ? (
-                              <Box display="flex" alignItems="center" justifyContent="flex-end">
-                                <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                {costSummary.totals.totalCost.toFixed(2)}
-                              </Box>
-                            ) : (
-                              '-'
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            <Box display="flex" gap={1} justifyContent="center">
-                              {clubReg.confermaPresidenteNome && (
-                                <Tooltip title="Scarica Conferma Presidente">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() =>
-                                      handleDownloadDocument(
-                                        clubId,
-                                        'confermaPresidente',
-                                        clubReg.confermaPresidenteNome
-                                      )
-                                    }
-                                  >
-                                    <DownloadIcon fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {!clubReg.confermaPresidenteNome && '-'}
-                            </Box>
-                          </TableCell>
-                        </TableRow>
+                  return {
+                    id: clubId,
+                    club: clubReg.club?.denominazione || 'N/A',
+                    stato: clubReg.stato,
+                    dataIscrizione: clubReg.dataIscrizione
+                      ? new Date(clubReg.dataIscrizione).toLocaleDateString()
+                      : 'N/A',
+                    dataConferma: clubReg.dataConferma
+                      ? new Date(clubReg.dataConferma).toLocaleDateString()
+                      : '-',
+                    atleti: loadingCost ? '-' : costSummary?.totals?.totalAthletes ?? '-',
+                    categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
+                    costo: loadingCost
+                      ? '-'
+                      : costSummary?.totals?.totalCost
+                        ? costSummary.totals.totalCost.toFixed(2)
+                        : '-',
+                    // IMPORTANTISSIMO: manteniamo tutto l'oggetto
+                    raw: clubReg,
+                  };
+                })}
+                columns={[
+                  {
+                    field: 'club',
+                    headerName: 'Club',
+                    flex: 2,
+                    minWidth: 180,
+                  },
+                  {
+                    field: 'stato',
+                    headerName: 'Stato',
+                    flex: 1,
+                    minWidth: 120,
+                    renderCell: (params) => (
+                      <Chip
+                        label={params.value}
+                        size="small"
+                        color={
+                          params.value === 'Confermata'
+                            ? 'success'
+                            : params.value === 'In attesa'
+                              ? 'warning'
+                              : 'default'
+                        }
+                      />
+                    ),
+                  },
+                  {
+                    field: 'dataIscrizione',
+                    headerName: 'Data Iscrizione',
+                    flex: 1,
+                    minWidth: 130,
+                  },
+                  {
+                    field: 'dataConferma',
+                    headerName: 'Data Conferma',
+                    flex: 1,
+                    minWidth: 130,
+                  },
+                  {
+                    field: 'atleti',
+                    headerName: 'Atleti',
+                    flex: 1,
+                    minWidth: 100,
+                    align: 'center',
+                    headerAlign: 'center',
+                  },
+                  {
+                    field: 'categorie',
+                    headerName: 'Categorie',
+                    flex: 1,
+                    minWidth: 120,
+                    align: 'center',
+                    headerAlign: 'center',
+                  },
+                  {
+                    field: 'costo',
+                    headerName: 'Costo Totale (€)',
+                    flex: 1,
+                    minWidth: 140,
+                    align: 'right',
+                    headerAlign: 'right',
+                    renderCell: (params) =>
+                      params.value !== '-' ? (
+                        <Box display="flex" alignItems="center" justifyContent="flex-end">
+                          <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
+                          {params.value}
+                        </Box>
+                      ) : (
+                        '-'
+                      ),
+                  },
+                {
+                  field: 'actions',
+                  type: 'actions',
+                  headerName: 'Azioni',
+                  width: 80,
+                  getActions: (params) => {
+                    const actions = [
+                      <GridActionsCellItem
+                        key="details"
+                        icon={<InfoIcon />}
+                        label="Dettagli"
+                        showInMenu
+                        onClick={() => handleOpenClubDetails(params.row.raw)}
+                      />,
+                    ];
 
-                        {/* Riga espandibile con i dettagli del club */}
-                        <TableRow>
-                          <TableCell colSpan={9} sx={{ py: 0, borderBottom: 'none' }}>
-                            <Collapse
-                              in={expandedClubs[clubId]}
-                              timeout="auto"
-                              unmountOnExit
-                            >
-                              <Box sx={{ margin: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                  Dettaglio Iscrizioni - {clubReg.club?.denominazione}
-                                </Typography>
+                    if (params.row.raw?.confermaPresidenteNome) {
+                      actions.push(
+                        <GridActionsCellItem
+                          key="download-cp"
+                          icon={<DownloadIcon />}
+                          label="Scarica CP"
+                          showInMenu
+                          onClick={() =>
+                            handleDownloadDocument(
+                              params.row.raw.clubId,
+                              'confermaPresidente',
+                              params.row.raw.confermaPresidenteNome
+                            )
+                          }
+                        />
+                      );
+                    }
 
-                                {loadingCost ? (
-                                  <Box display="flex" justifyContent="center" p={2}>
-                                    <CircularProgress />
-                                  </Box>
-                                ) : costSummary ? (
-                                  <>
-                                    <Typography variant="body2" sx={{ mb: 2 }}>
-                                      Totale atleti: <strong>{costSummary.totals.totalAthletes}</strong> |
-                                      Totale categorie: <strong>{costSummary.totals.totalCategories}</strong>
-                                    </Typography>
-
-                                    {costSummary.athleteTypeTotals &&
-                                      Object.entries(costSummary.athleteTypeTotals).length > 0 ? (
-                                      <Table size="small" sx={{ bgcolor: 'white' }}>
-                                        <TableHead>
-                                          <TableRow>
-                                            <TableCell><strong>Tipo Atleta</strong></TableCell>
-                                            <TableCell align="center"><strong>Totale</strong></TableCell>
-                                            <TableCell align="center"><strong>1 Categoria</strong></TableCell>
-                                            <TableCell align="center"><strong>2+ Categorie</strong></TableCell>
-                                            <TableCell align="right"><strong>Costo Tipo</strong></TableCell>
-                                          </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                          {Object.entries(costSummary.athleteTypeTotals).map(
-                                            ([type, detail]) => (
-                                              <TableRow key={type}>
-                                                <TableCell>{type}</TableCell>
-                                                <TableCell align="center">{detail.total}</TableCell>
-                                                <TableCell align="center">{detail.singleCategory}</TableCell>
-                                                <TableCell align="center">{detail.multiCategory}</TableCell>
-                                                <TableCell align="right">
-                                                  <Box
-                                                    display="flex"
-                                                    alignItems="center"
-                                                    justifyContent="flex-end"
-                                                  >
-                                                    <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                                    {detail.totalCost?.toFixed(2) || '0.00'}
-                                                  </Box>
-                                                </TableCell>
-                                              </TableRow>
-                                            )
-                                          )}
-                                          <TableRow>
-                                            <TableCell colSpan={4} align="right">
-                                              <strong>Totale Complessivo:</strong>
-                                            </TableCell>
-                                            <TableCell align="right">
-                                              <Box
-                                                display="flex"
-                                                alignItems="center"
-                                                justifyContent="flex-end"
-                                              >
-                                                <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                                <strong>{costSummary.totals?.totalCost?.toFixed(2)}</strong>
-                                              </Box>
-                                            </TableCell>
-                                          </TableRow>
-                                        </TableBody>
-                                      </Table>
-                                    ) : (
-                                      <Typography variant="body2" color="text.secondary">
-                                        Nessun dettaglio disponibile per tipo atleta
-                                      </Typography>
-                                    )}
-                                  </>
-                                ) : (
-                                  <Typography variant="body2" color="text.secondary">
-                                    Dati non disponibili
-                                  </Typography>
-                                )}
-                              </Box>
-                            </Collapse>
-                          </TableCell>
-                        </TableRow>
-                      </React.Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                    return actions;
+                  },
+                }
+                ]}
+                initialState={{
+                  sorting: {
+                    sortModel: [{ field: 'club', sort: 'asc' }],
+                  },
+                }}
+                disableRowSelectionOnClick
+                disableColumnSelector
+                sx={{
+                  border: 'none',
+                  '& .MuiDataGrid-cell:focus': { outline: 'none' },
+                  '& .MuiDataGrid-row:hover': {
+                    backgroundColor: 'var(--bg-secondary, #f8f9fa)',
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: 'var(--bg-secondary, #f8f9fa)',
+                    fontWeight: 600,
+                  },
+                }}
+              />
+            </Box>
           )}
         </Paper>
       )}
+      <DrawerModal
+        open={clubDetailsOpen}
+        onClose={handleCloseClubDetails}
+        title={`Dettaglio Iscrizioni - ${selectedClub?.club?.denominazione || ''}`}
+      >
+        {selectedClub && (() => {
+          const clubId = selectedClub.clubId;
+          const loadingCost = loadingCosts[clubId];
+          const costSummary = clubCostSummaries[clubId];
+
+          return (
+            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+
+              {/* ================= RIEPILOGO ================= */}
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'grey.100',
+                  borderRadius: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                }}
+              >
+                <Box>
+                  <strong>Club:</strong> {selectedClub.club?.denominazione || 'N/A'}
+                </Box>
+
+                <Box>
+                  <strong>Stato iscrizione:</strong> {selectedClub.stato}
+                </Box>
+
+                <Box>
+                  <strong>Data iscrizione:</strong>{' '}
+                  {selectedClub.dataIscrizione
+                    ? new Date(selectedClub.dataIscrizione).toLocaleDateString()
+                    : 'N/A'}
+                </Box>
+
+                <Box>
+                  <strong>Data conferma:</strong>{' '}
+                  {selectedClub.dataConferma
+                    ? new Date(selectedClub.dataConferma).toLocaleDateString()
+                    : '-'}
+                </Box>
+
+                <Box>
+                  <strong>Numero atleti:</strong>{' '}
+                  {costSummary?.totals?.totalAthletes ?? '-'}
+                </Box>
+
+                <Box>
+                  <strong>Numero categorie:</strong>{' '}
+                  {costSummary?.totals?.totalCategories ?? '-'}
+                </Box>
+
+                <Box>
+                  <strong>Quota totale:</strong>{' '}
+                  {costSummary?.totals?.totalCost
+                    ? `${costSummary.totals.totalCost.toFixed(2)} €`
+                    : '-'}
+                </Box>
+              </Box>
+
+              <Divider />
+
+              {/* ================= DETTAGLIO PER TIPO ATLETA ================= */}
+              {loadingCost ? (
+                <Box display="flex" justifyContent="center" p={2}>
+                  <CircularProgress />
+                </Box>
+              ) : costSummary ? (
+                costSummary.athleteTypeTotals &&
+                Object.entries(costSummary.athleteTypeTotals).length > 0 ? (
+                  <Table size="small" sx={{ bgcolor: 'white' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell><strong>Tipo Atleta</strong></TableCell>
+                        <TableCell align="center"><strong>Totale</strong></TableCell>
+                        <TableCell align="center"><strong>1 Categoria</strong></TableCell>
+                        <TableCell align="center"><strong>2+ Categorie</strong></TableCell>
+                        <TableCell align="right"><strong>Costo Tipo</strong></TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {Object.entries(costSummary.athleteTypeTotals).map(
+                        ([type, detail]) => (
+                          <TableRow key={type}>
+                            <TableCell>{type}</TableCell>
+                            <TableCell align="center">{detail.total}</TableCell>
+                            <TableCell align="center">{detail.singleCategory}</TableCell>
+                            <TableCell align="center">{detail.multiCategory}</TableCell>
+                            <TableCell align="right">
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="flex-end"
+                              >
+                                <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
+                                {detail.totalCost?.toFixed(2) || '0.00'}
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      )}
+
+                      <TableRow>
+                        <TableCell colSpan={4} align="right">
+                          <strong>Totale Complessivo:</strong>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="flex-end"
+                          >
+                            <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
+                            <strong>{costSummary.totals?.totalCost?.toFixed(2)}</strong>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Nessun dettaglio disponibile per tipo atleta
+                  </Typography>
+                )
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Dati non disponibili
+                </Typography>
+              )}
+            </Box>
+          );
+        })()}
+      </DrawerModal>    
 
       {/* Tab Panel - Atleti */}
       {activeTab === 2 && (
@@ -767,6 +861,8 @@ const CompetitionSummary = () => {
         </Paper>
       )}
     </Container>
+
+    
   );
 };
 
