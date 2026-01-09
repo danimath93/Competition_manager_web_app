@@ -35,6 +35,7 @@ import {
   loadRegistrationsByCompetition,
   downloadClubRegistrationDocument,
 } from '../api/registrations';
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 
 const CompetitionSummary = () => {
   const { competitionId } = useParams();
@@ -283,101 +284,94 @@ const CompetitionSummary = () => {
           <Typography variant="h6" gutterBottom>
             Riepilogo Generale
           </Typography>
-
           {clubRegistrations.length === 0 ? (
             <Alert severity="info">Nessun club iscritto a questa competizione</Alert>
           ) : (
-            <TableContainer component={Paper} sx={{ mt: 2 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Nome Club</strong></TableCell>
-                    <TableCell align="center"><strong>CB Bambini</strong></TableCell>
-                    <TableCell align="center"><strong>CB Adulti</strong></TableCell>
-                    <TableCell align="center"><strong>CN</strong></TableCell>
-                    <TableCell align="center"><strong>Totale iscritti</strong></TableCell>
-                    <TableCell align="right"><strong>Quota dovuta (€)</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {clubRegistrations.map((clubReg) => {
-                    const clubId = clubReg.clubId;
-                    const costSummary = clubCostSummaries[clubId];
-
-                    // Ricava i conteggi per tipo atleta
-                    const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
-                    const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
-                    const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
-                    const totale = cbBambini + cbAdulti + cn;
-                    const quota = costSummary?.totals?.totalCost?.toFixed(2) || '0.00';
-
+            <Box sx={{ width: '100%', height: 820, mt: 2 }}>
+              <DataGrid
+                rows={clubRegistrations.map((clubReg) => {
+                  const clubId = clubReg.clubId;
+                  const costSummary = clubCostSummaries[clubId];
+                  const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
+                  const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
+                  const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
+                  const totale = cbBambini + cbAdulti + cn;
+                  const quota = costSummary?.totals?.totalCost?.toFixed(2) || '0.00';
+                  return {
+                    id: clubId,
+                    club: clubReg.club?.denominazione || 'N/A',
+                    cbBambini,
+                    cbAdulti,
+                    cn,
+                    totale,
+                    quota,
+                  };
+                })}
+                columns={[
+                  { field: 'club', headerName: 'Nome Club', flex: 2, minWidth: 180 },
+                  { field: 'cbBambini', headerName: 'CB Bambini', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
+                  { field: 'cbAdulti', headerName: 'CB Adulti', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
+                  { field: 'cn', headerName: 'CN', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
+                  { field: 'totale', headerName: 'Totale iscritti', flex: 1, minWidth: 120, align: 'center', headerAlign: 'center', type: 'number' },
+                  { field: 'quota', headerName: 'Quota dovuta (€)', flex: 1, minWidth: 120, align: 'right', headerAlign: 'right', type: 'number' },
+                ]}
+                initialState={{
+                  sorting: { sortModel: [{ field: 'club', sort: 'asc' }] },
+                }}
+                disableRowSelectionOnClick
+                disableColumnMenu={false}
+                disableColumnSelector={true}
+                sx={{
+                  border: 'none',
+                  '& .MuiDataGrid-cell:focus': { outline: 'none' },
+                  '& .MuiDataGrid-row:hover': { backgroundColor: 'var(--bg-secondary, #f8f9fa)' },
+                  '& .MuiDataGrid-columnHeaders': { backgroundColor: 'var(--bg-secondary, #f8f9fa)', fontWeight: 600 },
+                }}
+                slots={{
+                  footer: () => {
+                    // Riga dei totali custom
+                    const totalCbBambini = clubRegistrations.reduce((sum, clubReg) => {
+                      const clubId = clubReg.clubId;
+                      const costSummary = clubCostSummaries[clubId];
+                      return sum + (costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0);
+                    }, 0);
+                    const totalCbAdulti = clubRegistrations.reduce((sum, clubReg) => {
+                      const clubId = clubReg.clubId;
+                      const costSummary = clubCostSummaries[clubId];
+                      return sum + (costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0);
+                    }, 0);
+                    const totalCn = clubRegistrations.reduce((sum, clubReg) => {
+                      const clubId = clubReg.clubId;
+                      const costSummary = clubCostSummaries[clubId];
+                      return sum + (costSummary?.athleteTypeTotals?.['CN']?.total || 0);
+                    }, 0);
+                    const totalIscritti = clubRegistrations.reduce((sum, clubReg) => {
+                      const clubId = clubReg.clubId;
+                      const costSummary = clubCostSummaries[clubId];
+                      const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
+                      const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
+                      const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
+                      return sum + cbBambini + cbAdulti + cn;
+                    }, 0);
+                    const totalQuota = clubRegistrations.reduce((sum, clubReg) => {
+                      const clubId = clubReg.clubId;
+                      const costSummary = clubCostSummaries[clubId];
+                      return sum + (costSummary?.totals?.totalCost || 0);
+                    }, 0);
                     return (
-                      <TableRow key={clubId}>
-                        <TableCell>{clubReg.club?.denominazione || 'N/A'}</TableCell>
-                        <TableCell align="center">{cbBambini}</TableCell>
-                        <TableCell align="center">{cbAdulti}</TableCell>
-                        <TableCell align="center">{cn}</TableCell>
-                        <TableCell align="center">{totale}</TableCell>
-                        <TableCell align="right">{quota}</TableCell>
-                      </TableRow>
+                      <Box sx={{ display: 'flex', width: '100%', borderTop: '3px solid #d8240cff', background: '#fafafa', fontWeight: 600, minHeight: 56 }}>
+                        <Box sx={{ flex: 2, display: 'flex', alignItems: 'center', pl: 2 }}>Totale</Box>
+                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCbBambini}</Box>
+                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCbAdulti}</Box>
+                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCn}</Box>
+                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalIscritti}</Box>
+                        <Box sx={{ flex: 1, textAlign: 'right', alignItems: 'center', display: 'flex', justifyContent: 'flex-end', pr: 2 }}>{totalQuota.toFixed(2)}</Box>
+                      </Box>
                     );
-                  })}
-
-                  {/* Riga dei totali */}
-                  <TableRow sx={{ borderTop: '3px solid #d8240cff' }}>
-                    <TableCell><strong>Totale</strong></TableCell>
-                    <TableCell align="center">
-                      <strong>
-                        {clubRegistrations.reduce((sum, clubReg) => {
-                          const clubId = clubReg.clubId;
-                          const costSummary = clubCostSummaries[clubId];
-                          return sum + (costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0);
-                        }, 0)}
-                      </strong>
-                    </TableCell>
-                    <TableCell align="center">
-                      <strong>
-                        {clubRegistrations.reduce((sum, clubReg) => {
-                          const clubId = clubReg.clubId;
-                          const costSummary = clubCostSummaries[clubId];
-                          return sum + (costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0);
-                        }, 0)}
-                      </strong>
-                    </TableCell>
-                    <TableCell align="center">
-                      <strong>
-                        {clubRegistrations.reduce((sum, clubReg) => {
-                          const clubId = clubReg.clubId;
-                          const costSummary = clubCostSummaries[clubId];
-                          return sum + (costSummary?.athleteTypeTotals?.['CN']?.total || 0);
-                        }, 0)}
-                      </strong>
-                    </TableCell>
-                    <TableCell align="center">
-                      <strong>
-                        {clubRegistrations.reduce((sum, clubReg) => {
-                          const clubId = clubReg.clubId;
-                          const costSummary = clubCostSummaries[clubId];
-                          const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
-                          const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
-                          const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
-                          return sum + cbBambini + cbAdulti + cn;
-                        }, 0)}
-                      </strong>
-                    </TableCell>
-                    <TableCell align="right">
-                      <strong>
-                        {clubRegistrations.reduce((sum, clubReg) => {
-                          const clubId = clubReg.clubId;
-                          const costSummary = clubCostSummaries[clubId];
-                          return sum + (costSummary?.totals?.totalCost || 0);
-                        }, 0).toFixed(2)}
-                      </strong>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  }
+                }}
+              />
+            </Box>
           )}
         </Paper>
       )}
