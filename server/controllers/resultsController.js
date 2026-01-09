@@ -6,8 +6,14 @@ const { buildGlobalAthleteList, buildClubRanking, computeAthletePoints, assignAg
 // GET /results/atleti
 exports.getAtletiResults = async (req, res) => {
   try {
+  console.log('[resultsController] getAtletiResults - query:', req.query);
+    const where = {};
+    const competitionId = req.query.competitionId || req.query.competizioneId;
+  console.log('[resultsController] getAtletiResults - competitionId resolved:', competitionId || null);
+    if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
-      attributes: ["id", "categoriaId", "classifica"],
+      attributes: ["id", "categoriaId", "classifica", "competizioneId"],
+      where,
       raw: true
     });
 
@@ -37,8 +43,14 @@ exports.getAtletiResults = async (req, res) => {
 // GET /results/club
 exports.getClubResults = async (req, res) => {
   try {
+  console.log('[resultsController] getClubResults - query:', req.query);
+    const where = {};
+    const competitionId = req.query.competitionId || req.query.competizioneId;
+  console.log('[resultsController] getClubResults - competitionId resolved:', competitionId || null);
+    if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
-      attributes: ['id', 'categoriaId', 'classifica'],
+      attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
+      where,
       raw: true
     });
 
@@ -84,9 +96,15 @@ exports.getClubResults = async (req, res) => {
 exports.getClubMedalsDetails = async (req, res) => {
   try {
     const clubId = req.params.id;
+  console.log('[resultsController] getClubMedalsDetails - params:', req.params, 'query:', req.query);
+    const where = {};
+    const competitionId = req.query.competitionId || req.query.competizioneId;
+  console.log('[resultsController] getClubMedalsDetails - competitionId resolved:', competitionId || null);
+    if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
-    attributes: ['id', 'categoriaId', 'classifica'],
-    raw: true
+      attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
+      where,
+      raw: true
     });
 
     const dettagli = await dettagliMedaglieClub(svolgimenti, clubId);

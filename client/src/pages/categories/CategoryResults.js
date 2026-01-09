@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Tabs, Tab, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, Button } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
-
+import { ArrowBack } from '@mui/icons-material';
 const medalEmoji = {
   oro: '🥇',
   argento: '🥈',
@@ -14,7 +15,12 @@ function MedalIcons({ ori, argenti, bronzi }) {
   return <span>{'🥇'.repeat(ori)}{'🥈'.repeat(argenti)}{'🥉'.repeat(bronzi)}</span>;
 }
 
-const CategoryResults = () => {
+const CategoryResults = ({ competitionId: propCompetitionId }) => {
+  const params = useParams();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const effectiveCompetitionId = propCompetitionId || params.competitionId || query.get('competitionId') || query.get('competizioneId') || null;
+
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [atleti, setAtleti] = useState(null);
@@ -22,34 +28,48 @@ const CategoryResults = () => {
   const [error, setError] = useState(null);
   const [clubDetails, setClubDetails] = useState({});
   const [bestByFascia, setBestByFascia] = useState(null);
+  const navigate = useNavigate();
 
 useEffect(() => {
-  setLoading(true);
+  let cancelled = false;
+  const fetch = async () => {
+    try {
+      setLoading(true);
+      const [atletiRes, clubRes] = await Promise.all([
+        getAtletiResults(effectiveCompetitionId),
+        getClubResults(effectiveCompetitionId),
+      ]);
 
-  Promise.all([getAtletiResults(), getClubResults()])
-    .then(([atletiRes, clubRes]) => {
+      if (cancelled) return;
 
       const listaAtleti = atletiRes.atleti;
-
       setAtleti(listaAtleti);
       setClub(clubRes);
-      setLoading(false);
-
       setBestByFascia(atletiRes.miglioriPerFasce);
-
-    })
-    .catch((err) => {
-      console.error("Errore risultati:", err);
-      setError("Errore caricamento risultati");
       setLoading(false);
-    });
-}, []);
+    } catch (err) {
+      console.error('Errore risultati:', err);
+      if (!cancelled) {
+        setError('Errore caricamento risultati');
+        setLoading(false);
+      }
+    }
+  };
+
+  fetch();
+  return () => { cancelled = true; };
+}, [effectiveCompetitionId]);
 
   const handleTab = (e, v) => setTab(v);
 
+  const handleGoBack = () => {
+    navigate('/categories');
+  };
+
+
   const handleAccordion = async (clubId) => {
     if (clubDetails[clubId]) return;
-    const details = await getClubMedalsDetails(clubId);
+    const details = await getClubMedalsDetails(clubId, effectiveCompetitionId);
     setClubDetails(prev => ({ ...prev, [clubId]: details }));
   };
 
@@ -58,6 +78,13 @@ useEffect(() => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={handleGoBack}
+        sx={{ mb: 2 }}
+      >
+        Torna a tutte le categorie
+      </Button>
       <Typography variant="h4" gutterBottom>Risultati Generali</Typography>
       <Paper sx={{ mb: 3 }}>
         <Tabs value={tab} onChange={handleTab}>
