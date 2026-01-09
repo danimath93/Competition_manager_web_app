@@ -731,133 +731,54 @@ const handleCloseClubDetails = () => {
               </Grid>
             </Grid>
           </Box>
-
           {Object.keys(athletesByClub).length === 0 ? (
             <Alert severity="info">Nessun atleta iscritto a questa competizione</Alert>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell width="50"></TableCell>
-                    <TableCell><strong>Club</strong></TableCell>
-                    <TableCell><strong>Cognome</strong></TableCell>
-                    <TableCell><strong>Nome</strong></TableCell>
-                    <TableCell><strong>Data di Nascita</strong></TableCell>
-                    <TableCell><strong>Tipologia</strong></TableCell>
-                    <TableCell align="center"><strong>N° Categorie</strong></TableCell>
-                    <TableCell align="center"><strong>Costo</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Object.entries(athletesByClub)
-                    .sort(([, a], [, b]) => a.clubName.localeCompare(b.clubName))
-                    .map(([clubId, clubData]) =>
-                      Object.values(clubData.athletes)
-                        .sort((a, b) => {
-                          const lastNameCompare = (a.cognome || '').localeCompare(
-                            b.cognome || ''
-                          );
-                          if (lastNameCompare !== 0) return lastNameCompare;
-                          return (a.nome || '').localeCompare(b.nome || '');
-                        })
-                        .map((athlete) => (
-                          <React.Fragment key={athlete.id}>
-                            <TableRow hover>
-                              <TableCell>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleToggleAthlete(athlete.id)}
-                                >
-                                  {expandedAthletes[athlete.id] ? (
-                                    <ExpandLess />
-                                  ) : (
-                                    <ExpandMore />
-                                  )}
-                                </IconButton>
-                              </TableCell>
-                              <TableCell>{clubData.clubName}</TableCell>
-                              <TableCell>{athlete.cognome}</TableCell>
-                              <TableCell>{athlete.nome}</TableCell>
-                              <TableCell>
-                                {athlete.dataNascita
-                                  ? new Date(athlete.dataNascita).toLocaleDateString()
-                                  : 'N/A'}
-                              </TableCell>
-                              <TableCell>{athlete.tipoAtleta?.nome || 'N/A'}</TableCell>
-                              <TableCell align="center">
-                                {athlete.registrations.length}
-                              </TableCell>
-                              <TableCell align="right">
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  justifyContent="flex-end"
-                                >
-                                  {getRegistrationCosts(athlete.registrations)}
-                                  <EuroIcon
-                                    fontSize="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                </Box>
-                              </TableCell>
-                            </TableRow>
-
-                            {/* Riga espandibile con le categorie */}
-                            <TableRow>
-                              <TableCell
-                                colSpan={8}
-                                sx={{ py: 0, borderBottom: 'none' }}
-                              >
-                                <Collapse
-                                  in={expandedAthletes[athlete.id]}
-                                  timeout="auto"
-                                  unmountOnExit
-                                >
-                                  <Box sx={{ margin: 2 }}>
-                                    <Typography variant="subtitle2" gutterBottom>
-                                      Categorie di iscrizione:
-                                    </Typography>
-                                    <Table size="small">
-                                      <TableHead>
-                                        <TableRow>
-                                          <TableCell>Categoria</TableCell>
-                                          <TableCell>Tipo Competizione</TableCell>
-                                          <TableCell>Esperienza</TableCell>
-                                          <TableCell>Peso</TableCell>
-                                        </TableRow>
-                                      </TableHead>
-                                      <TableBody>
-                                        {athlete.registrations.map((reg) => (
-                                          <TableRow key={reg.id}>
-                                            <TableCell>
-                                              {reg.tipoCategoria?.nome || 'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                              {reg.tipoCategoria?.tipoCompetizione?.nome ||
-                                                'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                              {reg.esperienza?.nome || '-'}
-                                            </TableCell>
-                                            <TableCell>
-                                              {reg.peso ? `${reg.peso} kg` : '-'}
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </Box>
-                                </Collapse>
-                              </TableCell>
-                            </TableRow>
-                          </React.Fragment>
-                        ))
-                    )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+            <Box sx={{ width: '100%', height: 520, mt: 2 }}>
+              <DataGrid
+                rows={Object.entries(athletesByClub)
+                  .sort(([, a], [, b]) => a.clubName.localeCompare(b.clubName))
+                  .flatMap(([clubId, clubData]) =>
+                    Object.values(clubData.athletes).map((athlete) => ({
+                      id: athlete.id,
+                      club: clubData.clubName,
+                      cognome: athlete.cognome,
+                      nome: athlete.nome,
+                      dataNascita: athlete.dataNascita,
+                      tipoAtleta: athlete.tipoAtleta?.nome || 'N/A',
+                      nCategorie: athlete.registrations.length,
+                      costo: getRegistrationCosts(athlete.registrations),
+                    }))
+                  )
+                }
+                columns={[
+                  { field: 'club', headerName: 'Club', flex: 2, minWidth: 150 },
+                  { field: 'cognome', headerName: 'Cognome', flex: 1, minWidth: 120 },
+                  { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 120 },
+                  { field: 'dataNascita', headerName: 'Data di Nascita', flex: 1, minWidth: 130, valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : 'N/A' },
+                  { field: 'tipoAtleta', headerName: 'Tipologia', flex: 1, minWidth: 120 },
+                  { field: 'nCategorie', headerName: 'N° Categorie', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
+                  { field: 'costo', headerName: 'Costo', flex: 1, minWidth: 100, align: 'right', headerAlign: 'right', renderCell: (params) => (
+                      <Box display="flex" alignItems="center" justifyContent="flex-end">
+                        {params.value}
+                        <EuroIcon fontSize="small" sx={{ ml: 1 }} />
+                      </Box>
+                    ) },
+                ]}
+                initialState={{
+                  sorting: { sortModel: [{ field: 'cognome', sort: 'asc' }] },
+                }}
+                disableRowSelectionOnClick
+                disableColumnMenu={false}
+                disableColumnSelector={true}
+                sx={{
+                  border: 'none',
+                  '& .MuiDataGrid-cell:focus': { outline: 'none' },
+                  '& .MuiDataGrid-row:hover': { backgroundColor: 'var(--bg-secondary, #f8f9fa)' },
+                  '& .MuiDataGrid-columnHeaders': { backgroundColor: 'var(--bg-secondary, #f8f9fa)', fontWeight: 600 },
+                }}
+              />
+            </Box>)}
         </Paper>
       )}
     </Container>
