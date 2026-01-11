@@ -384,10 +384,6 @@ const CompetitionRegistration = () => {
               onDeleteAthlete={handleDeleteAthleteRegistration}
               onRegistrationChange={refreshRegistrations}
             />
-            {/* <div className="page-card-scrollable">
-              <div className="page-card-scrollable-body">
-              </div>
-            </div> */}
           </div>
         </div>
       </div>

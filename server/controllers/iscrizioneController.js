@@ -283,6 +283,42 @@ const deleteIscrizioniAtleta = async (req, res) => {
   }
 };
 
+// Modifica le iscrizioni di un atleta
+const editIscrizioniAtleta = async (req, res) => { 
+  try {
+    const { athleteId, competitionId, editData } = req.body;
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { atletaId: athleteId, competizioneId: competitionId }
+    });
+    // for (const iscrizione of iscrizioni) {
+    //   if (editData.stato) {
+    //     iscrizione.stato = editData.stato;
+    //   }
+    //   if (editData.peso !== undefined) {
+    //     iscrizione.peso = editData.peso ? parseFloat(editData.peso) : null;
+    //   }
+    //   await iscrizione.save();
+    // }
+    // Ricalcola i costi per l'atleta
+    const athleteCost = await calculateSingleAthleteCosts(athleteId, competitionId);
+    const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
+      where: { atletaId: athleteId, competizioneId: competitionId }
+    });
+    if (dettagliIscrizione) {
+      await dettagliIscrizione.update({
+        quota: athleteCost
+      });
+    }
+    res.status(200).json({ message: 'Iscrizioni modificate con successo' });
+  } catch (error) {
+    logger.error(`Errore nella modifica delle iscrizioni dell'atleta ${req.body.athleteId} per competizione ${req.body.competitionId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nella modifica delle iscrizioni dell\'atleta',
+      details: error.message
+    });
+  }
+};
+
 // ============ ISCRIZIONI CLUB ============
 
 // Crea o recupera l'iscrizione di un club a una competizione
@@ -819,6 +855,7 @@ module.exports = {
   createIscrizione,
   deleteIscrizione,
   deleteIscrizioniAtleta,
+  editIscrizioniAtleta,
   createOrGetIscrizioneClub,
   getIscrizioneClub,
   getClubRegistrationsByCompetition,

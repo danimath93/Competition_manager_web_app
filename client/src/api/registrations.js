@@ -54,6 +54,17 @@ export const deleteAthleteRegistrations = async (athleteId, competitionId) => {
   }
 };
 
+// Funzione per modificare le iscrizioni di un atleta
+export const editAthleteRegistrations = async (athleteId, competitionId, editData) => {
+  try {
+    const response = await axios.post('/iscrizioni/atleta/modifica', { athleteId, competitionId, editData });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la modifica delle iscrizioni dell\'atleta:', error);
+    throw error;
+  }
+};
+
 // ============ ISCRIZIONI CLUB ============
 
 // Funzione per creare o recuperare l'iscrizione di un club a una competizione

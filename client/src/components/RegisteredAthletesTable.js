@@ -267,7 +267,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
   };
 
   // Gestisce il salvataggio delle modifiche (placeholder - da implementare con API)
-  const handleSaveRegistration = async (data) => {
+  const handleSaveRegistration = async () => {
     if (onRegistrationChange) {
       await onRegistrationChange();
     }

@@ -12,7 +12,7 @@ import ConfirmActionModal from './common/ConfirmActionModal';
 import Button from './common/Button';
 import {
   loadAthleteTypes,
-  loadExperiencesByAthleteType,
+  loadExperienceById,
   loadCategoryTypeById,
   loadAthleteTypeById
 } from '../api/config';
@@ -56,10 +56,6 @@ const AthleteRegistration = ({
     { id: MembershipType.ASI, nome: 'ASI' },
     { id: MembershipType.REQUEST, nome: 'Richiedi tesseramento' }
   ]);
-  const [experienceQuyen, setExperienceQuyen] = useState(null);
-  const [availableExperiencesQuyen, setAvailableExperiencesQuyen] = useState([]);
-  const [experienceFight, setExperienceFight] = useState(null);
-  const [availableExperiencesFight, setAvailableExperiencesFight] = useState([]);
 
   // Stato fase 2 - Categorie
   const [availableCategories, setAvailableCategories] = useState([]);
@@ -68,6 +64,7 @@ const AthleteRegistration = ({
   const [categoryDetailSelections, setCategoryDetailSelections] = useState({});
   const [weight, setWeight] = useState('');
   const [selectedExperiences, setSelectedExperiences] = useState({});
+  const [availableExperiencesByType, setAvailableExperiencesByType] = useState({});
 
   // Stati generali
   const [errors, setErrors] = useState([]);
@@ -100,16 +97,6 @@ const AthleteRegistration = ({
   // Gestione modifica tesseramento
   const handleTesseramentoChange = (event, newValue) => {
     setTesseramento(newValue);
-  };
-
-  // Gestione modifica esperienza Quyen
-  const handleExperienceQuyenChange = (event, newValue) => {
-    setExperienceQuyen(newValue);
-  };
-
-  // Gestione modifica esperienza Fight
-  const handleExperienceFightChange = (event, newValue) => {
-    setExperienceFight(newValue);
   };
 
   // Gestione download certificato
@@ -198,31 +185,34 @@ const AthleteRegistration = ({
         ca => ca.idTipoAtleta === athlete.tipoAtletaId
       );
 
-      if (!athleteConfig || !athleteConfig.esperienzaCategorie) {
-        setAvailableExperiencesQuyen([]);
-        setAvailableExperiencesFight([]);
+      if (!athleteConfig?.esperienzaCategorie) {
+        setAvailableExperiencesByType({});
         return;
       }
 
       try {
-        // Carica le esperienze per ogni tipo competizione dalla configurazione
-        const allExperiences = await loadExperiencesByAthleteType(athlete.tipoAtletaId);
-        
-        // Filtra le esperienze in base a quelle configurate nella competizione
         const experiencesByType = {};
-        athleteConfig.esperienzaCategorie.forEach(ec => {
-          const filteredExperiences = allExperiences.filter(exp => 
-            ec.idEsperienza.includes(exp.id)
-          );
-          experiencesByType[ec.configTipoCompetizione] = filteredExperiences;
-        });
-
-        // Separa Quyen (1,2) e Combattimento (3)
-        const experiencesQuyen = experiencesByType[1] || experiencesByType[2] || [];
-        const experiencesFight = experiencesByType[3] || [];
         
-        setAvailableExperiencesQuyen(experiencesQuyen);
-        setAvailableExperiencesFight(experiencesFight);
+        // Per ogni tipo competizione, carica le esperienze
+        for (const expConfig of athleteConfig.esperienzaCategorie) {
+          const tipoCompId = expConfig.configTipoCompetizione;
+          const experienceIds = expConfig.idEsperienza || [];
+          
+          // Carica i dettagli di ogni esperienza
+          const experiences = [];
+          for (const expId of experienceIds) {
+            try {
+              const experience = await loadExperienceById(expId);
+              experiences.push(experience);
+            } catch (error) {
+              console.error(`Errore nel caricamento esperienza ${expId}:`, error);
+            }
+          }
+          
+          experiencesByType[tipoCompId] = experiences;
+        }
+        
+        setAvailableExperiencesByType(experiencesByType);
       } catch (err) {
         console.error('Errore caricamento esperienze:', err);
       }
@@ -305,27 +295,27 @@ const AthleteRegistration = ({
 
       case 1:
         // Fase 2: categorie ed esperienze
-        // Verifica che tutti i tipi competizione presenti abbiano un'esperienza selezionata
-        const requiredCompetitionTypes = new Set();
-        availableCategories.forEach(category => {
-          const details = categoryDetails[category.configTipoCategoria];
+        if (selectedCategories.length === 0) {
+          newErrors.push('Seleziona almeno una categoria');
+        }
+
+        // Verifica che i tipi competizione con categorie selezionate abbiano un'esperienza
+        const selectedCompetitionTypes = new Set();
+        selectedCategories.forEach(categoryId => {
+          const details = categoryDetails[categoryId];
           if (details?.tipoCompetizioneId) {
-            requiredCompetitionTypes.add(details.tipoCompetizioneId);
+            selectedCompetitionTypes.add(details.tipoCompetizioneId);
           }
         });
-        requiredCompetitionTypes.forEach(tipoCompId => {
+        
+        selectedCompetitionTypes.forEach(tipoCompId => {
           if (!selectedExperiences[tipoCompId]) {
-            const experiences = (availableExperiencesQuyen.concat(availableExperiencesFight)).filter(
-              exp => exp.tipiCompetizione && exp.tipiCompetizione.includes(tipoCompId)
-            );
-            if (experiences.length > 0) {
+            const hasExperiences = availableExperiencesByType[tipoCompId]?.length > 0;
+            if (hasExperiences) {
               newErrors.push(`Seleziona il livello di esperienza richiesto`);
             }
           }
         });
-        if (selectedCategories.length === 0) {
-          newErrors.push('Seleziona almeno una categoria');
-        }
 
         // Verifica peso se obbligatorio per le categorie selezionate
         const requiresWeight = selectedCategories.some(catId => {
@@ -659,8 +649,8 @@ const AthleteRegistration = ({
       }
     });
 
-    // Verifica se le esperienze per Quyen e Quyen Vu Khi sono le stesse
-    const quyenExperiences = availableExperiencesQuyen;
+    // Ottiene le esperienze per i tipi Quyen (1 e 2)
+    const quyenExperiences = availableExperiencesByType[1] || availableExperiencesByType[2] || [];
     const canMergeQuyenTypes = categoriesByType[1].length > 0 && categoriesByType[2].length > 0;
     
     // Identifica quali tipi competizione hanno categorie
@@ -886,13 +876,13 @@ const AthleteRegistration = ({
                     padding: '8px'
                   }}>
                     {/* Esperienza Combattimento */}
-                    {availableExperiencesFight.length > 0 && (
+                    {availableExperiencesByType[3]?.length > 0 && (
                       <div style={{ marginRight: '16px', width: '400px' }}>
                         <Autocomplete
                           size="small"
                           value={selectedExperiences[3] || null}
                           onChange={(event, newValue) => handleExperienceChange(3, newValue)}
-                          options={availableExperiencesFight}
+                          options={availableExperiencesByType[3]}
                           getOptionLabel={(option) => option.nome || ''}
                           renderInput={(params) => (
                             <TextField

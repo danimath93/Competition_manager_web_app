@@ -36,6 +36,9 @@ router.delete('/:id', iscrizioneController.deleteIscrizione);
 // DELETE /api/iscrizioni/atleta/:atletaId/competizione/:competizioneId - Elimina tutte le iscrizioni di un atleta per una competizione
 router.delete('/atleta/:atletaId/competizione/:competizioneId', iscrizioneController.deleteIscrizioniAtleta);
 
+// POST /api/iscrizioni/atleta/modifica - Modifica le iscrizioni di un atleta
+router.post('/atleta/modifica', iscrizioneController.editIscrizioniAtleta);
+
 // ============ ISCRIZIONI CLUB ============
 
 // POST /api/iscrizioni/club-iscrizione - Crea o recupera l'iscrizione di un club a una competizione
