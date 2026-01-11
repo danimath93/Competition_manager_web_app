@@ -161,7 +161,7 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
   }, [athletes]);
 
   return (
-    <Paper sx={{ width: '100%', height: 600 }}>
+    <Paper sx={{ width: '100%', height: '100%' }}>
       <DataGrid
         rows={rows}
         columns={columns}

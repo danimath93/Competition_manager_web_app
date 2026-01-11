@@ -264,7 +264,7 @@ const CompetitionRegistration = () => {
   };
 
   const areDocumentsUploaded = () => {
-    return clubRegistration?.confermaPresidenteNome;
+    return clubRegistration?.confermaPresidenteId;
   };
 
   const canConfirmRegistration = () => {
@@ -377,13 +377,17 @@ const CompetitionRegistration = () => {
           </div>
           <div className="page-card-with-external-title">
             <h2 className="page-card-external-title">Atleti Iscritti alla Gara</h2>
-            <RegisteredAthletesTable
-              registrations={registeredAthletes}
-              competition={competition}
-              isClubRegistered={isClubRegistered}
-              onDeleteAthlete={handleDeleteAthleteRegistration}
-              onRegistrationChange={refreshRegistrations}
-            />
+            <div className="page-card-scrollable">
+              <div className="page-card-scrollable-body" style={{ padding: '0' }}>
+                <RegisteredAthletesTable
+                  registrations={registeredAthletes}
+                  competition={competition}
+                  isClubRegistered={isClubRegistered}
+                  onDeleteAthlete={handleDeleteAthleteRegistration}
+                  onRegistrationChange={refreshRegistrations}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

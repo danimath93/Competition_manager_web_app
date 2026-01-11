@@ -111,15 +111,15 @@ const ClubAdmin = () => {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <PageHeader
         title="Gestione Club" 
         icon={FaUniversity}
       />
 
       {/* Contenuto della pagina */}
-      <div className="page-content">
-        <div className="page-card">
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <div className="page-card" style={{ flexShrink: 0 }}>
           <div className="page-card-body">
             <Box sx={{ mb: 2 }} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
               <Grid container spacing={2}>
@@ -164,8 +164,8 @@ const ClubAdmin = () => {
           </div>
         </div>
 
-        <div className="page-card">
-          <div className="page-card-body">
+        <div className="page-card" style={{ padding: '0', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="page-card-body" style={{ flex: 1, overflow: 'auto' }}>
             <ClubsTable
               clubs={filteredClubs || []}
               onEdit={handleOpenModal}

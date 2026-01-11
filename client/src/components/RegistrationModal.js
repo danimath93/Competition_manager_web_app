@@ -187,10 +187,10 @@ const RegistrationModal = ({
       // Prepara i dati da inviare
       const data = {
         // tesseramento,
-        selectedCategories,
-        categoryDetailSelections,
+        categories: selectedCategories,
+        categoriesDetails: categoryDetailSelections,
+        experiences: selectedExperiences,
         weight: weight || null,
-        selectedExperiences,
       };
       
       // Chiama on submit per refreshare i dati

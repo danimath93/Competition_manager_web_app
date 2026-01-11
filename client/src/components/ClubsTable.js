@@ -102,7 +102,7 @@ const ClubsTable = ({ clubs, onEdit, onDelete }) => {
   }, [clubs]);
 
   return (
-    <Paper sx={{ width: '100%', height: 600 }}>
+    <Paper sx={{ width: '100%', height: '100%' }}>
       <DataGrid
         rows={rows}
         columns={columns}

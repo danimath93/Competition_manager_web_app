@@ -169,7 +169,7 @@ const createIscrizione = async (req, res) => {
       stato: req.body.stato || 'In attesa',
       dettagli: dettagliCategoria,
       idConfigEsperienza: req.body.idConfigEsperienza || null,
-      peso: req.body.peso? parseFloat(req.body.peso) : null
+      peso: req.body.peso ? parseFloat(req.body.peso) : null
     };
 
     const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
@@ -203,7 +203,7 @@ const createIscrizione = async (req, res) => {
 const deleteIscrizione = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Recupera l'iscrizione prima di eliminarla per ricalcolare i costi
     const iscrizione = await IscrizioneAtleta.findByPk(id, {
       include: [
@@ -258,7 +258,7 @@ const deleteIscrizioniAtleta = async (req, res) => {
         competizioneId
       }
     });
-    
+
     const deletedRowsCount = await IscrizioneAtleta.destroy({
       where: {
         atletaId,
@@ -284,21 +284,77 @@ const deleteIscrizioniAtleta = async (req, res) => {
 };
 
 // Modifica le iscrizioni di un atleta
-const editIscrizioniAtleta = async (req, res) => { 
+const editIscrizioniAtleta = async (req, res) => {
   try {
-    const { athleteId, competitionId, editData } = req.body;
+    const { athleteId, competitionId } = req.body;
     const iscrizioni = await IscrizioneAtleta.findAll({
       where: { atletaId: athleteId, competizioneId: competitionId }
     });
-    // for (const iscrizione of iscrizioni) {
-    //   if (editData.stato) {
-    //     iscrizione.stato = editData.stato;
-    //   }
-    //   if (editData.peso !== undefined) {
-    //     iscrizione.peso = editData.peso ? parseFloat(editData.peso) : null;
-    //   }
-    //   await iscrizione.save();
-    // }
+
+    const editData = req.body.editData;
+    if (!editData) {
+      return res.status(400).json({ error: 'Nessun dato di modifica fornito' });
+    }
+
+    const { categories, categoriesDetails, experiences, weight } = editData;
+
+    if (!categories || categories.length === 0) {
+      return res.status(400).json({ error: 'Deve essere selezionata almeno una categoria' });
+    }
+    
+    const configTipoCategorie = await ConfigTipoCategoria.findAll({
+      where: { id: categories }
+    });
+
+    // Modifica le categorie
+    for (const idCategory of categories) {
+      const iscrizione = iscrizioni.find(i => i.tipoCategoriaId === idCategory);
+      const configCategoria = configTipoCategorie.find(c => c.id === idCategory);
+      const dettagliCategoria = categoriesDetails && categoriesDetails[idCategory] ? categoriesDetails[idCategory] : null;
+      let idExperience = null;
+      let valuePeso = null;
+
+      if (configCategoria.obbligoPeso) {
+        if (weight) {
+          valuePeso = parseFloat(weight);
+        } else {
+          return res.status(400).json({ error: `Il peso è obbligatorio per la categoria ${configCategoria.nome}` });
+        }
+      }
+
+      // Controlla se esiste un'esperienza associata al tipo di competizione della categoria
+      // Experiences e' un oggetto con chiavi i tipi competizione e valori l'oggetto exp
+      if (experiences && experiences[configCategoria.tipoCompetizioneId]) {
+        idExperience = experiences[configCategoria.tipoCompetizioneId].id;
+      }
+
+      if (!iscrizione) {
+        // Devo creare una nuova iscrizione per questa categoria
+        await IscrizioneAtleta.create({
+          atletaId: athleteId,
+          tipoCategoriaId: idCategory,
+          competizioneId: competitionId,
+          dettagli: dettagliCategoria,
+          peso: valuePeso,
+          idConfigEsperienza: idExperience
+        });
+      }
+      else {
+        await iscrizione.update({
+          dettagli: dettagliCategoria,
+          peso: valuePeso,
+          idConfigEsperienza: idExperience
+        });
+      }
+    }
+
+    // Rimuovi le categorie non più selezionate
+    for (const iscrizione of iscrizioni) {
+      if (!categories.includes(iscrizione.tipoCategoriaId)) {
+        await iscrizione.destroy();
+      }
+    }
+
     // Ricalcola i costi per l'atleta
     const athleteCost = await calculateSingleAthleteCosts(athleteId, competitionId);
     const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
@@ -397,7 +453,7 @@ const getIscrizioneClub = async (req, res) => {
         {
           model: Competizione,
           as: 'competizione'
-        }, 
+        },
         {
           model: Documento,
           as: 'confermaPresidenteDocumento',

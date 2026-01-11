@@ -114,7 +114,7 @@ const AthleteRegistration = ({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setErrors([err.response?.data?.message || 'Errore durante il download del certificato']);
+      setErrors(['Errore durante il download del certificato', err.response?.data?.message || err.message]);
     }
   };
 
@@ -148,7 +148,7 @@ const AthleteRegistration = ({
           if (onUpdateAthlete)
             onUpdateAthlete();
         } catch (err) {
-          setErrors([err.response?.data?.message || 'Errore durante il caricamento del certificato']);
+          setErrors(['Errore durante il caricamento del certificato', err.response?.data?.message || err.message]);
         } finally {
           setLoading(false);
         }
@@ -166,7 +166,7 @@ const AthleteRegistration = ({
           setAthleteType(athleteType);
         } catch (err) {
           console.error('Errore caricamento dati atleta:', err);
-          setErrors(['Errore nel caricamento dei dati dell\'atleta']);
+          setErrors(['Errore nel caricamento dei dati dell\'atleta', err.response?.data?.message || err.message]);
         }
       }
     };
@@ -361,7 +361,7 @@ const AthleteRegistration = ({
       }
       return true;
     } catch (err) {
-      setErrors(['Errore durante l\'aggiornamento delle informazioni atleta. Riprova.']);
+      setErrors(['Errore durante l\'aggiornamento delle informazioni atleta. Riprova.', err.response?.data?.message || err.message]);
       return false;
     }
   };
@@ -479,10 +479,7 @@ const AthleteRegistration = ({
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Errore durante l\'iscrizione:', err);
-      setErrors([
-        'Errore durante l\'iscrizione. Verifica i dati e riprova.',
-        err.response?.data?.message || err.message
-      ]);
+      setErrors(['Errore durante l\'iscrizione. Verifica i dati e riprova.', err.response?.data?.message || err.message]);
     } finally {
       setLoading(false);
     }
