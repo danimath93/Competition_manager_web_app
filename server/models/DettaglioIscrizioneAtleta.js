@@ -18,25 +18,6 @@ const DettaglioIscrizioneAtleta = sequelize.define('DettaglioIscrizioneAtleta', 
     onUpdate: 'CASCADE',
     field: 'atleta_id'
   },
-  peso: {
-    type: DataTypes.DECIMAL(5, 2),
-    allowNull: true,
-    validate: {
-      min: 20.0,
-      max: 200.0
-    }
-  },
-  gradoId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'config_esperienza',
-      key: 'id'
-    },
-    onDelete: 'RESTRICT',
-    onUpdate: 'CASCADE',
-    field: 'grado_id'
-  },
   tesseramento: {
     type: DataTypes.STRING(255),
     allowNull: true
@@ -58,7 +39,14 @@ const DettaglioIscrizioneAtleta = sequelize.define('DettaglioIscrizioneAtleta', 
   }
 }, {
   tableName: 'dettagli_iscrizione_atleti',
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['atleta_id', 'competizione_id'],
+      name: 'unique_atleta_competizione'
+    }
+  ]
 });
 
 module.exports = DettaglioIscrizioneAtleta;

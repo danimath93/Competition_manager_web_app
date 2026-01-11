@@ -1,83 +1,6 @@
-const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza, Documento } = require('../models');
+const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza, Documento, DettaglioIscrizioneAtleta } = require('../models');
 const { calculateAthleteCost, calculateClubTotalCost } = require('../helpers/costCalculator');
 const logger = require('../helpers/logger/logger');
-
-/**
- * Ricalcola e aggiorna i costi per tutti gli atleti di un club in una competizione
- * @param {Number} clubId - ID del club
- * @param {Number} competizioneId - ID della competizione
- */
-const recalculateAthletesCosts = async (clubId, competizioneId) => {
-  try {
-    // Carica la competizione per ottenere costiIscrizione
-    const competizione = await Competizione.findByPk(competizioneId);
-    if (!competizione || !competizione.costiIscrizione) {
-      logger.debug('Nessuna configurazione costi per questa competizione');
-      return;
-    }
-
-    // Carica tutte le iscrizioni del club per questa competizione
-    const iscrizioni = await IscrizioneAtleta.findAll({
-      where: { competizioneId },
-      include: [
-        {
-          model: Atleta,
-          as: 'atleta',
-          where: { clubId },
-          include: [
-            {
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
-            }
-          ]
-        }
-      ]
-    });
-
-    if (iscrizioni.length === 0) {
-      return;
-    }
-
-    // Raggruppa le iscrizioni per atleta
-    const athletesMap = new Map();
-    const categoriesMap = new Map();
-    iscrizioni.forEach(iscrizione => {
-      const atletaId = iscrizione.atletaId;
-      if (!athletesMap.has(atletaId)) {
-        athletesMap.set(atletaId, {
-          atletaId,
-          tipoAtletaId: iscrizione.atleta?.tipoAtletaId,
-          tesseramento: iscrizione.atleta?.tesseramento,
-          iscrizioni: []
-        });
-      }
-      athletesMap.get(atletaId).iscrizioni.push(iscrizione);
-
-      if (!categoriesMap.has(atletaId)) {
-        categoriesMap.set(atletaId, []);
-      }
-      categoriesMap.get(atletaId).push(iscrizione.tipoCategoriaId);
-    });
-
-    // Calcola e aggiorna il costo per ogni atleta
-    for (const [athleteId, athleteData] of athletesMap) {
-      const cost = calculateAthleteCost(
-        competizione.costiIscrizione,
-        athleteData,
-        categoriesMap.get(athleteId)
-      );
-
-      // Aggiorna tutte le iscrizioni dell'atleta con il costo calcolato
-      await Promise.all(
-        athleteData.iscrizioni.map(iscrizione =>
-          iscrizione.update({ costoIscrizione: cost })
-        )
-      );
-    }
-  } catch (error) {
-    logger.error(`Errore nel ricalcolo dei costi per club ${clubId}, competizione ${competizioneId}: ${error.message}`, { stack: error.stack });
-  }
-};
 
 // Ottieni tutte le iscrizioni di una competizione specifica
 const getIscrizioniByCompetizione = async (req, res) => {
@@ -142,6 +65,7 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
     const { competizioneId, clubId } = req.params;
 
     // Prendiamo tutti gli atleti iscritti alla competizione scelta che appartengono al club scelto
+    let iscrizioniEspanse = [];
     const iscrizioni = await IscrizioneAtleta.findAll({
       where: { competizioneId },
       include: [
@@ -174,7 +98,24 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
       ]
     });
 
-    res.status(200).json(iscrizioni);
+    iscrizioniEspanse = iscrizioni.map(iscrizione => iscrizione.dataValues);
+
+    const dettagliIscrizioni = await DettaglioIscrizioneAtleta.findAll({
+      where: {
+        atletaId: iscrizioniEspanse.map(i => i.atletaId),
+        competizioneId
+      }
+    });
+
+    iscrizioniEspanse = iscrizioniEspanse.map(iscrizione => {
+      const dettagli = dettagliIscrizioni.find(d => d.atletaId === iscrizione.atletaId);
+      return {
+        ...iscrizione,
+        dettagliIscrizione: dettagli || null
+      };
+    });
+
+    res.status(200).json(iscrizioniEspanse);
   } catch (error) {
     logger.error(`Errore nel recupero delle iscrizioni del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
@@ -187,7 +128,26 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
 // Crea una nuova iscrizione
 const createIscrizione = async (req, res) => {
   try {
-    const { atletaId, tipoCategoriaId, competizioneId, idConfigEsperienza, peso } = req.body;
+    const { atletaId, tesseramento, tipoCategoriaId, competizioneId, dettagliCategoria } = req.body;
+
+    if (!atletaId || !tesseramento || !tipoCategoriaId || !competizioneId) {
+      logger.warn('Dati mancanti nella richiesta di creazione iscrizione');
+      return res.status(400).json({
+        error: 'atletaId, tesseramento, tipoCategoriaId e competizioneId sono obbligatori'
+      });
+    }
+
+    // Usa findOrCreate per evitare race condition quando si creano più iscrizioni simultaneamente
+    const [dettagliIscrizione, created] = await DettaglioIscrizioneAtleta.findOrCreate({
+      where: {
+        atletaId,
+        competizioneId
+      },
+      defaults: {
+        tesseramento: tesseramento.nome,
+        quota: 0
+      }
+    });
 
     // Verifica se l'iscrizione esiste già per questo atleta, categoria e competizione
     const existingIscrizione = await IscrizioneAtleta.findOne({
@@ -207,53 +167,22 @@ const createIscrizione = async (req, res) => {
       tipoCategoriaId,
       competizioneId,
       stato: req.body.stato || 'In attesa',
-      note: req.body.note || null
+      dettagli: dettagliCategoria,
+      idConfigEsperienza: req.body.idConfigEsperienza || null,
+      peso: req.body.peso? parseFloat(req.body.peso) : null
     };
-
-    // Aggiungi campi opzionali se presenti
-    if (idConfigEsperienza) {
-      iscrizioneData.idConfigEsperienza = idConfigEsperienza;
-    }
-    
-    if (peso) {
-      iscrizioneData.peso = parseFloat(peso);
-    }
 
     const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
 
     // Ricalcola i costi per tutti gli atleti del club
-    const atleta = await Atleta.findByPk(atletaId);
-    if (atleta && atleta.clubId) {
-      await recalculateAthletesCosts(atleta.clubId, competizioneId);
-    }
-
-    // Recupera l'iscrizione con tutti i dettagli
-    const iscrizioneCompleta = await IscrizioneAtleta.findByPk(newIscrizione.id, {
-      include: [
-        {
-          model: Atleta,
-          as: 'atleta',
-          include: [
-            {
-              model: Club,
-              as: 'club',
-              attributes: { exclude: ['logo'] }
-            },
-            {
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
-            }
-          ]
-        },
-        {
-          model: ConfigTipoCategoria,
-          as: 'tipoCategoria'
-        }
-      ]
+    const athleteCost = await calculateSingleAthleteCosts(atletaId, competizioneId);
+    await dettagliIscrizione.update({
+      tesseramento: tesseramento.nome,
+      quota: athleteCost
     });
 
     logger.info(`Iscrizione creata - ID: ${newIscrizione.id}, Atleta: ${atletaId}, Competizione: ${competizioneId}`);
-    res.status(201).json(iscrizioneCompleta);
+    res.status(201).json(newIscrizione);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nella creazione iscrizione: ${error.errors.map(e => e.message).join(', ')}`);
@@ -323,6 +252,13 @@ const deleteIscrizioniAtleta = async (req, res) => {
     const atleta = await Atleta.findByPk(atletaId);
     const clubId = atleta?.clubId;
 
+    await DettaglioIscrizioneAtleta.destroy({
+      where: {
+        atletaId,
+        competizioneId
+      }
+    });
+    
     const deletedRowsCount = await IscrizioneAtleta.destroy({
       where: {
         atletaId,
@@ -735,6 +671,145 @@ const getClubRegistrationCosts = async (req, res) => {
       error: 'Errore nel calcolo dei costi',
       details: error.message
     });
+  }
+};
+
+/**
+ * Ricalcola e aggiorna i costi per tutti gli atleti di un club in una competizione
+ * @param {Number} clubId - ID del club
+ * @param {Number} competizioneId - ID della competizione
+ */
+const recalculateAthletesCosts = async (clubId, competizioneId) => {
+  try {
+    // Carica la competizione per ottenere costiIscrizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione || !competizione.costiIscrizione) {
+      logger.debug('Nessuna configurazione costi per questa competizione');
+      return;
+    }
+
+    // Carica tutte le iscrizioni del club per questa competizione
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          where: { clubId },
+          include: [
+            {
+              model: ConfigTipoAtleta,
+              as: 'tipoAtleta'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (iscrizioni.length === 0) {
+      return;
+    }
+
+    // Raggruppa le iscrizioni per atleta
+    const athletesMap = new Map();
+    const categoriesMap = new Map();
+    iscrizioni.forEach(iscrizione => {
+      const atletaId = iscrizione.atletaId;
+      if (!athletesMap.has(atletaId)) {
+        athletesMap.set(atletaId, {
+          atletaId,
+          tipoAtletaId: iscrizione.atleta?.tipoAtletaId,
+          tesseramento: iscrizione.atleta?.tesseramento,
+          iscrizioni: []
+        });
+      }
+      athletesMap.get(atletaId).iscrizioni.push(iscrizione);
+
+      if (!categoriesMap.has(atletaId)) {
+        categoriesMap.set(atletaId, []);
+      }
+      categoriesMap.get(atletaId).push(iscrizione.tipoCategoriaId);
+    });
+
+    // Calcola e aggiorna il costo per ogni atleta
+    for (const [athleteId, athleteData] of athletesMap) {
+      const cost = calculateAthleteCost(
+        competizione.costiIscrizione,
+        athleteData,
+        categoriesMap.get(athleteId)
+      );
+
+      // Aggiorna tutte le iscrizioni dell'atleta con il costo calcolato
+      await Promise.all(
+        athleteData.iscrizioni.map(iscrizione =>
+          iscrizione.update({ costoIscrizione: cost })
+        )
+      );
+    }
+  } catch (error) {
+    logger.error(`Errore nel ricalcolo dei costi per club ${clubId}, competizione ${competizioneId}: ${error.message}`, { stack: error.stack });
+  }
+};
+
+const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
+  try {
+    // Carica la competizione per ottenere costiIscrizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione || !competizione.costiIscrizione) {
+      logger.debug('Nessuna configurazione costi per questa competizione');
+      return;
+    }
+
+    // Carica i dettagli iscrizione dell'atleta
+    const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
+      where: {
+        atletaId,
+        competizioneId
+      }
+    });
+
+    if (!dettagliIscrizione) {
+      throw new Error('Dettagli iscrizione atleta non trovati');
+    }
+
+    // Carica tutte le iscrizioni dell'atleta per questa competizione
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { competizioneId, atletaId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          include: [
+            {
+              model: ConfigTipoAtleta,
+              as: 'tipoAtleta'
+            }
+          ]
+        }
+      ]
+    });
+
+    if (iscrizioni.length === 0) {
+      return;
+    }
+
+    const athleteData = {
+      atletaId,
+      tipoAtletaId: iscrizioni[0].atleta?.tipoAtletaId,
+      tesseramento: dettagliIscrizione.tesseramento,
+      iscrizioni
+    };
+
+    const categories = iscrizioni.map(iscrizione => iscrizione.tipoCategoriaId);
+    const cost = calculateAthleteCost(
+      competizione.costiIscrizione,
+      athleteData,
+      categories
+    );
+
+    return cost;
+  } catch (error) {
+    logger.error(`Errore nel calcolo dei costi per atleta ${atletaId}, competizione ${competizioneId}: ${error.message}`, { stack: error.stack });
   }
 };
 

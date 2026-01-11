@@ -64,17 +64,6 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
       return value === null || value === undefined ? null : parseFloat(value);
     }
   },
-  costoIscrizione: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: true,
-    defaultValue: 0,
-    field: 'costo_iscrizione',
-    comment: 'Costo calcolato automaticamente in base alle categorie iscritte',
-    get() {
-      const value = this.getDataValue('costoIscrizione');
-      return value === null || value === undefined ? null : parseFloat(value);
-    }
-  },
   dataIscrizione: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -85,8 +74,8 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
     allowNull: false,
     defaultValue: 'In attesa'
   },
-  note: {
-    type: DataTypes.TEXT,
+  dettagli: {
+    type: DataTypes.JSON,
     allowNull: true
   }
 }, {

@@ -23,6 +23,11 @@ const ConfigEsperienza = sequelize.define('ConfigEsperienza', {
       key: 'id'
     }
   },
+  idConfigGruppoEsperienza: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'id_config_gruppo_esperienza',
+  },
   descrizione: {
     type: DataTypes.TEXT,
     allowNull: true

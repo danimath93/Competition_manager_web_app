@@ -64,6 +64,11 @@ const Competizione = sequelize.define('Competizione', {
     field: 'categorie_atleti',
     comment: 'Struttura per gestire le categorie/esperienze ammesse alla competizione, per ogni tipologia di atleta'
   },
+  gestioneLivelloAtleti: {
+    type: DataTypes.ARRAY(DataTypes.JSONB),
+    allowNull: true,
+    field: 'gestione_livello_atleti',
+  },
   livello: {
     type: DataTypes.ENUM('Locale', 'Regionale', 'Nazionale', 'Internazionale'),
     allowNull: false,

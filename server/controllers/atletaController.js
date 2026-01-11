@@ -112,8 +112,13 @@ const updateAtleta = async (req, res) => {
       });
     }
 
+    // Il certificato va aggiornato tramite endpoint dedicato, cancello eventuale campo nel body
+    if (req.body.hasOwnProperty('certificatoId')) {
+      delete req.body.certificatoId;
+    }
+      
     const [updatedRowsCount] = await Atleta.update(req.body, {
-      where: { id }
+      where: { id },
     });
     
     if (updatedRowsCount === 0) {

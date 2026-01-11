@@ -61,6 +61,7 @@ exports.uploadCertificato = async (req, res) => {
           where: { id: atleta.certificatoId }
         });
         if (certificatoEsistente) {
+          await atleta.update({ certificatoId: null });
           await certificatoEsistente.destroy();
         }
       }

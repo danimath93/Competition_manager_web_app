@@ -40,8 +40,8 @@ const calculateSpecialCosts = (athleteData, specials) => {
   // Devo gestire alcuni casi di costi speciali
   for (const [key, value] of Object.entries(specials)) {
     if (key === 'insurance' && typeof value === 'number') {
-      if (!athleteData?.tesseramento) {
-        total += parseFloat(value);
+      if (athleteData?.tesseramento?.toUpperCase() === 'RICHIEDI TESSERAMENTO') {
+        total += parseFloat(value); 
       }
     } 
     else if (typeof value === 'number') {
