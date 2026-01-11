@@ -64,7 +64,7 @@ const CompetitionCategoryManager = ({
   const [selectedAthleteTypes, setSelectedAthleteTypes] = useState([]);
   const [selectedCompetitionTypes, setSelectedCompetitionTypes] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState({});
-  const [selectedExperiences, setSelectedExperiences] = useState({});
+  const [selectedExperiences, setSelectedExperiences] = useState({}); // key: athleteTypeId_competitionTypeId
   
   // Dialog di conferma per edit mode
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -113,19 +113,23 @@ const CompetitionCategoryManager = ({
       loadCategoriesForCompetitionTypes(selectedCompTypes);
     }
     
-    // Estrai le categorie e esperienze selezionate
+    // Estrai le categorie selezionate
     const categoriesMap = {};
-    const experiencesMap = {};
-    
     value.categorieAtleti.forEach(ca => {
       categoriesMap[ca.idTipoAtleta] = ca.categorie.map(cat => cat.configTipoCategoria);
-      ca.categorie.forEach(cat => {
-        const key = `${ca.idTipoAtleta}_${cat.configTipoCategoria}`;
-        experiencesMap[key] = cat.idEsperienza || [];
-      });
     });
-    
     setSelectedCategories(categoriesMap);
+    
+    // Estrai le esperienze dalla struttura esperienzaCategorie dentro categorieAtleti
+    const experiencesMap = {};
+    value.categorieAtleti.forEach(ca => {
+      if (ca.esperienzaCategorie) {
+        ca.esperienzaCategorie.forEach(ec => {
+          const key = `${ca.idTipoAtleta}_${ec.configTipoCompetizione}`;
+          experiencesMap[key] = ec.idEsperienza || [];
+        });
+      }
+    });
     setSelectedExperiences(experiencesMap);
     setActiveStep(3); // Vai all'ultimo step
   };
@@ -160,6 +164,7 @@ const CompetitionCategoryManager = ({
       delete newCategories[athleteTypeId];
       setSelectedCategories(newCategories);
       
+      // Rimuovi le esperienze per questo tipo atleta
       const newExperiences = { ...selectedExperiences };
       Object.keys(newExperiences).forEach(key => {
         if (key.startsWith(`${athleteTypeId}_`)) {
@@ -212,18 +217,13 @@ const CompetitionCategoryManager = ({
       newCategories[athleteTypeId] = [...newCategories[athleteTypeId], categoryId];
     } else {
       newCategories[athleteTypeId] = newCategories[athleteTypeId].filter(id => id !== categoryId);
-      // Rimuovi anche le esperienze associate
-      const key = `${athleteTypeId}_${categoryId}`;
-      const newExperiences = { ...selectedExperiences };
-      delete newExperiences[key];
-      setSelectedExperiences(newExperiences);
     }
     
     setSelectedCategories(newCategories);
   };
 
-  const handleExperienceChange = (athleteTypeId, categoryId, experienceId, checked) => {
-    const key = `${athleteTypeId}_${categoryId}`;
+  const handleExperienceChange = (athleteTypeId, competitionTypeId, experienceId, checked) => {
+    const key = `${athleteTypeId}_${competitionTypeId}`;
     const newExperiences = { ...selectedExperiences };
     
     if (!newExperiences[key]) {
@@ -239,24 +239,9 @@ const CompetitionCategoryManager = ({
     setSelectedExperiences(newExperiences);
   };
 
-  // Filtra le esperienze in base ai tipi di competizione selezionati e alla categoria
-  const getFilteredExperiencesForCategory = (athleteTypeId, categoryId) => {
+  // Filtra le esperienze in base al tipo di competizione
+  const getFilteredExperiencesForCompetitionType = (athleteTypeId, competitionTypeId) => {
     const athleteExperiences = experiences[athleteTypeId] || [];
-    const category = categoryTypes.find(ct => ct.id === categoryId);
-    
-    if (!category || selectedCompetitionTypes.length === 0) {
-      return [];
-    }
-    
-    // Trova il tipo di competizione della categoria
-    const categoryCompetitionTypeId = category.tipoCompetizioneId;
-    
-    // Verifica se il tipo di competizione della categoria è tra quelli selezionati
-    const isCompetitionTypeSelected = selectedCompetitionTypes.some(ct => ct.id === categoryCompetitionTypeId);
-    
-    if (!isCompetitionTypeSelected) {
-      return [];
-    }
     
     // Filtra le esperienze che supportano questo tipo di competizione
     return athleteExperiences.filter(experience => {
@@ -265,8 +250,17 @@ const CompetitionCategoryManager = ({
         return true;
       }
       
-      // Verifica se il tipo di competizione della categoria è tra quelli supportati dall'esperienza
-      return experience.tipiCompetizione.includes(categoryCompetitionTypeId);
+      // Verifica se il tipo di competizione è tra quelli supportati dall'esperienza
+      return experience.tipiCompetizione.includes(competitionTypeId);
+    });
+  };
+  
+  // Verifica se un tipo atleta ha almeno una categoria per un dato tipo competizione
+  const hasAthleteTypeInCompetitionType = (athleteTypeId, competitionTypeId) => {
+    const selectedCategoriesForType = selectedCategories[athleteTypeId] || [];
+    return selectedCategoriesForType.some(categoryId => {
+      const category = categoryTypes.find(ct => ct.id === categoryId);
+      return category && category.tipoCompetizioneId === competitionTypeId;
     });
   };
 
@@ -315,18 +309,36 @@ const CompetitionCategoryManager = ({
   };
 
   const handleFinish = () => {
-    // Costruisci la struttura finale
-    const categorieAtleti = selectedAthleteTypes.map(athleteTypeId => ({
-      idTipoAtleta: athleteTypeId,
-      categorie: (selectedCategories[athleteTypeId] || []).map(categoryId => ({
-        configTipoCategoria: categoryId,
-        idEsperienza: selectedExperiences[`${athleteTypeId}_${categoryId}`] || []
-      }))
-    }));
+    // Costruisci la struttura finale per categorieAtleti con esperienzaCategorie incluso
+    const categorieAtleti = selectedAthleteTypes.map(athleteTypeId => {
+      // Crea l'array di esperienzaCategorie per questo tipo atleta
+      const esperienzaCategorie = [];
+      Object.entries(selectedExperiences).forEach(([key, experienceIds]) => {
+        const [expAthleteTypeId, competitionTypeId] = key.split('_').map(Number);
+        if (expAthleteTypeId === athleteTypeId && experienceIds && experienceIds.length > 0) {
+          esperienzaCategorie.push({
+            configTipoCompetizione: competitionTypeId,
+            idEsperienza: experienceIds
+          });
+        }
+      });
+      
+      return {
+        idTipoAtleta: athleteTypeId,
+        categorie: (selectedCategories[athleteTypeId] || []).map(categoryId => ({
+          configTipoCategoria: categoryId
+        })),
+        esperienzaCategorie
+      };
+    });
 
     const tipiCompetizione = selectedCompetitionTypes.map(ct => ct.id);
 
+    // Passa i dati al parent
     onChange({ categorieAtleti, tipiCompetizione });
+    
+    // Avanza allo step finale per mostrare il messaggio di completamento
+    setActiveStep(steps.length);
   };
 
   // Validazioni per ogni step
@@ -586,14 +598,11 @@ const CompetitionCategoryManager = ({
             </StepLabel>
             <StepContent>
               <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                Assegna i livelli di esperienza per ogni categoria (opzionale)
+                Assegna i livelli di esperienza per ogni tipo atleta e tipo competizione (opzionale)
               </Typography>
               
               {selectedAthleteTypes.map(athleteTypeId => {
                 const athleteType = athleteTypes.find(at => at.id === athleteTypeId);
-                const selectedCategoriesForType = selectedCategories[athleteTypeId] || [];
-                
-                if (selectedCategoriesForType.length === 0) return null;
                 
                 return (
                   <Accordion key={athleteTypeId} defaultExpanded>
@@ -603,15 +612,23 @@ const CompetitionCategoryManager = ({
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                      {selectedCategoriesForType.map(categoryId => {
-                        const category = categoryTypes.find(ct => ct.id === categoryId);
-                        const experienceKey = `${athleteTypeId}_${categoryId}`;
+                      {selectedCompetitionTypes.map(competitionType => {
+                        // Verifica se questo tipo atleta ha almeno una categoria in questo tipo competizione
+                        if (!hasAthleteTypeInCompetitionType(athleteTypeId, competitionType.id)) {
+                          return null;
+                        }
+                        
+                        const experienceKey = `${athleteTypeId}_${competitionType.id}`;
                         
                         return (
-                          <Paper key={categoryId} sx={{ p: 2, mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                              {category?.nome}
+                          <Paper key={competitionType.id} sx={{ p: 2, mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
+                              {competitionType.nome}
                             </Typography>
+                            <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                              Seleziona i livelli di esperienza per tutte le categorie di questo tipo competizione
+                            </Typography>
+                            <Divider sx={{ my: 1 }} />
                             <FormGroup row>
                               {(() => {
                                 // Carica le esperienze se non sono già state caricate
@@ -624,13 +641,13 @@ const CompetitionCategoryManager = ({
                                   );
                                 }
                                 
-                                // Ottieni le esperienze filtrate per questa categoria
-                                const filteredExperiences = getFilteredExperiencesForCategory(athleteTypeId, categoryId);
+                                // Ottieni le esperienze filtrate per questo tipo competizione
+                                const filteredExperiences = getFilteredExperiencesForCompetitionType(athleteTypeId, competitionType.id);
                                 
                                 if (filteredExperiences.length === 0) {
                                   return (
                                     <Typography variant="body2" color="textSecondary" fontStyle="italic">
-                                      Nessuna esperienza disponibile per questa categoria nei tipi di competizione selezionati
+                                      Nessuna esperienza disponibile per questo tipo di competizione
                                     </Typography>
                                   );
                                 }
@@ -641,7 +658,7 @@ const CompetitionCategoryManager = ({
                                     control={
                                       <Checkbox
                                         checked={selectedExperiences[experienceKey]?.includes(experience.id) || false}
-                                        onChange={(e) => handleExperienceChange(athleteTypeId, categoryId, experience.id, e.target.checked)}
+                                        onChange={(e) => handleExperienceChange(athleteTypeId, competitionType.id, experience.id, e.target.checked)}
                                         disabled={disabled || loading}
                                       />
                                     }

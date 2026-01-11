@@ -13,23 +13,25 @@ import {
   Tooltip,
 } from '@mui/material';
 import { ArrowBack, Euro as EuroIcon, ContentCopy as CopyIcon } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { getCompetitionDetails } from '../api/competitions';
-import { loadAthletesByClub, createAthlete, updateAthlete } from '../api/athletes';
-import { getCompetitionCostSummary } from '../api/competitions';
-import { 
-  loadAthleteRegistrationsByCompetitionAndClub, 
+import { FaTrophy } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { getCompetitionDetails } from '../../api/competitions';
+import { loadAthletesByClub } from '../../api/athletes';
+import { getCompetitionCostSummary } from '../../api/competitions';
+import {
+  loadAthleteRegistrationsByCompetitionAndClub,
   createOrGetClubRegistration,
   getClubRegistration,
   confirmClubRegistrationFinal,
   editClubRegistration,
   getClubRegistrationCosts,
-} from '../api/registrations';
-import ClubAthletesList from '../components/ClubAthletesList';
-import RegisteredAthletesList from '../components/RegisteredAthletesList';
-import AthleteModal from '../components/AthleteModal';
-import RegistrationDocumentsUploadModal from '../components/RegistrationDocumentsUploadModal';
+  deleteAthleteRegistrations,
+} from '../../api/registrations';
+import ClubAthletesList from '../../components/ClubAthletesList';
+import RegisteredAthletesTable from '../../components/RegisteredAthletesTable';
+import RegistrationDocumentsUploadModal from '../../components/RegistrationDocumentsUploadModal';
+import PageHeader from '../../components/PageHeader';
 
 const CompetitionRegistration = () => {
   const { competitionId } = useParams();
@@ -44,9 +46,6 @@ const CompetitionRegistration = () => {
   const [clubRegistration, setClubRegistration] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAthleteModalOpen, setIsAthleteModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [totalCost, setTotalCost] = useState(null);
   const [costLoading, setCostLoading] = useState(false);
@@ -192,7 +191,7 @@ const CompetitionRegistration = () => {
   // Funzione per aggiornare i costi
   const refreshCosts = async () => {
     if (!user?.clubId || !competitionId) return;
-    
+
     try {
       setCostLoading(true);
       const costsData = await getClubRegistrationCosts(user.clubId, competitionId);
@@ -245,14 +244,14 @@ const CompetitionRegistration = () => {
   const handleConfirmRegistration = async () => {
     try {
       setLoading(true);
-      
+
       // Conferma iscrizione
       await confirmClubRegistrationFinal(user.clubId, competitionId);
 
       // Ricarica i dati
       const clubRegData = await getClubRegistration(user.clubId, competitionId);
       setClubRegistration(clubRegData);
-      
+
       await refreshRegistrations();
 
       setError(null);
@@ -276,29 +275,8 @@ const CompetitionRegistration = () => {
     navigate('/competitions');
   };
 
-  const handleOpenAthleteModal = (athlete = null) => {
-    setIsEditMode(!!athlete);
-    setSelectedAthlete(athlete);
-    setIsAthleteModalOpen(true);
-  };
-
-  const handleCloseAthleteModal = () => {
-    setIsAthleteModalOpen(false);
-    setSelectedAthlete(null);
-  };
-
-  const handleSaveAthlete = async (athleteData) => {
-    try {
-      if (isEditMode) {
-        await updateAthlete(athleteData.id, athleteData);
-      } else {
-        await createAthlete(athleteData);
-      }
-      handleCloseAthleteModal();
-      await refreshClubAthletes();
-    } catch (error) {
-      throw error;
-    }
+  const handleEditAthlete = () => {
+    refreshClubAthletes();
   };
 
   const handleEditRegistration = () => {
@@ -307,7 +285,7 @@ const CompetitionRegistration = () => {
         await editClubRegistration(user.clubId, competitionId);
         const competitionData = await getCompetitionDetails(competitionId);
         setCompetition(competitionData);
-        
+
         // Ricarica anche l'iscrizione del club
         try {
           const clubRegData = await getClubRegistration(user.clubId, competitionId);
@@ -320,6 +298,22 @@ const CompetitionRegistration = () => {
         setError('Errore durante la modifica dell\'iscrizione');
       }
     };
+  };
+
+  const handleDeleteAthleteRegistration = async (athlete, registrations) => {
+    try {
+      setLoading(true);
+
+      // Rimuovi l'atleta dalle iscrizioni
+      await deleteAthleteRegistrations(athlete.id, competitionId);
+
+      // Ricarica le iscrizioni
+      await refreshRegistrations();
+    } catch (err) {
+      setError('Errore durante la rimozione dell\'atleta: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -350,36 +344,53 @@ const CompetitionRegistration = () => {
   }
 
   return (
-    <Container 
-      maxWidth={false} 
-      sx={{ 
-        height: 'calc(100vh - 100px)', 
-        display: 'flex', 
-        flexDirection: 'column',
-        overflow: 'hidden',
-        px: 2
-      }}
-    >
-      {/* Header */}
-      <Box sx={{ mb: 2, flexShrink: 0 }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={handleGoBack}
-          sx={{ mb: 1 }}
-        >
-          Torna alle Competizioni
-        </Button>
-        
-        <Typography variant="h4" gutterBottom>
-          Iscrizione alla Competizione
-        </Typography>
-        
-        {competition && (
-          <Typography variant="h6" color="text.secondary">
-            {competition.nome} - {competition.luogo}
-          </Typography>
-        )}
-      </Box>
+    <div className="page-container">
+      <PageHeader
+        icon={FaTrophy}
+        title="Competizioni"
+        subtitle={`Iscrizione alla competizione: ${competition ? competition.nome : ''}${competition && competition.luogo ? ` - ${competition.luogo}` : ''}`}
+      />
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={handleGoBack}
+        sx={{ mb: 1 }}
+      >
+        Torna alle Competizioni
+      </Button>
+
+      {/* Contenuto della pagina */}
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 280px)' }}>
+        <div className="page-grid-25-75">
+          <div className="page-card-with-external-title">
+            <h2 className="page-card-external-title">Atleti del Club</h2>
+            <div className="page-card-scrollable">
+              <div className="page-card-scrollable-body">
+                <ClubAthletesList
+                  athletes={clubAthletes}
+                  competition={competition}
+                  isClubRegistered={isClubRegistered}
+                  onEditAthlete={handleEditAthlete}
+                  onRegistrationSuccess={refreshRegistrations}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="page-card-with-external-title">
+            <h2 className="page-card-external-title">Atleti Iscritti alla Gara</h2>
+            <RegisteredAthletesTable
+              registrations={registeredAthletes}
+              competition={competition}
+              isClubRegistered={isClubRegistered}
+              onDeleteAthlete={handleDeleteAthleteRegistration}
+              onRegistrationChange={refreshRegistrations}
+            />
+            {/* <div className="page-card-scrollable">
+              <div className="page-card-scrollable-body">
+              </div>
+            </div> */}
+          </div>
+        </div>
+      </div>
 
       <Box sx={{ mb: 2, flexShrink: 0 }}>
         {error && (
@@ -389,97 +400,11 @@ const CompetitionRegistration = () => {
         )}
       </Box>
 
-      {/* Layout a due colonne con flexbox */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          gap: 3, 
-          flexGrow: 1,
-          overflow: 'auto',
-          minHeight: 0
-        }}
-      >
-        {/* Colonna sinistra - Atleti del club */}
-        <Box sx={{ 
-          minWidth: 400, 
-          flex: '0 0 400px',
-          display: 'flex', 
-          flexDirection: 'column'
-        }}>
-          <Paper sx={{ 
-            p: 2, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100%',
-            overflow: 'hidden'
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              mb: 2,
-              flexShrink: 0
-            }}>
-              <Typography variant="h6">
-                Atleti del Club
-              </Typography>
-              <Tooltip title="Aggiungi Atleta" arrow>             
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  onClick={() => handleOpenAthleteModal()}
-                >
-                  +
-                </Button>
-              </Tooltip> 
-            </Box>
-            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-              <ClubAthletesList
-                athletes={clubAthletes}
-                competition={competition}
-                isClubRegistered={isClubRegistered}
-                onRegistrationSuccess={refreshRegistrations}
-                onEditAthlete={handleOpenAthleteModal}
-              />
-            </Box>
-          </Paper>
-        </Box>
-
-        {/* Colonna destra - Atleti iscritti */}
-        <Box sx={{ 
-          flexGrow: 1,
-          minWidth: 600,
-          display: 'flex', 
-          flexDirection: 'column'
-        }}>
-          <Paper sx={{ 
-            p: 2, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            height: '100%',
-            overflow: 'hidden'
-          }}>
-            <Typography variant="h6" gutterBottom sx={{ flexShrink: 0 }}>
-              Atleti Iscritti alla Gara
-            </Typography>
-            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-              <RegisteredAthletesList
-                registrations={registeredAthletes}
-                competition={competition}
-                isClubRegistered={isClubRegistered}
-                onRegistrationChange={refreshRegistrations}
-              />
-            </Box>
-          </Paper>
-        </Box>
-      </Box>
-
       {/* Bottoni in basso a destra */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           gap: 2,
           mt: 2,
@@ -518,82 +443,69 @@ const CompetitionRegistration = () => {
               >
                 {areDocumentsUploaded() ? 'Modifica Documenti' : 'Carica Documenti'}
               </Button>
-              
+
               {areDocumentsUploaded() && (
                 <Alert severity="success" sx={{ mb: 0 }}>
-                ✓ Documenti caricati
-              </Alert>
-            )}
-          </>
-        )}
+                  ✓ Documenti caricati
+                </Alert>
+              )}
+            </>
+          )}
 
-        {/* Bottone conferma iscrizione - visibile solo se documenti caricati e atleti iscritti */}
-        {!isClubRegistered && (
-          <>
-            {registeredAthletes.length === 0 && (
-              <Alert severity="info" sx={{ mb: 0 }}>
-                Aggiungi almeno un atleta per poter confermare l'iscrizione
-              </Alert>
-            )}
-            
-            {registeredAthletes.length > 0 && !areDocumentsUploaded() && (
-              <Alert severity="warning" sx={{ mb: 0 }}>
-                Carica i documenti obbligatori per confermare l'iscrizione
-              </Alert>
-            )}
+          {/* Bottone conferma iscrizione - visibile solo se documenti caricati e atleti iscritti */}
+          {!isClubRegistered && (
+            <>
+              {registeredAthletes.length === 0 && (
+                <Alert severity="info" sx={{ mb: 0 }}>
+                  Aggiungi almeno un atleta per poter confermare l'iscrizione
+                </Alert>
+              )}
 
-            <Button
-              variant="contained"
-              color="success"
-              size="large"
-              onClick={handleConfirmRegistration}
-              disabled={!canConfirmRegistration()}
-            >
-              Conferma Iscrizione
-            </Button>
-          </>
-        )}
+              {registeredAthletes.length > 0 && !areDocumentsUploaded() && (
+                <Alert severity="warning" sx={{ mb: 0 }}>
+                  Carica i documenti obbligatori per confermare l'iscrizione
+                </Alert>
+              )}
 
-        {/* Iscrizione confermata */}
-        {isClubRegistered && (
-          <Box display="flex" alignItems="center" gap={2}>
-            <Alert severity="success" sx={{ mb: 0 }}>
-              Iscrizione confermata il {clubRegistration?.dataConferma ? new Date(clubRegistration.dataConferma).toLocaleDateString() : ''}
-            </Alert>
-            <Button
-              variant="outlined"
-              color="secondary"
-              size="large"
-              onClick={handleEditRegistration()}
-            >
-              Modifica Iscrizione
-            </Button>
-            <Button
-              variant="outlined"
-              color="info"
-              size="large"
-              sx={{ ml: 1 }}
-              onClick={handleOpenCostSummary}
-            >
-              FINALIZZA ISCRIZIONE
-            </Button>
-          </Box>
-        )}
+              <Button
+                variant="contained"
+                color="success"
+                size="large"
+                onClick={handleConfirmRegistration}
+                disabled={!canConfirmRegistration()}
+              >
+                Conferma Iscrizione
+              </Button>
+            </>
+          )}
+
+          {/* Iscrizione confermata */}
+          {isClubRegistered && (
+            <Box display="flex" alignItems="center" gap={2}>
+              <Alert severity="success" sx={{ mb: 0 }}>
+                Iscrizione confermata il {clubRegistration?.dataConferma ? new Date(clubRegistration.dataConferma).toLocaleDateString() : ''}
+              </Alert>
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="large"
+                onClick={handleEditRegistration()}
+              >
+                Modifica Iscrizione
+              </Button>
+              <Button
+                variant="outlined"
+                color="info"
+                size="large"
+                sx={{ ml: 1 }}
+                onClick={handleOpenCostSummary}
+              >
+                FINALIZZA ISCRIZIONE
+              </Button>
+            </Box>
+          )}
         </Box>
       </Box>
-
-      {/* Modale per aggiungere/modificare atleta */}
-      {isAthleteModalOpen && (
-        <AthleteModal
-          open={isAthleteModalOpen}
-          onClose={handleCloseAthleteModal}
-          onSubmit={handleSaveAthlete}
-          onDelete={null}
-          isEditMode={isEditMode}
-          athlete={selectedAthlete}
-          userClubId={user?.clubId}
-        />
-      )}
 
       {/* Modale per upload documenti */}
       <RegistrationDocumentsUploadModal
@@ -687,7 +599,7 @@ const CompetitionRegistration = () => {
           </Box>
         </>
       )}
-    </Container>
+    </div>
   );
 };
 

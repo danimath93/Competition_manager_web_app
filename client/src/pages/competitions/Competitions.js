@@ -2,21 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box } from '@mui/material';
 import { Add } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
+import { FaTrophy } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
     loadAllCompetitions, 
     createCompetition,
     updateCompetition,
     deleteCompetition,
     getCompetitionDetails 
-} from '../api/competitions';
-import CompetitionCard from '../components/CompetitionCard';
-import CompetitionModal from '../components/CompetitionModal';
-import CompetitionDetailsModal from '../components/CompetitionDetailsModal';
-import CompetitionOrganizerSelectorModal from '../components/CompetitionOrganizerSelectorModal';
-import CompetitionDocumentsModal from '../components/CompetitionDocumentsModal';
-import AuthComponent from '../components/AuthComponent';
+} from '../../api/competitions';
+import CompetitionCard from '../../components/CompetitionCard';
+import CompetitionDetailsModal from '../../components/CompetitionDetailsModal';
+import CompetitionOrganizerSelectorModal from '../../components/CompetitionOrganizerSelectorModal';
+import CompetitionDocumentsModal from '../../components/CompetitionDocumentsModal';
+import AuthComponent from '../../components/AuthComponent';
 
 const Competitions = () => {
   const { t } = useLanguage();
@@ -24,9 +24,7 @@ const Competitions = () => {
   const navigate = useNavigate();
   
   const [competitions, setCompetitions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [editClubOrganizerModalOpen, setEditClubOrganizerModalOpen] = useState(false);
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
@@ -69,14 +67,11 @@ const Competitions = () => {
   }, [user]);
 
   const handleOpenModal = (competition = null) => {
-    setIsEditMode(!!competition);
-    setSelectedCompetition(competition);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedCompetition(null);
+    if (competition) {
+      navigate(`/competitions/edit/${competition.id}`);
+    } else {
+      navigate('/competitions/new');
+    }
   };
 
   const handleOpenDetailsModal = async (competition) => {
@@ -110,16 +105,6 @@ const Competitions = () => {
   const handleCloseDetailsModal = () => {
     setIsDetailsModalOpen(false);
     setCompetitionDetails(null);
-  };
-
-  const handleSaveModifyCompetition = async (competitionData) => {
-    if (competitionData.id) {
-      await updateCompetition(competitionData.id, competitionData);
-    } else {
-        await createCompetition(competitionData);
-    }
-    reloadSelectedCompetitionData();
-    handleCloseModal();
   };
 
   const handleDeleteCompetition = async (id) => {
@@ -196,16 +181,6 @@ const Competitions = () => {
           />
         ))}
       </div>
-
-      {isModalOpen && (
-        <CompetitionModal
-            open={isModalOpen}
-            onClose={handleCloseModal}
-            onSubmit={handleSaveModifyCompetition}
-            isEditMode={isEditMode}
-            competition={selectedCompetition}
-        />
-      )}
 
       {isDetailsModalOpen && (
         <CompetitionDetailsModal

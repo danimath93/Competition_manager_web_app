@@ -30,15 +30,15 @@ import {
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material';
-import { getCompetitionDetails, getCompetitionCostSummary } from '../api/competitions';
+import { getCompetitionDetails, getCompetitionCostSummary } from '../../api/competitions';
 import {
   getClubRegistrationsByCompetition,
   loadRegistrationsByCompetition,
   downloadClubRegistrationDocument,
-} from '../api/registrations';
+} from '../../api/registrations';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import InfoIcon from '@mui/icons-material/Info';
-import DrawerModal from '../components/common/DrawerModal';
+import DrawerModal from '../../components/common/DrawerModal';
 
 const CompetitionSummary = () => {
   const { competitionId } = useParams();

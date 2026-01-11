@@ -123,6 +123,57 @@
   gap: 1.5rem;
 }
 
+/* Grid con proporzioni personalizzate */
+.page-grid-25-75 {
+  display: grid;
+  grid-template-columns: minmax(280px, 25%) minmax(500px, 1fr);
+  gap: 1.5rem;
+  height: 100%;
+}
+
+/* Container per card con titolo esterno */
+.page-card-with-external-title {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0; /* Importante per permettere lo scroll */
+}
+
+/* Titolo esterno alla card */
+.page-card-external-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #333333);
+}
+
+/* Card con scroll interno */
+.page-card-scrollable {
+  background-color: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-light, #e0e0e0);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-sm, 0 2px 2px rgba(0, 0, 0, 0.1));
+  transition: box-shadow 0.3s ease;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-card-scrollable:hover {
+  box-shadow: var(--shadow-md, 0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Body della card con scroll */
+.page-card-scrollable-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  color: var(--text-primary, #333333);
+}
+
 /* ========================================
    UTILITY CLASSES
    ======================================== */

@@ -10,10 +10,10 @@ import RequestPasswordReset from './components/RequestPasswordReset';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
 import AuthGate from './components/AuthGate';
 import Dashboard from './pages/Dashboard';
-import Competitions from './pages/Competitions';
+import Competitions from './pages/competitions/Competitions';
 import ClubCategories from './pages/competitions/ClubCategories';
-import CompetitionRegistration from './pages/CompetitionRegistration';
-import CompetitionSummary from './pages/CompetitionSummary';
+import CompetitionRegistration from './pages/competitions/CompetitionRegistration';
+import CompetitionSummary from './pages/competitions/CompetitionSummary';
 import Athletes from './pages/Athletes';
 import ClubAdmin from './pages/ClubAdmin';
 import ClubUser from './pages/ClubUser';
@@ -23,6 +23,7 @@ import CategoryDefinition from './pages/categories/CategoryDefinition';
 import CategoryExecution from './pages/categories/CategoryExecution';
 import CategoryResults from './pages/categories/CategoryResults';
 import CategoryInProgress from './pages/categories/CategoryInProgress';
+import CompetitionConfigurator from './pages/CompetitionConfigurator';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
 
@@ -86,6 +87,19 @@ const AppContent = () => {
         <Route path="/competitions" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club", "user"]}>
             <Competitions />
+          </AuthGate>
+        } />
+
+        {/* Configuratore Competizione - superAdmin, admin */}
+        <Route path="/competitions/new" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
+            <CompetitionConfigurator />
+          </AuthGate>
+        } />
+
+        <Route path="/competitions/edit/:id" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
+            <CompetitionConfigurator />
           </AuthGate>
         } />
 

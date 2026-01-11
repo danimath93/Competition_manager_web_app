@@ -1,0 +1,138 @@
+/* ========================================
+   HORIZONTAL STEPPER - STILI
+   ======================================== */
+
+.horizontal-stepper {
+  width: 100%;
+  padding: var(--spacing-xl) 0;
+}
+
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+/* Linea connettiva tra gli step */
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background-color: var(--border-light);
+  margin: 0 var(--spacing-sm);
+  transition: background-color var(--transition-normal);
+}
+
+.stepper-line.completed {
+  background-color: var(--color-primary);
+}
+
+/* Step singolo */
+.stepper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Cerchio numerato */
+.stepper-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-lg);
+  font-weight: var(--font-bold);
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-light);
+  color: var(--text-tertiary);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+/* Step completato */
+.stepper-step.completed .stepper-circle {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-white);
+}
+
+/* Step attivo */
+.stepper-step.active .stepper-circle {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-white);
+  box-shadow: var(--shadow-primary);
+}
+
+/* Step non ancora raggiunto */
+.stepper-step.pending .stepper-circle {
+  background-color: var(--bg-primary);
+  border-color: var(--border-light);
+  color: var(--text-tertiary);
+}
+
+/* Label dello step attivo - mostrato sopra il cerchio */
+.stepper-label-active {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  text-align: center;
+  white-space: nowrap;
+  animation: fadeIn var(--transition-fast);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stepper-circle {
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-base);
+  }
+
+  .stepper-label-active {
+    font-size: var(--font-xs);
+  }
+
+  .stepper-line {
+    margin: 0 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stepper-circle {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-sm);
+  }
+
+  .stepper-label-active {
+    font-size: 0.7rem;
+  }
+
+  .stepper-line {
+    margin: 0 4px;
+  }
+
+  .horizontal-stepper {
+    padding: var(--spacing-lg) 0;
+  }
+}

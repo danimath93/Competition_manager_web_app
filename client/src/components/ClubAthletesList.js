@@ -7,33 +7,22 @@ import {
   Button,
   Typography,
   Box,
-  Chip,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  IconButton,
   Tooltip
 } from '@mui/material';
-import { PersonAdd, Edit } from '@mui/icons-material';
-import { createRegistration } from '../api/registrations';
-import CategorySelector from './CategorySelector';
+import { PersonAdd } from '@mui/icons-material';
+import SearchTextField from './SearchTextField';
+import AthleteRegistration from './AthleteRegistration';
 
 const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrationSuccess, onEditAthlete }) => {
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [isCategorySelectorOpen, setIsCategorySelectorOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [searchText, setSearchText] = useState('');
 
   // Funzione per aprire il dialog di iscrizione
   const handleRegisterAthlete = async (athlete) => {
     setSelectedAthlete(athlete);
-    setError(null);
     setIsCategorySelectorOpen(true);
   };
 
@@ -41,44 +30,22 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
   const handleCloseCategorySelector = () => {
     setIsCategorySelectorOpen(false);
     setSelectedAthlete(null);
-    setError(null);
   };
 
-  // Funzione per confermare l'iscrizione
-  const handleConfirmRegistration = async (registrationData) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      await createRegistration({
-        atletaId: selectedAthlete.id,
-        tipoCategoriaId: registrationData.tipoCategoriaId,
-        competizioneId: competition.id,
-        stato: 'In attesa',
-        idConfigEsperienza: registrationData.idConfigEsperienza,
-        peso: registrationData.peso
-      });
-
-      handleCloseCategorySelector();
-      onRegistrationSuccess();
-    } catch (err) {
-      throw err;
-    } finally {
-      setLoading(false);
+  // Funzione chiamata al completamento dell'iscrizione
+  const handleRegistrationSuccess = async () => {
+    setIsCategorySelectorOpen(false);
+    setSelectedAthlete(null);
+    if (onRegistrationSuccess) {
+      await onRegistrationSuccess();
     }
   };
 
-  // Calcola l'età dell'atleta
-  const calculateAge = (birthDate) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
+  // Filtra gli atleti in base al testo di ricerca
+  const filteredAthletes = athletes.filter((athlete) => {
+    const fullName = `${athlete.nome} ${athlete.cognome}`.toLowerCase();
+    return fullName.includes(searchText.toLowerCase());
+  });
 
   if (!athletes || athletes.length === 0) {
     return (
@@ -92,44 +59,20 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
 
   return (
     <>
+      <SearchTextField
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        placeholder="Cerca atleta..."
+      />
       <List>
-        {athletes.map((athlete) => (
+        {filteredAthletes.map((athlete) => (
           <ListItem key={athlete.id} divider sx={{ alignItems: "flex-start", py: 2 }}>
             <ListItemText
-              primary={`${athlete.nome} ${athlete.cognome}`}
-              // secondary={
-              //   <Box>
-              //     <Typography variant="body2" color="text.secondary">
-              //       Età: {calculateAge(athlete.dataNascita)} anni
-              //     </Typography>
-              //     <Typography variant="body2" color="text.secondary">
-              //       Peso: {athlete.peso} kg
-              //     </Typography>
-              //     {athlete.grado && (
-              //       <Chip 
-              //         label={athlete.grado} 
-              //         size="small" 
-              //         sx={{ mt: 0.5 }}
-              //       />
-              //     )}
-              //   </Box>
-              // }
+              primary={`${athlete.cognome} ${athlete.nome}`}
             />
             <ListItemSecondaryAction>
             {!isClubRegistered && (
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Tooltip title="Modifica Atleta" arrow>     
-                  <Button
-                    aria-label="edit"
-                    size="small"
-                    variant="outlined"
-                    sx={{p:0.5, minWidth: 20}}
-                    onClick={() => onEditAthlete(athlete)}
-                  >
-                    <Edit />
-                  </Button>
-                </Tooltip>
-
                 <Tooltip title="Iscrivi Atleta" arrow>                    
                   <Button
                     size="small"
@@ -148,15 +91,29 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
         ))}
       </List>
 
-      {/* Nuovo CategorySelector */}
-      <CategorySelector
+      {/* Registrazione atleta */}
+      <Dialog
         open={isCategorySelectorOpen}
-        onClose={handleCloseCategorySelector}
-        onConfirm={handleConfirmRegistration}
-        athlete={selectedAthlete}
-        competition={competition}
-        title="Iscrivi Atleta"
-      />
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '90vh',
+            maxHeight: '90vh'
+          }
+        }}
+      >
+        <DialogContent sx={{ p: '10px', height: '100%', overflow: 'auto' }}>
+          <AthleteRegistration
+            athlete={selectedAthlete}
+            competition={competition}
+            onUpdateAthlete={onEditAthlete}
+            onRegistrationComplete={handleRegistrationSuccess}
+            onCancel={handleCloseCategorySelector}
+            fullWidth={true}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

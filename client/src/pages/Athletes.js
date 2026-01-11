@@ -9,7 +9,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { FaUsers } from 'react-icons/fa';
-import { Add } from '@mui/icons-material';
+import { Add, Height } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
 import { loadAllClubs } from '../api/clubs';
@@ -21,6 +21,7 @@ import AuthComponent from '../components/AuthComponent';
 import PageHeader from '../components/PageHeader';
 import { Button } from '../components/common';
 import ConfirmActionModal from '../components/common/ConfirmActionModal';
+import SearchTextField from '../components/SearchTextField';
 import '../pages/styles/CommonPageStyles.css';
 
 const Athletes = () => {
@@ -129,6 +130,10 @@ const Athletes = () => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
+  const handleFilterNameChange = (e) => {
+    setFilters({ ...filters, name: e.target.value });
+  }
+
   const handleOpenModal = (athlete = null) => {
     setIsEditMode(!!athlete);
     setSelectedAthlete(athlete);
@@ -206,18 +211,18 @@ const Athletes = () => {
       {/* Contenuto della pagina */}
       <div className="page-content">
         <div className="page-card">
-          {/* <div className="page-card-header">
-            <Typography variant="h6" className="page-card-title">
-              Filtri
-            </Typography>
-          </div> */}
           <div className="page-card-body">
             <Box sx={{ mb: 2 }} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-              <TextField
-                name="name"
-                label="Filtra per Nome/Cognome"
-                variant="outlined"
-                onChange={handleFilterChange}
+              <SearchTextField
+                value={filters.name}
+                onChange={handleFilterNameChange}
+                placeholder="Filtra per Nome/Cognome"
+                sx={{
+                  maxWidth: "800px",
+                  '& .MuiOutlinedInput-root': {
+                    height: '60px',
+                  }
+                }}
               />
               <Button
                 icon={Add}
