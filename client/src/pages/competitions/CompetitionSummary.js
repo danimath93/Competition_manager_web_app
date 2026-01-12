@@ -215,7 +215,7 @@ const handleCloseClubDetails = () => {
     }, {});
   }
 
-  // Calcola il costo iscrizione di un atleta
+  /* Calcola il costo iscrizione di un atleta
   const getRegistrationCosts = (registrations) => {
     if (!registrations || registrations.length === 0) {
       return 'N/A';
@@ -227,7 +227,12 @@ const handleCloseClubDetails = () => {
     }
 
     return 'N/A';
-  };
+  };*/
+
+  const getRegistrationCosts = (registrations) => {
+  if (!registrations || registrations.length === 0) return 'N/A';
+  return registrations[0]?.quota ?? 0;
+};
 
 
   if (loading) {
@@ -295,11 +300,23 @@ const handleCloseClubDetails = () => {
                 rows={clubRegistrations.map((clubReg) => {
                   const clubId = clubReg.clubId;
                   const costSummary = clubCostSummaries[clubId];
+
                   const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
                   const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
                   const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
                   const totale = cbBambini + cbAdulti + cn;
-                  const quota = costSummary?.totals?.totalCost?.toFixed(2) || '0.00';
+                  const quota = athleteRegistrations
+                    .filter(r => r.atleta?.club?.id === clubId)
+                    .reduce((acc, r) => {
+                      if (!acc._seen) acc._seen = new Set();
+                      if (!acc._seen.has(r.atleta.id)) {
+                        acc._seen.add(r.atleta.id);
+                        acc.total += r.quota || 0;
+                      }
+                      return acc;
+                    }, { total: 0, _seen: new Set() })
+                    .total
+                    .toFixed(2);
                   return {
                     id: clubId,
                     club: clubReg.club?.denominazione || 'N/A',
@@ -358,8 +375,19 @@ const handleCloseClubDetails = () => {
                     }, 0);
                     const totalQuota = clubRegistrations.reduce((sum, clubReg) => {
                       const clubId = clubReg.clubId;
-                      const costSummary = clubCostSummaries[clubId];
-                      return sum + (costSummary?.totals?.totalCost || 0);
+                      const athletesSeen = new Set();
+
+                      const clubTotal = athleteRegistrations
+                        .filter(r => r.atleta?.club?.id === clubId)
+                        .reduce((acc, r) => {
+                          if (!athletesSeen.has(r.atleta.id)) {
+                            athletesSeen.add(r.atleta.id);
+                            acc += r.quota || 0;
+                          }
+                          return acc;
+                        }, 0);
+
+                      return sum + clubTotal;
                     }, 0);
                     return (
                       <Box sx={{ display: 'flex', width: '100%', borderTop: '3px solid #d8240cff', background: '#fafafa', fontWeight: 600, minHeight: 56 }}>
@@ -410,9 +438,18 @@ const handleCloseClubDetails = () => {
                     categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
                     costo: loadingCost
                       ? '-'
-                      : costSummary?.totals?.totalCost
-                        ? costSummary.totals.totalCost.toFixed(2)
-                        : '-',
+                      : athleteRegistrations
+                          .filter(r => r.atleta?.club?.id === clubId)
+                          .reduce((acc, r) => {
+                            if (!acc._seen) acc._seen = new Set();
+                            if (!acc._seen.has(r.atleta.id)) {
+                              acc._seen.add(r.atleta.id);
+                              acc.total += r.quota || 0;
+                            }
+                            return acc;
+                          }, { total: 0, _seen: new Set() })
+                          .total
+                          .toFixed(2),
                     // IMPORTANTISSIMO: manteniamo tutto l'oggetto
                     raw: clubReg,
                   };
@@ -558,7 +595,20 @@ const handleCloseClubDetails = () => {
           const clubId = selectedClub.clubId;
           const loadingCost = loadingCosts[clubId];
           const costSummary = clubCostSummaries[clubId];
+          const athletesOfClub = athleteRegistrations.filter(
+            r => r.atleta?.club?.id === clubId
+          );
 
+          // mappa atletaId -> { quota, tipoAtleta }
+          const athleteQuotaMap = new Map();
+          athletesOfClub.forEach(r => {
+            if (!athleteQuotaMap.has(r.atleta.id)) {
+              athleteQuotaMap.set(r.atleta.id, {
+                quota: r.quota || 0,
+                tipoAtleta: r.atleta?.tipoAtleta?.nome
+              });
+            }
+          });
           return (
             <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
@@ -606,10 +656,19 @@ const handleCloseClubDetails = () => {
                 </Box>
 
                 <Box>
-                  <strong>Quota totale:</strong>{' '}
-                  {costSummary?.totals?.totalCost
-                    ? `${costSummary.totals.totalCost.toFixed(2)} €`
-                    : '-'}
+                <strong>Quota totale:</strong>{' '}
+                {athleteRegistrations
+                  .filter(r => r.atleta?.club?.id === clubId)
+                  .reduce((acc, r) => {
+                    if (!acc._seen) acc._seen = new Set();
+                    if (!acc._seen.has(r.atleta.id)) {
+                      acc._seen.add(r.atleta.id);
+                      acc.total += r.quota || 0;
+                    }
+                    return acc;
+                  }, { total: 0, _seen: new Set() })
+                  .total
+                  .toFixed(2)} €
                 </Box>
               </Box>
 
@@ -649,7 +708,10 @@ const handleCloseClubDetails = () => {
                                 justifyContent="flex-end"
                               >
                                 <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                {detail.totalCost?.toFixed(2) || '0.00'}
+                                {Array.from(athleteQuotaMap.values())
+                                  .filter(a => a.tipoAtleta === type)
+                                  .reduce((sum, a) => sum + a.quota, 0)
+                                  .toFixed(2)}
                               </Box>
                             </TableCell>
                           </TableRow>
@@ -667,7 +729,11 @@ const handleCloseClubDetails = () => {
                             justifyContent="flex-end"
                           >
                             <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                            <strong>{costSummary.totals?.totalCost?.toFixed(2)}</strong>
+                            <strong>
+                              {Array.from(athleteQuotaMap.values())
+                                .reduce((sum, a) => sum + a.quota, 0)
+                                .toFixed(2)}
+                            </strong>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -760,7 +826,7 @@ const handleCloseClubDetails = () => {
                   { field: 'nCategorie', headerName: 'N° Categorie', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
                   { field: 'costo', headerName: 'Costo', flex: 1, minWidth: 100, align: 'right', headerAlign: 'right', renderCell: (params) => (
                       <Box display="flex" alignItems="center" justifyContent="flex-end">
-                        {params.value}
+                        {Number(params.value).toFixed(2)}
                         <EuroIcon fontSize="small" sx={{ ml: 1 }} />
                       </Box>
                     ) },

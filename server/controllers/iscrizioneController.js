@@ -49,7 +49,25 @@ const getIscrizioniByCompetizione = async (req, res) => {
       ]
     });
 
-    res.status(200).json(iscrizioni);
+    // Recupera tutte le quote dal modello DettaglioIscrizioneAtleta
+    const atletaIds = iscrizioni.map(i => i.atletaId);
+    const dettagliQuote = await DettaglioIscrizioneAtleta.findAll({
+      where: {
+        atletaId: atletaIds,
+        competizioneId
+      }
+    });
+
+    // Mappa la quota su ogni iscrizione
+    const iscrizioniConQuota = iscrizioni.map(iscrizione => {
+      const dettaglio = dettagliQuote.find(dq => dq.atletaId === iscrizione.atletaId);
+      return {
+        ...iscrizione.dataValues,
+        quota: dettaglio ? parseFloat(dettaglio.quota) || 0 : 0
+      };
+    });
+
+    res.status(200).json(iscrizioniConQuota);
   } catch (error) {
     logger.error(`Errore nel recupero delle iscrizioni per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
@@ -108,10 +126,10 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
     });
 
     iscrizioniEspanse = iscrizioniEspanse.map(iscrizione => {
-      const dettagli = dettagliIscrizioni.find(d => d.atletaId === iscrizione.atletaId);
+      const dettaglio = dettagliIscrizioni.find(d => d.atletaId === iscrizione.atletaId);
       return {
         ...iscrizione,
-        dettagliIscrizione: dettagli || null
+        quota: dettaglio ? parseFloat(dettaglio.quota) || 0 : 0
       };
     });
 
@@ -720,29 +738,14 @@ const getClubRegistrationCosts = async (req, res) => {
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
-    // Carica tutte le iscrizioni del club per questa competizione
-    const iscrizioni = await IscrizioneAtleta.findAll({
-      where: { competizioneId },
-      include: [
-        {
-          model: Atleta,
-          as: 'atleta',
-          where: { clubId },
-          include: [
-            {
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
-            }
-          ]
-        },
-        {
-          model: ConfigTipoCategoria,
-          as: 'tipoCategoria'
-        }
-      ]
+    // Carica tutti gli atleti del club iscritti a questa competizione
+    const atleti = await Atleta.findAll({
+      where: { clubId },
+      attributes: ['id']
     });
+    const atletaIds = atleti.map(a => a.id);
 
-    if (iscrizioni.length === 0) {
+    if (atletaIds.length === 0) {
       return res.status(200).json({
         totalCost: 0,
         athletesCosts: [],
@@ -750,11 +753,23 @@ const getClubRegistrationCosts = async (req, res) => {
       });
     }
 
-    // Calcola i costi
-    const costsData = calculateClubTotalCost(iscrizioni, competizione.costiIscrizione);
+    // Recupera tutte le quote dal modello DettaglioIscrizioneAtleta
+    const dettagliQuote = await DettaglioIscrizioneAtleta.findAll({
+      where: {
+        atletaId: atletaIds,
+        competizioneId
+      }
+    });
+
+    const totalCost = dettagliQuote.reduce((sum, dq) => sum + (parseFloat(dq.quota) || 0), 0);
+    const athletesCosts = dettagliQuote.map(dq => ({
+      atletaId: dq.atletaId,
+      cost: parseFloat(dq.quota) || 0
+    }));
 
     res.status(200).json({
-      ...costsData,
+      totalCost,
+      athletesCosts,
       costiIscrizione: competizione.costiIscrizione
     });
   } catch (error) {
