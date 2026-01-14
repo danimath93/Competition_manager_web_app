@@ -116,7 +116,7 @@ const Login = () => {
 
           <div className="login-right">
             <img
-              src="/assets/GN26_Locandina.png"
+              src="/assets/Locandina_GN2026.png"
               alt="Sports background"
               className="login-image"
             />
