@@ -305,18 +305,7 @@ const handleCloseClubDetails = () => {
                   const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
                   const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
                   const totale = cbBambini + cbAdulti + cn;
-                  const quota = athleteRegistrations
-                    .filter(r => r.atleta?.club?.id === clubId)
-                    .reduce((acc, r) => {
-                      if (!acc._seen) acc._seen = new Set();
-                      if (!acc._seen.has(r.atleta.id)) {
-                        acc._seen.add(r.atleta.id);
-                        acc.total += r.quota || 0;
-                      }
-                      return acc;
-                    }, { total: 0, _seen: new Set() })
-                    .total
-                    .toFixed(2);
+                  const quota = costSummary?.totals?.totalCost || 0;
                   return {
                     id: clubId,
                     club: clubReg.club?.denominazione || 'N/A',
@@ -375,18 +364,8 @@ const handleCloseClubDetails = () => {
                     }, 0);
                     const totalQuota = clubRegistrations.reduce((sum, clubReg) => {
                       const clubId = clubReg.clubId;
-                      const athletesSeen = new Set();
-
-                      const clubTotal = athleteRegistrations
-                        .filter(r => r.atleta?.club?.id === clubId)
-                        .reduce((acc, r) => {
-                          if (!athletesSeen.has(r.atleta.id)) {
-                            athletesSeen.add(r.atleta.id);
-                            acc += r.quota || 0;
-                          }
-                          return acc;
-                        }, 0);
-
+                      const costSummary = clubCostSummaries[clubId];
+                      const clubTotal = costSummary?.totals?.totalCost || 0;
                       return sum + clubTotal;
                     }, 0);
                     return (
@@ -436,21 +415,7 @@ const handleCloseClubDetails = () => {
                       : '-',
                     atleti: loadingCost ? '-' : costSummary?.totals?.totalAthletes ?? '-',
                     categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
-                    costo: loadingCost
-                      ? '-'
-                      : athleteRegistrations
-                          .filter(r => r.atleta?.club?.id === clubId)
-                          .reduce((acc, r) => {
-                            if (!acc._seen) acc._seen = new Set();
-                            if (!acc._seen.has(r.atleta.id)) {
-                              acc._seen.add(r.atleta.id);
-                              acc.total += r.quota || 0;
-                            }
-                            return acc;
-                          }, { total: 0, _seen: new Set() })
-                          .total
-                          .toFixed(2),
-                    // IMPORTANTISSIMO: manteniamo tutto l'oggetto
+                    costo: loadingCost ? '-' : costSummary?.totals?.totalCost?.toFixed(2) ?? '-',
                     raw: clubReg,
                   };
                 })}
@@ -657,18 +622,7 @@ const handleCloseClubDetails = () => {
 
                 <Box>
                 <strong>Quota totale:</strong>{' '}
-                {athleteRegistrations
-                  .filter(r => r.atleta?.club?.id === clubId)
-                  .reduce((acc, r) => {
-                    if (!acc._seen) acc._seen = new Set();
-                    if (!acc._seen.has(r.atleta.id)) {
-                      acc._seen.add(r.atleta.id);
-                      acc.total += r.quota || 0;
-                    }
-                    return acc;
-                  }, { total: 0, _seen: new Set() })
-                  .total
-                  .toFixed(2)} €
+                  {costSummary?.totals?.totalCost ?? '-'}
                 </Box>
               </Box>
 

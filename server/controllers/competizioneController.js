@@ -1,5 +1,5 @@
 const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento } = require('../models');
-const { IscrizioneClub, IscrizioneAtleta, Atleta } = require('../models');
+const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta } = require('../models');
 
 const logger = require('../helpers/logger/logger');
 const PDFDocument = require('pdfkit');
@@ -358,20 +358,31 @@ const getCompetitionCostSummary = async (req, res) => {
 
     // Raggruppa iscrizioni per atleta
     const iscrizioniPerAtleta = {};
-    iscrizioniAtleti.forEach((iscrizione) => {
+    for (const iscrizione of iscrizioniAtleti) {
       const atleta = iscrizione.atleta;
       const tipoCategoria = iscrizione.tipoCategoria;
       if (atleta) {
         // Raggruppa per id atleta
         if (!iscrizioniPerAtleta[atleta.id]) {
-          iscrizioniPerAtleta[atleta.id] = { atleta, categorie: [], costoIscrizione: iscrizione.costoIscrizione };
+          iscrizioniPerAtleta[atleta.id] = { atleta, categorie: [], costoIscrizione: 0 };
+          // Uso i dettagli iscrizione per calcolare il costo
+          const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
+            where: {
+              atletaId: atleta.id,
+              competizioneId: competizioneId
+            }
+          });
+
+          if (dettagliIscrizione && dettagliIscrizione.quota > 0) {
+            iscrizioniPerAtleta[atleta.id].costoIscrizione = parseFloat(dettagliIscrizione.quota);
+          }
         }
         if (tipoCategoria && tipoCategoria.nome) {
           iscrizioniPerAtleta[atleta.id].categorie.push(tipoCategoria.nome);
           categoryBreakdown[tipoCategoria.nome] = (categoryBreakdown[tipoCategoria.nome] || 0) + 1;
         }
       }
-    });
+    };
 
     // Calcola breakdown per tipo atleta e iscrizioni singole/multiple
     Object.values(iscrizioniPerAtleta).forEach(({ atleta, categorie, costoIscrizione }) => {

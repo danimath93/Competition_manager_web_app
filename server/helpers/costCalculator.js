@@ -158,64 +158,10 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
   return parseFloat(totalCost.toFixed(2));
 };
 
-/**
- * Calcola i costi per tutti gli atleti iscritti di un club
- * @param {Array} iscrizioni - Array di iscrizioni atleti con atleta.tipoAtletaId
- * @param {Object} costiIscrizione - Configurazione costi della competizione
- * @returns {Object} - { totalCost, athletesCosts: [{ atletaId, cost, numCategories }] }
- */
-const calculateClubTotalCost = (iscrizioni, costiIscrizione) => {
-  if (!iscrizioni || iscrizioni.length === 0) {
-    return { totalCost: 0, athletesCosts: [] };
-  }
-  
-  // Raggruppa le iscrizioni per atleta
-  const athletesMap = new Map();
-  
-  iscrizioni.forEach(iscrizione => {
-    const atletaId = iscrizione.atletaId;
-    if (!athletesMap.has(atletaId)) {
-      athletesMap.set(atletaId, {
-        atletaId,
-        tipoAtletaId: iscrizione.atleta?.tipoAtletaId,
-        tesseramento: iscrizione.atleta?.tesseramento,
-        categories: []
-      });
-    }
-    athletesMap.get(atletaId).categories.push(iscrizione.tipoCategoriaId);
-  });
-  
-  // Calcola il costo per ogni atleta
-  const athletesCosts = [];
-  let totalCost = 0;
-  
-  athletesMap.forEach((athleteData) => {
-    const cost = calculateAthleteCost(
-      costiIscrizione,
-      athleteData,
-      athleteData.categories
-    );
-    
-    athletesCosts.push({
-      atletaId: athleteData.atletaId,
-      cost,
-      numCategories: athleteData.categories.length
-    });
-    
-    totalCost += cost;
-  });
-  
-  return {
-    totalCost: parseFloat(totalCost.toFixed(2)),
-    athletesCosts
-  };
-};
-
 module.exports = {
   calculateSpecialCosts,
   calculateFixedCost,
   calculateMinimumCost,
   calculateAdditionalCost,
   calculateAthleteCost,
-  calculateClubTotalCost
 };
