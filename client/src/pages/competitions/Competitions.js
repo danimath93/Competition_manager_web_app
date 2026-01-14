@@ -1,28 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Button, Box } from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { FaTrophy } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { 
-    loadAllCompetitions, 
-    createCompetition,
-    updateCompetition,
-    deleteCompetition,
-    getCompetitionDetails 
+import {
+  loadAllCompetitions,
+  createCompetition,
+  updateCompetition,
+  deleteCompetition,
+  getCompetitionDetails
 } from '../../api/competitions';
 import CompetitionCard from '../../components/CompetitionCard';
 import CompetitionDetailsModal from '../../components/CompetitionDetailsModal';
 import CompetitionOrganizerSelectorModal from '../../components/CompetitionOrganizerSelectorModal';
 import CompetitionDocumentsModal from '../../components/CompetitionDocumentsModal';
 import AuthComponent from '../../components/AuthComponent';
+import PageHeader from '../../components/PageHeader';
+import Button from '../../components/common/Button';
 
 const Competitions = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [competitions, setCompetitions] = useState([]);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [editClubOrganizerModalOpen, setEditClubOrganizerModalOpen] = useState(false);
@@ -76,11 +78,11 @@ const Competitions = () => {
 
   const handleOpenDetailsModal = async (competition) => {
     try {
-        const details = await getCompetitionDetails(competition.id);
-        setCompetitionDetails(details);
-        setIsDetailsModalOpen(true);
+      const details = await getCompetitionDetails(competition.id);
+      setCompetitionDetails(details);
+      setIsDetailsModalOpen(true);
     } catch (error) {
-        console.error("Errore nel caricamento dei dettagli:", error);
+      console.error("Errore nel caricamento dei dettagli:", error);
     }
   };
 
@@ -146,24 +148,14 @@ const Competitions = () => {
   }
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        {t('competitions')}
-      </Typography>
+    <div className="page-container">
+      <PageHeader
+        icon={FaTrophy}
+        title={t('competitions')}
+      />
 
-      <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-        <Box sx={{ mb: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenModal()}
-          >
-            Aggiungi Competizione
-          </Button>
-        </Box>
-      </AuthComponent>
-
-      <div>
+      {/* Contenuto della pagina */}
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 400 }}>
         {competitions.map((comp) => (
           <CompetitionCard
             key={comp.id}
@@ -180,37 +172,50 @@ const Competitions = () => {
             userPermissions={user?.permissions}
           />
         ))}
+
+        <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+          <Box sx={{ mt: 2, ml: 'auto', display: 'flex', justifyContent: 'center' }}>
+            <Button
+              icon={Add}
+              size='s'
+              onClick={() => handleOpenModal()}
+            >
+              Aggiungi Competizione
+            </Button>
+          </Box>
+        </AuthComponent>
       </div>
+
 
       {isDetailsModalOpen && (
         <CompetitionDetailsModal
-            open={isDetailsModalOpen}
-            onClose={handleCloseDetailsModal}
-            competitionDetails={competitionDetails}
+          open={isDetailsModalOpen}
+          onClose={handleCloseDetailsModal}
+          competitionDetails={competitionDetails}
         />
       )}
 
       {editClubOrganizerModalOpen && (
         <CompetitionOrganizerSelectorModal
-            open={editClubOrganizerModalOpen}
-            onClose={() => setEditClubOrganizerModalOpen(false)}
-            onSubmit={handleClubOrganizerSelected}
-            organizerId={selectedCompetition?.organizzatoreClubId}
-            competition={selectedCompetition} 
+          open={editClubOrganizerModalOpen}
+          onClose={() => setEditClubOrganizerModalOpen(false)}
+          onSubmit={handleClubOrganizerSelected}
+          organizerId={selectedCompetition?.organizzatoreClubId}
+          competition={selectedCompetition}
         />
       )}
 
       {isDocumentsModalOpen && (
         <CompetitionDocumentsModal
-            open={isDocumentsModalOpen}
-            onClose={handleCloseDocumentsModal}
-            onDocumentChange={handleDocumentLoadedChanged}
-            competition={selectedCompetition}
-            userClubId={user?.clubId}
-            userPermissions={user?.permissions}
+          open={isDocumentsModalOpen}
+          onClose={handleCloseDocumentsModal}
+          onDocumentChange={handleDocumentLoadedChanged}
+          competition={selectedCompetition}
+          userClubId={user?.clubId}
+          userPermissions={user?.permissions}
         />
       )}
-    </Container>
+    </div>
   );
 };
 

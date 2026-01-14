@@ -223,7 +223,7 @@ const AthleteModal = ({
               options={['M', 'F']}
             />
           </div>
-          <TextField
+          {/* <TextField
             name="codiceFiscale"
             label="Codice Fiscale"
             value={formData.codiceFiscale || ''}
@@ -231,7 +231,7 @@ const AthleteModal = ({
             required
             fullWidth
             size="small"
-          />
+          /> */}
         </div>
       </div>
 

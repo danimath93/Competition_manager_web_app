@@ -10,8 +10,9 @@ import {
   Chip,
   Tooltip
 } from '@mui/material';
-import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts, InfoOutline } from '@mui/icons-material';
-import { FaTags } from 'react-icons/fa';
+import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts, InfoOutline, CalendarToday, LocationOn } from '@mui/icons-material';
+import { FaCalendar, FaTags } from 'react-icons/fa';
+import { FaLocationDot } from 'react-icons/fa6';
 import { format } from 'date-fns';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 import AuthComponent from './AuthComponent';
@@ -30,7 +31,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
       case CompetitionStatus.IN_PREPARATION:
         return 'info';
       case CompetitionStatus.OPEN:
-        return 'primary';
+        return 'info';
       case CompetitionStatus.ONGOING:
         return 'warning';
       case CompetitionStatus.COMPLETED:
@@ -46,29 +47,34 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
         <Typography variant="h5" component="div">
           {competition.nome}
         </Typography>
-        <Typography sx={{ mb: 1.5 }} color="text.secondary">
-          {format(new Date(competition.dataInizio), 'dd/MM/yyyy')} - {format(new Date(competition.dataFine), 'dd/MM/yyyy')}
-        </Typography>
-        <Typography variant="body2">
-          {competition.luogo}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+          <FaCalendar style={{ fontSize: '0.8rem', color: 'text.secondary' }} />
+          <Typography color="text.secondary" variant="body2">
+            {format(new Date(competition.dataInizio), 'dd/MM/yyyy')} - {format(new Date(competition.dataFine), 'dd/MM/yyyy')}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <FaLocationDot style={{ fontSize: '1.0rem', color: 'text.secondary' }} />
+          <Typography variant="h5">
+            {competition.luogo}
+          </Typography>
+        </Box>
 
         <Box sx={{ mt: 1 }}>
-          <Chip label={competition.stato} color={getStatusColor(competition.stato)} size="small" />
+          <Chip label={"Stato: " + competition.stato.toUpperCase()} color={getStatusColor(competition.stato)} size="small" />
           {isClubRegistered && (
             <Chip label="Iscritto" color="primary" size="small" sx={{ ml: 1 }} />
           )}
         </Box>
       </CardContent>
       <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
-        <>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
+          <Box sx={{ mt: 1, ml: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
             {/* Selezione specifica per club organizzatore: */}
             {competition.organizzatoreClubId === userClubId && (
               <AuthComponent requiredRoles={['club']}>
                 <Tooltip title="Definisci Competizione" arrow>
                   <Button
-                    color='secondary'
+                    color='primary'
                     variant="contained"
                     onClick={() => onEdit(competition)}
                   >
@@ -77,7 +83,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                 </Tooltip>
                 <Tooltip title="Riepilogo Iscrizioni" arrow>
                   <Button
-                    color='secondary'
+                    color='primary'
                     variant="contained"
                     onClick={() => onSummary(competition.id)}
                   >
@@ -90,7 +96,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
             <AuthComponent requiredRoles={['admin', 'superAdmin']}>
               <Tooltip title="Definisci Competizione" arrow>
                 <Button
-                  color='secondary'
+                  color='primary'
                   variant="contained"
                   onClick={() => onEdit(competition)}
                 >
@@ -99,7 +105,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               </Tooltip>
               <Tooltip title="Riepilogo Iscrizioni" arrow>
                 <Button
-                  color='secondary'
+                  color='primary'
                   variant="contained"
                   onClick={() => onSummary(competition.id)}
                 >
@@ -131,6 +137,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               <Tooltip title="Registra Atleti" arrow>
                 <Button
                   variant="contained"
+                  color='info'
                   onClick={() => onRegister(competition.id)}
                   disabled={!isCompOpen}
                 >
@@ -138,17 +145,19 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                 </Button>
               </Tooltip>
             </AuthComponent>
-            <Tooltip title="Dettagli Competizione" arrow>
+            {/* <Tooltip title="Dettagli Competizione" arrow>
               <Button
                 variant="contained"
+                color='info'
                 onClick={() => onDetails(competition)}
               >
                 <InfoOutline />
               </Button>
-            </Tooltip>
+            </Tooltip> */}
             <Tooltip title="Visualizza documenti competizione" arrow>
               <Button
                 variant="contained"
+                color='info'
                 onClick={() => onDocuments(competition)}
                 disabled={!(isCompOpen || isCompInPreparation)}
               >
@@ -158,6 +167,7 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
             <Tooltip title="Visualizza categorie iscritti" arrow>
               <Button
                 variant="contained"
+                color='info'
                 onClick={() => onCategories(competition.id)}
                 disabled={!isCompInPreparation}
               >
@@ -165,7 +175,6 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
               </Button>
             </Tooltip>
           </Box>
-        </>
       </CardActions>
     </Card>
   );

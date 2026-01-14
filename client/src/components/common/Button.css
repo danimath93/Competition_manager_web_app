@@ -42,58 +42,63 @@
   width: 100%;
 }
 
+/* Inline - previene full-width automatico su mobile */
+.btn-inline {
+  width: auto !important;
+}
+
 /* ========================================
-   DIMENSIONI BUTTON
+   DIMENSIONI BUTTON - RESPONSIVE
    ======================================== */
 
-/* Extra Small */
+/* Extra Small - Con scaling responsive */
 .btn-xs {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
+  padding: clamp(0.25rem, 0.375rem, 0.5rem) clamp(0.5rem, 0.75rem, 1rem);
+  font-size: clamp(0.7rem, 0.75rem, 0.8rem);
 }
 
 .btn-xs .btn-icon {
-  font-size: 0.875rem;
+  font-size: clamp(0.8rem, 0.875rem, 0.95rem);
 }
 
-/* Small */
+/* Small - Con scaling responsive */
 .btn-s {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: clamp(0.375rem, 0.5rem, 0.625rem) clamp(0.75rem, 1rem, 1.25rem);
+  font-size: clamp(0.8rem, 0.875rem, 0.95rem);
 }
 
 .btn-s .btn-icon {
-  font-size: 1rem;
+  font-size: clamp(0.95rem, 1rem, 1.1rem);
 }
 
-/* Medium (default - simile a login-button) */
+/* Medium (default) - Con scaling responsive */
 .btn-m {
-  padding: var(--spacing-md, 1rem) var(--spacing-xl, 1.5rem);
-  font-size: var(--font-lg, 1rem);
+  padding: clamp(0.75rem, 1rem, 1.25rem) clamp(1rem, 1.5rem, 2rem);
+  font-size: clamp(0.9rem, 1rem, 1.1rem);
 }
 
 .btn-m .btn-icon {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 1.25rem, 1.4rem);
 }
 
-/* Large */
+/* Large - Con scaling responsive */
 .btn-l {
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
+  padding: clamp(0.875rem, 1rem, 1.5rem) clamp(1.5rem, 2rem, 2.5rem);
+  font-size: clamp(1rem, 1.125rem, 1.25rem);
 }
 
 .btn-l .btn-icon {
-  font-size: 1.5rem;
+  font-size: clamp(1.35rem, 1.5rem, 1.65rem);
 }
 
-/* Extra Large */
+/* Extra Large - Con scaling responsive */
 .btn-xl {
-  padding: 1.25rem 2.5rem;
-  font-size: 1.25rem;
+  padding: clamp(1rem, 1.25rem, 1.75rem) clamp(1.75rem, 2.5rem, 3rem);
+  font-size: clamp(1.1rem, 1.25rem, 1.4rem);
 }
 
 .btn-xl .btn-icon {
-  font-size: 1.75rem;
+  font-size: clamp(1.5rem, 1.75rem, 2rem);
 }
 
 /* ========================================
@@ -254,25 +259,55 @@
    RESPONSIVE
    ======================================== */
 
+/* Tablet e schermi medi */
+@media (max-width: 1024px) {
+  .btn {
+    gap: 0.4rem;
+  }
+}
+
 /* Mobile */
 @media (max-width: 768px) {
-  /* Riduci padding su mobile per dimensioni più grandi */
+  .btn {
+    gap: 0.35rem;
+  }
+  
+  /* Riduzione padding aggiuntiva su mobile */
+  .btn-m {
+    padding: clamp(0.7rem, 0.875rem, 1rem) clamp(1rem, 1.25rem, 1.5rem);
+  }
+  
   .btn-l {
-    padding: 0.875rem 1.5rem;
-    font-size: 1rem;
+    padding: clamp(0.75rem, 0.875rem, 1.25rem) clamp(1.25rem, 1.5rem, 2rem);
   }
 
   .btn-xl {
-    padding: 1rem 2rem;
-    font-size: 1.125rem;
+    padding: clamp(0.875rem, 1rem, 1.5rem) clamp(1.5rem, 2rem, 2.5rem);
   }
 }
 
 /* Mobile piccolo */
 @media (max-width: 480px) {
-  /* Su schermi molto piccoli, forza full-width per bottoni grandi */
-  .btn-l,
-  .btn-xl {
+  .btn {
+    gap: 0.3rem;
+  }
+  
+  /* Su schermi molto piccoli, forza full-width per bottoni grandi se necessario */
+  .btn-l:not(.btn-inline),
+  .btn-xl:not(.btn-inline) {
     width: 100%;
+  }
+  
+  /* Font sizes ancora più compatti */
+  .btn-m {
+    font-size: clamp(0.85rem, 0.9rem, 1rem);
+  }
+  
+  .btn-l {
+    font-size: clamp(0.95rem, 1rem, 1.125rem);
+  }
+  
+  .btn-xl {
+    font-size: clamp(1rem, 1.1rem, 1.25rem);
   }
 }

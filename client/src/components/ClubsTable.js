@@ -65,7 +65,7 @@ const ClubsTable = ({ clubs, onEdit, onDelete }) => {
     },
     {
       field: 'tesseramento',
-      headerName: 'Tesseramento',
+      headerName: 'Affiliazione',
       flex: 1,
       minWidth: 130,
       filterable: false,

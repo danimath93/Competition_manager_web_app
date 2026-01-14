@@ -288,7 +288,7 @@ const Register = () => {
                       <div className="text-input-container">
                         <label className="text-input-label">
                           <h6>
-                            Tesseramento
+                            Affiliazione
                             <span className="required-asterisk">*</span>
                           </h6>
                         </label>
@@ -300,7 +300,7 @@ const Register = () => {
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              placeholder="Seleziona tesseramento"
+                              placeholder="Seleziona affiliazione"
                               size="small"
                               required
                             />

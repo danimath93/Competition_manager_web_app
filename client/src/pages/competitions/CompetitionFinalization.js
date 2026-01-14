@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { uploadClubRegistrationDocuments, confirmClubRegistrationFinal } from '../../api/registrations';
 import { getCompetitionCostSummary } from '../../api/competitions';
 import '../../components/common/DrawerModal.css';
-import './CompetitionFinalization.css';
+import '../styles/CompetitionFinalization.css';
 
 const CompetitionFinalization = ({
   open,

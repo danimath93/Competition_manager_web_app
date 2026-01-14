@@ -121,7 +121,7 @@ const ClubAdmin = () => {
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <div className="page-card" style={{ flexShrink: 0 }}>
           <div className="page-card-body">
-            <Box sx={{ mb: 2 }} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <TextField
@@ -153,13 +153,11 @@ const ClubAdmin = () => {
               </Grid>
               <Button
                 icon={Add}
+                size='s'
                 onClick={() => handleOpenModal()}
               >
                 Aggiungi Club
               </Button>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
             </Box>
           </div>
         </div>

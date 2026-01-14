@@ -11,6 +11,7 @@ import './Button.css';
  * @param {React.ReactNode} props.children - Contenuto del bottone
  * @param {boolean} props.disabled - Se il bottone è disabilitato
  * @param {boolean} props.fullWidth - Se il bottone deve occupare tutta la larghezza disponibile
+ * @param {boolean} props.inline - Previene full-width automatico su mobile (default: false)
  * @param {string} props.type - Tipo del bottone ('button', 'submit', 'reset')
  * @param {function} props.onClick - Funzione da chiamare al click
  * @param {string} props.className - Classi CSS aggiuntive
@@ -22,6 +23,7 @@ const Button = ({
   children,
   disabled = false,
   fullWidth = false,
+  inline = false,
   type = 'button',
   onClick,
   className = '',
@@ -32,6 +34,7 @@ const Button = ({
     `btn-${variant}`,
     `btn-${size}`,
     fullWidth ? 'btn-full-width' : '',
+    inline ? 'btn-inline' : '',
     className
   ].filter(Boolean).join(' ');
 

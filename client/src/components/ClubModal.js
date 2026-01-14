@@ -229,7 +229,7 @@ const ClubModal = ({
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Tesseramento"
+                label="Affiliazione"
                 size="small"
                 required
               />
