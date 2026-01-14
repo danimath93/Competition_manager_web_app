@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const ConfigTipoCategoria = sequelize.define('ConfigTipoCategoria', {
+const ConfigNomiQuyen = sequelize.define('ConfigNomiQuyen', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -18,30 +18,19 @@ const ConfigTipoCategoria = sequelize.define('ConfigTipoCategoria', {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  tipoCompetizioneId: {
+  tipoCategoriaId: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'config_tipo_competizioni',
+      model: 'config_tipo_categorie',
       key: 'id'
     },
-    field: 'tipo_competizione_id'
+    field: 'tipo_categoria_id'
   },
-  idConfigTipiAtleti: {
+  esperienzeId: {
     type: DataTypes.ARRAY(DataTypes.INTEGER),
     allowNull: true,
-    field: 'id_config_tipi_atleti'
-  },
-  obbligoPeso: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-    field: 'obbligo_peso'
-  },
-  ordine: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0
+    field: 'esperienze_id'
   },
   attivo: {
     type: DataTypes.BOOLEAN,
@@ -49,8 +38,10 @@ const ConfigTipoCategoria = sequelize.define('ConfigTipoCategoria', {
     defaultValue: true
   }
 }, {
-  tableName: 'config_tipo_categorie',
-  timestamps: true
+  tableName: 'config_nomi_quyen',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
-module.exports = ConfigTipoCategoria;
+module.exports = ConfigNomiQuyen;

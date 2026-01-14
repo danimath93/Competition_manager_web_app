@@ -35,4 +35,19 @@ router.get('/esperienze/:id', configController.getEsperienzaById);
 // GET /api/config/tipi-atleta/:tipoAtletaId/esperienze - Ottieni le esperienze per tipo atleta
 router.get('/tipi-atleta/:tipoAtletaId/esperienze', configController.getEsperienzeByTipoAtleta);
 
+// GET /api/config/tipi-costi - Ottieni tutti i tipi di costi
+router.get('/tipi-costi', configController.getAllTipiCosti);
+
+// GET /api/config/tipi-costi/:id - Ottieni un tipo di costo specifico
+router.get('/tipi-costi/:id', configController.getTipoCostoById);
+
+// GET /api/config/nomi-quyen - Ottieni tutti i nomi quyen
+router.get('/nomi-quyen', configController.getAllNomiQuyen);
+
+// GET /api/config/nomi-quyen/:id - Ottieni un nome quyen specifico
+router.get('/nomi-quyen/:id', configController.getNomeQuyenById);
+
+// GET /api/config/nomi-quyen/tipo-categoria/:tipoCategoriaId - Ottieni i nomi quyen per tipo categoria
+router.get('/nomi-quyen/tipo-categoria/:tipoCategoriaId', configController.getNomiQuyenByTipoCategoria);
+
 module.exports = router;

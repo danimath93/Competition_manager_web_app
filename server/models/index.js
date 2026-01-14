@@ -18,6 +18,9 @@ const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 const CertificatoMedico = require('./CertificatoMedico');
 const DettaglioIscrizioneAtleta = require('./DettaglioIscrizioneAtleta');
 const Documento = require('./Documento');
+const ConfigTipoCosti = require('./ConfigTipoCosti');
+const ConfigNomiQuyen = require('./ConfigNomiQuyen');
+
 // Definisci le associazioni
 
 // Club -> Atleti (One-to-Many)
@@ -145,6 +148,17 @@ ConfigTipoCategoria.hasMany(Categoria, {
   onDelete: 'RESTRICT'
 });
 Categoria.belongsTo(ConfigTipoCategoria, {
+  foreignKey: 'tipoCategoriaId',
+  as: 'tipoCategoria'
+});
+
+// ConfigTipoCategoria -> ConfigNomiQuyen (One-to-Many)
+ConfigTipoCategoria.hasMany(ConfigNomiQuyen, {
+  foreignKey: 'tipoCategoriaId',
+  as: 'nomiQuyen',
+  onDelete: 'CASCADE'
+});
+ConfigNomiQuyen.belongsTo(ConfigTipoCategoria, {
   foreignKey: 'tipoCategoriaId',
   as: 'tipoCategoria'
 });
@@ -307,5 +321,7 @@ module.exports = {
   SvolgimentoCategoria,
   CertificatoMedico,
   DettaglioIscrizioneAtleta,
-  Documento
+  Documento,
+  ConfigTipoCosti,
+  ConfigNomiQuyen
 };

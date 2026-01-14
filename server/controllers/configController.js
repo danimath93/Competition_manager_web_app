@@ -1,4 +1,4 @@
-const { ConfigTipoCompetizione, ConfigTipoCategoria, ConfigGruppoEta, ConfigTipoAtleta, ConfigEsperienza } = require('../models');
+const { ConfigTipoCompetizione, ConfigTipoCategoria, ConfigGruppoEta, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCosti, ConfigNomiQuyen } = require('../models');
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutti i tipi di competizione
@@ -268,6 +268,131 @@ const getEsperienzeByTipoAtleta = async (req, res) => {
   }
 };
 
+// Ottieni tutti i tipi di costi
+const getAllTipiCosti = async (req, res) => {
+  try {
+    const includeInattivi = req.query.includeInattivi === 'true';
+    const whereClause = includeInattivi ? {} : { attivo: true };
+
+    const tipiCosti = await ConfigTipoCosti.findAll({
+      where: whereClause,
+      order: [['nome', 'ASC']]
+    });
+    res.json(tipiCosti);
+  } catch (error) {
+    logger.error(`Errore nel recupero dei tipi di costi: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nel recupero dei tipi di costi',
+      details: error.message 
+    });
+  }
+};
+
+// Ottieni un tipo di costo specifico
+const getTipoCostoById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tipoCosto = await ConfigTipoCosti.findByPk(id);
+
+    if (!tipoCosto) {
+      return res.status(404).json({ error: 'Tipo di costo non trovato' });
+    }
+
+    res.json(tipoCosto);
+  } catch (error) {
+    logger.error(`Errore nel recupero del tipo di costo ${req.params.id}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nel recupero del tipo di costo',
+      details: error.message 
+    });
+  }
+};
+
+// Ottieni tutti i nomi quyen
+const getAllNomiQuyen = async (req, res) => {
+  try {
+    const includeInattivi = req.query.includeInattivi === 'true';
+    const whereClause = includeInattivi ? {} : { attivo: true };
+
+    const nomiQuyen = await ConfigNomiQuyen.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome', 'descrizione']
+        }
+      ],
+      order: [['nome', 'ASC']]
+    });
+    res.json(nomiQuyen);
+  } catch (error) {
+    logger.error(`Errore nel recupero dei nomi quyen: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nel recupero dei nomi quyen',
+      details: error.message 
+    });
+  }
+};
+
+// Ottieni un nome quyen specifico
+const getNomeQuyenById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const nomeQuyen = await ConfigNomiQuyen.findByPk(id, {
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome', 'descrizione']
+        }
+      ]
+    });
+
+    if (!nomeQuyen) {
+      return res.status(404).json({ error: 'Nome quyen non trovato' });
+    }
+
+    res.json(nomeQuyen);
+  } catch (error) {
+    logger.error(`Errore nel recupero del nome quyen ${req.params.id}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nel recupero del nome quyen',
+      details: error.message 
+    });
+  }
+};
+
+// Ottieni i nomi quyen per tipo categoria
+const getNomiQuyenByTipoCategoria = async (req, res) => {
+  try {
+    const { tipoCategoriaId } = req.params;
+    
+    const nomiQuyen = await ConfigNomiQuyen.findAll({
+      where: { 
+        tipoCategoriaId,
+        attivo: true 
+      },
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome', 'descrizione']
+        }
+      ],
+      order: [['nome', 'ASC']]
+    });
+
+    res.json(nomiQuyen);
+  } catch (error) {
+    logger.error(`Errore nel recupero dei nomi quyen per tipo categoria ${req.params.tipoCategoriaId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nel recupero dei nomi quyen',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllTipiCompetizione,
   getTipoCompetizioneById,
@@ -279,5 +404,10 @@ module.exports = {
   getTipoAtletaById,
   getAllEsperienze,
   getEsperienzaById,
-  getEsperienzeByTipoAtleta
+  getEsperienzeByTipoAtleta,
+  getAllTipiCosti,
+  getTipoCostoById,
+  getAllNomiQuyen,
+  getNomeQuyenById,
+  getNomiQuyenByTipoCategoria
 };
