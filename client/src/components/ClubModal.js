@@ -215,9 +215,9 @@ const ClubModal = ({
         </div>
       </div>
 
-      {/* Informazioni federazione */}
+      {/* Informazioni aggiuntive */}
       <div className="drawer-section">
-        <h3 className="drawer-section-title">Informazioni federazione</h3>
+        <h3 className="drawer-section-title">Informazioni aggiuntive</h3>
         <div className="drawer-section-content">
           <Autocomplete
             id="tesseramento-select"

@@ -227,7 +227,7 @@ const AthleteModal = ({
 
       {/* Informazioni federazione */}
       <div className="drawer-section">
-        <h3 className="drawer-section-title">Informazioni federazione</h3>
+        <h3 className="drawer-section-title">Info: Viet Vo Dao Italia</h3>
         <div className="drawer-section-content">
           <div className="drawer-fields-row-2">
             <TextField
@@ -297,7 +297,7 @@ const AthleteModal = ({
 
       {/* Dati aggiuntivi nascosti inizialmente */}
       <div className="drawer-section">
-        <h3 className="drawer-section-title">Informazioni assicurative</h3>
+        <h3 className="drawer-section-title">Info: Tesseramento assicurativo</h3>
         <div className="drawer-section-content">
 
           <TextField

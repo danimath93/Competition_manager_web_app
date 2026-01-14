@@ -505,7 +505,7 @@ const AthleteRegistration = ({
       </p>
 
       <div className="data-section">
-        <h4 className="section-title">Informazioni federazione</h4>
+        <h4 className="section-title">Info: Viet Vo Dao Italia</h4>
         <div className="data-row">
           <div className="data-field">
             <TextField
@@ -540,7 +540,7 @@ const AthleteRegistration = ({
       </div>
 
       <div className="data-section">
-        <h4 className="section-title">Informazioni assicurative</h4>
+        <h4 className="section-title">Info : Tesseramento assicurativo</h4>
         <div className="data-row">
           <div className="data-field">
             <TextField
@@ -758,24 +758,28 @@ const AthleteRegistration = ({
                         <div style={{ minWidth: '200px', fontWeight: '500' }}>
                           {details?.nome || 'Categoria'}
                         </div>
-                        <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
-                          <Autocomplete
-                            size="small"
-                            value={categoryDetailSelections[categoryId] || null}
-                            onChange={(event, newValue) => handleCategoryDetailChange(categoryId, newValue)}
-                            options={detailOptions}
-                            getOptionLabel={(option) => option.nome || ''}
-                            disabled={!isSelected}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                label="Dettagli"
-                                variant="outlined"
+                        { /* Dettagli categoria */
+                          detailOptions && detailOptions.length > 0 && (
+                            <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
+                              <Autocomplete
                                 size="small"
+                                value={categoryDetailSelections[categoryId] || null}
+                                onChange={(event, newValue) => handleCategoryDetailChange(categoryId, newValue)}
+                                options={detailOptions}
+                                getOptionLabel={(option) => option.nome || ''}
+                                disabled={!isSelected}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    label="Dettagli"
+                                    variant="outlined"
+                                    size="small"
+                                  />
+                                )}
                               />
-                            )}
-                          />
-                        </div>
+                            </div>
+                          )
+                        }
                       </div>
                     );
                   })}
@@ -837,6 +841,7 @@ const AthleteRegistration = ({
                         <div style={{ minWidth: '200px', fontWeight: '500' }}>
                           {details?.nome || 'Categoria'}
                         </div>
+                        {detailOptions && detailOptions.length > 0 && (
                         <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
                           <Autocomplete
                             size="small"
@@ -855,6 +860,7 @@ const AthleteRegistration = ({
                             )}
                           />
                         </div>
+                        )}
                       </div>
                     );
                   })}
