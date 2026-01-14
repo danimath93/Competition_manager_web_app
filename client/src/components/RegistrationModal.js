@@ -13,6 +13,7 @@ import { editAthleteRegistrations } from '../api/registrations';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
+import { checkCategoryConstraints } from '../utils/helperRegistration';
 import './common/DrawerModal.css';
 
 const RegistrationModal = ({
@@ -184,6 +185,39 @@ const RegistrationModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Effettua la validazione
+      if (competition?.maxCategorieAtleta && selectedCategories.length > competition.maxCategorieAtleta) {
+        setError(`Puoi selezionare al massimo ${competition.maxCategorieAtleta} categorie per questa competizione.`);
+        return;
+      }
+
+      if (selectedCategories.length === 0) {
+        setError('Seleziona almeno una categoria per l\'iscrizione.');
+        return;
+      }
+
+      if (selectedRequiresWeight && (!weight || weight.trim() === '')) {
+        setError('Inserisci il peso per le categorie di combattimento selezionate.');
+        return;
+      }
+
+      for (const categoryId of selectedCategories) {
+        const options = getCategoryDetailOptions(categoryId);
+        if (options.length > 0 && !categoryDetailSelections[categoryId]) {
+          setError('Seleziona i dettagli per tutte le categorie selezionate.');
+          return;
+        }
+
+        const details = categoryDetails[categoryId];
+        if (details?.tipoCompetizioneId) {
+          const tipoCompId = details.tipoCompetizioneId;
+          if (!selectedExperiences[tipoCompId]) {
+            setError('Seleziona il livello di esperienza per tutte le categorie selezionate.');
+            return;
+          }
+        }
+      }
+
       // Prepara i dati da inviare
       const data = {
         // tesseramento,
@@ -268,7 +302,10 @@ const RegistrationModal = ({
   availableCategories.forEach(category => {
     const details = categoryDetails[category.configTipoCategoria];
     if (details?.tipoCompetizioneId && categoriesByType[details.tipoCompetizioneId]) {
-      categoriesByType[details.tipoCompetizioneId].push(category);
+      // Verifica i vincoli prima di aggiungere la categoria
+      if (checkCategoryConstraints(category, details.tipoCompetizioneId, athlete, selectedExperiences)) {
+        categoriesByType[details.tipoCompetizioneId].push(category);
+      }
     }
   });
 

@@ -85,7 +85,17 @@ const AthleteModal = ({
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value === '' ? null : e.target.value });
+    const name = e.target.name;
+    const value = e.target.value;
+
+    if (name === 'numeroTessera') {
+      // Accetta solo numeri e massimo 8 caratteri
+      if (/^\d{0,8}$/.test(value)) {
+        setFormData({ ...formData, [name]: value === '' ? null : value });
+      }
+    } else {
+      setFormData({ ...formData, [name]: value === '' ? null : value });
+    }
   };
 
   const handleClubSelectChange = (value) => {

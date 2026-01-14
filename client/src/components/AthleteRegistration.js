@@ -22,6 +22,7 @@ import { updateAthlete } from '../api/athletes';
 import { FiAlertCircle, FiUser, FiCheckCircle, FiDownload, FiUpload } from 'react-icons/fi';
 import { MembershipType } from '../constants/enums/CompetitionEnums';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
+import { checkCategoryConstraints } from '../utils/helperRegistration';
 
 /**
  * Componente per la gestione delle iscrizioni degli atleti alle competizioni
@@ -80,7 +81,10 @@ const AthleteRegistration = ({
   // Gestione modifica numero tessera
   const handleCardNumberChange = (e) => {
     const value = e.target.value;
-    setCardNumber(value);
+    // Accetta solo numeri e massimo 8 caratteri
+    if (value === '' || (/^\d+$/.test(value) && value.length <= 8)) {
+      setCardNumber(value);
+    }
   };
 
   // Gestione modifica scadenza certificato
@@ -295,36 +299,33 @@ const AthleteRegistration = ({
 
       case 1:
         // Fase 2: categorie ed esperienze
-        if (selectedCategories.length === 0) {
-          newErrors.push('Seleziona almeno una categoria');
+        if (competition?.maxCategorieAtleta && selectedCategories.length > competition.maxCategorieAtleta) {
+          newErrors.push(`Puoi selezionare al massimo ${competition.maxCategorieAtleta} categorie per questa competizione.`);
         }
 
-        // Verifica che i tipi competizione con categorie selezionate abbiano un'esperienza
-        const selectedCompetitionTypes = new Set();
-        selectedCategories.forEach(categoryId => {
+        if (selectedCategories.length === 0) {
+          newErrors.push('Seleziona almeno una categoria per l\'iscrizione.');
+        }
+
+        if (checkCategoryRequiresWeight && (!weight || parseFloat(weight) <= 0)) {
+          newErrors.push('Il peso è obbligatorio per almeno una delle categorie selezionate');
+        }
+
+        for (const categoryId of selectedCategories) {
+          const options = getCategoryDetailOptions(categoryId);
+          if (options.length > 0 && !categoryDetailSelections[categoryId]) {
+            newErrors.push('Seleziona i dettagli per tutte le categorie selezionate.');
+            break;
+          }
+
           const details = categoryDetails[categoryId];
           if (details?.tipoCompetizioneId) {
-            selectedCompetitionTypes.add(details.tipoCompetizioneId);
-          }
-        });
-        
-        selectedCompetitionTypes.forEach(tipoCompId => {
-          if (!selectedExperiences[tipoCompId]) {
-            const hasExperiences = availableExperiencesByType[tipoCompId]?.length > 0;
-            if (hasExperiences) {
-              newErrors.push(`Seleziona il livello di esperienza richiesto`);
+            const tipoCompId = details.tipoCompetizioneId;
+            if (!selectedExperiences[tipoCompId]) {
+              newErrors.push('Seleziona il livello di esperienza per tutte le categorie selezionate.');
+              break;
             }
           }
-        });
-
-        // Verifica peso se obbligatorio per le categorie selezionate
-        const requiresWeight = selectedCategories.some(catId => {
-          const category = categoryDetails[catId];
-          return category?.obbligoPeso;
-        });
-
-        if (requiresWeight && (!weight || parseFloat(weight) <= 0)) {
-          newErrors.push('Il peso è obbligatorio per almeno una delle categorie selezionate');
         }
         break;
 
@@ -335,6 +336,12 @@ const AthleteRegistration = ({
     setErrors(newErrors);
     return newErrors.length === 0;
   };
+
+  // Verifica peso se obbligatorio per le categorie selezionate
+  const checkCategoryRequiresWeight = selectedCategories.some(catId => {
+    const category = categoryDetails[catId];
+    return category?.obbligoPeso;
+  });
 
   // Gestisce eventuali operazioni specifiche della fase corrente
   const manageCurrentPhase = async () => {
@@ -511,6 +518,8 @@ const AthleteRegistration = ({
             <TextField
               name="numeroTessera"
               label="Numero Tessera"
+              type='text'
+              inputProps={{ maxLength: 8 }}
               value={cardNumber}
               onChange={handleCardNumberChange}
               fullWidth
@@ -642,7 +651,10 @@ const AthleteRegistration = ({
     availableCategories.forEach(category => {
       const details = categoryDetails[category.configTipoCategoria];
       if (details?.tipoCompetizioneId && categoriesByType[details.tipoCompetizioneId]) {
-        categoriesByType[details.tipoCompetizioneId].push(category);
+        // Verifica i vincoli prima di aggiungere la categoria
+        if (checkCategoryConstraints(category, details.tipoCompetizioneId, athlete, selectedExperiences)) {
+          categoriesByType[details.tipoCompetizioneId].push(category);
+        }
       }
     });
 
