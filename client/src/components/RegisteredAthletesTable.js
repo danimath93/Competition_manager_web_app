@@ -309,7 +309,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
 
   if (rows.length === 0) {
     return (
-      <Paper sx={{ width: '100%', height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: 'text.secondary' }}>
           Nessun atleta iscritto alla competizione
         </div>

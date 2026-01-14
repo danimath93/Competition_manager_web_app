@@ -131,6 +131,14 @@
   height: 100%;
 }
 
+/* Grid a colonna singola (quando l'iscrizione è confermata) */
+.page-grid-full {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  height: 100%;
+}
+
 /* Container per card con titolo esterno */
 .page-card-with-external-title {
   display: flex;

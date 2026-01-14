@@ -33,6 +33,7 @@ const Documento = sequelize.define('Documento', {
       'file_extra2_competizione',
       'locandina_competizione',
       'conferma_presidente',
+      'bonifico',
       'altro'
     ),
     allowNull: false,

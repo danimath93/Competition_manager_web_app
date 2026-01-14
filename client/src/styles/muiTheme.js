@@ -96,7 +96,7 @@ const muiCustomTheme = createTheme({
       contrastText: '#1a1a1a',
     },
     info: {
-      main: '#2563eb', // var(--color-info-button)
+      main: 'rgba(0, 86, 156, 1)', // var(--color-info-button)
       dark: '#1e40af',
       contrastText: '#ffffff',
     },

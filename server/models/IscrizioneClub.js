@@ -51,6 +51,16 @@ const IscrizioneClub = sequelize.define('IscrizioneClub', {
     field: 'conferma_presidente_id',
     comment: 'Riferimento al documento conferma del presidente'
   },
+  bonificoId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'documenti',
+      key: 'id'
+    },
+    field: 'bonifico_id',
+    comment: 'Riferimento al documento del bonifico'
+  },
   note: {
     type: DataTypes.TEXT,
     allowNull: true

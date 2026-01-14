@@ -302,6 +302,18 @@ Documento.hasOne(IscrizioneClub, {
   constraints: false
 });
 
+// IscrizioneClub -> Documento (One-to-One per bonifico)
+IscrizioneClub.belongsTo(Documento, {
+  foreignKey: 'bonificoId',
+  as: 'bonificoDocumento',
+  constraints: false
+});
+Documento.hasOne(IscrizioneClub, {
+  foreignKey: 'bonificoId',
+  as: 'iscrizioneClubBonifico',
+  constraints: false
+});
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,

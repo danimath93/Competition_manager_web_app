@@ -419,6 +419,11 @@ const createOrGetIscrizioneClub = async (req, res) => {
           model: Documento,
           as: 'confermaPresidenteDocumento',
           attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'bonificoDocumento',
+          attributes: { exclude: ['file'] }
         }
       ]
     });
@@ -477,6 +482,11 @@ const getIscrizioneClub = async (req, res) => {
         {
           model: Documento,
           as: 'confermaPresidenteDocumento',
+          attributes: { exclude: ['file'] }
+        },
+        {
+          model: Documento,
+          as: 'bonificoDocumento',
           attributes: { exclude: ['file'] }
         }
       ]
@@ -548,8 +558,13 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       });
     }
 
-    const confermaPresidente = files.confermaPresidente[0];
+    if (!files || !files.bonifico) {
+      return res.status(400).json({
+        error: 'Il documento del bonifico è obbligatorio'
+      });
+    }
 
+    const confermaPresidente = files.confermaPresidente[0];
     // Verifica che sia PDF
     if (confermaPresidente.mimetype !== 'application/pdf') {
       return res.status(400).json({
@@ -557,7 +572,15 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       });
     }
 
-    // Se esiste già un documento, elimino il riferimento dall'iscrizione e lo cancello
+    const bonifico = files.bonifico[0];
+    // Verifica che sia PDF
+    if (bonifico.mimetype !== 'application/pdf') {
+      return res.status(400).json({
+        error: 'Il bonifico deve essere in formato PDF'
+      });
+    }
+
+    // Se esistono gia' altri doc, elimino il riferimento dall'iscrizione e li cancello
     const oldDocId = iscrizioneClub.confermaPresidenteId;
     if (iscrizioneClub.confermaPresidenteId) {
       iscrizioneClub.confermaPresidenteId = null;
@@ -565,6 +588,16 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       const vecchioDocumento = await Documento.findByPk(oldDocId);
       if (vecchioDocumento) {
         await vecchioDocumento.destroy();
+      }
+    }
+
+    const oldBonificoId = iscrizioneClub.bonificoId;
+    if (iscrizioneClub.bonificoId) {
+      iscrizioneClub.bonificoId = null;
+      await iscrizioneClub.save();
+      const vecchioDocumentoBonifico = await Documento.findByPk(oldBonificoId);
+      if (vecchioDocumentoBonifico) {
+        await vecchioDocumentoBonifico.destroy();
       }
     }
 
@@ -577,8 +610,17 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       tipoDocumento: 'conferma_presidente'
     });
 
+    const documentoBonifico = await Documento.create({
+      nomeFile: bonifico.originalname,
+      file: bonifico.buffer,
+      mimeType: bonifico.mimetype,
+      dimensione: bonifico.size,
+      tipoDocumento: 'bonifico'
+    });
+
     // Aggiorna il riferimento nell'iscrizione
     iscrizioneClub.confermaPresidenteId = documento.id;
+    iscrizioneClub.bonificoId = documentoBonifico.id;
     await iscrizioneClub.save();
 
     res.status(200).json({
@@ -586,7 +628,9 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       iscrizioneClub: {
         id: iscrizioneClub.id,
         confermaPresidenteId: documento.id,
-        confermaPresidenteNome: documento.nomeFile
+        confermaPresidenteNome: documento.nomeFile,
+        bonificoId: documentoBonifico.id,
+        bonificoNome: documentoBonifico.nomeFile
       }
     });
   } catch (error) {
