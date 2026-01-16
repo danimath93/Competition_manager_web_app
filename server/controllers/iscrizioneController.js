@@ -526,7 +526,14 @@ const getClubRegistrationsByCompetition = async (req, res) => {
       ]
     });
 
-    res.status(200).json(clubRegistrations);
+    // Aggiungi il campo tesseramento direttamente nella risposta principale per comodità frontend
+    const clubRegistrationsWithAffiliation = clubRegistrations.map(reg => {
+      const regJson = reg.toJSON();
+      regJson.affiliazione = regJson.club?.tesseramento || '';
+      return regJson;
+    });
+
+    res.status(200).json(clubRegistrationsWithAffiliation);
   } catch (error) {
     logger.error(`Errore nel recupero delle iscrizioni dei club per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({

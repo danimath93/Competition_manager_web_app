@@ -54,6 +54,7 @@ const CompetitionSummary = () => {
   const [clubCostSummaries, setClubCostSummaries] = useState({});
   const [loadingCosts, setLoadingCosts] = useState({});
   const [athleteFilters, setAthleteFilters] = useState({ name: '', club: '' });
+  const [clubFilters, setClubFilters] = useState({ affiliazione: '' });
   const [selectedClub, setSelectedClub] = useState(null);
   const [clubDetailsOpen, setClubDetailsOpen] = useState(false);
 
@@ -86,8 +87,8 @@ const CompetitionSummary = () => {
       setCompetition(competitionData);
 
       // Carica le iscrizioni dei club
-      const clubRegs = await getClubRegistrationsByCompetition(competitionId);
-      setClubRegistrations(clubRegs);
+  const clubRegs = await getClubRegistrationsByCompetition(competitionId);
+  setClubRegistrations(clubRegs);
 
       // Carica tutte le iscrizioni degli atleti
       const athleteRegs = await loadRegistrationsByCompetition(competitionId);
@@ -375,7 +376,7 @@ const handleCloseClubDetails = () => {
                         <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCbAdulti}</Box>
                         <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCn}</Box>
                         <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalIscritti}</Box>
-                        <Box sx={{ flex: 1, textAlign: 'right', alignItems: 'center', display: 'flex', justifyContent: 'flex-end', pr: 2 }}>{totalQuota.toFixed(2)}</Box>
+                        <Box sx={{ flex: 1, textAlign: 'right', alignItems: 'center', display: 'flex', justifyContent: 'flex-end', pr: 2 }}>{totalQuota.toFixed(2)}<EuroIcon fontSize="small" sx={{ mr: 0.5 }} /></Box>
                       </Box>
                     );
                   }
@@ -393,32 +394,59 @@ const handleCloseClubDetails = () => {
             Club Iscritti
           </Typography>
 
+          {/* Filtro per affiliazione */}
+          <Box sx={{ mb: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                  <InputLabel>Filtra per Affiliazione</InputLabel>
+                  <Select
+                    name="affiliazione"
+                    label="Filtra per Affiliazione"
+                    value={clubFilters.affiliazione}
+                    onChange={e => setClubFilters(f => ({ ...f, affiliazione: e.target.value }))}
+                  >
+                    <MenuItem value="">
+                      <em>Tutte</em>
+                    </MenuItem>
+                    {[...new Set(clubRegistrations.map(c => c.affiliazione || ''))].filter(Boolean).map(aff => (
+                      <MenuItem key={aff} value={aff}>{aff}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+
           {clubRegistrations.length === 0 ? (
             <Alert severity="info">Nessun club iscritto a questa competizione.</Alert>
           ) : (
             <Box sx={{ width: '100%', height: 650, mt: 2 }}>
               <DataGrid
-                rows={clubRegistrations.map((clubReg) => {
-                  const clubId = clubReg.clubId;
-                  const costSummary = clubCostSummaries[clubId];
-                  const loadingCost = loadingCosts[clubId];
+                rows={clubRegistrations
+                  .filter(clubReg => !clubFilters.affiliazione || clubReg.affiliazione === clubFilters.affiliazione)
+                  .map((clubReg) => {
+                    const clubId = clubReg.clubId;
+                    const costSummary = clubCostSummaries[clubId];
+                    const loadingCost = loadingCosts[clubId];
 
-                  return {
-                    id: clubId,
-                    club: clubReg.club?.denominazione || 'N/A',
-                    stato: clubReg.stato,
-                    dataIscrizione: clubReg.dataIscrizione
-                      ? new Date(clubReg.dataIscrizione).toLocaleDateString()
-                      : 'N/A',
-                    dataConferma: clubReg.dataConferma
-                      ? new Date(clubReg.dataConferma).toLocaleDateString()
-                      : '-',
-                    atleti: loadingCost ? '-' : costSummary?.totals?.totalAthletes ?? '-',
-                    categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
-                    costo: loadingCost ? '-' : costSummary?.totals?.totalCost?.toFixed(2) ?? '-',
-                    raw: clubReg,
-                  };
-                })}
+                    return {
+                      id: clubId,
+                      club: clubReg.club?.denominazione || 'N/A',
+                      stato: clubReg.stato,
+                      dataIscrizione: clubReg.dataIscrizione
+                        ? new Date(clubReg.dataIscrizione).toLocaleDateString()
+                        : 'N/A',
+                      dataConferma: clubReg.dataConferma
+                        ? new Date(clubReg.dataConferma).toLocaleDateString()
+                        : '-',
+                      atleti: loadingCost ? '-' : costSummary?.totals?.totalAthletes ?? '-',
+                      categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
+                      affiliazione: clubReg.affiliazione || '-',
+                      costo: loadingCost ? '-' : costSummary?.totals?.totalCost?.toFixed(2) ?? '-',
+                      raw: clubReg,
+                    };
+                  })}
                 columns={[
                   {
                     field: 'club',
@@ -468,6 +496,14 @@ const handleCloseClubDetails = () => {
                   {
                     field: 'categorie',
                     headerName: 'Categorie',
+                    flex: 1,
+                    minWidth: 120,
+                    align: 'center',
+                    headerAlign: 'center',
+                  },
+                  {
+                    field: 'affiliazione',
+                    headerName: 'Affiliazione',
                     flex: 1,
                     minWidth: 120,
                     align: 'center',
