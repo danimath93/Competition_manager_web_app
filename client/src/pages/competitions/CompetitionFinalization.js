@@ -224,12 +224,6 @@ const CompetitionFinalization = ({
       if (onFinalizationSuccess) {
         onFinalizationSuccess();
       }
-
-      // Chiudi drawer dopo un breve delay
-      setTimeout(() => {
-        if (onClose) onClose();
-      }, 1500);
-
     } catch (err) {
       console.error('Errore durante la finalizzazione:', err);
       setError('Errore durante la finalizzazione: ' + (err.response?.data?.error || err.message));

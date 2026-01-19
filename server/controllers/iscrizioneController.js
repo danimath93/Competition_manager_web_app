@@ -827,6 +827,341 @@ const getClubRegistrationCosts = async (req, res) => {
   }
 };
 
+// Crea un documento di riepilogo dell'iscrizione del club ad una competizione
+const downloadClubCompetitionSummary = async (req, res) => {
+  let doc;
+  let streamStarted = false;
+  
+  try {
+    const { clubId, competizioneId } = req.params;
+
+    if (!clubId || !competizioneId) {
+      return res.status(400).json({ error: 'clubId e competizioneId sono obbligatori' });
+    }
+
+    // Carica la competizione
+    const competizione = await Competizione.findByPk(competizioneId, {
+      include: [
+        {
+          model: Club,
+          as: 'organizzatore',
+          attributes: { exclude: ['logoId'] }
+        }
+      ]
+    });
+
+    if (!competizione) {
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Carica il club
+    const club = await Club.findByPk(clubId);
+    if (!club) {
+      return res.status(404).json({ error: 'Club non trovato' });
+    }
+
+    // Conto iscrizioni totali, iscrizioni atleti e costo totale
+    const iscrizioni = await IscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          where: { clubId }
+        }
+      ]
+    });
+
+    const iscrizioniPerAtleta = {};
+    iscrizioni.forEach(iscrizione => {
+      if (!iscrizioniPerAtleta[iscrizione.atletaId]) {
+        iscrizioniPerAtleta[iscrizione.atletaId] = {
+          atleta: iscrizione.atleta,
+          iscrizioni: []
+        };
+      }
+      iscrizioniPerAtleta[iscrizione.atletaId].iscrizioni.push(iscrizione);
+    });
+
+    const dettagliIscrizioni = await DettaglioIscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          where: { clubId }
+        }
+      ]
+    });
+    
+    const totalAthletes = dettagliIscrizioni.length;
+    const totalCategories = iscrizioni.length;
+    const totalCost = dettagliIscrizioni.reduce((sum, di) => sum + (parseFloat(di.quota) || 0), 0);
+
+    // Estrai categorie uniche
+    const categorySet = new Set();
+    const categoryDetailsMap = {};
+    
+    if (competizione.categorieAtleti) {
+      for (const categorieTipoAtleta of competizione.categorieAtleti) {
+        if (categorieTipoAtleta.categorie && Array.isArray(categorieTipoAtleta.categorie)) {
+          for (const cat of categorieTipoAtleta.categorie) {
+            if (!categorySet.has(cat.configTipoCategoria)) {
+              categorySet.add(cat.configTipoCategoria);
+              const catDetails = await ConfigTipoCategoria.findByPk(cat.configTipoCategoria);
+              if (catDetails) {
+                categoryDetailsMap[cat.configTipoCategoria] = catDetails;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Crea mappa esperienze per id
+    const experienceMap = {};
+    const esperienze = await ConfigEsperienza.findAll();
+    esperienze.forEach(exp => {
+      experienceMap[exp.id] = exp;
+    });
+
+    // Ordino le categorie per proprieta' 'ordine'
+    const categories = Array.from(categorySet);
+    categories.sort((a, b) => {
+      const catA = categoryDetailsMap[a];
+      const catB = categoryDetailsMap[b];
+      return (catA.ordine || 0) - (catB.ordine || 0);
+    });
+
+    // Prepara dati per la tabella PRIMA di iniziare lo stream
+    const tableData = [];
+    
+    Object.values(iscrizioniPerAtleta).forEach(({ atleta, iscrizioni }) => {
+      const row = [`${atleta.cognome} ${atleta.nome}`];
+
+      categories.forEach(catId => {
+        const registration = iscrizioni.find(
+          reg => reg.tipoCategoriaId === catId
+        );
+
+        if (registration) {
+          let cellValue = 'V';
+          
+          // Verifica se ci sono dettagli, considero solo il nome in riepilogo
+          if (registration.dettagli && registration.dettagli.nome) {
+            if (registration.dettagli.nome) {
+              cellValue = registration.dettagli.nome;
+            }
+          }
+          
+          // Se c'è il peso, mostralo
+          if (registration.peso) {
+            cellValue = `${registration.peso} kg`;
+          }
+          
+          // Aggiungi esperienza se disponibile
+          if (registration.idConfigEsperienza) {
+            cellValue += ` (${experienceMap[registration.idConfigEsperienza]?.nome || 'Exp sconosciuta'})`;
+          }
+          
+          row.push(cellValue);
+        } else {
+          row.push('-');
+        }
+      });
+
+      tableData.push(row);
+    });
+
+    // SOLO ADESSO crea il PDF e avvia lo stream
+    const PDFDocument = require('pdfkit');
+    doc = new PDFDocument({ 
+      margin: 30,
+      size: 'A4',
+      layout: 'landscape'
+    });
+
+    // Imposta headers per il download
+    const fileName = `Riepilogo_Iscrizione_${competizione.nome.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    doc.pipe(res);
+    streamStarted = true;
+
+    // Dimensioni pagina
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const marginX = 30;
+
+    // Data generazione documento in alto a destra
+    doc.fontSize(7).font('Helvetica-Oblique').fillColor('gray');
+    const generationText = `Documento generato il ${new Date().toLocaleDateString('it-IT')} alle ${new Date().toLocaleTimeString('it-IT')}`;
+    doc.text(generationText, pageWidth - 250, 10, { align: 'right', width: 220 });
+
+    // Reset posizione e stile per il contenuto principale
+    doc.fillColor('black');
+    doc.x = marginX;
+    doc.y = 40;
+
+    // Titolo
+    doc.fontSize(18).font('Helvetica-Bold').text('Riepilogo Iscrizione Competizione', { align: 'center' });
+    doc.moveDown(0.3);
+    
+    // Nome competizione
+    doc.fontSize(12).font('Helvetica').text(`${competizione.nome}${competizione.luogo ? ` - ${competizione.luogo}` : ''}`, { align: 'center' });
+    doc.moveDown(0.3);
+    
+    // Data competizione
+    if (competizione.dataInizio) {
+      doc.text(`Data: ${new Date(competizione.dataInizio).toLocaleDateString('it-IT')}`, { align: 'center' });
+    }
+    doc.moveDown(0.5);
+
+    // Tabella Riepilogo Generale
+    doc.fontSize(14).font('Helvetica-Bold').text('Riepilogo Generale');
+    doc.moveDown(0.5);
+
+    const summaryTableData = [
+      [club.denominazione, totalAthletes.toString(), totalCategories.toString(), `€${totalCost.toFixed(2)}`]
+    ];
+
+    const summaryHeaders = ['Club', 'Atleti Iscritti', 'Categorie Totali', 'Costo Totale'];
+    const summaryTableWidth = pageWidth - (marginX * 2);
+    const summaryColWidth = summaryTableWidth / 4;
+    const summaryStartX = marginX;
+    let summaryStartY = doc.y;
+    const summaryRowHeight = 18;
+
+    // Header tabella riepilogo
+    doc.fontSize(8).font('Helvetica-Bold');
+    doc.fillColor('#b91c1c');
+    summaryHeaders.forEach((header, i) => {
+      const x = summaryStartX + (i * summaryColWidth);
+      doc.rect(x, summaryStartY, summaryColWidth, summaryRowHeight).stroke();
+      doc.fillColor('white').rect(x, summaryStartY, summaryColWidth, summaryRowHeight).fill();
+      doc.fillColor('#b91c1c');
+      doc.text(header, x + 2, summaryStartY + 5, { width: summaryColWidth - 4, align: 'center' });
+    });
+    summaryStartY += summaryRowHeight;
+
+    // Riga dati tabella riepilogo
+    doc.fontSize(9).font('Helvetica').fillColor('black');
+    summaryTableData[0].forEach((cell, colIndex) => {
+      const x = summaryStartX + (colIndex * summaryColWidth);
+      doc.rect(x, summaryStartY, summaryColWidth, summaryRowHeight).stroke();
+      
+      if (colIndex === 0) {
+        doc.font('Helvetica-Bold');
+      } else {
+        doc.font('Helvetica');
+      }
+      
+      doc.text(cell, x + 2, summaryStartY + 5, { 
+        width: summaryColWidth - 4, 
+        align: colIndex === 0 ? 'left' : 'center'
+      });
+    });
+    summaryStartY += summaryRowHeight;
+
+    // Reset posizione per la sezione successiva
+    doc.x = marginX;
+    doc.y = summaryStartY + 10;
+    doc.moveDown(0.5);
+
+    // Sezione: Dettaglio Iscrizioni Atleti
+    doc.fontSize(14).font('Helvetica-Bold').text('Dettaglio Iscrizioni Atleti');
+    doc.moveDown(0.5);
+
+    // Tabella Iscrizioni Atleti
+    const headers = [
+      'Atleta',
+      ...categories.map(catId => categoryDetailsMap[catId]?.nome || `Cat. ${catId}`)
+    ];
+
+    // Calcola larghezze colonne
+    const tableWidth = pageWidth - (marginX * 2);
+    const athleteColWidth = 100;
+    const remainingWidth = tableWidth - athleteColWidth;
+    const categoryColWidth = remainingWidth / categories.length;
+
+    const startX = marginX;
+    let startY = doc.y;
+    const rowHeight = 18;
+
+    // Header
+    doc.fontSize(8).font('Helvetica-Bold');
+    doc.fillColor('#b91c1c');
+    headers.forEach((header, i) => {
+      const colWidth = i === 0 ? athleteColWidth : categoryColWidth;
+      const x = i === 0 ? startX : startX + athleteColWidth + (i - 1) * categoryColWidth;
+      doc.rect(x, startY, colWidth, rowHeight*2).stroke();
+      doc.fillColor('white').rect(x, startY, colWidth, rowHeight*2).fill();
+      doc.fillColor('#b91c1c');
+      doc.text(header, x + 2, startY + 4, { width: colWidth - 4, align: 'center', ellipsis: true });
+    });
+    startY += rowHeight*2;
+
+    // Righe
+    doc.fontSize(7).font('Helvetica').fillColor('black');
+    tableData.forEach((row, rowIndex) => {
+      // Verifica se c'è spazio sulla pagina
+      if (startY + rowHeight > pageHeight - 40) {
+        doc.addPage({ layout: 'landscape' });
+        startY = marginX;
+        
+        // Ridisegna header sulla nuova pagina
+        doc.fontSize(8).font('Helvetica-Bold');
+        doc.fillColor('#b91c1c');
+        headers.forEach((header, i) => {
+          const colWidth = i === 0 ? athleteColWidth : categoryColWidth;
+          const x = i === 0 ? startX : startX + athleteColWidth + (i - 1) * categoryColWidth;
+          doc.rect(x, startY, colWidth, rowHeight).stroke();
+          doc.fillColor('white').rect(x, startY, colWidth, rowHeight).fill();
+          doc.fillColor('#b91c1c');
+          doc.text(header, x + 2, startY + 4, { width: colWidth - 4, align: 'center', ellipsis: true });
+        });
+        startY += rowHeight;
+        doc.fontSize(7).font('Helvetica').fillColor('black');
+      }
+
+      row.forEach((cell, colIndex) => {
+        const colWidth = colIndex === 0 ? athleteColWidth : categoryColWidth;
+        const x = colIndex === 0 ? startX : startX + athleteColWidth + (colIndex - 1) * categoryColWidth;
+        doc.rect(x, startY, colWidth, rowHeight).stroke();
+        
+        if (colIndex === 0) {
+          doc.font('Helvetica-Bold');
+        } else {
+          doc.font('Helvetica');
+        }
+        
+        doc.text(cell || '-', x + 2, startY + 4, { 
+          width: colWidth - 4, 
+          align: colIndex === 0 ? 'left' : 'center',
+          ellipsis: true
+        });
+      });
+      startY += rowHeight;
+    });
+
+    doc.end();
+
+  } catch (error) {
+    logger.error(`Errore nel download del riepilogo iscrizione club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    
+    // Se lo stream è già stato avviato, non possiamo più inviare JSON
+    if (streamStarted && doc) {
+      doc.end();
+    } else {
+      res.status(500).json({
+        error: 'Errore nel download del riepilogo iscrizione',
+        details: error.message
+      });
+    }
+  }
+}
+
 const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
   try {
     // Carica la competizione per ottenere costiIscrizione
@@ -903,5 +1238,6 @@ module.exports = {
   confermaIscrizioneClub,
   downloadDocumentoIscrizioneClub,
   modificaIscrizioneClub,
-  getClubRegistrationCosts
+  getClubRegistrationCosts,
+  downloadClubCompetitionSummary
 };

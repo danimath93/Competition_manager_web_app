@@ -161,6 +161,29 @@ export const editClubRegistration = async (clubId, competizioneId) => {
   }
 };
 
+// Funzione per scaricare il riepilogo delle iscrizioni di un club in una competizione
+export const downloadClubRegistrationSummary = async (clubId, competizioneId) => {
+  try {
+    const response = await axios.get(`/iscrizioni/club-iscrizione/riepilogo/${clubId}/${competizioneId}`, {
+      responseType: 'blob'
+    });
+
+    // Crea un URL blob e trigger il download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Riepilogo_Iscrizione_${clubId}_${competizioneId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('Errore durante il download del riepilogo delle iscrizioni:', error);
+    throw error;
+  }
+};
+
 // ============ COSTI ISCRIZIONE ============
 
 // Funzione per ottenere i costi totali per un club in una competizione
