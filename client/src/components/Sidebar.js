@@ -18,6 +18,7 @@ import './styles/Sidebar.css';
 import { useAuth } from '../context/AuthContext';
 import { getBlobDocumento } from '../api/documents';
 import { loadClubByID } from '../api/clubs';
+import ConfirmActionModal from './common/ConfirmActionModal';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const { t } = useLanguage();
@@ -26,6 +27,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   const userPermissions = user ? user.permissions : [];
   const [logoSource, setLogoSource] = useState(null);
   const [loadingLogo, setLoadingLogo] = useState(false);
+  const [isConfirmLogoutModalOpen, setIsConfirmLogoutModalOpen] = useState(false);
 
   const allMenuItems = [
     { path: '/dashboard', icon: FaTachometerAlt, label: t('dashboard'), permission: 'dashboard' },
@@ -91,6 +93,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       }
     };
   }, [user?.clubId]);
+
+  const handleLogoutCheckConfirm = () => {
+    setIsConfirmLogoutModalOpen(true);
+  };
 
   const handleLogout = async () => {
     try {
@@ -203,13 +209,30 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       <div className="sidebar-footer">
         <button 
           className="sidebar-logout-btn" 
-          onClick={handleLogout}
+          onClick={handleLogoutCheckConfirm}
           title={!isOpen ? 'Logout' : ''}
         >
           <FaSignOutAlt className="nav-icon" />
           {isOpen && <span className="nav-label">Logout</span>}
         </button>
       </div>
+
+      { isConfirmLogoutModalOpen && (
+        <ConfirmActionModal
+          open={isConfirmLogoutModalOpen}
+          onClose={() => setIsConfirmLogoutModalOpen(false)}
+          title="Conferma Logout"
+          message="Sei sicuro di voler effettuare il logout?"
+          primaryButton={{
+            text: 'Conferma',
+            onClick: handleLogout,  
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setIsConfirmLogoutModalOpen(false),
+          }}
+        />
+      )}
     </aside>
     </>
   );
