@@ -65,4 +65,7 @@ router.post('/club-iscrizione/modifica', iscrizioneController.modificaIscrizione
 // GET /api/iscrizioni/costs/:clubId/:competizioneId - Ottieni i costi totali per un club in una competizione
 router.get('/costs/:clubId/:competizioneId', iscrizioneController.getClubRegistrationCosts);
 
+// GET /api/iscrizioni/club-iscrizione/riepilogo/:clubId/:competizioneId - Ottieni il riepilogo iscrizione per un club in una competizione
+router.get('/club-iscrizione/riepilogo/:clubId/:competizioneId', iscrizioneController.downloadClubCompetitionSummary);
+
 module.exports = router;

@@ -152,6 +152,7 @@ export const printCategories = async (competizioneId) => {
     link.click();
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
+    return true;
   } catch (error) {
     console.error('Errore nella stampa delle categorie:', error);
     throw error;

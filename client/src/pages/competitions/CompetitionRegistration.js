@@ -21,12 +21,14 @@ import {
   editClubRegistration,
   getClubRegistrationCosts,
   deleteAthleteRegistrations,
+  downloadClubRegistrationSummary
 } from '../../api/registrations';
 import ClubAthletesList from '../../components/ClubAthletesList';
 import RegisteredAthletesTable from '../../components/RegisteredAthletesTable';
 import CompetitionFinalization from './CompetitionFinalization';
 import PageHeader from '../../components/PageHeader';
 import Button from '../../components/common/Button';
+import { ConfirmActionModal } from '../../components/common';
 
 const CompetitionRegistration = () => {
   const { competitionId } = useParams();
@@ -42,11 +44,57 @@ const CompetitionRegistration = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFinalizationDrawerOpen, setIsFinalizationDrawerOpen] = useState(false);
+  const [isDownloadSummaryModalOpen, setIsDownloadSummaryModalOpen] = useState(false);
   const [totalCost, setTotalCost] = useState(null);
   const [costLoading, setCostLoading] = useState(false);
 
+  const handleGoBack = () => {
+    navigate('/competitions');
+  };
+
+  const handleEditAthlete = () => {
+    refreshClubAthletes();
+  };
+
+  const handleEditRegistration = () => {
+    return async () => {
+      try {
+        await editClubRegistration(user.clubId, competitionId);
+        const competitionData = await getCompetitionDetails(competitionId);
+        setCompetition(competitionData);
+
+        // Ricarica anche l'iscrizione del club
+        try {
+          const clubRegData = await getClubRegistration(user.clubId, competitionId);
+          setClubRegistration(clubRegData);
+        } catch (err) {
+          setClubRegistration(null);
+        }
+      } catch (err) {
+        console.error('Errore durante la modifica dell\'iscrizione:', err);
+        setError('Errore durante la modifica dell\'iscrizione');
+      }
+    };
+  };
+
+  const handleDeleteAthleteRegistration = async (athlete, registrations) => {
+    try {
+      setLoading(true);
+
+      // Rimuovi l'atleta dalle iscrizioni
+      await deleteAthleteRegistrations(athlete.id, competitionId);
+
+      // Ricarica le iscrizioni
+      await refreshRegistrations();
+    } catch (err) {
+      setError('Errore durante la rimozione dell\'atleta: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Funzione per aprire il drawer di finalizzazione
-  const handleOpenFinalizationDrawer = () => {
+  const handleOpenFinalizationDrawer = async () => {
     setIsFinalizationDrawerOpen(true);
   };
 
@@ -57,11 +105,92 @@ const CompetitionRegistration = () => {
 
   // Funzione chiamata dopo il successo della finalizzazione
   const handleFinalizationSuccess = async () => {
+    setIsFinalizationDrawerOpen(false);
+    setIsDownloadSummaryModalOpen(true);
+
     await refreshClubRegistration();
     await refreshRegistrations();
   };
 
-  // Carica i dati iniziali
+  // Funzione per gestire il download del riepilogo iscrizione del club
+  const handleDownloadClubRegistrationSummary = async () => {
+    await downloadRegistrationPDF();
+  };
+
+  // Funzione per aggiornare la lista degli atleti iscritti
+  const refreshRegistrations = async () => {
+    try {
+      const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(
+        competitionId,
+        user.clubId
+      );
+      setRegisteredAthletes(registrationsData);
+
+      if (clubRegistration == null) {
+        const newClubReg = await createOrGetClubRegistration(user.clubId, competitionId);
+        setClubRegistration(newClubReg);
+        setIsClubRegistered(false);
+      }
+
+      // Aggiorna anche i costi
+      await refreshCosts();
+    } catch (err) {
+      console.error('Errore nel ricaricamento delle iscrizioni:', err);
+    }
+  };
+
+  // Funzione per aggiornare i costi
+  const refreshCosts = async () => {
+    if (!user?.clubId || !competitionId) return;
+
+    try {
+      setCostLoading(true);
+      const costsData = await getClubRegistrationCosts(user.clubId, competitionId);
+      setTotalCost(costsData.totalCost);
+    } catch (err) {
+      console.error('Errore nel caricamento dei costi:', err);
+      setTotalCost(null);
+    } finally {
+      setCostLoading(false);
+    }
+  };
+
+  // Funzione per aggiornare la lista degli atleti del club
+  const refreshClubAthletes = async () => {
+    try {
+      const athletesData = await loadAthletesByClub(user.clubId);
+      setClubAthletes(athletesData);
+    } catch (err) {
+      console.error('Errore nel ricaricamento degli atleti:', err);
+    }
+  };
+
+  // Funzione per aggiornare lo stato dell'iscrizione del club
+  const refreshClubRegistration = async () => {
+    try {
+      const clubRegData = await getClubRegistration(user.clubId, competitionId);
+      setClubRegistration(clubRegData);
+      setIsClubRegistered(clubRegData.stato === 'Confermata');
+    } catch (err) {
+      console.error('Errore nel ricaricamento dell\'iscrizione del club:', err);
+    }
+  };
+
+  const canConfirmRegistration = () => {
+    return registeredAthletes.length > 0 && !isClubRegistered;
+  };
+
+    // Funzione per scaricare il PDF di riepilogo dal backend
+  const downloadRegistrationPDF = async () => {
+    try {
+      await downloadClubRegistrationSummary(user.clubId, competitionId);
+    } catch (err) {
+      console.error('Errore durante il download del PDF:', err);
+      setError('Errore durante il download del PDF: ' + err.message);
+    }
+  };
+
+    // Carica i dati iniziali
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -132,116 +261,6 @@ const CompetitionRegistration = () => {
       setIsClubRegistered(clubRegistration.stato === 'Confermata');
     }
   }, [clubRegistration]);
-
-  // Funzione per aggiornare la lista degli atleti iscritti
-  const refreshRegistrations = async () => {
-    try {
-      const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(
-        competitionId,
-        user.clubId
-      );
-      setRegisteredAthletes(registrationsData);
-
-      if (clubRegistration == null) {
-        const newClubReg = await createOrGetClubRegistration(user.clubId, competitionId);
-        setClubRegistration(newClubReg);
-        setIsClubRegistered(false);
-      }
-
-      // Aggiorna anche i costi
-      await refreshCosts();
-    } catch (err) {
-      console.error('Errore nel ricaricamento delle iscrizioni:', err);
-    }
-  };
-
-  // Funzione per aggiornare i costi
-  const refreshCosts = async () => {
-    if (!user?.clubId || !competitionId) return;
-
-    try {
-      setCostLoading(true);
-      const costsData = await getClubRegistrationCosts(user.clubId, competitionId);
-      setTotalCost(costsData.totalCost);
-    } catch (err) {
-      console.error('Errore nel caricamento dei costi:', err);
-      setTotalCost(null);
-    } finally {
-      setCostLoading(false);
-    }
-  };
-
-  // Funzione per aggiornare la lista degli atleti del club
-  const refreshClubAthletes = async () => {
-    try {
-      const athletesData = await loadAthletesByClub(user.clubId);
-      setClubAthletes(athletesData);
-    } catch (err) {
-      console.error('Errore nel ricaricamento degli atleti:', err);
-    }
-  };
-
-  // Funzione per aggiornare lo stato dell'iscrizione del club
-  const refreshClubRegistration = async () => {
-    try {
-      const clubRegData = await getClubRegistration(user.clubId, competitionId);
-      setClubRegistration(clubRegData);
-      setIsClubRegistered(clubRegData.stato === 'Confermata');
-    } catch (err) {
-      console.error('Errore nel ricaricamento dell\'iscrizione del club:', err);
-    }
-  };
-
-
-
-  const canConfirmRegistration = () => {
-    return registeredAthletes.length > 0 && !isClubRegistered;
-  };
-
-  const handleGoBack = () => {
-    navigate('/competitions');
-  };
-
-  const handleEditAthlete = () => {
-    refreshClubAthletes();
-  };
-
-  const handleEditRegistration = () => {
-    return async () => {
-      try {
-        await editClubRegistration(user.clubId, competitionId);
-        const competitionData = await getCompetitionDetails(competitionId);
-        setCompetition(competitionData);
-
-        // Ricarica anche l'iscrizione del club
-        try {
-          const clubRegData = await getClubRegistration(user.clubId, competitionId);
-          setClubRegistration(clubRegData);
-        } catch (err) {
-          setClubRegistration(null);
-        }
-      } catch (err) {
-        console.error('Errore durante la modifica dell\'iscrizione:', err);
-        setError('Errore durante la modifica dell\'iscrizione');
-      }
-    };
-  };
-
-  const handleDeleteAthleteRegistration = async (athlete, registrations) => {
-    try {
-      setLoading(true);
-
-      // Rimuovi l'atleta dalle iscrizioni
-      await deleteAthleteRegistrations(athlete.id, competitionId);
-
-      // Ricarica le iscrizioni
-      await refreshRegistrations();
-    } catch (err) {
-      setError('Errore durante la rimozione dell\'atleta: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -371,7 +390,7 @@ const CompetitionRegistration = () => {
                     </Button>
                     <Button
                       variant='info'
-                      onClick={handleOpenFinalizationDrawer}
+                      onClick={handleDownloadClubRegistrationSummary}
                     >
                       Riepilogo Iscrizione
                     </Button>
@@ -401,7 +420,20 @@ const CompetitionRegistration = () => {
         )}
       </Box>
 
-
+      <ConfirmActionModal 
+        title="Iscrizione Confermata"
+        message="L'iscrizione del club a questa competizione è stata confermata con successo, scaricare il riepilogo dell'iscrizione effettuata?"
+        open={isDownloadSummaryModalOpen}
+        onClose={() => setIsDownloadSummaryModalOpen(false)}
+        primaryButton={{
+          text: 'Scarica',
+          onClick: async () => { await handleDownloadClubRegistrationSummary(); setIsDownloadSummaryModalOpen(false); },
+        }}
+        secondaryButton={{
+          text: 'Chiudi',
+          onClick: () => setIsDownloadSummaryModalOpen(false),
+        }}
+      />
     </div>
   );
 };

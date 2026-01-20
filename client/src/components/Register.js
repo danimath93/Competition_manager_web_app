@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import { TextInput, PasswordInput, Tabs } from './common';
@@ -40,9 +40,14 @@ const Register = () => {
   const [clubEmail, setClubEmail] = useState('');
   const [tesseramento, setTesseramento] = useState(null);
 
+  // Stato per privacy policy
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyViewed, setPrivacyViewed] = useState(false);
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
 
   // Funzione di redirect già presente
   const handleRegisterSuccess = () => { };
@@ -65,6 +70,14 @@ const Register = () => {
       !indirizzoVia.trim() || !indirizzoComune.trim() || !indirizzoCap.trim() ||
       !direttoreTecnico.trim() || !legaleRappresentante.trim() || !clubEmail.trim() || !tesseramento) {
       setError('Tutti i campi del club contrassegnati con * sono obbligatori.');
+      return false;
+    }
+    if (!privacyViewed) {
+      setError('Devi visualizzare l\'informativa sulla privacy prima di procedere.');
+      return false;
+    }
+    if (!privacyAccepted) {
+      setError('Devi accettare l\'informativa sulla privacy per procedere.');
       return false;
     }
     return true;
@@ -308,11 +321,37 @@ const Register = () => {
                           disabled={loading}
                         />
                       </div>
+                    </div>
+                      <div className="privacy-section">
+                        <div className="privacy-checkbox-container">
+                          <input
+                            type="checkbox"
+                            id="privacyAccepted"
+                            checked={privacyAccepted}
+                            onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                            disabled={loading || !privacyViewed}
+                            className="privacy-checkbox"
+                          />
+                          <label htmlFor="privacyAccepted" className="privacy-label">
+                            <span className="required-asterisk">*</span>
+                            Dichiaro di aver letto e accettato l' 
+                            <a
+                              href="/trattamento-dati-personali"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="privacy-link"
+                              onClick={() => setPrivacyViewed(true)}
+                            >
+                              Informativa sul Trattamento dei Dati Personali
+                            </a>
+                          </label>
+                        </div>
+                      </div>
 
                       <button
                         type="submit"
                         className="login-button register-submit-button"
-                        disabled={loading}
+                        disabled={loading || !privacyViewed || !privacyAccepted}
                       >
                         {loading ? 'Registrazione in corso...' : 'Iscriviti'}
                       </button>
@@ -327,7 +366,7 @@ const Register = () => {
                           {success}
                         </div>
                       )}
-                    </div>
+                      
                   </form>
                 )}
               </Tabs>
