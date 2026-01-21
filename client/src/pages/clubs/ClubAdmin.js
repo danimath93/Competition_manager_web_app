@@ -7,13 +7,13 @@ import {
 import { Add } from '@mui/icons-material';
 import { FaUniversity } from 'react-icons/fa';
 
-import { useAuth } from '../context/AuthContext';
-import { loadAllClubs, createClub, updateClub, deleteClub } from '../api/clubs';
-import ClubsTable from '../components/ClubsTable';
-import ClubModal from '../components/ClubModal';
-import PageHeader from '../components/PageHeader';
-import Button from '../components/common/Button';
-import ConfirmActionModal from '../components/common/ConfirmActionModal';
+import { useAuth } from '../../context/AuthContext';
+import { loadAllClubs, createClub, updateClub, deleteClub } from '../../api/clubs';
+import ClubsTable from '../../components/ClubsTable';
+import ClubModal from '../../components/ClubModal';
+import PageHeader from '../../components/PageHeader';
+import Button from '../../components/common/Button';
+import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 
 const ClubAdmin = () => {
   const { user } = useAuth();
