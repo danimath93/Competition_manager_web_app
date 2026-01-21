@@ -81,10 +81,11 @@
     min-height: calc(100vh - 80px);
   }
   
-  /* Su mobile la sidebar è sempre visibile a 105px */
-  .layout-content.with-sidebar-open,
-  .layout-content.with-sidebar-closed {
-    margin-left: 105px;
+  /* Su mobile con utente loggato, lascia spazio all'header menu */
+  .layout-content.with-header-menu {
+    margin-top: 60px;
+    margin-left: 0;
+    min-height: calc(100vh - 60px);
   }
 
   .main-content {

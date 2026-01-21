@@ -3,9 +3,7 @@
    ======================================== */
 
 .page-header {
-  margin-bottom: 0.5rem;
-  /* padding-bottom: 1.5rem; */
-  /* border-bottom: 2px solid var(--border-light, #e0e0e0); */
+  margin-bottom: 0.05rem;
 }
 
 .page-header-main {
@@ -92,11 +90,6 @@
 
 /* Mobile */
 @media (max-width: 768px) {
-  .page-header {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-  }
-
   .page-header-main {
     flex-direction: column;
     gap: 1rem;
@@ -129,10 +122,6 @@
 
 /* Mobile piccolo */
 @media (max-width: 480px) {
-  .page-header {
-    margin-bottom: 1rem;
-  }
-
   .page-header-content {
     gap: 0.75rem;
   }
