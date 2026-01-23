@@ -144,7 +144,9 @@ const CategoryExecution = () => {
       "&categoriaNome=" + encodeURIComponent(cat?.nome) +
       "&competizioneId=" + competizioneId +
       "&tipoCompetizioneId=" + cat?.tipoCategoria?.tipoCompetizione?.id;
-    navigate(`/category-execution/${cat.id}/category-in-progress?${pageParameters}`);
+    // Voglio aprire la pagina in una nuova scheda
+    updateCategoryState(cat.id, res?.stato);
+    window.open(`/category-execution/${cat.id}/category-in-progress?${pageParameters}`, '_blank');
   };
 
   const handlePrintCategory = async (cat) => {
