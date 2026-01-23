@@ -513,12 +513,22 @@ const getClubRegistrationsByCompetition = async (req, res) => {
 
     const clubRegistrations = await IscrizioneClub.findAll({
       where: { competizioneId },
-      attributes: { exclude: ['confermaPresidenteId'] },
+      attributes: { exclude: [] },
       include: [
         {
           model: Club,
           as: 'club',
           attributes: { exclude: ['logo'] }
+        },        
+        {
+          model: require('../models').Documento,
+          as: 'confermaPresidenteDocumento',
+          attributes: ['id', 'nomeFile']
+        },
+        {
+          model: require('../models').Documento,
+          as: 'bonificoDocumento',
+          attributes: ['id', 'nomeFile']
         }
       ],
       order: [
@@ -530,6 +540,10 @@ const getClubRegistrationsByCompetition = async (req, res) => {
     const clubRegistrationsWithAffiliation = clubRegistrations.map(reg => {
       const regJson = reg.toJSON();
       regJson.affiliazione = regJson.club?.tesseramento || '';
+      regJson.confermaPresidenteDocId = regJson.confermaPresidenteDocumento?.id || null;
+      regJson.confermaPresidenteDocName = regJson.confermaPresidenteDocumento?.nomeFile || null;
+      regJson.bonificoDocId = regJson.bonificoDocumento?.id || null;
+      regJson.bonificoDocName = regJson.bonificoDocumento?.nomeFile || null;
       return regJson;
     });
 
@@ -715,35 +729,40 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
     if (!iscrizioneClub) {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
     }
+    let documento = null;
 
-    let fileBuffer, fileName, fileType;
-
-    if (tipoDocumento === 'certificatiMedici') {
-      fileBuffer = iscrizioneClub.certificatiMedici;
-      fileName = iscrizioneClub.certificatiMediciNome;
-      fileType = iscrizioneClub.certificatiMediciTipo;
-    } else if (tipoDocumento === 'autorizzazioni') {
-      fileBuffer = iscrizioneClub.autorizzazioni;
-      fileName = iscrizioneClub.autorizzazioniNome;
-      fileType = iscrizioneClub.autorizzazioniTipo;
-    } else if (tipoDocumento === 'confermaPresidente') {
-      fileBuffer = iscrizioneClub.confermaPresidente;
-      fileName = iscrizioneClub.confermaPresidenteNome;
-      fileType = iscrizioneClub.confermaPresidenteTipo;
+    if (tipoDocumento === 'confermaPresidente') {
+      if (!iscrizioneClub.confermaPresidenteId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conferma del Presidente non trovata'
+      });
+      }
+      documento = await Documento.findByPk(iscrizioneClub.confermaPresidenteId);
+    } else if (tipoDocumento === 'bonifico') {
+      if (!iscrizioneClub.bonificoId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ricevuta del bonifico non trovata'
+      });
+      }
+      documento = await Documento.findByPk(iscrizioneClub.bonificoId);											   
     } else {
       return res.status(400).json({ error: 'Tipo di documento non valido' });
     }
 
-    if (!fileBuffer) {
+    if (!documento) {
       return res.status(404).json({ error: 'Documento non trovato' });
     }
 
-    res.setHeader('Content-Type', fileType);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.send(fileBuffer);
+    res.setHeader('Content-Type', documento.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${documento.nomeFile}"`);
+    console.log('Documento:', documento.id, 'Size:', documento.file ? documento.file.length : 'null');
+    res.send(documento.file);
   } catch (error) {
     logger.error(`Errore nel download del documento ${req.params.tipoDocumento} per club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
+      success: false,
       error: 'Errore nel download del documento',
       details: error.message
     });

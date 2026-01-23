@@ -47,6 +47,9 @@ router.post('/club-iscrizione', iscrizioneController.createOrGetIscrizioneClub);
 // GET /api/iscrizioni/club-iscrizione/competizione/:competizioneId - Ottieni tutte le iscrizioni dei club per una competizione
 router.get('/club-iscrizione/competizione/:competizioneId', iscrizioneController.getClubRegistrationsByCompetition);
 
+// GET /api/iscrizioni/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento - Download documento
+router.get('/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento', iscrizioneController.downloadDocumentoIscrizioneClub);
+
 // GET /api/iscrizioni/club-iscrizione/:clubId/:competizioneId - Ottieni l'iscrizione di un club a una competizione
 router.get('/club-iscrizione/:clubId/:competizioneId', iscrizioneController.getIscrizioneClub);
 
@@ -55,9 +58,6 @@ router.post('/club-iscrizione/documenti', uploadDocumenti.fields([{ name: 'confe
 
 // POST /api/iscrizioni/club-iscrizione/conferma - Conferma l'iscrizione del club (dopo upload documenti)
 router.post('/club-iscrizione/conferma', iscrizioneController.confermaIscrizioneClub);
-
-// GET /api/iscrizioni/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento - Download documento
-router.get('/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento', iscrizioneController.downloadDocumentoIscrizioneClub);
 
 // POST /api/iscrizioni/club-iscrizione/modifica - Modfica l'iscrizione del club
 router.post('/club-iscrizione/modifica', iscrizioneController.modificaIscrizioneClub);

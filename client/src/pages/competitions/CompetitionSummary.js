@@ -27,6 +27,7 @@ import {
   ArrowBack,
   Euro as EuroIcon,
   Download as DownloadIcon,
+  Description as DescriptionIcon,
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material';
@@ -136,6 +137,40 @@ const CompetitionSummary = () => {
     }
   };
 
+  const downloadConfermaPresidente = async (clubId, competitionId) => {
+    try {
+      const response = await downloadClubRegistrationDocument(clubId, competitionId, 'confermaPresidente');
+      const url = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Conferma_presidente_${clubId}_${competitionId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Errore nel download del documento di conferma presidente');
+    }
+  };
+
+  const downloadBonifico = async (clubId, competitionId) => {
+    try {
+      const response = await fetch(`/api/iscrizioni/club-iscrizione/${clubId}/${competitionId}/documento/bonifico`);
+      if (!response.ok) throw new Error('Errore nel download');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Ricevuta_bonifico_${clubId}_${competitionId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Errore nel download della ricevuta di bonifico');
+    }
+  };
+  /*
   const handleDownloadDocument = async (clubId, documentType, fileName) => {
     try {
       const blob = await downloadClubRegistrationDocument(clubId, competitionId, documentType);
@@ -151,7 +186,7 @@ const CompetitionSummary = () => {
       console.error('Errore nel download del documento:', err);
       alert('Errore nel download del documento');
     }
-  };
+  };*/
 
   const handleOpenClubDetails = (club) => {
   setSelectedClub(club);
@@ -443,7 +478,11 @@ const handleCloseClubDetails = () => {
                       atleti: loadingCost ? '-' : costSummary?.totals?.totalAthletes ?? '-',
                       categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
                       affiliazione: clubReg.affiliazione || '-',
+                      confermaPresidenteDocId: clubReg.confermaPresidenteDocId,
+                      confermaPresidenteDocName: clubReg.confermaPresidenteDocName,
                       costo: loadingCost ? '-' : costSummary?.totals?.totalCost?.toFixed(2) ?? '-',
+                      bonificoDocId: clubReg.bonificoDocId,
+                      bonificoDocName: clubReg.bonificoDocName,
                       raw: clubReg,
                     };
                   })}
@@ -510,6 +549,58 @@ const handleCloseClubDetails = () => {
                     headerAlign: 'center',
                   },
                   {
+                    field: 'confermaPresidente',
+                    headerName: 'Conferma Pres.',
+                    flex: 1,
+                    minWidth: 120,
+                    align: 'center',
+                    headerAlign: 'center',
+                    sortable: false,
+                    filterable: false,
+                    renderCell: (params) => {
+                      const hasDoc = !!params.row.confermaPresidenteDocId;
+                      return (
+                        <Tooltip title={hasDoc ? 'Scarica conferma presidente' : 'Non allegato'}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={!hasDoc}
+                              onClick={() => hasDoc && downloadConfermaPresidente(params.row.id, competitionId)}
+                            >
+                              <DescriptionIcon sx={{ color: hasDoc ? '#4caf50' : '#9e9e9e', fontSize: 28 }} />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      );
+                    },
+                  },
+                  {
+                    field: 'ricevutaBonifico',
+                    headerName: 'Ricevute Bonifico',
+                    flex: 1,
+                    minWidth: 120,
+                    align: 'center',
+                    headerAlign: 'center',
+                    sortable: false,
+                    filterable: false,
+                    renderCell: (params) => {
+                      const hasDoc = !!params.row.bonificoDocId;
+                      return (
+                        <Tooltip title={hasDoc ? 'Scarica ricevuta bonifico' : 'Non allegato'}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={!hasDoc}
+                              onClick={() => hasDoc && downloadBonifico(params.row.id, competitionId)}
+                            >
+                              <DescriptionIcon sx={{ color: hasDoc ? '#4caf50' : '#9e9e9e', fontSize: 28 }} />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      );
+                    },
+                  },
+                  {
                     field: 'costo',
                     headerName: 'Costo Totale (€)',
                     flex: 1,
@@ -541,25 +632,6 @@ const handleCloseClubDetails = () => {
                         onClick={() => handleOpenClubDetails(params.row.raw)}
                       />,
                     ];
-
-                    if (params.row.raw?.confermaPresidenteNome) {
-                      actions.push(
-                        <GridActionsCellItem
-                          key="download-cp"
-                          icon={<DownloadIcon />}
-                          label="Scarica CP"
-                          showInMenu
-                          onClick={() =>
-                            handleDownloadDocument(
-                              params.row.raw.clubId,
-                              'confermaPresidente',
-                              params.row.raw.confermaPresidenteNome
-                            )
-                          }
-                        />
-                      );
-                    }
-
                     return actions;
                   },
                 }
