@@ -8,7 +8,6 @@ import Login from './pages/Login';
 import Register from './components/Register';
 import RequestPasswordReset from './components/RequestPasswordReset';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
-import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
 import AuthGate from './components/AuthGate';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/competitions/Competitions';
@@ -72,7 +71,7 @@ const AppContent = () => {
       <Route path="/register" element={user ? <Navigate to={defaultRoute} replace /> : <Register />} />
       <Route path="/reset-password" element={<RequestPasswordReset />} />
       <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-      <Route path="/trattamento-dati-personali" element={<TrattamentoDatiPersonali />} />
+      {/* <Route path="/trattamento-dati-personali" element={<TrattamentoDatiPersonali />} /> */}
 
       <Route element={<Layout user={user} />}>
         {/* Redirect root */}
