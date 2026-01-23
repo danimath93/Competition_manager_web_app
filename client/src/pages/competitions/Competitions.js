@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Box } from '@mui/material';
+import { Box } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { FaTrophy } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';

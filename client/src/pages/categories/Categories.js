@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Box, Card, CardContent, CardActions, Button, Chip } from '@mui/material';
+import { Container, Typography, Box} from '@mui/material';
+import { FaTags } from 'react-icons/fa';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { loadAllCompetitions } from '../../api/competitions';
+import CategoryCard from './CategoryCard';  
+import PageHeader from '../../components/PageHeader';
 
 const Categories = () => {
   const { t } = useLanguage();
@@ -11,42 +14,6 @@ const Categories = () => {
   const { user } = useAuth();
   const [competitions, setCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
-
-  const fetchData = async () => {
-    const fetchCompetitions = async () => {
-      try {
-        setLoading(true);
-        // Filtra solo le competizioni negli stati: Aperta, In preparazione, In corso
-        const data = await loadAllCompetitions(['Aperta', 'In preparazione', 'In corso']);
-        // Se visualizzazione per organizzatore, filtra solo le competizioni organizzate dal club dell'utente
-        let filteredData = data;
-        if (user.permissions === 'club') {
-          if (user.clubId) {
-            filteredData = data.filter(comp => comp.organizzatoreClubId && comp.organizzatoreClubId === user.clubId);
-          }
-          else {
-            filteredData = [];
-            throw new Error('Utente club senza clubId associato');
-          }
-        }
-        // Ordina le competizioni per data di inizio, dalla più recente alla più vecchia
-        const sortedData = filteredData.sort((a, b) => new Date(b.dataInizio) - new Date(a.dataInizio));
-        setCompetitions(sortedData);
-      } catch (error) {
-        console.error('Errore nel caricamento delle competizioni:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    await fetchCompetitions();
-  };
 
   const handleDefinizione = (competitionId) => {
     navigate(`/categories/definition?competizioneId=${competitionId}`);
@@ -60,18 +27,41 @@ const Categories = () => {
     navigate(`/categories/results?competizioneId=${competitionId}`);
   };
 
-  const getStatoColor = (stato) => {
-    switch(stato) {
-      case 'Aperta':
-        return 'success';
-      case 'In preparazione':
-        return 'warning';
-      case 'In corso':
-        return 'info';
-      default:
-        return 'default';
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetchCompetitions = async () => {
+        try {
+          setLoading(true);
+          // Filtra solo le competizioni negli stati: Aperta, In preparazione, In corso
+          const data = await loadAllCompetitions(['Aperta', 'In preparazione', 'In corso']);
+          // Se visualizzazione per organizzatore, filtra solo le competizioni organizzate dal club dell'utente
+          let filteredData = data;
+          if (user.permissions === 'club') {
+            if (user.clubId) {
+              filteredData = data.filter(comp => comp.organizzatoreClubId && comp.organizzatoreClubId === user.clubId);
+            }
+            else {
+              filteredData = [];
+              throw new Error('Utente club senza clubId associato');
+            }
+          }
+          // Ordina le competizioni per data di inizio, dalla più recente alla più vecchia
+          const sortedData = filteredData.sort((a, b) => new Date(b.dataInizio) - new Date(a.dataInizio));
+          setCompetitions(sortedData);
+        } catch (error) {
+          console.error('Errore nel caricamento delle competizioni:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      await fetchCompetitions();
+    };
+
+    if (user) {
+      fetchData();
     }
-  };
+  }, [user]);
 
   if (loading) {
     return (
@@ -82,10 +72,11 @@ const Categories = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Gestione Categorie
-      </Typography>
+    <div className="page-container">
+      <PageHeader
+        icon={FaTags}
+        title={t('categories')}
+      />
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {competitions.length === 0 ? (
@@ -93,59 +84,22 @@ const Categories = () => {
             Nessuna competizione organizzata da visualizzare.
           </Typography>
         ) : (
-          competitions.map((competition) => (
-            <Card key={competition.id} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-              <CardContent sx={{ flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                  <Typography variant="h6">
-                    {competition.nome}
-                  </Typography>
-                  <Chip 
-                    label={competition.stato} 
-                    color={getStatoColor(competition.stato)}
-                    size="small"
-                  />
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  {new Date(competition.dataInizio).toLocaleDateString('it-IT')} - {new Date(competition.dataFine).toLocaleDateString('it-IT')}
-                </Typography>
-                {competition.organizzatoreClubId && (
-                  <Typography variant="body2" color="text.secondary">
-                    Organizzatore: {competition?.organizzatore?.denominazione}
-                  </Typography>
-                )}
-              </CardContent>
-              <CardActions sx={{ flexDirection: 'column', gap: 1, pr: 2 }}>
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  onClick={() => handleDefinizione(competition.id)}
-                  sx={{ minWidth: 120 }}
-                >
-                  Definizione
-                </Button>
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  onClick={() => handleSvolgimento(competition.id)}
-                  sx={{ minWidth: 120 }}
-                >
-                  Svolgimento
-                </Button>
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  onClick={() => handleRisultati(competition.id)}
-                  sx={{ minWidth: 120 }}
-                >
-                  Risultati
-                </Button>
-              </CardActions>
-            </Card>
-          ))
+        <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 400 }}>
+        {competitions.map((comp) => (
+          <CategoryCard
+            key={comp.id}
+            competition={comp}
+            onDefinition={handleDefinizione}
+            onExecution={handleSvolgimento}
+            onCheckResults={handleRisultati}
+            userClubId={user?.clubId}
+            userPermissions={user?.permissions}
+          />
+        ))}
+        </div>
         )}
       </Box>
-    </Container>
+    </div>
   );
 };
 
