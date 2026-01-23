@@ -14,7 +14,7 @@ exports.generateCategories = async (req, res) => {
     const { unisciAttivitaComplementari, unisciLivelloEsperienza } = req.body;
 
     // TODO: Aggiungere opzione per usare date di validità gruppi età
-    const useGroupAgeValidityDate = true;
+    const useGroupAgeValidityDate = false;
 
     // Verifica che la competizione esista
     const competition = await Competizione.findByPk(competizioneId);
