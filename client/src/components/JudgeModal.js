@@ -1,39 +1,32 @@
 import React from 'react';
 import {
-  Modal,
-  Box,
-  Typography,
   TextField,
   Button,
-  Grid,
-  Autocomplete
+  Autocomplete,
+  Alert,
+  Box,
 } from '@mui/material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllClubs } from '../api/clubs';
-
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 400,
-  bgcolor: 'background.paper',
-  border: '2px solid #000',
-  boxShadow: 24,
-  p: 4,
-};
+import { loadAthleteTypes } from '../api/config';
+import AuthComponent from './AuthComponent';
+import DrawerModal from './common/DrawerModal';
+import ConfirmActionModal from './common/ConfirmActionModal';
+import './common/DrawerModal.css';
 
 const JudgeModal = ({
   open,
   onClose,
   onSubmit,
+  onDelete,
   judge,
   isEditMode,
 }) => {
   const [formData, setFormData] = React.useState({});
-  const [clubs, setClubs] = React.useState([]);
-  const [clubName, setClubName] = React.useState(judge?.club?.denominazione || '');
-  const [clubNames, setClubNames] = React.useState([]);
-
+  const [judgeExperiences, setJudgeExperiences] = React.useState([]);
+  const [isDeleteJudgeConfirmModalOpen, setIsDeleteJudgeConfirmModalOpen] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  
   React.useEffect(() => {
     if (isEditMode && judge) {
       setFormData(judge);
@@ -42,55 +35,89 @@ const JudgeModal = ({
         nome: '',
         cognome: '',
         dataNascita: '',
-        codiceFiscale: '',
         livelloEsperienza: '',
-        specializzazione: '',
-        certificazioni: '',
-        telefono: '',
-        email: '',
-        clubId: '',
+        regione: '',
       });
     }
   }, [open, isEditMode, judge]);
  
   React.useEffect(() => {
-    const fetchClubs = async () => {
+    const fetchJudgeExperiences = async () => {
       try {
-        const clubsData = await loadAllClubs();
-        const clubNames = clubsData.map((club) => club.denominazione);
-        setClubs(clubsData);
-        setClubNames(clubNames);
+        // TODO: aggiungere API per richiedere livelli di esperienza dei giudici
       } catch (error) {
-        console.error('Errore nel caricamento dei dati:', error);
+        console.error('Errore nel caricamento dei livelli di esperienza:', error);
       }
     };
-
-    fetchClubs();
+    fetchJudgeExperiences();
   }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleClubSelectChange = (value) => {
-    setClubName(value);
-    const selectedClub = clubs.find((club) => club.denominazione === value);
-    setFormData({ ...formData, clubId: selectedClub?.id || null, club: selectedClub || null });
-  }
+  const handleJudgeExperienceChange = (event, newValue) => {
+    setFormData({ ...formData, esperienza: newValue });
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      setError(error.message || "Errore nel salvataggio del giudice");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (onDelete) {
+        await onDelete(judge.id);
+        onClose();
+      }
+    } catch (error) {
+      setError(error.message || "Errore nell'eliminazione del giudice");
+    }
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={style} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" component="h2">
-          {isEditMode ? 'Modifica Giudice' : 'Aggiungi Giudice'}
-        </Typography>
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid item xs={6}>
+    <DrawerModal
+      open={open}
+      onClose={onClose}
+      title={isEditMode ? 'Modifica Giudice' : 'Aggiungi Giudice'}
+      footer={
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <Box>
+            {isEditMode && onDelete && (
+              <Button
+                onClick={() => setIsDeleteJudgeConfirmModalOpen(true)}
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+              >
+                Elimina profilo
+              </Button>
+            )}
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button onClick={onClose} variant="outlined">
+              Annulla
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              variant="contained"
+            >
+              {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
+            </Button>
+          </Box>
+        </Box>
+      }
+    >
+      {/* Informazioni generali */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Informazioni generali</h3>
+        <div className="drawer-section-content">
+          <div className="drawer-fields-row-2">
             <TextField
               name="nome"
               label="Nome"
@@ -98,9 +125,8 @@ const JudgeModal = ({
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>
-          <Grid item xs={6}>
             <TextField
               name="cognome"
               label="Cognome"
@@ -108,9 +134,11 @@ const JudgeModal = ({
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>
-          <Grid item xs={12}>
+          </div>
+
+          <div className="drawer-fields-row-2">
             <TextField
               name="dataNascita"
               label="Data di Nascita"
@@ -119,98 +147,74 @@ const JudgeModal = ({
               onChange={handleChange}
               fullWidth
               required
+              size="small"
               InputLabelProps={{
                 shrink: true,
               }}
             />
-          </Grid>
-          <Grid item xs={12}>
             <TextField
-              name="codiceFiscale"
-              label="Codice Fiscale"
-              value={formData.codiceFiscale || ''}
+              name="regione"
+              label="Regione"
+              value={formData.regione || ''}
               onChange={handleChange}
               fullWidth
               required
+              size="small"
             />
-          </Grid>          
-          <Grid item xs={12}>
-            <TextField
-              name="livelloesperienza"
-              label="Livello di Esperienza"
-              value={formData.livelloEsperienza || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              name="specializzazione"
-              label="Specializzazione"
-              value={formData.specializzazione || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              name="certificazioni"
-              label="Certificazioni"
-              value={formData.certificazioni || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              name="email"
-              label="Email"
-              type="email"
-              value={formData.email || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              name="telefono"
-              label="Telefono"
-              value={formData.telefono || ''}
-              onChange={handleChange}
-              fullWidth
-            />
-          </Grid>
-          <Grid item xs={12}>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Informazioni esperienza */}
+      <div className="drawer-section">
+        <h3 className="drawer-section-title">Info: Esperienza</h3>
+        <div className="drawer-section-content">
+          <div className="drawer-fields-row-2">
             <Autocomplete
-              id="club-select"
-              value={clubName}
-              groupBy={(club) => club.charAt(0).toUpperCase()}
-              getOptionLabel={(club) => club}
-              onChange={(event, value) => handleClubSelectChange(value)}
-              isOptionEqualToValue={(option, value) => option === value}
+              id="exp-select"
+              value={formData.esperienza || null}
+              getOptionLabel={(option) => option.nome || ''}
+              onChange={handleJudgeExperienceChange}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  sx={{
-                    "& .MuiInputBase-root": { height: "50px" },
-                    "width": "300px",
-                  }}
-                  label="Club"
+                  label="Livello Giudice"
+                  variant="outlined"
+                  required
+                  size="small"
                 />
               )}
-              options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
+              options={judgeExperiences}
             />
-          </Grid>
-        </Grid>
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose}>Annulla</Button>
-          <Button type="submit" variant="contained" sx={{ ml: 2 }}>
-            {isEditMode ? 'Salva' : 'Aggiungi'}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {isDeleteJudgeConfirmModalOpen && (
+        <ConfirmActionModal
+          open={isDeleteJudgeConfirmModalOpen}
+          onClose={() => setIsDeleteJudgeConfirmModalOpen(false)}
+          title="Conferma Eliminazione"
+          message="Sei sicuro di voler eliminare il giudice selezionato?"
+          primaryButton={{
+            text: 'Elimina',
+            onClick: async () => { await handleDelete(); setIsDeleteJudgeConfirmModalOpen(false); },
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setIsDeleteJudgeConfirmModalOpen(false),
+          }}
+        />
+      )}
+
+    </DrawerModal>
   );
 };
 
