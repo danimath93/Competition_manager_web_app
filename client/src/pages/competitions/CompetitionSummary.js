@@ -39,6 +39,7 @@ import {
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import InfoIcon from '@mui/icons-material/Info';
 import DrawerModal from '../../components/common/DrawerModal';
+import muiTheme from '../../styles/muiTheme';
 
 const CompetitionSummary = () => {
   const { competitionId } = useParams();
@@ -325,17 +326,10 @@ const handleCloseClubDetails = () => {
                   { field: 'quota', headerName: 'Quota dovuta (€)', flex: 1, minWidth: 120, align: 'right', headerAlign: 'right', type: 'number' },
                 ]}
                 initialState={{
+                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
                   sorting: { sortModel: [{ field: 'club', sort: 'asc' }] },
                 }}
-                disableRowSelectionOnClick
                 disableColumnMenu={false}
-                disableColumnSelector={true}
-                sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-cell:focus': { outline: 'none' },
-                  '& .MuiDataGrid-row:hover': { backgroundColor: 'var(--bg-secondary, #f8f9fa)' },
-                  '& .MuiDataGrid-columnHeaders': { backgroundColor: 'var(--bg-secondary, #f8f9fa)', fontWeight: 600 },
-                }}
                 slots={{
                   footer: () => {
                     // Riga dei totali custom
@@ -529,21 +523,9 @@ const handleCloseClubDetails = () => {
                 }
                 ]}
                 initialState={{
+                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
                   sorting: {
                     sortModel: [{ field: 'club', sort: 'asc' }],
-                  },
-                }}
-                disableRowSelectionOnClick
-                disableColumnSelector
-                sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-cell:focus': { outline: 'none' },
-                  '& .MuiDataGrid-row:hover': {
-                    backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-                    fontWeight: 600,
                   },
                 }}
               />
@@ -786,17 +768,10 @@ const handleCloseClubDetails = () => {
                     ) },
                 ]}
                 initialState={{
+                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
                   sorting: { sortModel: [{ field: 'cognome', sort: 'asc' }] },
                 }}
-                disableRowSelectionOnClick
                 disableColumnMenu={false}
-                disableColumnSelector={true}
-                sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-cell:focus': { outline: 'none' },
-                  '& .MuiDataGrid-row:hover': { backgroundColor: 'var(--bg-secondary, #f8f9fa)' },
-                  '& .MuiDataGrid-columnHeaders': { backgroundColor: 'var(--bg-secondary, #f8f9fa)', fontWeight: 600 },
-                }}
               />
             </Box>)}
         </Paper>

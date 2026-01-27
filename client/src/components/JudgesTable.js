@@ -5,6 +5,7 @@ import { Paper } from '@mui/material';
 import { Edit, Delete } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
+import muiTheme from '../styles/muiTheme';
 
 const JudgesTable = ({ judges, onEdit, onDelete }) => {
 
@@ -102,31 +103,13 @@ const JudgesTable = ({ judges, onEdit, onDelete }) => {
         rows={rows}
         columns={columns}
         initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10, page: 0 },
-          },
+          ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
           sorting: {
             sortModel: [{ field: 'cognome', sort: 'asc' }],
           },
         }}
-        pageSizeOptions={[5, 10, 25, 50, 100]}
-        disableRowSelectionOnClick
         disableColumnMenu={false}
-        disableColumnSelector={true}
         localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
-        sx={{
-          border: 'none',
-          '& .MuiDataGrid-cell:focus': {
-            outline: 'none',
-          },
-          '& .MuiDataGrid-row:hover': {
-            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-          },
-          '& .MuiDataGrid-columnHeaders': {
-            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-            fontWeight: 600,
-          },
-        }}
       />
     </Paper>
   );

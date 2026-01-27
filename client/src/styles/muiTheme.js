@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import CustomDataGridPagination from '../components/common/CustomDataGridPagination';
 
 /**
  * Tema Material-UI personalizzato che applica:
@@ -264,8 +265,32 @@ const muiCustomTheme = createTheme({
       },
     },
 
-    // DataGrid
+    // DataGrid - Configurazione globale per tutte le griglie
     MuiDataGrid: {
+      defaultProps: {
+        // Configurazione paginazione di default
+        initialState: {
+          pagination: {
+            paginationModel: { pageSize: 25, page: 0 },
+          },
+        },
+        // Opzioni per il selettore "Righe per pagina"
+        pageSizeOptions: [5, 10, 25, 50, 100],
+        // Slot personalizzato per la paginazione con selettore di pagina
+        slots: {
+          pagination: CustomDataGridPagination,
+        },
+        // Configurazione paginazione con pulsanti prima/ultima pagina
+        slotProps: {
+          pagination: {
+            showFirstButton: true,
+            showLastButton: true,
+          },
+        },
+        // Opzioni comuni
+        disableRowSelectionOnClick: true,
+        disableColumnSelector: true,
+      },
       styleOverrides: {
         root: {
           fontFamily: "'Outfit', sans-serif",
@@ -273,9 +298,29 @@ const muiCustomTheme = createTheme({
           '& .MuiDataGrid-cell': {
             fontFamily: "'Outfit', sans-serif",
           },
+          '& .MuiDataGrid-cell:focus': {
+            outline: 'none',
+          },
+          '& .MuiDataGrid-row:hover': {
+            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
+          },
           '& .MuiDataGrid-columnHeaders': {
             fontFamily: "'Outfit', sans-serif",
             fontWeight: 600,
+            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
+          },
+          // Stili per la paginazione
+          '& .MuiTablePagination-root': {
+            fontFamily: "'Outfit', sans-serif",
+          },
+          '& .MuiTablePagination-select': {
+            fontFamily: "'Outfit', sans-serif",
+          },
+          '& .MuiTablePagination-selectLabel': {
+            fontFamily: "'Outfit', sans-serif",
+          },
+          '& .MuiTablePagination-displayedRows': {
+            fontFamily: "'Outfit', sans-serif",
           },
         },
       },
