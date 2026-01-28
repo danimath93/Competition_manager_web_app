@@ -9,6 +9,7 @@ import {
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
+import AuthComponent from './AuthComponent';
 import './common/DrawerModal.css';
 
 const ClubModal = ({
@@ -35,6 +36,7 @@ const ClubModal = ({
         recapitoTelefonico: club?.recapitoTelefonico,
         email: club?.email,
         tesseramento: club?.tesseramento,
+        abbreviazione: club?.abbreviazione,
       });
 
     } else {
@@ -48,6 +50,7 @@ const ClubModal = ({
         recapitoTelefonico: '',
         email: '',
         tesseramento: '',
+        abbreviazione: '',
       });
     }
   }, [open, isEditMode, club]);
@@ -235,6 +238,16 @@ const ClubModal = ({
               />
             )}
           />
+          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+            <TextField
+              name="abbreviazione"
+              label="Abbreviazione"
+              value={formData.abbreviazione || ''}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+            />
+          </AuthComponent>
         </div>
       </div>
 
