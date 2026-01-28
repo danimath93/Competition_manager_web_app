@@ -24,6 +24,7 @@ import CategoryExecution from './pages/categories/CategoryExecution';
 import CategoryResults from './pages/categories/CategoryResults';
 import CategoryInProgress from './pages/categories/CategoryInProgress';
 import CompetitionConfigurator from './pages/CompetitionConfigurator';
+import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
 
@@ -71,7 +72,7 @@ const AppContent = () => {
       <Route path="/register" element={user ? <Navigate to={defaultRoute} replace /> : <Register />} />
       <Route path="/reset-password" element={<RequestPasswordReset />} />
       <Route path="/reset-password/confirm" element={<ResetPasswordConfirm />} />
-      {/* <Route path="/trattamento-dati-personali" element={<TrattamentoDatiPersonali />} /> */}
+      <Route path="/trattamento-dati-personali" element={<TrattamentoDatiPersonali />} />
 
       <Route element={<Layout user={user} />}>
         {/* Redirect root */}
