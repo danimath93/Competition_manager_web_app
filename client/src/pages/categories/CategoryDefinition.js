@@ -4,12 +4,10 @@ import {
   Container,
   Typography,
   Box,
-  Button,
   Paper,
   Grid,
   Card,
   CardContent,
-  CardActions,
   Chip,
   Alert,
   CircularProgress,
@@ -42,7 +40,9 @@ import {
   FormControlLabel,
   Switch
 } from '@mui/material';
+import MuiButton from '@mui/material/Button';
 import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep, Settings, Summarize } from '@mui/icons-material';
+import { FaTags } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCompetitionDetails } from '../../api/competitions';
@@ -59,6 +59,7 @@ import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
 import { loadAllJudges } from '../../api/judges';
 import CategorySplit from './CategorySplit';
 import CategorySummaryModal from '../../components/CategorySummaryModal';
+import PageHeader from '../../components/PageHeader';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -747,13 +748,13 @@ const CategoryDefinition = () => {
     return (
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         <Alert severity="error">{error}</Alert>
-        <Button 
+        <MuiButton 
           startIcon={<ArrowBack />} 
           onClick={handleGoBack}
           sx={{ mt: 2 }}
         >
           Torna a tutte le categorie
-        </Button>
+        </MuiButton>
       </Container>
     );
   }
@@ -762,13 +763,13 @@ const CategoryDefinition = () => {
     return (
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         <Alert severity="warning">Competizione non trovata</Alert>
-        <Button 
+        <MuiButton 
           startIcon={<ArrowBack />} 
           onClick={handleGoBack}
           sx={{ mt: 2 }}
         >
           Torna a tutte le categorie
-        </Button>
+        </MuiButton>
       </Container>
     );
   }
@@ -778,13 +779,13 @@ const CategoryDefinition = () => {
     return (
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ mb: 3 }}>
-          <Button 
+          <MuiButton 
             startIcon={<ArrowBack />} 
             onClick={handleGoBack}
             sx={{ mb: 2 }}
           >
             Torna a tutte le categorie
-          </Button>
+          </MuiButton>
         </Box>
         
         <Alert severity="error">
@@ -815,38 +816,19 @@ const CategoryDefinition = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Header con bottone torna indietro */}
-      <Box sx={{ mb: 3 }}>
-        <Button 
-          startIcon={<ArrowBack />} 
-          onClick={handleGoBack}
-          sx={{ mb: 2 }}
-        >
-          Torna a tutte le categorie
-        </Button>
-        
-        <Typography variant="h4" gutterBottom>
-          Definizione Categorie
-        </Typography>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          {competition.nome}
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {new Date(competition.dataInizio).toLocaleDateString('it-IT')} - {new Date(competition.dataFine).toLocaleDateString('it-IT')}
-          </Typography>
-          <Chip label={competition.stato} color="primary" size="small" />
-        </Box>
-        {competition.organizzatore && (
-          <Typography variant="body2" color="text.secondary">
-            Organizzatore: {competition.organizzatore.denominazione}
-          </Typography>
-        )}
-      </Box>
-
-      <Divider sx={{ mb: 3 }} />
-
+    <div className="page-container">
+      <PageHeader
+        icon={FaTags}
+        title="Definizione Categorie"
+        subtitle={`${competition.nome} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
+      />
+      <MuiButton
+        startIcon={<ArrowBack />}
+        onClick={handleGoBack}
+      >
+        Torna alle Competizioni
+      </MuiButton>
+    
       {/* Messaggi di errore e successo */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -872,7 +854,7 @@ const CategoryDefinition = () => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
+            <MuiButton
               variant="outlined"
               startIcon={<Settings />}
               onClick={() => setShowGenerationOptions(!showGenerationOptions)}
@@ -880,8 +862,8 @@ const CategoryDefinition = () => {
               size="large"
             >
               Opzioni
-            </Button>
-            <Button
+            </MuiButton>
+            <MuiButton
               variant="contained"
               startIcon={loading ? <CircularProgress size={20} /> : <Refresh />}
               onClick={handleGenerateCategories}
@@ -889,7 +871,7 @@ const CategoryDefinition = () => {
               size="large"
             >
               Genera Categorie
-            </Button>
+            </MuiButton>
           </Box>
         </Box>
 
@@ -941,12 +923,12 @@ const CategoryDefinition = () => {
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-            <Button
+            <MuiButton
               variant="outlined"
               onClick={() => setShowGenerationOptions(false)}
             >
               Chiudi
-            </Button>
+            </MuiButton>
           </Box>
         </Collapse>
       </Paper>
@@ -961,29 +943,29 @@ const CategoryDefinition = () => {
             <Box sx={{ display: 'flex', gap: 1 }}>
               {!isMergeMode ? (
                 <>
-                  <Button
+                  <MuiButton
                     variant="outlined"
                     startIcon={<MergeType />}
                     onClick={handleOpenMerge}
                   >
                     Unisci
-                  </Button>
-                  <Button
+                  </MuiButton>
+                  <MuiButton
                     variant="outlined"
                     color="error"
                     onClick={handleCancelCategories}
                     disabled={loading}
                   >
                     Annulla Categorie
-                  </Button>
-                  <Button
+                  </MuiButton>
+                  <MuiButton
                     variant="contained"
                     startIcon={<Save />}
                     onClick={handleSaveCategories}
                     disabled={loading}
                   >
                     Salva Categorie
-                  </Button>
+                  </MuiButton>
                 </>
               ) : (
                 <>
@@ -992,19 +974,19 @@ const CategoryDefinition = () => {
                     color="primary"
                     sx={{ mr: 1 }}
                   />
-                  <Button
+                  <MuiButton
                     variant="outlined"
                     onClick={handleCancelMerge}
                   >
                     Annulla Unione
-                  </Button>
-                  <Button
+                  </MuiButton>
+                  <MuiButton
                     variant="contained"
                     onClick={handleConfirmMerge}
                     disabled={selectedForMerge.length < 2}
                   >
                     Conferma Unione
-                  </Button>
+                  </MuiButton>
                 </>
               )}
             </Box>
@@ -1135,15 +1117,15 @@ const CategoryDefinition = () => {
               Categorie Salvate ({categories.length})
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
+              <MuiButton
                 variant="outlined"
                 startIcon={<Summarize />}
                 onClick={() => setShowSummaryModal(true)}
                 disabled={loading}
               >
                 Riepilogo Generale
-              </Button>
-              <Button
+              </MuiButton>
+              <MuiButton
                 variant="outlined"
                 color="error"
                 startIcon={<DeleteSweep />}
@@ -1151,7 +1133,7 @@ const CategoryDefinition = () => {
                 disabled={loading}
               >
                 Elimina Tutte
-              </Button>
+              </MuiButton>
             </Box>
           </Box>
 
@@ -1289,12 +1271,12 @@ const CategoryDefinition = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>
+          <MuiButton onClick={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>
             Annulla
-          </Button>
-          <Button onClick={handleSaveEdit} variant="contained">
+          </MuiButton>
+          <MuiButton onClick={handleSaveEdit} variant="contained">
             Salva
-          </Button>
+          </MuiButton>
         </DialogActions>
       </Dialog>
 
@@ -1330,12 +1312,12 @@ const CategoryDefinition = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMergeDialog({ open: false, mergedName: '' })}>
+          <MuiButton onClick={() => setMergeDialog({ open: false, mergedName: '' })}>
             Annulla
-          </Button>
-          <Button onClick={handleMerge} variant="contained">
+          </MuiButton>
+          <MuiButton onClick={handleMerge} variant="contained">
             Unisci
-          </Button>
+          </MuiButton>
         </DialogActions>
       </Dialog>
 
@@ -1353,7 +1335,7 @@ const CategoryDefinition = () => {
         onClose={() => setShowSummaryModal(false)}
         competitionId={competizioneId}
       />
-    </Container>
+    </div>
   );
 };
 

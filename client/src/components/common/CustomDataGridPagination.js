@@ -79,9 +79,11 @@ const CustomDataGridPagination = (props) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        flexDirection: { xs: 'column', lg: 'row' },
         width: '100%',
         px: 2,
-        py: 1,
+        py: { xs: 2, md: 2, lg: 0 },
+        gap: { xs: 2, md: 2, lg: 0 },
         position: 'relative',
       }}
     >
@@ -93,6 +95,7 @@ const CustomDataGridPagination = (props) => {
             alignItems: 'center',
             gap: 0.5,
             fontFamily: "'Outfit', sans-serif",
+            order: { xs: 2, md: 2, lg: 0 },
           }}
         >
           {/* Freccia sinistra */}
@@ -171,10 +174,11 @@ const CustomDataGridPagination = (props) => {
       {/* Parte destra: Righe per pagina e contatore */}
       <Box 
         sx={{ 
-          position: 'absolute',
-          right: 16,
+          position: { xs: 'static', md: 'static', lg: 'absolute' },
+          right: { lg: 16 },
           display: 'flex', 
           alignItems: 'center',
+          order: { xs: 1, md: 1, lg: 0},
         }}
       >
         <TablePagination
