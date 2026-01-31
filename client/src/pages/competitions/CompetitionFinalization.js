@@ -5,7 +5,7 @@ import DrawerModal from '../../components/common/DrawerModal';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 import { uploadClubRegistrationDocuments, confirmClubRegistrationFinal } from '../../api/registrations';
-import { getCompetitionCostSummary } from '../../api/competitions';
+import { getClubCompetitionRegistrationSummary } from '../../api/competitions';
 import '../../components/common/DrawerModal.css';
 import '../styles/CompetitionFinalization.css';
 
@@ -95,7 +95,7 @@ const CompetitionFinalization = ({
     setCostSummaryLoading(true);
     setCostSummaryError(null);
     try {
-      const summary = await getCompetitionCostSummary(user.clubId, competitionId);
+      const summary = await getClubCompetitionRegistrationSummary(competitionId, user.clubId);
       setCostSummary(summary);
     } catch (err) {
       setCostSummaryError('Errore nel caricamento del riepilogo costi');

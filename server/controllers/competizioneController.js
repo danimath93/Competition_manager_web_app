@@ -312,7 +312,7 @@ const getCompetizioniByTipologia = async (req, res) => {
 };
 
 // Riepilogo costi dettagliato per una competizione e club
-const getCompetitionCostSummary = async (req, res) => {
+const getCompetitionClubRegistrationSummary = async (req, res) => {
   try {
     const { competizioneId } = req.params;
     const { clubId } = req.query;
@@ -709,6 +709,6 @@ module.exports = {
   deleteCompetizione,
   getCompetizioniByStato,
   getCompetizioniByTipologia,
-  getCompetitionCostSummary,
+  getCompetitionClubRegistrationSummary,
   printCategories
 };

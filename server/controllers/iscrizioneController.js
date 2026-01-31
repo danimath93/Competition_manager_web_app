@@ -513,7 +513,6 @@ const getClubRegistrationsByCompetition = async (req, res) => {
 
     const clubRegistrations = await IscrizioneClub.findAll({
       where: { competizioneId },
-      attributes: { exclude: ['confermaPresidenteId'] },
       include: [
         {
           model: Club,
@@ -700,6 +699,7 @@ const confermaIscrizioneClub = async (req, res) => {
 const downloadDocumentoIscrizioneClub = async (req, res) => {
   try {
     const { clubId, competizioneId, tipoDocumento } = req.params;
+    let docId = null;
 
     const iscrizioneClub = await IscrizioneClub.findOne({
       where: { clubId, competizioneId }
@@ -709,31 +709,25 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
     }
 
-    let fileBuffer, fileName, fileType;
-
-    if (tipoDocumento === 'certificatiMedici') {
-      fileBuffer = iscrizioneClub.certificatiMedici;
-      fileName = iscrizioneClub.certificatiMediciNome;
-      fileType = iscrizioneClub.certificatiMediciTipo;
-    } else if (tipoDocumento === 'autorizzazioni') {
-      fileBuffer = iscrizioneClub.autorizzazioni;
-      fileName = iscrizioneClub.autorizzazioniNome;
-      fileType = iscrizioneClub.autorizzazioniTipo;
-    } else if (tipoDocumento === 'confermaPresidente') {
-      fileBuffer = iscrizioneClub.confermaPresidente;
-      fileName = iscrizioneClub.confermaPresidenteNome;
-      fileType = iscrizioneClub.confermaPresidenteTipo;
+    if (tipoDocumento === 'confermaPresidente') {
+      docId = iscrizioneClub.confermaPresidenteId;
+    } else if (tipoDocumento === 'bonifico') {
+      docId = iscrizioneClub.bonificoId;
     } else {
       return res.status(400).json({ error: 'Tipo di documento non valido' });
     }
 
-    if (!fileBuffer) {
-      return res.status(404).json({ error: 'Documento non trovato' });
+    if (!docId) {
+      return res.status(404).json({ error: `Documento #${tipoDocumento} non presente nell'iscrizione` });
+    }
+    const doc = await Documento.findByPk(docId);
+    if (!doc) {
+      return res.status(404).json({ error: 'Documento richiesto associato non trovato' });
     }
 
-    res.setHeader('Content-Type', fileType);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.send(fileBuffer);
+    res.setHeader('Content-Type', doc.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${doc.nomeFile}"`);
+    res.send(doc.file);
   } catch (error) {
     logger.error(`Errore nel download del documento ${req.params.tipoDocumento} per club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({

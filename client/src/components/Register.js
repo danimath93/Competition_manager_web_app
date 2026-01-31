@@ -375,7 +375,7 @@ const Register = () => {
                 <span className="register-text">
                   Hai già un account?
                   <a
-                    href="#"
+                    href="/login"
                     className="register-link"
                     onClick={(e) => { e.preventDefault(); navigate('/login'); }}
                   >

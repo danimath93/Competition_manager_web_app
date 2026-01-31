@@ -1,45 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Paper,
-  Alert,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-  Collapse,
-  Tooltip,
-  Divider,
-} from '@mui/material';
-import { Grid, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import {
-  ArrowBack,
-  Euro as EuroIcon,
-  Download as DownloadIcon,
-  ExpandMore,
-  ExpandLess,
-} from '@mui/icons-material';
-import { getCompetitionDetails, getCompetitionCostSummary } from '../../api/competitions';
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+import { itIT } from '@mui/x-data-grid/locales';
+import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton } from '@mui/material';
+import { ArrowBack, Description} from '@mui/icons-material';
+import MuiButton from '@mui/material/Button';
+import { FaTrophy } from 'react-icons/fa';
+import { format } from 'date-fns';
+import { getCompetitionDetails, getClubCompetitionRegistrationSummary } from '../../api/competitions';
+import { loadCategoryTypeById } from '../../api/config';
+import { getStatoCertificato, downloadCertificato } from '../../api/certificati';
 import {
   getClubRegistrationsByCompetition,
   loadRegistrationsByCompetition,
   downloadClubRegistrationDocument,
 } from '../../api/registrations';
-import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
-import InfoIcon from '@mui/icons-material/Info';
-import DrawerModal from '../../components/common/DrawerModal';
+import PageHeader from '../../components/PageHeader';
+import Tabs from '../../components/common/Tabs';
 import muiTheme from '../../styles/muiTheme';
+
 
 const CompetitionSummary = () => {
   const { competitionId } = useParams();
@@ -48,193 +27,533 @@ const CompetitionSummary = () => {
   const [competition, setCompetition] = useState(null);
   const [clubRegistrations, setClubRegistrations] = useState([]);
   const [athleteRegistrations, setAthleteRegistrations] = useState([]);
+  const [categoryDetailsCache, setCategoryDetailsCache] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState(0);
-  const [expandedAthletes, setExpandedAthletes] = useState({});
-  const [clubCostSummaries, setClubCostSummaries] = useState({});
-  const [loadingCosts, setLoadingCosts] = useState({});
-  const [athleteFilters, setAthleteFilters] = useState({ name: '', club: '' });
-  const [selectedClub, setSelectedClub] = useState(null);
-  const [clubDetailsOpen, setClubDetailsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('administrative');
 
-  useEffect(() => {
-    fetchData();
-  }, [competitionId]);
+  // Configurazione dei tabs
+  const summaryTabs = [
+    { label: 'Amministrativo', value: 'administrative', disabled: false },
+    { label: 'Tecnico', value: 'technical', disabled: false }
+  ];
 
-  // Carica i costSummary di tutti i club quando si apre il tab Riepilogo Generale
-  useEffect(() => {
-    if (activeTab === 0 && clubRegistrations.length > 0) {
-      const missingClubIds = clubRegistrations
-        .map((clubReg) => clubReg.clubId)
-        .filter((clubId) => !clubCostSummaries[clubId]);
-      if (missingClubIds.length > 0) {
-        missingClubIds.forEach((clubId) => {
-          loadClubCostSummary(clubId);
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, clubRegistrations]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Carica i dettagli della competizione
-      const competitionData = await getCompetitionDetails(competitionId);
-      setCompetition(competitionData);
-
-      // Carica le iscrizioni dei club
-      const clubRegs = await getClubRegistrationsByCompetition(competitionId);
-      setClubRegistrations(clubRegs);
-
-      // Carica tutte le iscrizioni degli atleti
-      const athleteRegs = await loadRegistrationsByCompetition(competitionId);
-      setAthleteRegistrations(athleteRegs);
-
-    } catch (err) {
-      console.error('Errore nel caricamento dei dati:', err);
-      setError('Errore nel caricamento dei dati della competizione');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAthleteFilterChange = (e) => {
-    setAthleteFilters({ ...athleteFilters, [e.target.name]: e.target.value });
-  };
-
-  const handleGoBack = () => {
+    const handleGoBack = () => {
     navigate('/competitions');
   };
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
+  const handleTabChange = (tabValue) => {
+    setActiveTab(tabValue);
   };
 
-  const handleToggleAthlete = (athleteId) => {
-    setExpandedAthletes((prev) => ({
-      ...prev,
-      [athleteId]: !prev[athleteId],
-    }));
-  };
-
-
-  const loadClubCostSummary = async (clubId) => {
-    if (clubCostSummaries[clubId]) return; // Già caricato
-
-    setLoadingCosts((prev) => ({ ...prev, [clubId]: true }));
+  const handleDownloadCertificato = async (athlete) => {
     try {
-      const summary = await getCompetitionCostSummary(clubId, competitionId);
-      setClubCostSummaries((prev) => ({ ...prev, [clubId]: summary }));
-    } catch (err) {
-      console.error('Errore nel caricamento del riepilogo costi:', err);
-    } finally {
-      setLoadingCosts((prev) => ({ ...prev, [clubId]: false }));
-    }
-  };
-
-  const handleDownloadDocument = async (clubId, documentType, fileName) => {
-    try {
-      const blob = await downloadClubRegistrationDocument(clubId, competitionId, documentType);
+      const blob = await downloadCertificato(athlete.id);
       const url = window.URL.createObjectURL(blob);
+      const fileType = blob.type || 'application/pdf';
+      const fileExtension = fileType.split('/')[1] || 'pdf';
       const link = document.createElement('a');
       link.href = url;
-      link.download = fileName || `${documentType}.pdf`;
+      link.download = `certificato_${athlete.cognome}_${athlete.nome}.${fileExtension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('Errore nel download del documento:', err);
-      alert('Errore nel download del documento');
+      setError(err.response?.data?.message || 'Errore durante il download del certificato');
     }
   };
 
-  const handleOpenClubDetails = (club) => {
-  setSelectedClub(club);
-  setClubDetailsOpen(true);
-};
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-const handleCloseClubDetails = () => {
-  setSelectedClub(null);
-  setClubDetailsOpen(false);
-};
+        // Carica i dettagli della competizione
+        const competitionData = await getCompetitionDetails(competitionId);
+        setCompetition(competitionData);
 
-  // Raggruppa gli atleti per club
-  let athletesByClub = athleteRegistrations.reduce((acc, reg) => {
-    const clubId = reg.atleta?.club?.id;
-    const clubName = reg.atleta?.club?.denominazione || 'Sconosciuto';
+        // Carica le iscrizioni dei club
+        const clubRegs = await getClubRegistrationsByCompetition(competitionId);
 
-    if (!acc[clubId]) {
-      acc[clubId] = {
-        clubName,
-        athletes: {},
-      };
-    }
+        // Aggiungo il riepilogo costi e totali iscrizione per club
+        const clubRegsWithSummary = await Promise.all(clubRegs.map(async (clubReg) => {
+          const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
+          return { ...clubReg, summary };
+        }));
+        setClubRegistrations(clubRegsWithSummary);
 
-    const athleteId = reg.atleta?.id;
-    if (!acc[clubId].athletes[athleteId]) {
-      acc[clubId].athletes[athleteId] = {
-        ...reg.atleta,
-        registrations: [],
-      };
-    }
+        // Carica tutte le iscrizioni degli atleti
+        const athleteRegs = await loadRegistrationsByCompetition(competitionId);
+        setAthleteRegistrations(athleteRegs);
 
-    acc[clubId].athletes[athleteId].registrations.push(reg);
-    return acc;
-  }, {});
-
-  // Applica i filtri agli atleti
-  if (athleteFilters.name || athleteFilters.club) {
-    athletesByClub = Object.entries(athletesByClub).reduce((acc, [clubId, clubData]) => {
-      if (athleteFilters.club && clubId !== athleteFilters.club.toString()) {
-        return acc;
+      } catch (err) {
+        console.error('Errore nel caricamento dei dati:', err);
+        setError('Errore nel caricamento dei dati della competizione');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const filteredAthletes = Object.values(clubData.athletes).filter((athlete) => {
-        if (athleteFilters.name) {
-          const fullName = `${athlete.nome} ${athlete.cognome}`.toLowerCase();
-          return fullName.includes(athleteFilters.name.toLowerCase());
-        }
-        return true;
-      });
+    fetchData();
+  }, [competitionId]);
 
-      if (filteredAthletes.length > 0) {
-        acc[clubId] = {
-          ...clubData,
-          athletes: filteredAthletes.reduce((athletesAcc, athlete) => {
-            athletesAcc[athlete.id] = athlete;
-            return athletesAcc;
-          }, {}),
+    // Raggruppa le iscrizioni per atleta
+  const athleteGroups = useMemo(() => {
+    return athleteRegistrations.reduce((groups, registration) => {
+      const athlete = registration.atleta;
+      if (!groups[athlete.id]) {
+        groups[athlete.id] = {
+          athlete: athlete,
+          registrations: [],
+          totalCost: 0
         };
       }
-
-      return acc;
+      groups[athlete.id].registrations.push(registration);
+      
+      // Calcola il costo totale per questo atleta
+      if (registration.dettagliIscrizione != null) {
+        groups[athlete.id].totalCost = parseFloat(registration.dettagliIscrizione.quota) || 0;
+      }
+      
+      return groups;
     }, {});
-  }
+  }, [athleteRegistrations]);
 
-  /* Calcola il costo iscrizione di un atleta
-  const getRegistrationCosts = (registrations) => {
-    if (!registrations || registrations.length === 0) {
-      return 'N/A';
+  // Estrae le categorie uniche da categorieAtleti
+  const categoryColumns = useMemo(() => {
+    if (!competition?.categorieAtleti) return [];
+    
+    const categories = [];
+    const categorySet = new Set();
+
+    try {
+      // Parsa categorieAtleti che è un array di JSON stringhe
+      competition.categorieAtleti.forEach(categorieTipoAtleta => {
+        if (categorieTipoAtleta.categorie && Array.isArray(categorieTipoAtleta.categorie)) {
+          categorieTipoAtleta.categorie.forEach(cat => {
+            if (!categorySet.has(cat.configTipoCategoria)) {
+              categorySet.add(cat.configTipoCategoria);
+              categories.push({
+                id: cat.configTipoCategoria,
+                idEsperienza: cat.idEsperienza || []
+              });
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Errore nel parsing di categorieAtleti:', error);
     }
-    if (registrations.length > 0) {
-      let totalCost = 0;
-      totalCost = registrations[0].costoIscrizione;
-      return totalCost;
+
+    return categories;
+  }, [competition?.categorieAtleti]);  
+
+  // Carica i dettagli delle categorie
+  useEffect(() => {
+    const loadCategoryDetails = async () => {
+      const newCache = { ...categoryDetailsCache };
+      
+      for (const category of categoryColumns) {
+        if (!newCache[category.id]) {
+          try {
+            const details = await loadCategoryTypeById(category.id);
+            newCache[category.id] = details;
+          } catch (error) {
+            console.error(`Errore nel caricamento categoria ${category.id}:`, error);
+            newCache[category.id] = { nome: `Categoria ${category.id}` };
+          }
+        }
+      }
+      
+      if (Object.keys(newCache).length > Object.keys(categoryDetailsCache).length) {
+        setCategoryDetailsCache(newCache);
+      }
+    };
+
+    if (categoryColumns.length > 0) {
+      loadCategoryDetails();
     }
+  }, [categoryColumns]);
+  
+  // Definizione delle colonne tabella amministrativa
+  const administrativeTableColumns = useMemo(() => {
+    const handleDownloadDocument = async (clubId, documentType, fileName) => {
+      try {
+        const blob = await downloadClubRegistrationDocument(clubId, competitionId, documentType);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName || `${documentType}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        setError(err.response?.data?.message || `Errore durante il download del documento: ${documentType}`);
+      }
+    };
 
-    return 'N/A';
-  };*/
+    const baseColumns = [
+      {
+        field: 'club',
+        headerName: 'Club',
+        flex: 1,
+        minWidth: 150,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => row.club?.denominazione || 'N/A',
+      },
+      {
+        field: 'stato',
+        headerName: 'Stato',
+        flex: 1,
+        minWidth: 120,
+        renderCell: (params) => {
+          return (
+            <Tooltip title={`${params?.row?.stato}`} arrow>
+              <Chip
+                size="small"
+                label={params?.row?.stato || 'N/A'}
+                color={
+                  params.value === 'Confermata'
+                    ? 'success'
+                    : params.value === 'In attesa'
+                      ? 'warning'
+                      : 'default'
+                }
+              />
+            </Tooltip>
+          );
+        },
+      },
+      {
+        field: 'iscritti',
+        headerName: 'Atleti iscritti',
+        flex: 1,
+        minWidth: 150,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => {
+        },
+        renderCell: (params) => {
+          const cbBambini = params.row.summary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
+          const cbAdulti = params.row.summary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
+          const cn = params.row.summary?.athleteTypeTotals?.['CN']?.total || 0;
+          return (
+            <Tooltip title={`CB Bambini: ${cbBambini}, CB Adulti: ${cbAdulti}, CN: ${cn}`} arrow>
+              {cbBambini + cbAdulti + cn}
+            </Tooltip>
+          );
+        },
+      },
+      {
+        field: 'categorie',
+        headerName: 'Categorie',
+        flex: 1,
+        minWidth: 150,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => {
+        },
+        renderCell: (params) => {
+          // TODO: da inserire il conteggio delle categorie
+          return (
+            <Tooltip title={`N/A`} arrow>
+              N/A
+            </Tooltip>
+          );
+        },
+      },
+      {
+        field: 'confermaPresidente',
+        headerName: 'Conferma Presidente',
+        width: 120,
+        align: 'center',
+        headerAlign: 'center',
+        type: 'actions',
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const hasFile = !!params.row.confermaPresidenteId;
+          const iconStyle = {
+            fontSize: 28,
+            color: hasFile ? '#4caf50' : '#9e9e9e'
+          };
+          return (
+            <Tooltip title={hasFile ? "Conferma Presidente disponibile" : "Nessuna Conferma Presidente"} arrow>
+              <IconButton size="small" onClick={(e) => {
+                e.stopPropagation();
+                if (hasFile) {
+                  handleDownloadDocument(params.row?.club?.id, 'confermaPresidente', `conferma_presidente_${params.row.club.denominazione}.pdf`);
+                }
+              }}>
+                <Description sx={iconStyle} />
+              </IconButton>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        field: 'bonifico',
+        headerName: 'Bonifico',
+        width: 120,
+        align: 'center',
+        headerAlign: 'center',
+        type: 'actions',
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const hasFile = !!params.row.bonificoId;
+          const iconStyle = {
+            fontSize: 28,
+            color: hasFile ? '#4caf50' : '#9e9e9e'
+          };
+          return (
+            <Tooltip title={hasFile ? "Ricevuta bonifico disponibile" : "Nessuna ricevuta bonifico caricata"} arrow>
+              <IconButton size="small" onClick={(e) => {
+                e.stopPropagation();
+                if (hasFile) {
+                  handleDownloadDocument(params.row?.club?.id, 'bonifico', `bonifico_${params.row.club.denominazione}.pdf`);
+                }
+              }}>
+                <Description sx={iconStyle} />
+              </IconButton>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        field: 'quota',
+        headerName: 'Quota Dovuta (€)',
+        width: 150,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => {
+          return row.summary?.totals?.totalCost || 0;
+        },
+        type: 'number',
+        valueFormatter: (params) => {
+          return params?.value?.toFixed(2);
+        },
+      },
+    ];
 
-  const getRegistrationCosts = (registrations) => {
-  if (!registrations || registrations.length === 0) return 'N/A';
-  return registrations[0]?.quota ?? 0;
-};
+    // Colonna Azioni
+    baseColumns.push({
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Azioni',
+      width: 80,
+      getActions: (params) => [
+        // <GridActionsCellItem
+        //   icon={<Edit />}
+        //   label="Modifica"
+        //   onClick={() => onEdit(params.row)}
+        //   showInMenu={true}
+        // />,
+      ],
+    });
+    return baseColumns;
+  }, [competitionId]);
 
+  // Definizione delle colonne tabella tecnica
+  const technicalTableColumns = useMemo(() => {
+    const baseColumns = [
+      {
+        field: 'club',
+        headerName: 'Club',
+        flex: 1,
+        minWidth: 150,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => row.athlete?.club?.denominazione || 'N/A',
+      },
+      {
+        field: 'athlete',
+        headerName: 'Atleta',
+        flex: 1.5,
+        minWidth: 180,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => `${row.athlete.cognome} ${row.athlete.nome}`,
+        renderCell: (params) => (
+          <div>
+            <div style={{ fontWeight: 500 }}>
+              {params.row.athlete.cognome} {params.row.athlete.nome}
+            </div>
+          </div>
+        ),
+      },
+      {
+        field: 'dataNascita',
+        headerName: 'Data di Nascita',
+        flex: 1,
+        minWidth: 130,
+        filterable: false,
+        sortable: true,
+        valueGetter: (value, row) => new Date(row.athlete.dataNascita),
+        valueFormatter: (value) => {
+          if (!value) return 'N/A';
+          return format(new Date(value), 'dd/MM/yyyy');
+        },
+      },
+      {
+        field: 'tipoAtleta',
+        headerName: 'Tipo Atleta',
+        flex: 1,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => row.athlete.tipoAtleta?.nome || 'N/A',
+      },
+      {
+        field: 'sesso',
+        headerName: 'Sesso',
+        width: 100,
+        align: 'center',
+        headerAlign: 'center',
+        filterable: true,
+        sortable: false,
+        valueGetter: (value, row) => row.athlete.sesso || 'N/A',
+      },
+      {
+        field: 'certificato',
+        headerName: 'Certificato',
+        width: 120,
+        align: 'center',
+        headerAlign: 'center',
+        type: 'actions',
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+          const hasCertificato = !!params.row.athlete.certificatoId;
+          const scadenzaCertificato = params.row.athlete.scadenzaCertificato;
+          const stato = getStatoCertificato(scadenzaCertificato, hasCertificato);
+          
+          const iconStyle = {
+            fontSize: 28,
+            color: stato.colore === 'gray' ? '#9e9e9e' :
+                   stato.colore === 'red' ? '#f44336' :
+                   stato.colore === 'orange' ? '#ff9800' :
+                   stato.colore === 'green' ? '#4caf50' :
+                   '#2196f3'
+          };
+
+          return (
+            <Tooltip title={stato.tooltip} arrow>
+              <IconButton size="small" onClick={(e) => {
+                e.stopPropagation();
+                if (hasCertificato) {
+                  handleDownloadCertificato(params.row.athlete);
+                }
+              }}>
+                <Description sx={iconStyle} />
+              </IconButton>
+            </Tooltip>
+          );
+        },
+      },
+    ];
+
+    // Aggiungi colonne per ogni categoria disponibile
+    categoryColumns.forEach(category => {
+      const categoryDetails = categoryDetailsCache[category.id];
+      
+      baseColumns.push({
+        field: `category_${category.id}`,
+        headerName: categoryDetails?.nome || `Categoria ${category.id}`,
+        flex: 1,
+        align: 'center',
+        headerAlign: 'center',
+        type: 'actions',
+        renderCell: (params) => {
+          // Trova se l'atleta è iscritto a questa categoria
+          const registration = params.row.registrations.find(
+            reg => reg.tipoCategoria?.id === category.id
+          );
+          
+          if (registration && registration.dettagli?.nome) {
+            return (
+              <Tooltip title={`${registration?.dettagli?.nome}`} arrow>
+                <Chip
+                  label="✓"
+                  size="small"
+                  color="success"
+                  sx={{ fontSize: '0.75rem', height: '20px' }}
+                />
+              </Tooltip>
+            );
+          } else if (registration && registration.peso) {
+            return (
+              <Tooltip title={`Peso: ${registration.peso} kg`} arrow>
+                <Chip
+                  label="✓"
+                  size="small"
+                  color="success"
+                  sx={{ fontSize: '0.75rem', height: '20px' }}
+                />
+              </Tooltip>
+            );
+          } else if (registration) {
+            return (
+              <Tooltip title="Iscritto" arrow>
+                <Chip
+                  label="✓"
+                  size="small"
+                  color="success"
+                  sx={{ fontSize: '0.75rem', height: '20px' }}
+                />
+              </Tooltip>
+            );
+          }
+
+          return (
+            <Chip
+              label="-"
+              size="small"
+              variant="outlined"
+              sx={{ fontSize: '0.75rem', height: '20px', borderColor: '#e0e0e0' }}
+            />
+          );
+        },
+      });
+    });
+
+    // Colonna Azioni
+    baseColumns.push({
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Azioni',
+      width: 80,
+      getActions: (params) => [
+        // <GridActionsCellItem
+        //   icon={<Edit />}
+        //   label="Modifica"
+        //   onClick={() => onEdit(params.row)}
+        //   showInMenu={true}
+        // />,
+      ],
+    });
+
+    return baseColumns;
+  }, [categoryColumns, categoryDetailsCache]);
+
+  // Caricamento dati per le griglie
+  const administrativeTableRows = useMemo(() => {
+    return clubRegistrations.map((clubReg, index) => ({
+      ...clubReg,
+    }));
+  }, [clubRegistrations]); 
+
+  const technicalTableRows = useMemo(() => {
+    return Object.values(athleteGroups).map((group, index) => ({
+      id: group.athlete.id || index,
+      athlete: group.athlete,
+      registrations: group.registrations,
+      totalCost: group.totalCost,
+    }));
+  }, [athleteGroups]);
 
   if (loading) {
     return (
@@ -246,539 +565,63 @@ const handleCloseClubDetails = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
+  return (
+    <div className="page-container">
+      <PageHeader
+        icon={FaTrophy}
+        title="Riepilogo iscrizioni"
+        subtitle={`${competition.nome} - Luogo: ${competition.luogo} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
+      />
+      <MuiButton
+        startIcon={<ArrowBack />}
+        onClick={handleGoBack}
+      >
+        Torna alle Competizioni
+      </MuiButton>
+    
+      {/* Messaggi di errore e successo */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
-        <Button startIcon={<ArrowBack />} onClick={handleGoBack} sx={{ mt: 2 }}>
-          Torna alle Competizioni
-        </Button>
-      </Container>
-    );
-  }
-
-  return (
-    <Container maxWidth="lg" sx={{ mt: 3, mb: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Button startIcon={<ArrowBack />} onClick={handleGoBack} sx={{ mb: 2 }}>
-          Torna alle Competizioni
-        </Button>
-
-        <Typography variant="h4" gutterBottom>
-          Riepilogo Iscrizioni
-        </Typography>
-
-        {competition && (
-          <Typography variant="h6" color="text.secondary">
-            {competition.nome} - {competition.luogo}
-          </Typography>
-        )}
-      </Box>
+      )}
 
       {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={handleTabChange} centered>
-          <Tab label="Riepilogo generale" />
-          <Tab label="Dettagli per Club" />
-          <Tab label="Atleti" />
-        </Tabs>
-      </Paper>
+      <Tabs tabs={summaryTabs} activeTab={activeTab} onTabChange={handleTabChange}>
+        {/* Tab Panel - Riepilogo amministrativo */}
+        { activeTab === "administrative" && (
+          <DataGrid
+            rows={administrativeTableRows}
+            columns={administrativeTableColumns}
+            initialState={{
+              ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
+              sorting: {
+                sortModel: [{ field: 'cognome', sort: 'asc' }],
+              },
+            }}
+            disableColumnMenu={false}
+            localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
+          />
+        )}
 
-      {/* Tab Panel - Riepilogo generale */}
-      {activeTab === 0 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Riepilogo Generale
-          </Typography>
-          {clubRegistrations.length === 0 ? (
-            <Alert severity="info">Nessun club iscritto a questa competizione</Alert>
-          ) : (
-            <Box sx={{ width: '100%', height: 820, mt: 2 }}>
-              <DataGrid
-                rows={clubRegistrations.map((clubReg) => {
-                  const clubId = clubReg.clubId;
-                  const costSummary = clubCostSummaries[clubId];
+        {/* Tab Panel - Riepilogo tecnico */}
+        { activeTab === "technical" && (
+          <DataGrid
+            rows={technicalTableRows}
+            columns={technicalTableColumns}
+            initialState={{
+              ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
+              sorting: {
+                sortModel: [{ field: 'cognome', sort: 'asc' }],
+              },
+            }}
+            disableColumnMenu={false}
+            localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
+          />
+        )}
+      </Tabs>
 
-                  const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
-                  const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
-                  const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
-                  const totale = cbBambini + cbAdulti + cn;
-                  const quota = costSummary?.totals?.totalCost || 0;
-                  return {
-                    id: clubId,
-                    club: clubReg.club?.denominazione || 'N/A',
-                    cbBambini,
-                    cbAdulti,
-                    cn,
-                    totale,
-                    quota,
-                  };
-                })}
-                columns={[
-                  { field: 'club', headerName: 'Nome Club', flex: 2, minWidth: 180 },
-                  { field: 'cbBambini', headerName: 'CB Bambini', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
-                  { field: 'cbAdulti', headerName: 'CB Adulti', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
-                  { field: 'cn', headerName: 'CN', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
-                  { field: 'totale', headerName: 'Totale iscritti', flex: 1, minWidth: 120, align: 'center', headerAlign: 'center', type: 'number' },
-                  { field: 'quota', headerName: 'Quota dovuta (€)', flex: 1, minWidth: 120, align: 'right', headerAlign: 'right', type: 'number' },
-                ]}
-                initialState={{
-                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-                  sorting: { sortModel: [{ field: 'club', sort: 'asc' }] },
-                }}
-                disableColumnMenu={false}
-                slots={{
-                  footer: () => {
-                    // Riga dei totali custom
-                    const totalCbBambini = clubRegistrations.reduce((sum, clubReg) => {
-                      const clubId = clubReg.clubId;
-                      const costSummary = clubCostSummaries[clubId];
-                      return sum + (costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0);
-                    }, 0);
-                    const totalCbAdulti = clubRegistrations.reduce((sum, clubReg) => {
-                      const clubId = clubReg.clubId;
-                      const costSummary = clubCostSummaries[clubId];
-                      return sum + (costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0);
-                    }, 0);
-                    const totalCn = clubRegistrations.reduce((sum, clubReg) => {
-                      const clubId = clubReg.clubId;
-                      const costSummary = clubCostSummaries[clubId];
-                      return sum + (costSummary?.athleteTypeTotals?.['CN']?.total || 0);
-                    }, 0);
-                    const totalIscritti = clubRegistrations.reduce((sum, clubReg) => {
-                      const clubId = clubReg.clubId;
-                      const costSummary = clubCostSummaries[clubId];
-                      const cbBambini = costSummary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
-                      const cbAdulti = costSummary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
-                      const cn = costSummary?.athleteTypeTotals?.['CN']?.total || 0;
-                      return sum + cbBambini + cbAdulti + cn;
-                    }, 0);
-                    const totalQuota = clubRegistrations.reduce((sum, clubReg) => {
-                      const clubId = clubReg.clubId;
-                      const costSummary = clubCostSummaries[clubId];
-                      const clubTotal = costSummary?.totals?.totalCost || 0;
-                      return sum + clubTotal;
-                    }, 0);
-                    return (
-                      <Box sx={{ display: 'flex', width: '100%', borderTop: '3px solid #d8240cff', background: '#fafafa', fontWeight: 600, minHeight: 56 }}>
-                        <Box sx={{ flex: 2, display: 'flex', alignItems: 'center', pl: 2 }}>Totale</Box>
-                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCbBambini}</Box>
-                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCbAdulti}</Box>
-                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalCn}</Box>
-                        <Box sx={{ flex: 1, textAlign: 'center', alignItems: 'center', display: 'flex', justifyContent: 'center' }}>{totalIscritti}</Box>
-                        <Box sx={{ flex: 1, textAlign: 'right', alignItems: 'center', display: 'flex', justifyContent: 'flex-end', pr: 2 }}>{totalQuota.toFixed(2)}</Box>
-                      </Box>
-                    );
-                  }
-                }}
-              />
-            </Box>
-          )}
-        </Paper>
-      )}
-
-      {/* Tab Panel - Club */}
-      {activeTab === 1 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Club Iscritti
-          </Typography>
-
-          {clubRegistrations.length === 0 ? (
-            <Alert severity="info">Nessun club iscritto a questa competizione.</Alert>
-          ) : (
-            <Box sx={{ width: '100%', height: 650, mt: 2 }}>
-              <DataGrid
-                rows={clubRegistrations.map((clubReg) => {
-                  const clubId = clubReg.clubId;
-                  const costSummary = clubCostSummaries[clubId];
-                  const loadingCost = loadingCosts[clubId];
-
-                  return {
-                    id: clubId,
-                    club: clubReg.club?.denominazione || 'N/A',
-                    stato: clubReg.stato,
-                    dataIscrizione: clubReg.dataIscrizione
-                      ? new Date(clubReg.dataIscrizione).toLocaleDateString()
-                      : 'N/A',
-                    dataConferma: clubReg.dataConferma
-                      ? new Date(clubReg.dataConferma).toLocaleDateString()
-                      : '-',
-                    atleti: loadingCost ? '-' : costSummary?.totals?.totalAthletes ?? '-',
-                    categorie: loadingCost ? '-' : costSummary?.totals?.totalCategories ?? '-',
-                    costo: loadingCost ? '-' : costSummary?.totals?.totalCost?.toFixed(2) ?? '-',
-                    raw: clubReg,
-                  };
-                })}
-                columns={[
-                  {
-                    field: 'club',
-                    headerName: 'Club',
-                    flex: 2,
-                    minWidth: 180,
-                  },
-                  {
-                    field: 'stato',
-                    headerName: 'Stato',
-                    flex: 1,
-                    minWidth: 120,
-                    renderCell: (params) => (
-                      <Chip
-                        label={params.value}
-                        size="small"
-                        color={
-                          params.value === 'Confermata'
-                            ? 'success'
-                            : params.value === 'In attesa'
-                              ? 'warning'
-                              : 'default'
-                        }
-                      />
-                    ),
-                  },
-                  {
-                    field: 'dataIscrizione',
-                    headerName: 'Data Iscrizione',
-                    flex: 1,
-                    minWidth: 130,
-                  },
-                  {
-                    field: 'dataConferma',
-                    headerName: 'Data Conferma',
-                    flex: 1,
-                    minWidth: 130,
-                  },
-                  {
-                    field: 'atleti',
-                    headerName: 'Atleti',
-                    flex: 1,
-                    minWidth: 100,
-                    align: 'center',
-                    headerAlign: 'center',
-                  },
-                  {
-                    field: 'categorie',
-                    headerName: 'Categorie',
-                    flex: 1,
-                    minWidth: 120,
-                    align: 'center',
-                    headerAlign: 'center',
-                  },
-                  {
-                    field: 'costo',
-                    headerName: 'Costo Totale (€)',
-                    flex: 1,
-                    minWidth: 140,
-                    align: 'right',
-                    headerAlign: 'right',
-                    renderCell: (params) =>
-                      params.value !== '-' ? (
-                        <Box display="flex" alignItems="center" justifyContent="flex-end">
-                          <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                          {params.value}
-                        </Box>
-                      ) : (
-                        '-'
-                      ),
-                  },
-                {
-                  field: 'actions',
-                  type: 'actions',
-                  headerName: 'Azioni',
-                  width: 80,
-                  getActions: (params) => {
-                    const actions = [
-                      <GridActionsCellItem
-                        key="details"
-                        icon={<InfoIcon />}
-                        label="Dettagli"
-                        showInMenu
-                        onClick={() => handleOpenClubDetails(params.row.raw)}
-                      />,
-                    ];
-
-                    if (params.row.raw?.confermaPresidenteNome) {
-                      actions.push(
-                        <GridActionsCellItem
-                          key="download-cp"
-                          icon={<DownloadIcon />}
-                          label="Scarica CP"
-                          showInMenu
-                          onClick={() =>
-                            handleDownloadDocument(
-                              params.row.raw.clubId,
-                              'confermaPresidente',
-                              params.row.raw.confermaPresidenteNome
-                            )
-                          }
-                        />
-                      );
-                    }
-
-                    return actions;
-                  },
-                }
-                ]}
-                initialState={{
-                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-                  sorting: {
-                    sortModel: [{ field: 'club', sort: 'asc' }],
-                  },
-                }}
-              />
-            </Box>
-          )}
-        </Paper>
-      )}
-      <DrawerModal
-        open={clubDetailsOpen}
-        onClose={handleCloseClubDetails}
-        title={`Dettaglio Iscrizioni - ${selectedClub?.club?.denominazione || ''}`}
-      >
-        {selectedClub && (() => {
-          const clubId = selectedClub.clubId;
-          const loadingCost = loadingCosts[clubId];
-          const costSummary = clubCostSummaries[clubId];
-          const athletesOfClub = athleteRegistrations.filter(
-            r => r.atleta?.club?.id === clubId
-          );
-
-          // mappa atletaId -> { quota, tipoAtleta }
-          const athleteQuotaMap = new Map();
-          athletesOfClub.forEach(r => {
-            if (!athleteQuotaMap.has(r.atleta.id)) {
-              athleteQuotaMap.set(r.atleta.id, {
-                quota: r.quota || 0,
-                tipoAtleta: r.atleta?.tipoAtleta?.nome
-              });
-            }
-          });
-          return (
-            <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-
-              {/* ================= RIEPILOGO ================= */}
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: 'grey.100',
-                  borderRadius: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1.5,
-                }}
-              >
-                <Box>
-                  <strong>Club:</strong> {selectedClub.club?.denominazione || 'N/A'}
-                </Box>
-
-                <Box>
-                  <strong>Stato iscrizione:</strong> {selectedClub.stato}
-                </Box>
-
-                <Box>
-                  <strong>Data iscrizione:</strong>{' '}
-                  {selectedClub.dataIscrizione
-                    ? new Date(selectedClub.dataIscrizione).toLocaleDateString()
-                    : 'N/A'}
-                </Box>
-
-                <Box>
-                  <strong>Data conferma:</strong>{' '}
-                  {selectedClub.dataConferma
-                    ? new Date(selectedClub.dataConferma).toLocaleDateString()
-                    : '-'}
-                </Box>
-
-                <Box>
-                  <strong>Numero atleti:</strong>{' '}
-                  {costSummary?.totals?.totalAthletes ?? '-'}
-                </Box>
-
-                <Box>
-                  <strong>Numero categorie:</strong>{' '}
-                  {costSummary?.totals?.totalCategories ?? '-'}
-                </Box>
-
-                <Box>
-                <strong>Quota totale:</strong>{' '}
-                  {costSummary?.totals?.totalCost ?? '-'}
-                </Box>
-              </Box>
-
-              <Divider />
-
-              {/* ================= DETTAGLIO PER TIPO ATLETA ================= */}
-              {loadingCost ? (
-                <Box display="flex" justifyContent="center" p={2}>
-                  <CircularProgress />
-                </Box>
-              ) : costSummary ? (
-                costSummary.athleteTypeTotals &&
-                Object.entries(costSummary.athleteTypeTotals).length > 0 ? (
-                  <Table size="small" sx={{ bgcolor: 'white' }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell><strong>Tipo Atleta</strong></TableCell>
-                        <TableCell align="center"><strong>Totale</strong></TableCell>
-                        <TableCell align="center"><strong>1 Categoria</strong></TableCell>
-                        <TableCell align="center"><strong>2+ Categorie</strong></TableCell>
-                        <TableCell align="right"><strong>Costo Tipo</strong></TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {Object.entries(costSummary.athleteTypeTotals).map(
-                        ([type, detail]) => (
-                          <TableRow key={type}>
-                            <TableCell>{type}</TableCell>
-                            <TableCell align="center">{detail.total}</TableCell>
-                            <TableCell align="center">{detail.singleCategory}</TableCell>
-                            <TableCell align="center">{detail.multiCategory}</TableCell>
-                            <TableCell align="right">
-                              <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="flex-end"
-                              >
-                                <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                                {Array.from(athleteQuotaMap.values())
-                                  .filter(a => a.tipoAtleta === type)
-                                  .reduce((sum, a) => sum + a.quota, 0)
-                                  .toFixed(2)}
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      )}
-
-                      <TableRow>
-                        <TableCell colSpan={4} align="right">
-                          <strong>Totale Complessivo:</strong>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="flex-end"
-                          >
-                            <EuroIcon fontSize="small" sx={{ mr: 0.5 }} />
-                            <strong>
-                              {Array.from(athleteQuotaMap.values())
-                                .reduce((sum, a) => sum + a.quota, 0)
-                                .toFixed(2)}
-                            </strong>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Nessun dettaglio disponibile per tipo atleta
-                  </Typography>
-                )
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Dati non disponibili
-                </Typography>
-              )}
-            </Box>
-          );
-        })()}
-      </DrawerModal>    
-
-      {/* Tab Panel - Atleti */}
-      {activeTab === 2 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Atleti Iscritti
-          </Typography>
-
-          {/* Filtri */}
-          <Box sx={{ mb: 3 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  name="name"
-                  label="Filtra per Nome/Cognome"
-                  variant="outlined"
-                  sx={{ minWidth: 200 }}
-                  fullWidth
-                  value={athleteFilters.name}
-                  onChange={handleAthleteFilterChange}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
-                  <InputLabel>Filtra per Club</InputLabel>
-                  <Select
-                    name="club"
-                    label="Filtra per Club"
-                    value={athleteFilters.club}
-                    onChange={handleAthleteFilterChange}
-                  >
-                    <MenuItem value="">
-                      <em>Tutti</em>
-                    </MenuItem>
-                    {clubRegistrations.map((clubReg) => (
-                      <MenuItem key={clubReg.clubId} value={clubReg.clubId}>
-                        {clubReg.club?.denominazione || 'N/A'}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
-          {Object.keys(athletesByClub).length === 0 ? (
-            <Alert severity="info">Nessun atleta iscritto a questa competizione</Alert>
-          ) : (
-            <Box sx={{ width: '100%', height: 520, mt: 2 }}>
-              <DataGrid
-                rows={Object.entries(athletesByClub)
-                  .sort(([, a], [, b]) => a.clubName.localeCompare(b.clubName))
-                  .flatMap(([clubId, clubData]) =>
-                    Object.values(clubData.athletes).map((athlete) => ({
-                      id: athlete.id,
-                      club: clubData.clubName,
-                      cognome: athlete.cognome,
-                      nome: athlete.nome,
-                      dataNascita: athlete.dataNascita,
-                      tipoAtleta: athlete.tipoAtleta?.nome || 'N/A',
-                      nCategorie: athlete.registrations.length,
-                      costo: getRegistrationCosts(athlete.registrations),
-                    }))
-                  )
-                }
-                columns={[
-                  { field: 'club', headerName: 'Club', flex: 2, minWidth: 150 },
-                  { field: 'cognome', headerName: 'Cognome', flex: 1, minWidth: 120 },
-                  { field: 'nome', headerName: 'Nome', flex: 1, minWidth: 120 },
-                  { field: 'dataNascita', headerName: 'Data di Nascita', flex: 1, minWidth: 130, valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : 'N/A' },
-                  { field: 'tipoAtleta', headerName: 'Tipologia', flex: 1, minWidth: 120 },
-                  { field: 'nCategorie', headerName: 'N° Categorie', flex: 1, minWidth: 100, align: 'center', headerAlign: 'center', type: 'number' },
-                  { field: 'costo', headerName: 'Costo', flex: 1, minWidth: 100, align: 'right', headerAlign: 'right', renderCell: (params) => (
-                      <Box display="flex" alignItems="center" justifyContent="flex-end">
-                        {Number(params.value).toFixed(2)}
-                        <EuroIcon fontSize="small" sx={{ ml: 1 }} />
-                      </Box>
-                    ) },
-                ]}
-                initialState={{
-                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-                  sorting: { sortModel: [{ field: 'cognome', sort: 'asc' }] },
-                }}
-                disableColumnMenu={false}
-              />
-            </Box>)}
-        </Paper>
-      )}
-    </Container>
-
-    
+    </div>
   );
 };
 
