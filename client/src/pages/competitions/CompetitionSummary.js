@@ -79,8 +79,13 @@ const CompetitionSummary = () => {
 
         // Aggiungo il riepilogo costi e totali iscrizione per club
         const clubRegsWithSummary = await Promise.all(clubRegs.map(async (clubReg) => {
-          const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
-          return { ...clubReg, summary };
+          try {
+            const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
+            return { ...clubReg, summary };
+          } catch (err) {
+            console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
+            return { ...clubReg, summary: null };
+          } 
         }));
         setClubRegistrations(clubRegsWithSummary);
 
@@ -90,7 +95,7 @@ const CompetitionSummary = () => {
 
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
-        setError('Errore nel caricamento dei dati della competizione');
+        setError('Errore nel caricamento dei dati della competizione: ' + (err.response?.data?.message || err.message));
       } finally {
         setLoading(false);
       }
