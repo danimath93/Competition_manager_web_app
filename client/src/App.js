@@ -23,7 +23,7 @@ import CategoryDefinition from './pages/categories/CategoryDefinition';
 import CategoryExecution from './pages/categories/CategoryExecution';
 import CategoryResults from './pages/categories/CategoryResults';
 import CategoryInProgress from './pages/categories/CategoryInProgress';
-import CompetitionConfigurator from './pages/CompetitionConfigurator';
+import CompetitionConfigurator from './pages/competitions/CompetitionConfigurator';
 import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
@@ -142,7 +142,7 @@ const AppContent = () => {
 
         {/* ClubUser - visualizzazione dati club specifico */}
         <Route path="/club" element={
-          <AuthGate requiredPermissions={["club"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <ClubUser />
           </AuthGate>
         } />

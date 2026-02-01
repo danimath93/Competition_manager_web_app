@@ -38,7 +38,7 @@ const CompetitionSummary = () => {
     { label: 'Tecnico', value: 'technical', disabled: false }
   ];
 
-    const handleGoBack = () => {
+  const handleGoBack = () => {
     navigate('/competitions');
   };
 
@@ -373,6 +373,7 @@ const CompetitionSummary = () => {
         minWidth: 150,
         filterable: true,
         sortable: true,
+        hideable: false,
         valueGetter: (value, row) => row.athlete?.club?.denominazione || 'N/A',
       },
       {
@@ -382,6 +383,7 @@ const CompetitionSummary = () => {
         minWidth: 180,
         filterable: true,
         sortable: true,
+        hideable: false,
         valueGetter: (value, row) => `${row.athlete.cognome} ${row.athlete.nome}`,
         renderCell: (params) => (
           <div>
@@ -471,7 +473,23 @@ const CompetitionSummary = () => {
         flex: 1,
         align: 'center',
         headerAlign: 'center',
-        type: 'actions',
+        type: 'number',
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => {
+          // Trova l'iscrizione per questa categoria
+          const registration = row.registrations.find(
+            reg => reg.tipoCategoria?.id === category.id
+          );
+          
+          if (!registration) {
+            return null; // Non iscritto: restituisce null (permette filtro "is empty")
+          } else if (registration.peso) {
+            return registration.peso; // Iscritto con peso: restituisce il peso
+          } else {
+            return 1; // Iscritto senza peso (forme/quyen): restituisce 1 per permettere il filtro
+          }
+        },
         renderCell: (params) => {
           // Trova se l'atleta è iscritto a questa categoria
           const registration = params.row.registrations.find(
@@ -492,12 +510,7 @@ const CompetitionSummary = () => {
           } else if (registration && registration.peso) {
             return (
               <Tooltip title={`Peso: ${registration.peso} kg`} arrow>
-                <Chip
-                  label="✓"
-                  size="small"
-                  color="success"
-                  sx={{ fontSize: '0.75rem', height: '20px' }}
-                />
+                {registration.peso} kg
               </Tooltip>
             );
           } else if (registration) {
@@ -601,7 +614,7 @@ const CompetitionSummary = () => {
             initialState={{
               ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
               sorting: {
-                sortModel: [{ field: 'cognome', sort: 'asc' }],
+                sortModel: [{ field: 'club.denominazione', sort: 'asc' }],
               },
             }}
             disableColumnMenu={false}
@@ -617,10 +630,11 @@ const CompetitionSummary = () => {
             initialState={{
               ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
               sorting: {
-                sortModel: [{ field: 'cognome', sort: 'asc' }],
+                sortModel: [{ field: 'club.denominazione', sort: 'asc' }],
               },
             }}
             disableColumnMenu={false}
+            disableColumnSelector={false}
             localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
           />
         )}

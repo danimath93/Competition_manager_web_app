@@ -4,7 +4,6 @@ import Header from './Header';
 import { TextInput, PasswordInput, Tabs } from './common';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
-import { checkClubExists, createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
 import './styles/Layout.css';
 import './styles/Register.css';
@@ -334,7 +333,7 @@ const Register = () => {
                           />
                           <label htmlFor="privacyAccepted" className="privacy-label">
                             <span className="required-asterisk">*</span>
-                            Dichiaro di aver letto e accettato l' 
+                            Dichiaro di aver letto e accettato l'
                             <a
                               href="/trattamento-dati-personali"
                               target="_blank"

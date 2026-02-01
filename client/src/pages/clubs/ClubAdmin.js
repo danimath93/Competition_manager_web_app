@@ -4,9 +4,10 @@ import {
   Grid,
   TextField,
 } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Add, ArrowForward } from '@mui/icons-material';
+import { Alert } from '@mui/material';
 import { FaUniversity } from 'react-icons/fa';
-
+import { Button as MuiButton } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { loadAllClubs, createClub, updateClub, deleteClub } from '../../api/clubs';
 import ClubsTable from '../../components/ClubsTable';
@@ -17,6 +18,7 @@ import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 
 const ClubAdmin = () => {
   const { user } = useAuth();
+  const [error, setError] = useState(null);
   const [filteredClubs, setFilteredClubs] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [filters, setFilters] = useState({
@@ -36,6 +38,7 @@ const ClubAdmin = () => {
         setClubs(clubsData);
         setFilteredClubs(clubsData);
       } catch (error) {
+        setError('Errore nel caricamento dei dati dei club: ' + (error.message));
         console.error('Errore nel caricamento dei dati:', error);
       }
     };
@@ -92,7 +95,8 @@ const ClubAdmin = () => {
       setClubs(clubsData);
       handleCloseModal();
     } catch (error) {
-      throw error;
+      console.error("Errore nel salvataggio del club:", error);
+      setError("Errore nel salvataggio del club: " + (error.message));
     }
   };
 
@@ -107,15 +111,37 @@ const ClubAdmin = () => {
       setClubs(clubsData);
     } catch (error) {
       console.error("Errore nell'eliminazione del club:", error);
+      setError("Errore nell'eliminazione del club: " + (error.message));
+    }
+  };
+
+  const handleGoUserClub = () => {
+    if (user && user.clubId) {
+      window.location.href = `/club`;
+    } else {
+      alert('Non sei associato a nessun club.');
     }
   };
 
   return (
-    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div className="page-container" >
       <PageHeader
         title="Gestione Club" 
         icon={FaUniversity}
       />
+      <MuiButton
+        startIcon={<ArrowForward />}
+        onClick={handleGoUserClub}
+      >
+        Vai al mio club
+      </MuiButton>
+
+      {/* Messaggi di errore e successo */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       {/* Contenuto della pagina */}
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
