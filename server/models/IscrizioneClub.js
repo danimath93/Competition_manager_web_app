@@ -70,6 +70,7 @@ const IscrizioneClub = sequelize.define('IscrizioneClub', {
   timestamps: true,
   indexes: [
     {
+      name: 'unique_iscrizione_club',
       unique: true,
       fields: ['club_id', 'competizione_id']
     }

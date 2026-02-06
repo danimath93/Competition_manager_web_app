@@ -83,6 +83,7 @@ const IscrizioneAtleta = sequelize.define('IscrizioneAtleta', {
   timestamps: true,
   indexes: [
     {
+      name: 'unique_iscrizione_atleta',
       unique: true,
       fields: ['atleta_id', 'tipo_categoria_id', 'competizione_id']
     }

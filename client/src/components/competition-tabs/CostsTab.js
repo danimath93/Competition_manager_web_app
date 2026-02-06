@@ -378,7 +378,7 @@ const CostsTab = ({ value, onChange, onSubmit }) => {
             </div>
           ) : (
             <Alert severity="info">
-              Nessuna configurazione costi atleta. Clicca "Aggiungi Configurazione" per iniziare.
+              Nessuna configurazione costi atleta
             </Alert>
           )}
           </div>

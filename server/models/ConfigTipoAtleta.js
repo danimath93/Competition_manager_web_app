@@ -10,7 +10,6 @@ const ConfigTipoAtleta = sequelize.define('ConfigTipoAtleta', {
   nome: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     }
@@ -34,7 +33,14 @@ const ConfigTipoAtleta = sequelize.define('ConfigTipoAtleta', {
   },
 }, {
   tableName: 'config_tipo_atleta',
-  timestamps: false
+  timestamps: false,
+  indexes: [
+    {
+      name: 'unique_nome_tipo_atleta',
+      unique: true,
+      fields: ['nome']
+    }
+  ]
 });
 
 module.exports = ConfigTipoAtleta;

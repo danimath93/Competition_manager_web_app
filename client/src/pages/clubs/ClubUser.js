@@ -369,7 +369,7 @@ const ClubUser = () => {
                     <AccountBalanceIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={`Affiliazione: ${club.affiliazione || 'Non specificata'}`}
+                    primary={`Affiliazione: ${club.tesseramento || 'Non specificata'}`}
                     primaryTypographyProps={{
                       sx: { fontSize: { xs: '0.875rem', sm: '1rem' } },
                     }}

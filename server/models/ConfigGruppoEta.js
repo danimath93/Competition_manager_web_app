@@ -10,7 +10,6 @@ const ConfigGruppoEta = sequelize.define('ConfigGruppoEta', {
   nome: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     },
@@ -69,7 +68,14 @@ const ConfigGruppoEta = sequelize.define('ConfigGruppoEta', {
   }
 }, {
   tableName: 'config_gruppi_eta',
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    {
+      name: 'unique_nome_gruppo_eta',
+      unique: true,
+      fields: ['nome']
+    }
+  ]
 });
 
 module.exports = ConfigGruppoEta;

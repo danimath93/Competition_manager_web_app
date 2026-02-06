@@ -155,7 +155,6 @@ const ClubModal = ({
               value={formData.partitaIva || ''}
               onChange={handleChange}
               fullWidth
-              required
               size="small"
             />
           </div>

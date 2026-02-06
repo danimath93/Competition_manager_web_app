@@ -77,7 +77,7 @@ async function sendEmailViaGmailAPI(to, subject, htmlBody) {
       }
     });
 
-    logger.info('Email inviata con successo via Gmail API:', result.data.id);
+    logger.info(`Email inviata con successo via Gmail API: ${result.data.id}`);
     return result.data;
   } catch (error) {
     logger.error('Errore nell\'invio email via Gmail API:', error);
@@ -96,7 +96,7 @@ async function sendEmailViaGmailAPI(to, subject, htmlBody) {
 
 async function sendConfirmationEmail(to, token) {
   try {
-    logger.info('Invio email di conferma a:', to);
+    logger.info(`Invio email di conferma a: ${to}`);
     const confirmUrl = `${process.env.BACKEND_URL}/auth/confirm?token=${token}`;
 
     const htmlBody = `
@@ -136,7 +136,7 @@ async function sendConfirmationEmail(to, token) {
 
 async function sendResetPasswordEmail(to, token) {
   try {
-    logger.info('Invio email di reset password a:', to);
+    logger.info(`Invio email di reset password a: ${to}`);
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/confirm?token=${token}`;
 
     const htmlBody = `

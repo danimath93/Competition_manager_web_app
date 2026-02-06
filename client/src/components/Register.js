@@ -71,6 +71,12 @@ const Register = () => {
       setError('Tutti i campi del club contrassegnati con * sono obbligatori.');
       return false;
     }
+    // Il codice fiscale deve essere di 11 caratteri solo numerici
+    const codiceFiscaleRegex = /^[0-9]{11}$/;
+    if (!codiceFiscaleRegex.test(codiceFiscale)) {
+      setError('Il codice fiscale deve essere di 11 caratteri numerici.');
+      return false;
+    }
     if (!privacyViewed) {
       setError('Devi visualizzare l\'informativa sulla privacy prima di procedere.');
       return false;
@@ -238,7 +244,7 @@ const Register = () => {
 
                       <TextInput
                         id="codiceFiscale"
-                        label="Codice Fiscale"
+                        label="Codice Fiscale Associazione"
                         value={codiceFiscale}
                         onChange={(e) => setCodiceFiscale(e.target.value)}
                         placeholder="Codice fiscale"
@@ -248,7 +254,7 @@ const Register = () => {
 
                       <TextInput
                         id="partitaIva"
-                        label="Partita IVA"
+                        label="Partita IVA Associazione"
                         value={partitaIva}
                         onChange={(e) => setPartitaIva(e.target.value)}
                         placeholder="Partita IVA"

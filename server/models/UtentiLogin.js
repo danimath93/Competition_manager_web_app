@@ -10,7 +10,6 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
   username: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     }
@@ -18,7 +17,6 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     }
@@ -65,7 +63,19 @@ const UtentiLogin = sequelize.define('UtentiLogin', {
   }
 }, {
   tableName: 'utenti_login',
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    {
+      name: 'unique_utenti_username',
+      unique: true,
+      fields: ['username']
+    },
+    {
+      name: 'unique_utenti_email',
+      unique: true,
+      fields: ['email']
+    }
+  ]
 });
 
 module.exports = UtentiLogin;
