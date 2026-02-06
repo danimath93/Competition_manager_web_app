@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
-import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton } from '@mui/material';
-import { ArrowBack, Description} from '@mui/icons-material';
+import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { ArrowBack, Description, Info} from '@mui/icons-material';
 import MuiButton from '@mui/material/Button';
 import { FaTrophy } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { getCompetitionDetails, getClubCompetitionRegistrationSummary } from '../../api/competitions';
 import { loadCategoryTypeById } from '../../api/config';
+import { loadAllClubs } from '../../api/clubs';
 import { getStatoCertificato, downloadCertificato } from '../../api/certificati';
 import {
   getClubRegistrationsByCompetition,
@@ -17,6 +18,7 @@ import {
 } from '../../api/registrations';
 import PageHeader from '../../components/PageHeader';
 import Tabs from '../../components/common/Tabs';
+import ClubModal from '../../components/ClubModal';
 import muiTheme from '../../styles/muiTheme';
 
 
@@ -28,6 +30,10 @@ const CompetitionSummary = () => {
   const [clubRegistrations, setClubRegistrations] = useState([]);
   const [athleteRegistrations, setAthleteRegistrations] = useState([]);
   const [categoryDetailsCache, setCategoryDetailsCache] = useState({});
+  const [isClubInfoModalOpen, setIsClubInfoModalOpen] = useState(false);
+  const [selectedClub, setSelectedClub] = useState(null);
+  const [clubFilter, setClubFilter] = useState('');
+  const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('administrative');
@@ -44,6 +50,10 @@ const CompetitionSummary = () => {
 
   const handleTabChange = (tabValue) => {
     setActiveTab(tabValue);
+  };
+
+  const handleClubFilterChange = (event) => {
+    setClubFilter(event.target.value);
   };
 
   const handleDownloadCertificato = async (athlete) => {
@@ -64,6 +74,16 @@ const CompetitionSummary = () => {
     }
   };
 
+  const handleDisplayClubInfo = (clubData) => {
+    setSelectedClub(clubData);
+    setIsClubInfoModalOpen(true);
+  };
+
+  const handleClubInfoCloseModal = () => {
+    setIsClubInfoModalOpen(false);
+    setSelectedClub(null);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -73,6 +93,10 @@ const CompetitionSummary = () => {
         // Carica i dettagli della competizione
         const competitionData = await getCompetitionDetails(competitionId);
         setCompetition(competitionData);
+
+        // Carica tutti i club
+        const clubsData = await loadAllClubs();
+        setClubs(clubsData);
 
         // Carica le iscrizioni dei club
         const clubRegs = await getClubRegistrationsByCompetition(competitionId);
@@ -180,7 +204,7 @@ const CompetitionSummary = () => {
     if (categoryColumns.length > 0) {
       loadCategoryDetails();
     }
-  }, [categoryColumns]);
+  }, [categoryColumns, categoryDetailsCache]);
   
   // Definizione delle colonne tabella amministrativa
   const administrativeTableColumns = useMemo(() => {
@@ -330,6 +354,20 @@ const CompetitionSummary = () => {
         },
       },
       {
+        field: 'affiliazione',
+        headerName: 'Affiliazione',
+        width: 150,
+        filterable: true,
+        sortable: true,
+        valueGetter: (value, row) => {
+          return row.club?.tesseramento || 'N/A';
+        },
+        type: 'number',
+        valueFormatter: (params) => {
+          return params?.value?.toFixed(2);
+        },
+      },
+      {
         field: 'quota',
         headerName: 'Quota Dovuta (€)',
         width: 150,
@@ -352,12 +390,12 @@ const CompetitionSummary = () => {
       headerName: 'Azioni',
       width: 80,
       getActions: (params) => [
-        // <GridActionsCellItem
-        //   icon={<Edit />}
-        //   label="Modifica"
-        //   onClick={() => onEdit(params.row)}
-        //   showInMenu={true}
-        // />,
+        <GridActionsCellItem
+          icon={<Info />}
+          label="Visualizza informazioni club"
+          onClick={() => handleDisplayClubInfo(params.row?.club)}
+          showInMenu={true}
+        />,
       ],
     });
     return baseColumns;
@@ -559,10 +597,38 @@ const CompetitionSummary = () => {
 
   // Caricamento dati per le griglie
   const administrativeTableRows = useMemo(() => {
-    return clubRegistrations.map((clubReg, index) => ({
+    let filteredRegistrations = clubRegistrations;
+    
+    // Filtra per club se è selezionato un club specifico
+    if (clubFilter) {
+      filteredRegistrations = clubRegistrations.filter(
+        clubReg => clubReg.club?.id === parseInt(clubFilter)
+      );
+    }
+    
+    return filteredRegistrations.map((clubReg, index) => ({
       ...clubReg,
     }));
-  }, [clubRegistrations]); 
+  }, [clubRegistrations, clubFilter]);
+
+  // Calcola i totali per il riepilogo amministrativo
+  const administrativeSummary = useMemo(() => {
+    const totalClubs = administrativeTableRows.length;
+    const confirmedClubs = administrativeTableRows.filter(row => row.stato === 'Confermata').length;
+    const totalAthletes = administrativeTableRows.reduce((sum, row) => {
+      const cbBambini = row.summary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
+      const cbAdulti = row.summary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
+      const cn = row.summary?.athleteTypeTotals?.['CN']?.total || 0;
+      return sum + cbBambini + cbAdulti + cn;
+    }, 0);
+    const totalQuota = administrativeTableRows.reduce((sum, row) => {
+      return sum + (row.summary?.totals?.totalCost || 0);
+    }, 0);
+    const documentsPresidente = administrativeTableRows.filter(row => row.confermaPresidenteId).length;
+    const documentsBonifico = administrativeTableRows.filter(row => row.bonificoId).length;
+
+    return { totalClubs, confirmedClubs, totalAthletes, totalQuota, documentsPresidente, documentsBonifico };
+  }, [administrativeTableRows]); 
 
   const technicalTableRows = useMemo(() => {
     return Object.values(athleteGroups).map((group, index) => ({
@@ -608,18 +674,76 @@ const CompetitionSummary = () => {
       <Tabs tabs={summaryTabs} activeTab={activeTab} onTabChange={handleTabChange}>
         {/* Tab Panel - Riepilogo amministrativo */}
         { activeTab === "administrative" && (
-          <DataGrid
-            rows={administrativeTableRows}
-            columns={administrativeTableColumns}
-            initialState={{
-              ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-              sorting: {
-                sortModel: [{ field: 'club.denominazione', sort: 'asc' }],
-              },
-            }}
-            disableColumnMenu={false}
-            localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
-          />
+          <>
+            {/* Riepilogo totali */}
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+              gap: 1, 
+              mb: 3, 
+              p: 1.5, 
+              bgcolor: '#f5f5f5', 
+              borderRadius: 1,
+              border: '1px solid #e0e0e0'
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Club Iscritti</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'primary.main' }}>{administrativeSummary.totalClubs}</Box>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Confermati</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'success.main' }}>{administrativeSummary.confirmedClubs}</Box>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Atleti Totali</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'primary.main' }}>{administrativeSummary.totalAthletes}</Box>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Conf. Presidente</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'info.main' }}>{administrativeSummary.documentsPresidente}/{administrativeSummary.totalClubs}</Box>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Bonifici</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'info.main' }}>{administrativeSummary.documentsBonifico}/{administrativeSummary.totalClubs}</Box>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Quota Totale</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'success.main' }}>€ {administrativeSummary.totalQuota.toFixed(2)}</Box>
+              </Box>
+            </Box>
+
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200, maxWidth: 400, mb: 3 }}>
+              <InputLabel>Filtra per Club</InputLabel>
+              <Select
+                name="club"
+                label="Filtra per Club"
+                value={clubFilter}
+                onChange={handleClubFilterChange}
+              >
+                <MenuItem value="">
+                  <em>Tutti</em>
+                </MenuItem>
+                {clubs.map((club) => (
+                  <MenuItem key={club.id} value={club.id}>
+                    {club.denominazione}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <DataGrid
+              rows={administrativeTableRows}
+              columns={administrativeTableColumns}
+              initialState={{
+                ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
+                sorting: {
+                  sortModel: [{ field: 'club.denominazione', sort: 'asc' }],
+                },
+              }}
+              disableColumnMenu={false}
+              localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
+            />
+          </>
         )}
 
         {/* Tab Panel - Riepilogo tecnico */}
@@ -640,6 +764,14 @@ const CompetitionSummary = () => {
         )}
       </Tabs>
 
+      {isClubInfoModalOpen && (
+        <ClubModal
+          open={isClubInfoModalOpen}
+          onClose={handleClubInfoCloseModal}
+          club={selectedClub}
+          isReadOnlyMode={true}
+        />
+      )}
     </div>
   );
 };

@@ -143,7 +143,8 @@ const ClubUser = () => {
 
   const handleLogoUpdateComplete = async (updated) => {
     // Aggiorna i dati del club con il nuovo logoId
-    setClub(updated);
+    const updClubData = { ...club, logoId: updated.logoId };
+    setClub(updClubData);
     setLogoModalOpen(false);
   };
 

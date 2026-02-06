@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import { Paper } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { Edit, Delete, Info } from '@mui/icons-material';
 import muiTheme from '../styles/muiTheme';
 
-const ClubsTable = ({ clubs, onEdit, onDelete }) => {
+const ClubsTable = ({ clubs, onEdit, onInfo, onDelete }) => {
   // Definizione delle colonne
   const columns = useMemo(() => [
     {
@@ -49,28 +49,12 @@ const ClubsTable = ({ clubs, onEdit, onDelete }) => {
       sortable: true,
     },
     {
-      field: 'recapitoTelefonico',
-      headerName: 'Recapito Telefonico',
-      flex: 1,
-      minWidth: 140,
-      filterable: false,
-      sortable: false,
-    },
-    {
-      field: 'email',
-      headerName: 'Email',
-      flex: 1,
-      minWidth: 180,
-      filterable: false,
-      sortable: false,
-    },
-    {
       field: 'tesseramento',
       headerName: 'Affiliazione',
       flex: 1,
       minWidth: 130,
       filterable: false,
-      sortable: false,
+      sortable: true,
     },
     {
       field: 'actions',
@@ -78,6 +62,12 @@ const ClubsTable = ({ clubs, onEdit, onDelete }) => {
       headerName: 'Azioni',
       width: 80,
       getActions: (params) => [
+        <GridActionsCellItem
+          icon={<Info />}
+          label="Info"
+          onClick={() => onInfo(params.row)}
+          showInMenu={true}
+        />,
         <GridActionsCellItem
           icon={<Edit />}
           label="Modifica"
@@ -92,7 +82,7 @@ const ClubsTable = ({ clubs, onEdit, onDelete }) => {
         />,
       ],
     },
-  ], [onEdit, onDelete]);
+  ], [onEdit, onDelete, onInfo]);
 
   // Prepara i dati per la griglia
   const rows = useMemo(() => {

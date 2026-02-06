@@ -295,6 +295,7 @@ const muiCustomTheme = createTheme({
         root: {
           fontFamily: "'Outfit', sans-serif",
           border: 'none',
+          minHeight: '400px',
           '& .MuiDataGrid-cell': {
             fontFamily: "'Outfit', sans-serif",
           },

@@ -28,6 +28,7 @@ const ClubAdmin = () => {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isReadOnlyMode, setIsReadOnlyMode] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
 
@@ -57,7 +58,8 @@ const ClubAdmin = () => {
     }
     if (filters.codiceFiscale) {
       result = result.filter((club) =>
-        club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
+        club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase()) ||
+        club.partitaIva?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
       );
     }
     if (filters.rappresentanti) {
@@ -75,13 +77,22 @@ const ClubAdmin = () => {
 
   const handleOpenModal = (club = null) => {
     setIsEditMode(!!club);
+    setIsReadOnlyMode(false);
     setSelectedClub(club);
     setIsModalOpen(true);
   };
 
+  const handleOpenModalInfo = (club) => {
+    setIsEditMode(false);
+    setIsReadOnlyMode(true);
+    setSelectedClub(club);
+    setIsModalOpen(true);
+  }
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedClub(null);
+    setIsReadOnlyMode(false);
   };
 
   const handleSaveClub = async (clubData) => {
@@ -161,7 +172,7 @@ const ClubAdmin = () => {
                 <Grid item xs={12} sm={4}>
                   <TextField
                     name="codiceFiscale"
-                    label="Filtra per Codice Fiscale"
+                    label="Filtra per Cod. Fiscale o P. IVA"
                     variant="outlined"
                     fullWidth
                     onChange={handleFilterChange}
@@ -193,6 +204,7 @@ const ClubAdmin = () => {
             <ClubsTable
               clubs={filteredClubs || []}
               onEdit={handleOpenModal}
+              onInfo={handleOpenModalInfo}
               onDelete={handleDeleteClubConfirm}
             />
           </div>
@@ -206,6 +218,7 @@ const ClubAdmin = () => {
           onSubmit={handleSaveClub}
           onDelete={handleDeleteClub}
           isEditMode={isEditMode}
+          isReadOnlyMode={isReadOnlyMode}
           club={selectedClub}
           user={user}
         />

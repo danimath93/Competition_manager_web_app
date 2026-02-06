@@ -19,13 +19,14 @@ const ClubModal = ({
   onDelete,
   club,
   isEditMode,
+  isReadOnlyMode,
 }) => {
   const [formData, setFormData] = React.useState({});
   const [displayError, setDisplayError] = React.useState('');
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
   React.useEffect(() => {
-    if (isEditMode && club) {
+    if (club && (isEditMode || isReadOnlyMode)) {
       setFormData({
         denominazione: club?.denominazione,
         codiceFiscale: club?.codiceFiscale,
@@ -53,7 +54,7 @@ const ClubModal = ({
         abbreviazione: '',
       });
     }
-  }, [open, isEditMode, club]);
+  }, [open, isEditMode, isReadOnlyMode, club]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value === '' ? null : e.target.value });
@@ -113,14 +114,16 @@ const ClubModal = ({
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button onClick={onClose} variant="outlined">
-              Annulla
+              {isReadOnlyMode ? 'Chiudi' : 'Annulla'}
             </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-            >
-              {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
-            </Button>
+            {!isReadOnlyMode && (
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+              >
+                {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
+              </Button>
+            )}
           </Box>
         </Box>
       }
@@ -137,6 +140,7 @@ const ClubModal = ({
             fullWidth
             required
             size="small"
+            slotProps={{ input: { readOnly: isReadOnlyMode } }}
           />
 
           <div className="drawer-fields-row-2">
@@ -148,6 +152,7 @@ const ClubModal = ({
               fullWidth
               required
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
             <TextField
               name="partitaIva"
@@ -156,6 +161,7 @@ const ClubModal = ({
               onChange={handleChange}
               fullWidth
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
           </div>
 
@@ -166,6 +172,7 @@ const ClubModal = ({
             onChange={handleChange}
             fullWidth
             size="small"
+            slotProps={{ input: { readOnly: isReadOnlyMode } }}
           />
 
           <div className="drawer-fields-row-2">
@@ -176,6 +183,7 @@ const ClubModal = ({
               onChange={handleChange}
               fullWidth
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
             <TextField
               name="email"
@@ -185,6 +193,7 @@ const ClubModal = ({
               onChange={handleChange}
               fullWidth
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
           </div>
         </div>
@@ -203,6 +212,7 @@ const ClubModal = ({
               fullWidth
               required
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
             <TextField
               name="direttoreTecnico"
@@ -212,6 +222,7 @@ const ClubModal = ({
               fullWidth
               required
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
           </div>
         </div>
@@ -227,6 +238,7 @@ const ClubModal = ({
             getOptionLabel={(tesseramento) => tesseramento}
             onChange={(event, value) => handleTesseramentoChange(value)}
             isOptionEqualToValue={(option, value) => option === value}
+            readOnly={isReadOnlyMode}
             options={['FIWUK', 'ASI', 'Altro Ente']}
             renderInput={(params) => (
               <TextField
@@ -234,6 +246,12 @@ const ClubModal = ({
                 label="Affiliazione"
                 size="small"
                 required
+                slotProps={{
+                  input: {
+                    ...params.InputProps,
+                    readOnly: isReadOnlyMode,
+                  },
+                }}
               />
             )}
           />
@@ -245,6 +263,7 @@ const ClubModal = ({
               onChange={handleChange}
               fullWidth
               size="small"
+              slotProps={{ input: { readOnly: isReadOnlyMode } }}
             />
           </AuthComponent>
         </div>

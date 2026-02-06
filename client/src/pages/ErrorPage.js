@@ -19,8 +19,36 @@ const ErrorPage = ({ error, resetError }) => {
     navigate(-1);
   };
 
-  const handleReload = () => {
-    window.location.reload();
+  const handleDownloadErrorReport = () => {
+    try {
+      const errorReport = {
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        error: {
+          message: error ? error.toString() : 'Nessun messaggio di errore',
+          stack: error && error.stack ? error.stack : 'Nessuno stack trace disponibile'
+        },
+        browserInfo: {
+          platform: navigator.platform,
+          language: navigator.language,
+          cookieEnabled: navigator.cookieEnabled
+        }
+      };
+
+      const reportText = JSON.stringify(errorReport, null, 2);
+      const blob = new Blob([reportText], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `error-report-${Date.now()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Errore durante il download del report:', err);
+    }
   };
 
   return (
@@ -47,8 +75,8 @@ const ErrorPage = ({ error, resetError }) => {
           <button onClick={handleGoBack} className="btn btn-secondary">
             Torna Indietro
           </button>
-          <button onClick={handleReload} className="btn btn-secondary">
-            Ricarica Pagina
+          <button onClick={handleDownloadErrorReport} className="btn btn-outline">
+            Scarica Report Errore
           </button>
         </div>
 

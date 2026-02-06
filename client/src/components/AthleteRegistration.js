@@ -52,11 +52,11 @@ const AthleteRegistration = ({
   const [athleteType, setAthleteType] = useState(null);
   const [athleteTypes, setAthleteTypes] = useState([]);
   const [tesseramento, setTesseramento] = useState(null);
-  const [tesseramentoTypes, setTesseramentoTypes] = useState([
+  const tesseramentoTypes = [
     { id: MembershipType.FIWUK, nome: 'FIWUK' },
     { id: MembershipType.ASI, nome: 'ASI' },
     { id: MembershipType.REQUEST, nome: 'Richiedi tesseramento' }
-  ]);
+  ];
 
   // Stato fase 2 - Categorie
   const [availableCategories, setAvailableCategories] = useState([]);
@@ -349,15 +349,21 @@ const AthleteRegistration = ({
       switch (activeStep) {
         case 0:
           // Fase 1: aggiorna i dati dell'atleta
-          await updateAthlete(athlete.id, {
+          if (!athlete || !athlete.id) {
+            throw new Error('Dati atleta non validi');
+          }
+          
+          const updateData = {
             ...athlete,
             numeroTessera: cardNumber,
             tipoAtleta: athleteType ? athleteType : null,
-            tipoAtletaId: athleteType ? athleteType.id : null,
+            tipoAtletaId: athleteType && athleteType.id ? athleteType.id : null,
             scadenzaCertificato: endDateCertificate
-          }
-          );
-          if (onUpdateAthlete) {
+          };
+          
+          await updateAthlete(athlete.id, updateData);
+          
+          if (onUpdateAthlete && typeof onUpdateAthlete === 'function') {
             onUpdateAthlete();
           }
           break;
@@ -365,6 +371,7 @@ const AthleteRegistration = ({
           // Fase 2: nessuna operazione specifica
           break;
         default:
+          break;
       }
       return true;
     } catch (err) {
@@ -402,11 +409,21 @@ const AthleteRegistration = ({
 
   // Naviga allo step successivo
   const handleNext = async () => {
-    if (validateCurrentPhase()) {
-      if (await manageCurrentPhase()) {
+    try {
+      if (!validateCurrentPhase()) {
+        return;
+      }
+      
+      const success = await manageCurrentPhase();
+      if (success) {
         setActiveStep(prev => Math.min(prev + 1, steps.length - 1));
         setErrors([]);
       }
+    } catch (err) {
+      setErrors([
+        'Si è verificato un errore imprevisto. Per favore riprova.',
+        err && err.message ? err.message : 'Errore sconosciuto'
+      ]);
     }
   };
 
