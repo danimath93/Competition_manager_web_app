@@ -115,23 +115,6 @@ const CompetitionConfigurator = () => {
   };
 
   const handleSubmit = async () => {
-    // Validazione
-    if (!formData.categorieAtleti || formData.categorieAtleti.length === 0) {
-      setError('Configura almeno una categoria per gli atleti');
-      setCurrentTab(1); // Vai al tab delle categorie
-      return;
-    }
-
-    const hasInvalidConfig = formData.categorieAtleti.some(
-      (ca) => !ca.categorie || ca.categorie.length === 0
-    );
-
-    if (hasInvalidConfig) {
-      setError('Ogni tipo di atleta deve avere almeno una categoria configurata');
-      setCurrentTab(1);
-      return;
-    }
-
     setError('');
     setLoading(true);
     
@@ -145,6 +128,30 @@ const CompetitionConfigurator = () => {
     } catch (err) {
       setError(err.message || 'Errore durante il salvataggio');
       setLoading(false);
+    }
+  };
+
+  const handleGeneralInfoSubmit = (e) => {
+    e.preventDefault();
+    if (isEditMode) {
+      handleSubmit();
+    } else {
+      setCurrentTab('categories');
+    }
+  };
+
+  const handleCategoriesSubmit = (e) => {
+    if (isEditMode) {
+      handleSubmit();
+    } else {
+      setCurrentTab('costs');
+    }
+  };
+
+  const handleCostsSubmit = (e) => {
+    e.preventDefault();
+    if (isEditMode) {
+      handleSubmit();
     }
   };
 
@@ -186,6 +193,7 @@ const CompetitionConfigurator = () => {
           <GeneralInfoTab
             formData={formData}
             onChange={handleFieldChange}
+            onSubmit={handleGeneralInfoSubmit}
           />
         )}
         {/* Tab Panel - Categorie e gradi tecnici */}
@@ -196,6 +204,7 @@ const CompetitionConfigurator = () => {
               tipiCompetizione: formData.tipiCompetizione,
             }}
             onChange={handleCategoriesChange}
+            onSubmit={handleCategoriesSubmit}
             isEditMode={isEditMode}
           />
         )}
@@ -209,6 +218,7 @@ const CompetitionConfigurator = () => {
               causale: formData.causale,
             }} 
             onChange={handleCostsChange}
+            onSubmit={handleCostsSubmit}
           />
         )}
       </Tabs>

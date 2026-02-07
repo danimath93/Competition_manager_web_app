@@ -113,22 +113,30 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit }) => {
         />
 
         <h6 className="text-primary text-center register-section-title">Informazioni organizzative</h6>
-        <TextInput
-          name="stato"
-          label="Stato Competizione"
-          value={formData.stato}
-          onChange={handleChange}
-          fullWidth
-          required
-          select
-          SelectProps={{ native: true }}
-        >
-          {Object.entries(CompetitionStatus).map(([value, label]) => (
-            <option key={value} value={label}>
-              {label}
-            </option>
-          ))}
-        </TextInput>
+        <div className="text-input-container">
+          <label className="text-input-label">
+            <h6>
+              Stato Competizione
+              <span className="required-asterisk">*</span>
+            </h6>
+          </label>
+          <TextField
+            name="stato"
+            value={formData.stato}
+            onChange={handleChange}
+            placeholder="Seleziona stato competizione"
+            fullWidth
+            required
+            select
+            SelectProps={{ native: true }}
+          >
+            {Object.entries(CompetitionStatus).map(([value, label]) => (
+              <option key={value} value={label}>
+                {label}
+              </option>
+            ))}
+          </TextField>
+        </div>
 
         <TextInput
           name="maxCategorieAtleta"

@@ -773,23 +773,26 @@ const AthleteRegistration = ({
                         key={categoryId}
                         style={{
                           display: 'flex',
+                          flexWrap: 'wrap',
                           alignItems: 'center',
-                          gap: '16px',
+                          gap: '12px',
                           padding: '8px',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCategoryToggle(categoryId)}
-                          style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                        />
-                        <div style={{ minWidth: '200px', fontWeight: '500' }}>
-                          {details?.nome || 'Categoria'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCategoryToggle(categoryId)}
+                            style={{ cursor: 'pointer', width: '20px', height: '20px', flexShrink: 0 }}
+                          />
+                          <div style={{ fontWeight: '500' }}>
+                            {details?.nome || 'Categoria'}
+                          </div>
                         </div>
                         { /* Dettagli categoria */
                           detailOptions && detailOptions.length > 0 && (
-                            <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
+                            <div style={{ flex: '0 1 400px', minWidth: '250px', maxWidth: '100%', marginLeft: 'auto' }}>
                               <Autocomplete
                                 size="small"
                                 value={categoryDetailSelections[categoryId] || null}
@@ -856,22 +859,25 @@ const AthleteRegistration = ({
                         key={categoryId}
                         style={{
                           display: 'flex',
+                          flexWrap: 'wrap',
                           alignItems: 'center',
-                          gap: '16px',
+                          gap: '12px',
                           padding: '8px',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCategoryToggle(categoryId)}
-                          style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                        />
-                        <div style={{ minWidth: '200px', fontWeight: '500' }}>
-                          {details?.nome || 'Categoria'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCategoryToggle(categoryId)}
+                            style={{ cursor: 'pointer', width: '20px', height: '20px', flexShrink: 0 }}
+                          />
+                          <div style={{ fontWeight: '500' }}>
+                            {details?.nome || 'Categoria'}
+                          </div>
                         </div>
                         {detailOptions && detailOptions.length > 0 && (
-                        <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
+                        <div style={{ flex: '0 1 400px', minWidth: '250px', maxWidth: '100%', marginLeft: 'auto' }}>
                           <Autocomplete
                             size="small"
                             value={categoryDetailSelections[categoryId] || null}
@@ -958,19 +964,22 @@ const AthleteRegistration = ({
                         key={categoryId}
                         style={{
                           display: 'flex',
+                          flexWrap: 'wrap',
                           alignItems: 'center',
-                          gap: '16px',
+                          gap: '12px',
                           padding: '8px',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCategoryToggle(categoryId)}
-                          style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                        />
-                        <div style={{ minWidth: '200px', fontWeight: '500' }}>
-                          {details?.nome || 'Categoria'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCategoryToggle(categoryId)}
+                            style={{ cursor: 'pointer', width: '20px', height: '20px', flexShrink: 0 }}
+                          />
+                          <div style={{ fontWeight: '500' }}>
+                            {details?.nome || 'Categoria'}
+                          </div>
                         </div>
                       </div>
                     );

@@ -39,7 +39,7 @@ const steps = [
   { label: 'Assegna Livelli Esperienza', number: 4 }
 ];
 
-const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, onChange, isEditMode = false }) => {
+const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, onChange, onSubmit, isEditMode = false }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
@@ -81,41 +81,41 @@ const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, 
 
   // Inizializza i dati se siamo in edit mode
   useEffect(() => {
+    const initializeFromExistingData = () => {
+      const athleteTypeIds = value.categorieAtleti.map(ca => ca.idTipoAtleta);
+      setSelectedAthleteTypes(athleteTypeIds);
+      
+      if (value.tipiCompetizione && value.tipiCompetizione.length > 0) {
+        const selectedCompTypes = competitionTypes.filter(ct => 
+          value.tipiCompetizione.includes(ct.id)
+        );
+        setSelectedCompetitionTypes(selectedCompTypes);
+        loadCategoriesForCompetitionTypes(selectedCompTypes);
+      }
+      
+      const categoriesMap = {};
+      value.categorieAtleti.forEach(ca => {
+        categoriesMap[ca.idTipoAtleta] = ca.categorie.map(cat => cat.configTipoCategoria);
+      });
+      setSelectedCategories(categoriesMap);
+      
+      const experiencesMap = {};
+      value.categorieAtleti.forEach(ca => {
+        if (ca.esperienzaCategorie) {
+          ca.esperienzaCategorie.forEach(ec => {
+            const key = `${ca.idTipoAtleta}_${ec.configTipoCompetizione}`;
+            experiencesMap[key] = ec.idEsperienza || [];
+          });
+        }
+      });
+      setSelectedExperiences(experiencesMap);
+      setActiveStep(3);
+    };
+  
     if (isEditMode && value?.categorieAtleti?.length > 0) {
       initializeFromExistingData();
     }
   }, [value, isEditMode, athleteTypes, competitionTypes]);
-
-  const initializeFromExistingData = () => {
-    const athleteTypeIds = value.categorieAtleti.map(ca => ca.idTipoAtleta);
-    setSelectedAthleteTypes(athleteTypeIds);
-    
-    if (value.tipiCompetizione && value.tipiCompetizione.length > 0) {
-      const selectedCompTypes = competitionTypes.filter(ct => 
-        value.tipiCompetizione.includes(ct.id)
-      );
-      setSelectedCompetitionTypes(selectedCompTypes);
-      loadCategoriesForCompetitionTypes(selectedCompTypes);
-    }
-    
-    const categoriesMap = {};
-    value.categorieAtleti.forEach(ca => {
-      categoriesMap[ca.idTipoAtleta] = ca.categorie.map(cat => cat.configTipoCategoria);
-    });
-    setSelectedCategories(categoriesMap);
-    
-    const experiencesMap = {};
-    value.categorieAtleti.forEach(ca => {
-      if (ca.esperienzaCategorie) {
-        ca.esperienzaCategorie.forEach(ec => {
-          const key = `${ca.idTipoAtleta}_${ec.configTipoCompetizione}`;
-          experiencesMap[key] = ec.idEsperienza || [];
-        });
-      }
-    });
-    setSelectedExperiences(experiencesMap);
-    setActiveStep(3);
-  };
 
   const loadCategoriesForCompetitionTypes = async (competitionTypes) => {
     try {
@@ -306,6 +306,9 @@ const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, 
 
     const tipiCompetizione = selectedCompetitionTypes.map(ct => ct.id);
     onChange({ categorieAtleti, tipiCompetizione });
+    if (onSubmit) {
+      onSubmit();
+    }
   };
 
   const canProceedFromStep = (step) => {

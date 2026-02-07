@@ -16,11 +16,10 @@ import {
   DialogActions,
   Card,
   CardContent,
-  CardActions,
   Typography,
   Chip
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAthleteTypes } from '../../api/config';
 import { TextInput } from '../common';
 import Button from '../common/Button';
