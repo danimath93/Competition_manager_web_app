@@ -1,11 +1,17 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import PageHeader from '../components/PageHeader';
+import Button from '../components/common/Button';
+import { Box } from '@mui/material';
 import { FaTachometerAlt } from 'react-icons/fa';
 import './styles/CommonPageStyles.css';
 
 const Dashboard = () => {
   const { t } = useLanguage();
+
+  const handleTestError = () => {
+    throw new Error('Errore di test generato dalla Dashboard');
+  }
 
   return (
     <div className="page-container">
@@ -46,6 +52,22 @@ const Dashboard = () => {
           <h2 className="page-section-title">Statistiche</h2>
           <div className="page-card">
             <p>Grafici e statistiche verranno visualizzati qui.</p>
+          </div>
+        </div>
+
+        <div className="page-divider"></div>
+
+        <div className="page-section">
+          <h2 className="page-section-title">Sezione di test</h2>
+          <div className="page-card">
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+              <Button
+                size='s'
+                onClick={() => handleTestError()}
+              >
+                Test errore
+              </Button>
+            </Box>
           </div>
         </div>
       </div>
