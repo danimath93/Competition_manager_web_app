@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import PageHeader from '../components/PageHeader';
 import Button from '../components/common/Button';
@@ -8,8 +8,14 @@ import './styles/CommonPageStyles.css';
 
 const Dashboard = () => {
   const { t } = useLanguage();
+  const [shouldThrowError, setShouldThrowError] = useState(false);
 
   const handleTestError = () => {
+    setShouldThrowError(true);
+  }
+
+  // Lancia l'errore durante il rendering per essere catturato dall'ErrorBoundary
+  if (shouldThrowError) {
     throw new Error('Errore di test generato dalla Dashboard');
   }
 
