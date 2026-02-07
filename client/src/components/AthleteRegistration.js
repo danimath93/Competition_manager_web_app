@@ -180,6 +180,8 @@ const AthleteRegistration = ({
 
   // Carica le esperienze disponibili dalla competizione
   useEffect(() => {
+    let isMounted = true;
+    
     const loadExperiences = async () => {
       if (!athlete?.tipoAtletaId || !competition?.categorieAtleti) {
         return;
@@ -190,7 +192,9 @@ const AthleteRegistration = ({
       );
 
       if (!athleteConfig?.esperienzaCategorie) {
-        setAvailableExperiencesByType({});
+        if (isMounted) {
+          setAvailableExperiencesByType({});
+        }
         return;
       }
 
@@ -199,12 +203,16 @@ const AthleteRegistration = ({
         
         // Per ogni tipo competizione, carica le esperienze
         for (const expConfig of athleteConfig.esperienzaCategorie) {
+          if (!isMounted) return;
+          
           const tipoCompId = expConfig.configTipoCompetizione;
           const experienceIds = expConfig.idEsperienza || [];
           
           // Carica i dettagli di ogni esperienza
           const experiences = [];
           for (const expId of experienceIds) {
+            if (!isMounted) return;
+            
             try {
               const experience = await loadExperienceById(expId);
               experiences.push(experience);
@@ -216,17 +224,25 @@ const AthleteRegistration = ({
           experiencesByType[tipoCompId] = experiences;
         }
         
-        setAvailableExperiencesByType(experiencesByType);
+        if (isMounted) {
+          setAvailableExperiencesByType(experiencesByType);
+        }
       } catch (err) {
         console.error('Errore caricamento esperienze:', err);
       }
     };
 
     loadExperiences();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [athlete?.tipoAtletaId, competition]);
 
   // Carica le categorie disponibili per l'atleta
   useEffect(() => {
+    let isMounted = true;
+    
     const loadCategories = async () => {
       if (!competition?.categorieAtleti || !athlete?.tipoAtletaId) {
         return;
@@ -237,16 +253,22 @@ const AthleteRegistration = ({
       );
 
       if (!athleteConfig) {
-        setAvailableCategories([]);
+        if (isMounted) {
+          setAvailableCategories([]);
+        }
         return;
       }
 
       const categories = athleteConfig.categorie || [];
-      setAvailableCategories(categories);
+      if (isMounted) {
+        setAvailableCategories(categories);
+      }
 
       // Carica i dettagli di ogni categoria
       const details = {};
       for (const category of categories) {
+        if (!isMounted) return;
+        
         try {
           const categoryDetail = await loadCategoryTypeById(category.configTipoCategoria);
           details[category.configTipoCategoria] = { ...categoryDetail, ...category };
@@ -254,10 +276,17 @@ const AthleteRegistration = ({
           console.error('Errore nel caricamento dettagli categoria:', err);
         }
       }
-      setCategoryDetails(details);
+      
+      if (isMounted) {
+        setCategoryDetails(details);
+      }
     };
 
     loadCategories();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [competition, athlete?.tipoAtletaId]);
 
   useEffect(() => {
@@ -640,6 +669,21 @@ const AthleteRegistration = ({
 
   // Renderizza il contenuto della fase 2
   const renderPhase2 = () => {
+    // Verifica che i dati siano caricati
+    const isLoadingCategories = availableCategories.length > 0 && Object.keys(categoryDetails).length === 0;
+    
+    if (isLoadingCategories) {
+      return (
+        <div className="phase-container">
+          <h3 className="phase-title">
+            <FiCheckCircle className="section-title-icon" />
+            Selezione categorie
+          </h3>
+          <p>Caricamento categorie in corso...</p>
+        </div>
+      );
+    }
+    
     // Verifica se è una categoria di combattimento
     const isFightCategory = (categoryId) => {
       const details = categoryDetails[categoryId];
