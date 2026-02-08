@@ -71,6 +71,7 @@ const AthleteRegistration = ({
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isPhase2DataLoading, setIsPhase2DataLoading] = useState(true);
 
   // Configurazione stepper
   const steps = [
@@ -279,6 +280,11 @@ const AthleteRegistration = ({
       
       if (isMounted) {
         setCategoryDetails(details);
+        // Segnala che il caricamento è completato con un piccolo delay
+        // per dare tempo a React di stabilizzare il DOM
+        setTimeout(() => {
+          if (isMounted) setIsPhase2DataLoading(false);
+        }, 150);
       }
     };
 
@@ -445,10 +451,18 @@ const AthleteRegistration = ({
       
       const success = await manageCurrentPhase();
       if (success) {
-        setActiveStep(prev => Math.min(prev + 1, steps.length - 1));
+        setActiveStep(prev => {
+          const nextStep = Math.min(prev + 1, steps.length - 1);
+          // Se stiamo per andare alla fase 2, impostiamo loading
+          if (nextStep === 1) {
+            setIsPhase2DataLoading(true);
+          }
+          return nextStep;
+        });
         setErrors([]);
       }
     } catch (err) {
+      console.error('Errore in handleNext:', err);
       setErrors([
         'Si è verificato un errore imprevisto. Per favore riprova.',
         err && err.message ? err.message : 'Errore sconosciuto'
@@ -669,10 +683,8 @@ const AthleteRegistration = ({
 
   // Renderizza il contenuto della fase 2
   const renderPhase2 = () => {
-    // Verifica che i dati siano caricati
-    const isLoadingCategories = availableCategories.length > 0 && Object.keys(categoryDetails).length === 0;
-    
-    if (isLoadingCategories) {
+    // Verifica che i dati siano completamente caricati
+    if (isPhase2DataLoading || (availableCategories.length > 0 && Object.keys(categoryDetails).length === 0)) {
       return (
         <div className="phase-container">
           <h3 className="phase-title">
@@ -806,7 +818,7 @@ const AthleteRegistration = ({
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {categoriesByType[1].map(category => {
+                  {categoriesByType[1].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
@@ -814,7 +826,7 @@ const AthleteRegistration = ({
 
                     return (
                       <div
-                        key={categoryId}
+                        key={`quyen-${categoryId}-${index}`}
                         style={{
                           display: 'flex',
                           flexWrap: 'wrap',
@@ -892,7 +904,7 @@ const AthleteRegistration = ({
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {categoriesByType[2].map(category => {
+                  {categoriesByType[2].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
@@ -900,7 +912,7 @@ const AthleteRegistration = ({
 
                     return (
                       <div
-                        key={categoryId}
+                        key={`quyenvukhi-${categoryId}-${index}`}
                         style={{
                           display: 'flex',
                           flexWrap: 'wrap',
@@ -998,14 +1010,14 @@ const AthleteRegistration = ({
                   </div>
             
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {categoriesByType[3].map(category => {
+                  {categoriesByType[3].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
 
                     return (
                       <div
-                        key={categoryId}
+                        key={`combat-${categoryId}-${index}`}
                         style={{
                           display: 'flex',
                           flexWrap: 'wrap',
