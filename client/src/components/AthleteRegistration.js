@@ -71,7 +71,6 @@ const AthleteRegistration = ({
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [isPhase2DataLoading, setIsPhase2DataLoading] = useState(true);
 
   // Configurazione stepper
   const steps = [
@@ -280,11 +279,6 @@ const AthleteRegistration = ({
       
       if (isMounted) {
         setCategoryDetails(details);
-        // Segnala che il caricamento è completato con un piccolo delay
-        // per dare tempo a React di stabilizzare il DOM
-        setTimeout(() => {
-          if (isMounted) setIsPhase2DataLoading(false);
-        }, 150);
       }
     };
 
@@ -451,14 +445,7 @@ const AthleteRegistration = ({
       
       const success = await manageCurrentPhase();
       if (success) {
-        setActiveStep(prev => {
-          const nextStep = Math.min(prev + 1, steps.length - 1);
-          // Se stiamo per andare alla fase 2, impostiamo loading
-          if (nextStep === 1) {
-            setIsPhase2DataLoading(true);
-          }
-          return nextStep;
-        });
+        setActiveStep(prev => Math.min(prev + 1, steps.length - 1));
         setErrors([]);
       }
     } catch (err) {
@@ -683,8 +670,10 @@ const AthleteRegistration = ({
 
   // Renderizza il contenuto della fase 2
   const renderPhase2 = () => {
-    // Verifica che i dati siano completamente caricati
-    if (isPhase2DataLoading || (availableCategories.length > 0 && Object.keys(categoryDetails).length === 0)) {
+    // Verifica che i dati siano caricati
+    const isLoadingCategories = availableCategories.length > 0 && Object.keys(categoryDetails).length === 0;
+    
+    if (isLoadingCategories) {
       return (
         <div className="phase-container">
           <h3 className="phase-title">
