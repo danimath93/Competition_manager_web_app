@@ -351,6 +351,7 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
     // Calcola dettagli per tipo atleta
     const athleteTypeTotals = {};
     const categoryBreakdown = {};
+    const categoryTypeTotals = {};
 
     if (iscrizioniAtleti.length === 0) {
       return res.status(404).json({ error: 'Nessuna iscrizione atleta trovata per questo club e competizione' });
@@ -380,6 +381,7 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
         if (tipoCategoria && tipoCategoria.nome) {
           iscrizioniPerAtleta[atleta.id].categorie.push(tipoCategoria.nome);
           categoryBreakdown[tipoCategoria.nome] = (categoryBreakdown[tipoCategoria.nome] || 0) + 1;
+          categoryTypeTotals[tipoCategoria.tipoCompetizioneId] = (categoryTypeTotals[tipoCategoria.tipoCompetizioneId] || 0) + 1;
         }
       }
     };
@@ -418,7 +420,8 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
         totalCategories,
         totalCost
       },
-      athleteTypeTotals
+      athleteTypeTotals,
+      categoryTypeTotals
     };
     res.json(summary);
   } catch (error) {

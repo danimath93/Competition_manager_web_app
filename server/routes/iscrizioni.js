@@ -68,4 +68,10 @@ router.get('/costs/:clubId/:competizioneId', iscrizioneController.getClubRegistr
 // GET /api/iscrizioni/club-iscrizione/riepilogo/:clubId/:competizioneId - Ottieni il riepilogo iscrizione per un club in una competizione
 router.get('/club-iscrizione/riepilogo/:clubId/:competizioneId', iscrizioneController.downloadClubCompetitionSummary);
 
+// POST /api/iscrizioni/club-iscrizione/verifica/:clubId/:competizioneId - Verifica o annulla la verifica dell'iscrizione del club
+router.post('/club-iscrizione/verifica', iscrizioneController.toggleVerificaIscrizioneClub);
+
+// POST /api/iscrizioni/atleta/verifica - Verifica o annulla la verifica dell'iscrizione di un atleta
+router.post('/atleta/verifica', iscrizioneController.toggleVerificaIscrizioneAtleta);
+
 module.exports = router;
