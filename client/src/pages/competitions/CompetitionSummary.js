@@ -37,7 +37,9 @@ const CompetitionSummary = () => {
   const [isClubInfoModalOpen, setIsClubInfoModalOpen] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
   const [clubFilter, setClubFilter] = useState('');
+  const [athleteFilter, setAthleteFilter] = useState('');
   const [clubs, setClubs] = useState([]);
+  const [athletes, setAthletes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('administrative');
@@ -58,6 +60,10 @@ const CompetitionSummary = () => {
 
   const handleClubFilterChange = (event) => {
     setClubFilter(event.target.value);
+  };
+
+  const handleAthleteFilterChange = (event) => {
+    setAthleteFilter(event.target.value);
   };
 
   const handleDownloadCertificato = async (athlete) => {
@@ -155,6 +161,14 @@ const CompetitionSummary = () => {
         const athleteRegs = await loadRegistrationsByCompetition(competitionId);
         setAthleteRegistrations(athleteRegs);
 
+        // Estrai lista atleti per filtro tecnico
+        const uniqueAthletes = {};
+        athleteRegs.forEach(reg => {
+          if (reg.atleta && !uniqueAthletes[reg.atleta.id]) {
+            uniqueAthletes[reg.atleta.id] = reg.atleta;
+          }
+        });
+        setAthletes(Object.values(uniqueAthletes));
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
         setError('Errore nel caricamento dei dati della competizione: ' + (err.response?.data?.message || err.message));
@@ -166,7 +180,7 @@ const CompetitionSummary = () => {
     fetchData();
   }, [competitionId]);
 
-    // Raggruppa le iscrizioni per atleta
+  // Raggruppa le iscrizioni per atleta
   const athleteGroups = useMemo(() => {
     return athleteRegistrations.reduce((groups, registration) => {
       const athlete = registration.atleta;
@@ -737,7 +751,16 @@ const CompetitionSummary = () => {
   }, [administrativeTableRows]); 
 
   const technicalTableRows = useMemo(() => {
-    return Object.values(athleteGroups).map((group, index) => ({
+    const filteredGroups = Object.values(athleteGroups).filter(group => {
+      // Filtra per id atleta
+      if (athleteFilter) {
+        return group.athlete.id === parseInt(athleteFilter);
+      }
+
+      return true;
+    });
+
+    return filteredGroups.map((group, index) => ({
       id: group.athlete.id || index,
       athlete: group.athlete,
       registrations: group.registrations,
@@ -745,7 +768,7 @@ const CompetitionSummary = () => {
       tesseramento: group.tesseramento,
       totalCost: group.totalCost,
     }));
-  }, [athleteGroups]);
+  }, [athleteGroups, athleteFilter]);
 
   if (loading) {
     return (
@@ -862,19 +885,39 @@ const CompetitionSummary = () => {
 
         {/* Tab Panel - Riepilogo tecnico */}
         { activeTab === "technical" && (
-          <DataGrid
-            rows={technicalTableRows}
-            columns={technicalTableColumns}
-            initialState={{
-              ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-              sorting: {
-                sortModel: [{ field: 'club.denominazione', sort: 'asc' }],
-              },
-            }}
-            disableColumnMenu={false}
-            disableColumnSelector={false}
-            localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
-          />
+          <>
+            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200, maxWidth: 400, mb: 3 }}>
+              <InputLabel>Cerca atleta</InputLabel>
+              <Select
+                name="athlete"
+                label="Cerca atleta"
+                value={athleteFilter}
+                onChange={handleAthleteFilterChange}
+              >
+                <MenuItem value="">
+                  <em>Tutti</em>
+                </MenuItem>
+                {athletes.map((athlete) => (
+                  <MenuItem key={athlete.id} value={athlete.id}>
+                    {athlete.cognome} {athlete.nome}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <DataGrid
+              rows={technicalTableRows}
+              columns={technicalTableColumns}
+              initialState={{
+                ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
+                sorting: {
+                  sortModel: [{ field: 'club.denominazione', sort: 'asc' }],
+                },
+              }}
+              disableColumnMenu={false}
+              disableColumnSelector={false}
+              localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
+            />
+          </>
         )}
       </Tabs>
 

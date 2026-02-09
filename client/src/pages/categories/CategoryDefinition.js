@@ -60,6 +60,7 @@ import { loadAllJudges } from '../../api/judges';
 import CategorySplit from './CategorySplit';
 import CategorySummaryModal from '../../components/CategorySummaryModal';
 import PageHeader from '../../components/PageHeader';
+import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -107,7 +108,9 @@ const CategoryDefinition = () => {
   const [showGenerationOptions, setShowGenerationOptions] = useState(false);
   const [generationOptions, setGenerationOptions] = useState({
     unisciAttivitaComplementari: false,
-    unisciLivelloEsperienza: false
+    unisciLivelloEsperienza: false,
+    utilizzaDateValiditaGruppiEta: false,
+    utilizzaEtaAtletiInizioGara: false
   });
 
   // Modals for summary and print
@@ -525,6 +528,7 @@ const CategoryDefinition = () => {
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
     const isSelected = selectedForMerge.includes(categoria.nome);
+    const isFightCategory = categoria.tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
 
     const getBirthYear = (dataNascita) => {
       if (!dataNascita) return null;
@@ -682,15 +686,14 @@ const CategoryDefinition = () => {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Atleta</strong></TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
-                        { isGeneratedCard ? (
-                          <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Esperienza</strong></TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Atleta</strong></TableCell>
+                        { isFightCategory ? (
+                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
                         ) : (
-                          <TableCell sx = {{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Club</strong></TableCell>
-                        )
-                         }
+                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
+                        )}
+                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Esperienza</strong></TableCell>
+                        <TableCell sx = {{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Club</strong></TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -700,25 +703,28 @@ const CategoryDefinition = () => {
                         return (
                           <TableRow key={idx} hover>
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {atleta.nome} {atleta.cognome}
+                              <Tooltip title={`${atleta.cognome} ${atleta.nome}`} arrow placement="top">
+                                <span>
+                              {atleta.cognome} {atleta.nome ? `${atleta.nome.charAt(0)}.` : ''}
+                                </span>
+                              </Tooltip>
                             </TableCell>
-                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {getBirthYear(atleta.dataNascita) || getBirthYear(item.dataNascita) || '-'}
-                            </TableCell>
-                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {atleta.peso || item.peso || '-'}
-                            </TableCell>
-                            {
-                              isGeneratedCard ? (
-                                <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                  {item.esperienza || '-'}
-                                </TableCell>
-                              ) : (
-                                <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                  {club?.denominazione || club?.nome || '-'}
-                                </TableCell>
+                            { isFightCategory ? (
+                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                                {atleta.peso || item.peso || '-'}
+                              </TableCell>
+                             ) : (
+                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                                {getBirthYear(atleta.dataNascita) || getBirthYear(item.dataNascita) || '-'}
+                              </TableCell>
                               )
                             }
+                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {item.esperienza || '-'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {club?.abbreviazione || club?.denominazione || '-'}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -916,6 +922,40 @@ const CategoryDefinition = () => {
                   <Typography variant="body1">Unisci categorie per livello esperienza</Typography>
                   <Typography variant="caption" color="text.secondary">
                     Raggruppa atleti di diversi livelli di esperienza nella stessa categoria
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={generationOptions.utilizzaDateValiditaGruppiEta}
+                  onChange={() => handleToggleGenerationOption('utilizzaDateValiditaGruppiEta')}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body1">Utilizza date di validità dei gruppi di età</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Considera le date di validità dei gruppi di età per la generazione delle categorie
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={generationOptions.utilizzaEtaAtletiInizioGara}
+                  onChange={() => handleToggleGenerationOption('utilizzaEtaAtletiInizioGara')}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body1">Utilizza età atleti all'inizio gara</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Considera l'età degli atleti all'inizio della gara per la generazione delle categorie
                   </Typography>
                 </Box>
               }

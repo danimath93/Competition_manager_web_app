@@ -6,15 +6,14 @@ const logger = require('../helpers/logger/logger');
 const FIGHTING_COMPETITION_TYPE_ID = 3; // ID del tipo di competizione per combattimento  
 const COMPLEMENTARY_ACTIVITIES_TYPE_ID = 4; // ID del tipo di competizione per attività complementari
 
+const BLACK_BELT_ATHETE_TYPE_ID = 3; // ID del tipo atleta per cintura nera
+
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
 exports.generateCategories = async (req, res) => {
   try {
     const { competizioneId } = req.params;
-    const { unisciAttivitaComplementari, unisciLivelloEsperienza } = req.body;
-
-    // TODO: Aggiungere opzione per usare date di validità gruppi età
-    const useGroupAgeValidityDate = false;
+    const { unisciAttivitaComplementari, unisciLivelloEsperienza, utilizzaDateValiditaGruppiEta, utilizzaEtaAtletiInizioGara } = req.body;
 
     // Verifica che la competizione esista
     const competition = await Competizione.findByPk(competizioneId);
@@ -38,7 +37,7 @@ exports.generateCategories = async (req, res) => {
         }, {
           model: Club,
           as: 'club',
-          attributes: ['id', 'denominazione']
+          attributes: ['id', 'denominazione', 'abbreviazione']
         }],
       }, {
         model: ConfigTipoCategoria,
@@ -73,10 +72,24 @@ exports.generateCategories = async (req, res) => {
     registrations.forEach(registration => {
       const athlete = registration.atleta;
       const birthDate = new Date(athlete.dataNascita);
-      const age = today.getFullYear() - birthDate.getFullYear();
       const tipoAtleta = athlete.tipoAtleta;
       const tipoCompetizioneId = registration?.tipoCategoria?.tipoCompetizioneId;
       const categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
+
+      // Calcola l'età dell'atleta (considerando eventuale preferenza per età all'inizio gara)
+      let age = today.getFullYear() - birthDate.getFullYear();
+      if (utilizzaEtaAtletiInizioGara) {
+        // Considero il giorno preciso per il calcolo dell'età se la preferenza è attiva
+        if (competition.dataInizio) {
+          const inizioGaraDate = new Date(competition.dataInizio);
+          age = inizioGaraDate.getFullYear() - birthDate.getFullYear();
+          if (inizioGaraDate.getMonth() < birthDate.getMonth() ||
+            (inizioGaraDate.getMonth() === birthDate.getMonth() && inizioGaraDate.getDate() < birthDate.getDate())
+          ) {
+            age--;
+          }
+        }
+      }
 
       // Solo per le attività complementari (id=4), posso attivare il merge globale
       const mergeComplementaryActivities = unisciAttivitaComplementari && tipoCompetizioneId && tipoCompetizioneId == COMPLEMENTARY_ACTIVITIES_TYPE_ID? true : false;
@@ -86,8 +99,7 @@ exports.generateCategories = async (req, res) => {
       let displayName = '';
 
       // Aggiungi il tipo atleta alla chiave
-      // TODO: Gestire meglio questa parte con costanti o config esterna
-      if (tipoAtleta && tipoAtleta.id == 3) // id.3 = CN
+      if (tipoAtleta && tipoAtleta.id == BLACK_BELT_ATHETE_TYPE_ID)
       {
         if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
           categoryKey += `_CN`;
@@ -103,7 +115,7 @@ exports.generateCategories = async (req, res) => {
       // Aggiungi il gruppo di età alla chiave
       let groupAge = null;
       let athleteGroupAge = null;
-      if (!useGroupAgeValidityDate) {
+      if (!utilizzaDateValiditaGruppiEta) {
         gruppiEta.forEach(gruppo => {
           if (age >= gruppo.etaMinima && age <= gruppo.etaMassima) {
             groupAge = gruppo.id;
@@ -161,7 +173,8 @@ exports.generateCategories = async (req, res) => {
           tipiAtletaId: tipoAtleta ? [tipoAtleta.id] : [],
           livelliEsperienzaId: lvlEsperienza ? [lvlEsperienza] : [],
           gruppiEtaId: groupAge? [groupAge] : [],
-          tipoCategoriaId: registration.tipoCategoriaId
+          tipoCategoriaId: registration.tipoCategoriaId,
+          tipoCompetizioneId: tipoCompetizioneId
         });
       } else {
         // Aggiunge i cmapi array se non già presenti
@@ -185,7 +198,12 @@ exports.generateCategories = async (req, res) => {
         peso: registration.peso,
         esperienza: registration.esperienza ? registration.esperienza.nome : null,
         tipoAtleta: tipoAtleta ? tipoAtleta.nome : null,
-        iscrizioneId: registration.id
+        iscrizioneId: registration.id,
+        club: athlete.club ? {
+          id: athlete.club.id,
+          denominazione: athlete.club.denominazione,
+          abbreviazione: athlete.club.abbreviazione
+        } : null
       });
     });
 
@@ -325,7 +343,7 @@ exports.getCategoriesByCompetizione = async (req, res) => {
             include: [{
               model: Club,
               as: 'club',
-              attributes: ['id', 'denominazione']
+              attributes: ['id', 'denominazione', 'abbreviazione']
             }]
           }]
         });
