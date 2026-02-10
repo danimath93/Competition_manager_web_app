@@ -75,6 +75,7 @@ exports.generateCategories = async (req, res) => {
       const tipoAtleta = athlete.tipoAtleta;
       const tipoCompetizioneId = registration?.tipoCategoria?.tipoCompetizioneId;
       const categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
+      const categoryDetailName = registration.dettagli?.nome || null;
 
       // Calcola l'età dell'atleta (considerando eventuale preferenza per età all'inizio gara)
       let age = today.getFullYear() - birthDate.getFullYear();
@@ -197,6 +198,7 @@ exports.generateCategories = async (req, res) => {
         dataNascita: athlete.dataNascita,
         peso: registration.peso,
         esperienza: registration.esperienza ? registration.esperienza.nome : null,
+        dettagli: categoryDetailName,
         tipoAtleta: tipoAtleta ? tipoAtleta.nome : null,
         iscrizioneId: registration.id,
         club: athlete.club ? {

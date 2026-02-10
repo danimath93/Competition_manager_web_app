@@ -487,10 +487,10 @@ const CategoryDefinition = () => {
   const getFilteredCategories = (categoriesList) => {
     return categoriesList.filter(categoria => {
       if (filters.nomeCategoria && !categoria.nome.toLowerCase().includes(filters.nomeCategoria.toLowerCase())) return false;
-      if (filters.tipoAtletaId && !categoria.tipiAtletaId.includes(filters.tipoAtletaId)) return false;
+      if (filters.tipoAtletaId && !categoria?.tipiAtletaId?.includes(filters.tipoAtletaId)) return false;
       if (filters.tipoCategoriaId && categoria.tipoCategoriaId !== filters.tipoCategoriaId) return false;
       if (filters.genere && categoria.genere !== filters.genere) return false;
-      if (filters.gruppoEtaId && !categoria.gruppiEtaId.includes(filters.gruppoEtaId)) return false;
+      if (filters.gruppoEtaId && !categoria?.gruppiEtaId?.includes(filters.gruppoEtaId)) return false;
 
       return true;
     });
@@ -528,6 +528,7 @@ const CategoryDefinition = () => {
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
     const isSelected = selectedForMerge.includes(categoria.nome);
+    const isQuyenCategory = categoria.tipoCompetizioneId === CompetitionTipology.MANI_NUDE || categoria.tipoCompetizioneId === CompetitionTipology.ARMI;
     const isFightCategory = categoria.tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
 
     const getBirthYear = (dataNascita) => {
@@ -692,6 +693,9 @@ const CategoryDefinition = () => {
                         ) : (
                           <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
                         )}
+                        { isQuyenCategory && (
+                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Dettagli</strong></TableCell>
+                        )}
                         <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Esperienza</strong></TableCell>
                         <TableCell sx = {{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Club</strong></TableCell>
                       </TableRow>
@@ -719,6 +723,11 @@ const CategoryDefinition = () => {
                               </TableCell>
                               )
                             }
+                            { isQuyenCategory && (
+                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                                {item.dettagli || '-'}
+                              </TableCell>
+                            )}
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {item.esperienza || '-'}
                             </TableCell>

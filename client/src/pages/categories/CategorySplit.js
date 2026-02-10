@@ -10,7 +10,6 @@ import {
   Paper,
   List,
   ListItem,
-  ListItemText,
   ListItemButton,
   IconButton,
   Divider,
@@ -19,18 +18,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
-  Stack,
-  ToggleButtonGroup,
-  ToggleButton,
-  Alert
 } from '@mui/material';
 import {
   ArrowForward,
   ArrowBack,
   Close,
   Sort,
-  FilterList
 } from '@mui/icons-material';
 
 const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
@@ -325,6 +318,12 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
               >
                 {atleta.esperienza || '-'}
               </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ flex: '1 1 30%', color: 'text.secondary' }}
+              >
+                {atleta.club?.abbreviazione || atleta.club?.denominazione || '-'}
+              </Typography>
             </Box>
           </Box>
         </ListItemButton>
@@ -371,7 +370,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
                 label="Ordina per"
               >
                 <MenuItem value="alphabetical">Alfabetico</MenuItem>
-                <MenuItem value="bornYear">Anno di Nascita</MenuItem>
+                <MenuItem value="bornYear">Anno</MenuItem>
                 <MenuItem value="weight">Peso</MenuItem>
                 <MenuItem value="experience">Esperienza</MenuItem>
               </Select>
@@ -442,13 +441,6 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
               </Select>
             </FormControl>
           </Box>
-
-          <Alert severity="info" sx={{ mt: 2 }}>
-            <Typography variant="caption">
-              <strong>Suggerimenti:</strong> Fai doppio clic su un atleta per spostarlo. 
-              Usa i filtri per selezionare automaticamente gli atleti con caratteristiche specifiche.
-            </Typography>
-          </Alert>
         </Paper>
 
         {/* Nomi categorie */}
@@ -474,7 +466,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
           {/* Colonna sinistra - Atleti originali */}
           <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
-              <Typography variant="subtitle1" fontWeight={600}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ background: 'primary.main', color: 'white' }}>
                 {nome1}
               </Typography>
               <Typography variant="caption">
@@ -490,13 +482,16 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
                 ATLETA
               </Typography>
               <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 80px', textAlign: 'center' }}>
-                ANNO NASC.
+                ANNO
               </Typography>
               <Typography variant="caption" fontWeight={600} sx={{ flex: '0 0 60px', textAlign: 'center' }}>
                 PESO
               </Typography>
               <Typography variant="caption" fontWeight={600} sx={{ flex: '1 1 30%' }}>
                 ESPERIENZA
+              </Typography>
+              <Typography variant="caption" fontWeight={600} sx={{ flex: '1 1 30%' }}>
+                CLUB
               </Typography>
             </Box>
             
@@ -532,7 +527,7 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
           {/* Colonna destra - Nuova categoria */}
           <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <Box sx={{ p: 2, bgcolor: 'secondary.main', color: 'white' }}>
-              <Typography variant="subtitle1" fontWeight={600}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ background: 'secondary.main', color: 'white' }}>
                 {nome2}
               </Typography>
               <Typography variant="caption">
@@ -555,6 +550,9 @@ const CategorySplit = ({ open, onClose, categoria, onSplit }) => {
               </Typography>
               <Typography variant="caption" fontWeight={600} sx={{ flex: '1 1 30%' }}>
                 ESPERIENZA
+              </Typography>
+              <Typography variant="caption" fontWeight={600} sx={{ flex: '1 1 30%' }}>
+                CLUB
               </Typography>
             </Box>
             
