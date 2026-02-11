@@ -190,7 +190,6 @@ const ClubAdmin = () => {
               </Grid>
               <Button
                 icon={Add}
-                size='s'
                 onClick={() => handleOpenModal()}
               >
                 Aggiungi Club

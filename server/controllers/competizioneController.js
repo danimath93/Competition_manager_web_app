@@ -3,6 +3,7 @@ const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta } = 
 
 const logger = require('../helpers/logger/logger');
 const PDFDocument = require('pdfkit');
+const ExcelJS = require('exceljs');
 
 // Ottieni tutte le competizioni
 const getAllCompetizioni = async (req, res) => {
@@ -703,6 +704,112 @@ const printCategories = async (req, res) => {
   }
 };
 
+const exportRegisteredAthletes = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+    if (!competizioneId) {
+      return res.status(400).json({ error: 'competizioneId mancante' });
+    }
+
+    // Recupera la competizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      logger.warn(`Tentativo esportazione atleti per competizione inesistente - ID: ${competizioneId}`);
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Recupera tutti gli atleti iscritti tramite DettaglioIscrizioneAtleta
+    const dettagliIscrizioni = await DettaglioIscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          attributes: ['id', 'nome', 'cognome'],
+          include: [
+            {
+              model: Club,
+              as: 'club',
+              attributes: ['denominazione']
+            }
+          ]
+        }
+      ],
+      order: [['atleta', 'cognome', 'ASC'], ['atleta', 'nome', 'ASC']]
+    });
+
+    if (dettagliIscrizioni.length === 0) {
+      logger.warn(`Nessun atleta iscritto per competizione ${competizioneId}`);
+      return res.status(404).json({ error: 'Nessun atleta iscritto a questa competizione' });
+    }
+
+    // Crea il workbook Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Atleti Iscritti');
+
+    // Definisci le colonne
+    worksheet.columns = [
+      { header: 'Cognome', key: 'cognome', width: 25 },
+      { header: 'Nome', key: 'nome', width: 25 },
+      { header: 'N. Tessera', key: 'tessera', width: 20 },
+      { header: 'Club', key: 'club', width: 40 }
+    ];
+
+    // Formattazione intestazione
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, size: 12 };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1976D2' }
+    };
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.height = 25;
+
+    // Aggiungi i dati degli atleti
+    dettagliIscrizioni.forEach((dettaglio) => {
+      const atleta = dettaglio.atleta;
+      if (atleta) {
+        worksheet.addRow({
+          cognome: atleta.cognome || '',
+          nome: atleta.nome || '',
+          tessera: atleta.numeroTessera || '',
+          club: atleta.club?.denominazione || ''
+        });
+      }
+    });
+
+    // Formattazione delle celle dati
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) { // Salta l'intestazione
+        row.alignment = { vertical: 'middle', horizontal: 'left' };
+        row.border = {
+          top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }
+        };
+      }
+    });
+
+    // Imposta le intestazioni della risposta
+    const fileName = `atleti-iscritti-${competizione.nome.replace(/\s+/g, '_')}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    // Invia il file
+    await workbook.xlsx.write(res);
+    
+    logger.info(`File Excel atleti iscritti generato per competizione ${competizioneId} - ${dettagliIscrizioni.length} atleti`);
+    res.end();
+  } catch (error) {
+    logger.error(`Errore nella generazione del file Excel atleti iscritti per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nella generazione del file Excel',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllCompetizioni,
   getTipoCategorieByCompetizione,
@@ -713,5 +820,6 @@ module.exports = {
   getCompetizioniByStato,
   getCompetizioniByTipologia,
   getCompetitionClubRegistrationSummary,
-  printCategories
+  printCategories,
+  exportRegisteredAthletes
 };

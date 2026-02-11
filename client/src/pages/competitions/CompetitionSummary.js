@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton, FormControl, InputLabel, MenuItem, Select, Checkbox } from '@mui/material';
-import { ArrowBack, Description, Info} from '@mui/icons-material';
+import { ArrowBack, Description, Download, Info} from '@mui/icons-material';
 import MuiButton from '@mui/material/Button';
 import { FaTrophy } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { CompetitionTipology, CompetitionTipologyLabels } from '../../constants/enums/CompetitionEnums';
-import { getCompetitionDetails, getClubCompetitionRegistrationSummary } from '../../api/competitions';
+import { getCompetitionDetails, getClubCompetitionRegistrationSummary, downloadExcelRegisteredAthletes } from '../../api/competitions';
 import { loadCategoryTypeById } from '../../api/config';
 import { loadAllClubs } from '../../api/clubs';
 import { getStatoCertificato, downloadCertificato } from '../../api/certificati';
@@ -19,6 +19,7 @@ import {
   toggleVerificaIscrizioneClub,
   toggleVerificaIscrizioneAtleta
 } from '../../api/registrations';
+import Button from '../../components/common/Button';
 import PageHeader from '../../components/PageHeader';
 import Tabs from '../../components/common/Tabs';
 import ClubModal from '../../components/ClubModal';
@@ -125,6 +126,26 @@ const CompetitionSummary = () => {
     } catch (err) {
       console.error('Errore nell\'aggiornamento del flag verificato:', err);
       setError('Errore nell\'aggiornamento del flag verificato: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleDownloadExcelReport = async () => {
+    try {
+      const blob = await downloadExcelRegisteredAthletes(competitionId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = competition?.nome 
+        ? `atleti-iscritti-${competition.nome.replace(/\s+/g, '_')}.xlsx`
+        : `atleti-iscritti-competizione-${competitionId}.xlsx`;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Errore durante il download del report Excel:', err);
+      setError(err.response?.data?.message || 'Errore durante il download del report Excel');
     }
   };
 
@@ -886,24 +907,32 @@ const CompetitionSummary = () => {
         {/* Tab Panel - Riepilogo tecnico */}
         { activeTab === "technical" && (
           <>
-            <FormControl fullWidth variant="outlined" sx={{ minWidth: 200, maxWidth: 400, mb: 3 }}>
-              <InputLabel>Cerca atleta</InputLabel>
-              <Select
-                name="athlete"
-                label="Cerca atleta"
-                value={athleteFilter}
-                onChange={handleAthleteFilterChange}
-              >
-                <MenuItem value="">
-                  <em>Tutti</em>
-                </MenuItem>
-                {athletes.map((athlete) => (
-                  <MenuItem key={athlete.id} value={athlete.id}>
-                    {athlete.cognome} {athlete.nome}
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={3}>
+              <FormControl variant="outlined" sx={{ minWidth: 250 }}>
+                <InputLabel>Cerca atleta</InputLabel>
+                <Select
+                  name="athlete"
+                  label="Cerca atleta"
+                  value={athleteFilter}
+                  onChange={handleAthleteFilterChange}
+                >
+                  <MenuItem value="">
+                    <em>Tutti</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                  {athletes.map((athlete) => (
+                    <MenuItem key={athlete.id} value={athlete.id}>
+                      {athlete.cognome} {athlete.nome}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button
+                icon={Download}
+                onClick={() => handleDownloadExcelReport()}
+              >
+                Scarica iscrizioni
+              </Button>
+            </Box>
             <DataGrid
               rows={technicalTableRows}
               columns={technicalTableColumns}

@@ -217,6 +217,7 @@ const Athletes = () => {
                 onChange={handleFilterNameChange}
                 placeholder="Filtra per Nome/Cognome"
                 sx={{
+                  width: '100%',
                   maxWidth: "800px",
                   '& .MuiOutlinedInput-root': {
                     height: '60px',
@@ -225,7 +226,6 @@ const Athletes = () => {
               />
               <Button
                 icon={Add}
-                size='s'
                 onClick={() => handleOpenModal()}
               >
                 Aggiungi Atleta
@@ -236,7 +236,7 @@ const Athletes = () => {
               <Box sx={{ mt: 2 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 250 }}>
                       <InputLabel>Filtra per Club</InputLabel>
                       <Select
                         name="club"
@@ -256,7 +256,7 @@ const Athletes = () => {
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 250 }}>
                       <InputLabel>Filtra per Gruppo Età</InputLabel>
                       <Select
                         name="ageGroup"

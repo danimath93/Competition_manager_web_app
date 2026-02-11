@@ -92,6 +92,19 @@ export const deleteCompetition = async (id) => {
   }
 };
 
+// Scarica il report Excel degli atleti iscritti a una competizione
+export const downloadExcelRegisteredAthletes = async (competitionId) => {
+  try {
+    const response = await axios.get(`/competizioni/${competitionId}/export-reg-athletes`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il download del report Excel:', error);
+    throw error;
+  }
+};
+
 // Nota: Le funzioni di upload/download/delete file sono state migrate al file documents.js
 // Usare uploadDocumento, downloadDocumento, deleteDocumento da './documents'
 // Esempi:

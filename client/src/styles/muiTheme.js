@@ -194,10 +194,15 @@ const muiCustomTheme = createTheme({
 
     // TextField
     MuiTextField: {
+      defaultProps: {
+        size: 'medium',
+      },
       styleOverrides: {
         root: {
+          width: '250px',
           '& .MuiInputBase-root': {
             fontFamily: "'Outfit', sans-serif",
+            height: '56px',
           },
           '& .MuiInputLabel-root': {
             fontFamily: "'Outfit', sans-serif",
@@ -208,14 +213,25 @@ const muiCustomTheme = createTheme({
 
     // Autocomplete
     MuiAutocomplete: {
+      defaultProps: {
+        size: 'medium',
+      },
       styleOverrides: {
         root: {
+          width: '250px',
           '& .MuiInputBase-root': {
             fontFamily: "'Outfit', sans-serif",
+            height: '56px',
+            paddingTop: '0',
+            paddingBottom: '0',
           },
         },
         option: {
           fontFamily: "'Outfit', sans-serif",
+        },
+        inputRoot: {
+          paddingTop: '0 !important',
+          paddingBottom: '0 !important',
         },
       },
     },

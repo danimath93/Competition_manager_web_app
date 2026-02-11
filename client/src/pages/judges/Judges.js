@@ -124,6 +124,7 @@ const Judges = () => {
                 onChange={handleFilterChange}
                 placeholder="Filtra per Nome/Cognome"
                 sx={{
+                  width: '100%',
                   maxWidth: "800px",
                   '& .MuiOutlinedInput-root': {
                     height: '60px',
@@ -132,7 +133,6 @@ const Judges = () => {
               />
               <Button
                 icon={Add}
-                size='s'
                 onClick={() => handleOpenModal()}
               >
                 Aggiungi Giudice

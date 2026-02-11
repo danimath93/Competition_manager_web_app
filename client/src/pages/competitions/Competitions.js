@@ -177,7 +177,6 @@ const Competitions = () => {
           <Box sx={{ mt: 2, ml: 'auto', display: 'flex', justifyContent: 'center' }}>
             <Button
               icon={Add}
-              size='s'
               onClick={() => handleOpenModal()}
             >
               Aggiungi Competizione
