@@ -113,6 +113,19 @@ exports.generateCategories = async (req, res) => {
         }
       }
 
+      // Aggiungi il genere alla chiave
+      let gender = athlete.sesso || 'U';
+      if (!mergeComplementaryActivities) {
+        categoryKey += `_${gender}`;
+        displayName = `${displayName}${gender}`;
+      }
+
+      // Aggiungo il nome della categoria
+      if (displayName !== '')
+        displayName = `${displayName} - ${categoryName}`; 
+      else
+        displayName = categoryName;
+
       // Aggiungi il gruppo di età alla chiave
       let groupAge = null;
       let athleteGroupAge = null;
@@ -139,22 +152,9 @@ exports.generateCategories = async (req, res) => {
 
       if (!mergeComplementaryActivities) {
         categoryKey += `_age_${groupAge || 'open'}`;
-        displayName = athleteGroupAge ? `${displayName}${athleteGroupAge.nome}` : `${displayName}Open`;
+        displayName = athleteGroupAge ? `${displayName} - ${athleteGroupAge.nome}` : `${displayName} - Open`;
       }
 
-      // Aggiungi il genere alla chiave
-      let gender = athlete.sesso || 'U';
-      if (!mergeComplementaryActivities) {
-        categoryKey += `_${gender}`;
-        displayName = `${displayName} - ${gender}`;
-      }
-
-      // Aggiungo il nome della categoria
-      if (displayName !== '')
-        displayName = `${displayName} - ${categoryName}`; 
-      else
-        displayName = categoryName;
-      
       // Aggiungi lvl esperienza se presente
       let lvlEsperienza = null;
       if (registration.esperienza) {
@@ -175,7 +175,8 @@ exports.generateCategories = async (req, res) => {
           livelliEsperienzaId: lvlEsperienza ? [lvlEsperienza] : [],
           gruppiEtaId: groupAge? [groupAge] : [],
           tipoCategoriaId: registration.tipoCategoriaId,
-          tipoCompetizioneId: tipoCompetizioneId
+          tipoCompetizioneId: tipoCompetizioneId,
+          key: categoryKey
         });
       } else {
         // Aggiunge i cmapi array se non già presenti

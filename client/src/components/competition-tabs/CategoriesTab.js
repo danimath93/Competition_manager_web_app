@@ -39,7 +39,7 @@ const steps = [
   { label: 'Assegna Livelli Esperienza', number: 4 }
 ];
 
-const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, onChange, onSubmit, isEditMode = false }) => {
+const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   
@@ -85,13 +85,11 @@ const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, 
       const athleteTypeIds = value.categorieAtleti.map(ca => ca.idTipoAtleta);
       setSelectedAthleteTypes(athleteTypeIds);
       
-      if (value.tipiCompetizione && value.tipiCompetizione.length > 0) {
-        const selectedCompTypes = competitionTypes.filter(ct => 
-          value.tipiCompetizione.includes(ct.id)
-        );
-        setSelectedCompetitionTypes(selectedCompTypes);
-        loadCategoriesForCompetitionTypes(selectedCompTypes);
-      }
+      const selectedCompTypes = competitionTypes.filter(ct => 
+        value.tipiCompetizione.includes(ct.id)
+      );
+      setSelectedCompetitionTypes(selectedCompTypes);
+      loadCategoriesForCompetitionTypes(selectedCompTypes);
       
       const categoriesMap = {};
       value.categorieAtleti.forEach(ca => {
@@ -112,7 +110,7 @@ const CategoriesTab = ({ value = { categorieAtleti: [], tipiCompetizione: [] }, 
       setActiveStep(3);
     };
   
-    if (isEditMode && value?.categorieAtleti?.length > 0) {
+    if (value?.categorieAtleti?.length > 0 && value?.tipiCompetizione?.length > 0 && competitionTypes.length > 0) {
       initializeFromExistingData();
     }
   }, [value, isEditMode, athleteTypes, competitionTypes]);

@@ -7,6 +7,7 @@ import { FaTrophy } from 'react-icons/fa';
 import { createCompetition, updateCompetition, getCompetitionDetails } from '../../api/competitions';
 import { CompetitionStatus, CompetitionLevel } from '../../constants/enums/CompetitionEnums';
 import PageHeader from '../../components/PageHeader';
+import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 import GeneralInfoTab from '../../components/competition-tabs/GeneralInfoTab';
 import CategoriesTab from '../../components/competition-tabs/CategoriesTab';
 import CostsTab from '../../components/competition-tabs/CostsTab';
@@ -37,6 +38,7 @@ const CompetitionConfigurator = () => {
     intestatario: '',
     causale: '',
   });
+  const [editConfirmModalOpen, setEditConfirmModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -97,11 +99,12 @@ const CompetitionConfigurator = () => {
   };
 
   const handleCategoriesChange = (categoriesData) => {
-    setFormData({
+    const newFormData = {
       ...formData,
       categorieAtleti: categoriesData.categorieAtleti,
       tipiCompetizione: categoriesData.tipiCompetizione || [],
-    });
+    };
+    setFormData(newFormData);
   };
 
   const handleCostsChange = (costiIscrizione, iban, intestatario, causale) => {
@@ -116,6 +119,7 @@ const CompetitionConfigurator = () => {
 
   const handleSubmit = async () => {
     setError('');
+    setEditConfirmModalOpen(false);
     setLoading(true);
     
     try {
@@ -134,7 +138,7 @@ const CompetitionConfigurator = () => {
   const handleGeneralInfoSubmit = (e) => {
     e.preventDefault();
     if (isEditMode) {
-      handleSubmit();
+      setEditConfirmModalOpen(true);
     } else {
       setCurrentTab('categories');
     }
@@ -142,7 +146,7 @@ const CompetitionConfigurator = () => {
 
   const handleCategoriesSubmit = (e) => {
     if (isEditMode) {
-      handleSubmit();
+      setEditConfirmModalOpen(true);
     } else {
       setCurrentTab('costs');
     }
@@ -151,6 +155,8 @@ const CompetitionConfigurator = () => {
   const handleCostsSubmit = (e) => {
     e.preventDefault();
     if (isEditMode) {
+      setEditConfirmModalOpen(true);
+    } else {
       handleSubmit();
     }
   };
@@ -222,6 +228,21 @@ const CompetitionConfigurator = () => {
           />
         )}
       </Tabs>
+      { editConfirmModalOpen && (
+        <ConfirmActionModal
+          open={editConfirmModalOpen}
+          title="Conferma Modifiche"
+          message="Sei sicuro di voler salvare le modifiche apportate alla competizione?"
+          primaryButton={{
+            text: 'Salva Modifiche',
+            onClick: async () => { await handleSubmit();},
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setEditConfirmModalOpen(false),
+          }}
+        />
+      )}
     </div>
   );
 
