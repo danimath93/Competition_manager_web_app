@@ -725,7 +725,7 @@ const exportRegisteredAthletes = async (req, res) => {
         {
           model: Atleta,
           as: 'atleta',
-          attributes: ['id', 'nome', 'cognome'],
+          attributes: ['id', 'nome', 'cognome', 'numeroTessera'],
           include: [
             {
               model: Club,
@@ -735,7 +735,7 @@ const exportRegisteredAthletes = async (req, res) => {
           ]
         }
       ],
-      order: [['atleta', 'cognome', 'ASC'], ['atleta', 'nome', 'ASC']]
+      order: [['atleta', 'numeroTessera', 'ASC'], ['atleta', 'cognome', 'ASC'], ['atleta', 'nome', 'ASC']]
     });
 
     if (dettagliIscrizioni.length === 0) {
@@ -749,9 +749,9 @@ const exportRegisteredAthletes = async (req, res) => {
 
     // Definisci le colonne
     worksheet.columns = [
-      { header: 'Cognome', key: 'cognome', width: 25 },
-      { header: 'Nome', key: 'nome', width: 25 },
       { header: 'N. Tessera', key: 'tessera', width: 20 },
+      { header: 'Nome', key: 'nome', width: 25 },
+      { header: 'Cognome', key: 'cognome', width: 25 },
       { header: 'Club', key: 'club', width: 40 }
     ];
 
@@ -772,6 +772,7 @@ const exportRegisteredAthletes = async (req, res) => {
       const atleta = dettaglio.atleta;
       if (atleta) {
         worksheet.addRow({
+          nome: atleta.nome || '',
           cognome: atleta.cognome || '',
           nome: atleta.nome || '',
           tessera: atleta.numeroTessera || '',
