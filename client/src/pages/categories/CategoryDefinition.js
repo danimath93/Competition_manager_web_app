@@ -100,9 +100,9 @@ const CategoryDefinition = () => {
   const [mergeDialog, setMergeDialog] = useState({ open: false, mergedName: '' });
   const [splitDialog, setSplitDialog] = useState({ open: false, categoria: null });
   
-  // Merge mode state
-  const [isMergeMode, setIsMergeMode] = useState(false);
+  // Selection states
   const [selectedForMerge, setSelectedForMerge] = useState([]);
+  const [selectedSaved, setSelectedSaved] = useState([]);
 
   // Opzioni di generazione personalizzata
   const [showGenerationOptions, setShowGenerationOptions] = useState(false);
@@ -209,47 +209,6 @@ const CategoryDefinition = () => {
       ...prev,
       [option]: !prev[option]
     }));
-  };
-
-  const handleSaveCategories = async () => {
-    if (generatedCategories.length === 0) {
-      setError('Nessuna categoria da salvare');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      let categoriesToSave = [...generatedCategories];
-
-      // Rimuovo le info atleti non necessarie
-      categoriesToSave = categoriesToSave.map(cat => ({ 
-        ...cat,
-        atleti: cat.atleti.map(atleta => {
-          return {
-            id: atleta.id,
-            iscrizioneId: atleta.iscrizioneId
-           };
-        })
-      }));
-          
-
-      await saveCategories(competizioneId, {
-        categorie: categoriesToSave
-      });
-
-      setSuccess('Categorie salvate con successo!');
-      setIsGenerated(false);
-      setGeneratedCategories([]);
-      await loadCategories();
-    } catch (error) {
-      console.error('Errore nel salvataggio:', error);
-      setError(error.response?.data?.message || 'Errore nel salvataggio delle categorie');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSaveSingleCategory = async (categoria) => {
@@ -370,13 +329,6 @@ const CategoryDefinition = () => {
     setEditDialog({ open: false, categoria: null, originalNome: null });
   };
 
-  const handleOpenMerge = () => {
-    if (isGenerated) {
-      setIsMergeMode(true);
-      setSelectedForMerge([]);
-    }
-  };
-
   const handleToggleMergeSelection = (categoriaNome) => {
     setSelectedForMerge(prev => {
       if (prev.includes(categoriaNome)) {
@@ -387,18 +339,125 @@ const CategoryDefinition = () => {
     });
   };
 
+  const handleToggleSavedSelection = (categoriaId) => {
+    setSelectedSaved(prev => {
+      if (prev.includes(categoriaId)) {
+        return prev.filter(id => id !== categoriaId);
+      } else {
+        return [...prev, categoriaId];
+      }
+    });
+  };
+
   const handleConfirmMerge = () => {
     if (selectedForMerge.length < 2) {
       setError('Seleziona almeno due categorie da unire');
       return;
     }
 
+    if (!window.confirm(`Sei sicuro di voler unire ${selectedForMerge.length} categorie? Questa azione non può essere annullata.`)) {
+      return;
+    }
+
     setMergeDialog({ open: true, mergedName: selectedForMerge.join('_') });
   };
 
-  const handleCancelMerge = () => {
-    setIsMergeMode(false);
+  const handleSaveSelected = async () => {
+    if (selectedForMerge.length === 0) {
+      setError('Seleziona almeno una categoria da salvare');
+      return;
+    }
+
+    if (!window.confirm(`Sei sicuro di voler salvare ${selectedForMerge.length} categoria/e selezionata/e?`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const categoriesToSave = generatedCategories.filter(c => selectedForMerge.includes(c.nome));
+      
+      // Prepara le categorie per il salvataggio
+      const categoriesData = categoriesToSave.map(categoria => ({
+        ...categoria,
+        atleti: categoria.atleti.map(atleta => ({
+          id: atleta.id,
+          iscrizioneId: atleta.iscrizioneId
+        }))
+      }));
+
+      await saveCategories(competizioneId, {
+        categorie: categoriesData
+      });
+
+      // Rimuovi le categorie salvate dalla lista delle generate
+      const updated = generatedCategories.filter(c => !selectedForMerge.includes(c.nome));
+      setGeneratedCategories(updated);
+      setSelectedForMerge([]);
+      
+      // Se non ci sono più categorie generate, disattiva la modalità generata
+      if (updated.length === 0) {
+        setIsGenerated(false);
+      }
+
+      setSuccess(`${categoriesToSave.length} categoria/e salvata/e con successo!`);
+      await loadCategories();
+    } catch (error) {
+      console.error('Errore nel salvataggio:', error);
+      setError(error.response?.data?.message || 'Errore nel salvataggio delle categorie');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedForMerge.length === 0) {
+      setError('Seleziona almeno una categoria da eliminare');
+      return;
+    }
+
+    if (!window.confirm(`Sei sicuro di voler eliminare ${selectedForMerge.length} categoria/e selezionata/e? Questa azione non può essere annullata.`)) {
+      return;
+    }
+
+    const updated = generatedCategories.filter(c => !selectedForMerge.includes(c.nome));
+    setGeneratedCategories(updated);
     setSelectedForMerge([]);
+    setSuccess(`${selectedForMerge.length} categoria/e eliminata/e con successo`);
+    
+    // Se non ci sono più categorie, disattiva la modalità generata
+    if (updated.length === 0) {
+      setIsGenerated(false);
+    }
+  };
+
+  const handleDeleteSelectedSaved = async () => {
+    if (selectedSaved.length === 0) {
+      setError('Seleziona almeno una categoria da eliminare');
+      return;
+    }
+
+    if (!window.confirm(`Sei sicuro di voler eliminare ${selectedSaved.length} categoria/e selezionata/e? Questa azione non può essere annullata.`)) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Elimina tutte le categorie selezionate
+      await Promise.all(selectedSaved.map(id => deleteCategoria(id)));
+      
+      setSelectedSaved([]);
+      setSuccess(`${selectedSaved.length} categoria/e eliminata/e con successo`);
+      await loadCategories();
+    } catch (error) {
+      setError(error.response?.data?.message || 'Errore nell\'eliminazione delle categorie');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMerge = async () => {
@@ -431,7 +490,6 @@ const CategoryDefinition = () => {
       
       setGeneratedCategories(updated);
       setMergeDialog({ open: false, mergedName: '' });
-      setIsMergeMode(false);
       setSelectedForMerge([]);
       setSuccess(`${selectedForMerge.length} categorie unite con successo`);
     }
@@ -527,7 +585,7 @@ const CategoryDefinition = () => {
     const cardKey = `${isGeneratedCard ? 'gen' : 'saved'}_${index}`;
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
-    const isSelected = selectedForMerge.includes(categoria.nome);
+    const isSelected = isGeneratedCard ? selectedForMerge.includes(categoria.nome) : selectedSaved.includes(categoria.id);
     const isQuyenCategory = categoria.tipoCompetizioneId === CompetitionTipology.MANI_NUDE || categoria.tipoCompetizioneId === CompetitionTipology.ARMI;
     const isFightCategory = categoria.tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
 
@@ -550,8 +608,14 @@ const CategoryDefinition = () => {
         }}
       >
           <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Titolo con toggle per merge mode */}
+            {/* Titolo con checkbox sempre visibile */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Checkbox
+                checked={isSelected}
+                onChange={() => isGeneratedCard ? handleToggleMergeSelection(categoria.nome) : handleToggleSavedSelection(categoria.id)}
+                size="small"
+                sx={{ p: 0 }}
+              />
               <Tooltip title={categoria.nome} arrow placement="top">
                 <Typography 
                   variant="subtitle1" 
@@ -567,14 +631,6 @@ const CategoryDefinition = () => {
                   {categoria.nome}
                 </Typography>
               </Tooltip>
-              {isMergeMode && isGeneratedCard && (
-                <Checkbox
-                  checked={isSelected}
-                  onChange={() => handleToggleMergeSelection(categoria.nome)}
-                  size="small"
-                  sx={{ p: 0 }}
-                />
-              )}
             </Box>
 
             {/* Container scrollabile orizzontalmente per chips e bottoni */}
@@ -989,55 +1045,48 @@ const CategoryDefinition = () => {
             <Typography variant="h6">
               Anteprima Categorie Generate ({generatedCategories.length})
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {!isMergeMode ? (
-                <>
-                  <MuiButton
-                    variant="outlined"
-                    startIcon={<MergeType />}
-                    onClick={handleOpenMerge}
-                  >
-                    Unisci
-                  </MuiButton>
-                  <MuiButton
-                    variant="outlined"
-                    color="error"
-                    onClick={handleCancelCategories}
-                    disabled={loading}
-                  >
-                    Annulla Categorie
-                  </MuiButton>
-                  <MuiButton
-                    variant="contained"
-                    startIcon={<Save />}
-                    onClick={handleSaveCategories}
-                    disabled={loading}
-                  >
-                    Salva Categorie
-                  </MuiButton>
-                </>
-              ) : (
-                <>
-                  <Chip 
-                    label={`${selectedForMerge.length} categorie selezionate`} 
-                    color="primary"
-                    sx={{ mr: 1 }}
-                  />
-                  <MuiButton
-                    variant="outlined"
-                    onClick={handleCancelMerge}
-                  >
-                    Annulla Unione
-                  </MuiButton>
-                  <MuiButton
-                    variant="contained"
-                    onClick={handleConfirmMerge}
-                    disabled={selectedForMerge.length < 2}
-                  >
-                    Conferma Unione
-                  </MuiButton>
-                </>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              {selectedForMerge.length > 0 && (
+                <Chip 
+                  label={`${selectedForMerge.length} selezionate`} 
+                  color="primary"
+                  onDelete={() => setSelectedForMerge([])}
+                />
               )}
+              <MuiButton
+                variant="contained"
+                color="success"
+                startIcon={<Save />}
+                onClick={handleSaveSelected}
+                disabled={selectedForMerge.length === 0 || loading}
+              >
+                Salva Selezionate
+              </MuiButton>
+              <MuiButton
+                variant="outlined"
+                startIcon={<MergeType />}
+                onClick={handleConfirmMerge}
+                disabled={selectedForMerge.length < 2}
+              >
+                Unisci Selezionate
+              </MuiButton>
+              <MuiButton
+                variant="outlined"
+                color="error"
+                startIcon={<Delete />}
+                onClick={handleDeleteSelected}
+                disabled={selectedForMerge.length === 0}
+              >
+                Elimina Selezionate
+              </MuiButton>
+              <MuiButton
+                variant="outlined"
+                color="error"
+                onClick={handleCancelCategories}
+                disabled={loading}
+              >
+                Annulla Tutte
+              </MuiButton>
             </Box>
           </Box>
 
@@ -1165,7 +1214,14 @@ const CategoryDefinition = () => {
             <Typography variant="h6">
               Categorie Salvate ({categories.length})
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              {selectedSaved.length > 0 && (
+                <Chip 
+                  label={`${selectedSaved.length} selezionate`} 
+                  color="primary"
+                  onDelete={() => setSelectedSaved([])}
+                />
+              )}
               <MuiButton
                 variant="outlined"
                 startIcon={<Summarize />}
@@ -1173,6 +1229,15 @@ const CategoryDefinition = () => {
                 disabled={loading}
               >
                 Riepilogo Generale
+              </MuiButton>
+              <MuiButton
+                variant="outlined"
+                color="error"
+                startIcon={<Delete />}
+                onClick={handleDeleteSelectedSaved}
+                disabled={selectedSaved.length === 0 || loading}
+              >
+                Elimina Selezionate
               </MuiButton>
               <MuiButton
                 variant="outlined"
