@@ -33,7 +33,7 @@ router.get('/:competizioneId/riepilogo-iscrizione', competizioneController.getCo
 // GET /api/competizioni/:competizioneId/print-categories - Stampa categorie in PDF
 router.get('/:competizioneId/print-categories', competizioneController.printCategories);
 
-// GET /api/competizioni/:competizioneId/export-reg-athletes - Esporta atleti iscritti in Excel
+// GET /api/competizioni/:competizioneId/export-reg-athletes?mode=simple|full - Esporta atleti iscritti in Excel
 router.get('/:competizioneId/export-reg-athletes', competizioneController.exportRegisteredAthletes);
 
 module.exports = router;

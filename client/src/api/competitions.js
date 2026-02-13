@@ -93,9 +93,10 @@ export const deleteCompetition = async (id) => {
 };
 
 // Scarica il report Excel degli atleti iscritti a una competizione
-export const downloadExcelRegisteredAthletes = async (competitionId) => {
+export const downloadExcelRegisteredAthletes = async (competitionId, mode = 'simple') => {
   try {
     const response = await axios.get(`/competizioni/${competitionId}/export-reg-athletes`, {
+      params: { mode },
       responseType: 'blob'
     });
     return response.data;

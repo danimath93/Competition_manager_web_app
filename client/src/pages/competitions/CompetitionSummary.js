@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
-import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton, FormControl, InputLabel, MenuItem, Select, Checkbox } from '@mui/material';
+import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton, FormControl, InputLabel, MenuItem, Select, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { ArrowBack, Description, Download, Info} from '@mui/icons-material';
 import MuiButton from '@mui/material/Button';
 import { FaTrophy } from 'react-icons/fa';
@@ -44,6 +44,8 @@ const CompetitionSummary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('administrative');
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportMode, setExportMode] = useState('simple');
 
   // Configurazione dei tabs
   const summaryTabs = [
@@ -129,9 +131,22 @@ const CompetitionSummary = () => {
     }
   };
 
+  const handleOpenExportModal = () => {
+    setIsExportModalOpen(true);
+  };
+
+  const handleCloseExportModal = () => {
+    setIsExportModalOpen(false);
+    setExportMode('simple');
+  };
+
+  const handleExportModeChange = (event) => {
+    setExportMode(event.target.value);
+  };
+
   const handleDownloadExcelReport = async () => {
     try {
-      const blob = await downloadExcelRegisteredAthletes(competitionId);
+      const blob = await downloadExcelRegisteredAthletes(competitionId, exportMode);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -143,6 +158,7 @@ const CompetitionSummary = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      handleCloseExportModal();
     } catch (err) {
       console.error('Errore durante il download del report Excel:', err);
       setError(err.response?.data?.message || 'Errore durante il download del report Excel');
@@ -928,7 +944,7 @@ const CompetitionSummary = () => {
               </FormControl>
               <Button
                 icon={Download}
-                onClick={() => handleDownloadExcelReport()}
+                onClick={handleOpenExportModal}
               >
                 Scarica iscrizioni
               </Button>
@@ -958,6 +974,45 @@ const CompetitionSummary = () => {
           isReadOnlyMode={true}
         />
       )}
+
+      {/* Modale per selezione modalità export */}
+      <Dialog open={isExportModalOpen} onClose={handleCloseExportModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Seleziona modalità di export</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Modalità</InputLabel>
+              <Select
+                value={exportMode}
+                label="Modalità"
+                onChange={handleExportModeChange}
+              >
+                <MenuItem value="simple">VVD Italia</MenuItem>
+                <MenuItem value="full">Completa</MenuItem>
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
+              {exportMode === 'simple' ? (
+                <div>
+                  <strong>VVD Italia:</strong> Export semplificato con N. Tessera, Nome, Cognome e Club.
+                </div>
+              ) : (
+                <div>
+                  <strong>Completa:</strong> Export dettagliato con tutte le informazioni degli atleti e le categorie di iscrizione.
+                </div>
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={handleCloseExportModal}>
+            Annulla
+          </MuiButton>
+          <MuiButton onClick={handleDownloadExcelReport} variant="contained" startIcon={<Download />}>
+            Scarica
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
