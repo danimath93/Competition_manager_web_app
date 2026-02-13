@@ -25,6 +25,7 @@ import CategoryResults from './pages/categories/CategoryResults';
 import CategoryInProgress from './pages/categories/CategoryInProgress';
 import CompetitionConfigurator from './pages/competitions/CompetitionConfigurator';
 import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
+import Settings from './pages/settings/Settings';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
 
@@ -188,10 +189,10 @@ const AppContent = () => {
           </AuthGate>
         } />
 
-        {/* Impostazioni - TODO: al momento in sviluppo, solo superAdmin */}
+        {/* Impostazioni - In sviluppo admin e superAdmin */}
         <Route path="/settings" element={
-          <AuthGate requiredPermissions={["superAdmin"]}>
-            <div>Pagina Impostazioni (da implementare)</div>
+          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
+            <Settings />
           </AuthGate>
         } />
 

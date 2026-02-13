@@ -15,8 +15,16 @@ router.get('/check-auth', authController.checkAuthLevel);
 // POST /api/registerUsers - Register user
 router.post('/register', authController.registerUser);
 
+// POST /api/update-user-data - Update user data (e.g., clubId, more to be added) 
+router.post('/update-user-data', authController.updateUserData);
+
+// GET /api/confirm - Confirm user registration
 router.get('/confirm', authController.confirmUser);
+
+// POST /api/request-password-reset - Request password reset
 router.post('/request-password-reset', authController.requestPasswordReset);
+
+// POST /api/reset-password - Reset user password
 router.post('/reset-password', authController.resetPassword);
 
 module.exports = router;

@@ -214,6 +214,37 @@ const confirmUser = async (req, res) => {
   }
 };
 
+const updateUserData = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Token mancante' });
+    }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await UtentiLogin.findOne({ where: { username: decoded.username, status: 'E' } });
+    if (!user || !user.permissions) {
+      return res.status(404).json({ error: 'Utente non trovato o non autorizzato' });
+    }
+    
+    if (user.permissions !== 'superAdmin' && user.permissions !== 'admin') {
+      return res.status(403).json({ error: 'Permessi insufficienti per aggiornare le impostazioni' });
+    }
+
+    const { clubId } = req.body;
+    if (clubId) {
+      user.clubId = clubId;
+    }
+    await user.save();
+    return res.json({ success: true, message: 'Impostazioni aggiornate con successo.' });
+  } catch (error) {
+    logger.error(`Errore durante l'aggiornamento delle impostazioni utente: ${error.message}`, { stack: error.stack });
+    return res.status(500).json({
+      error: 'Errore durante l\'aggiornamento delle impostazioni',
+      details: error.message
+     });
+  }
+};
+
 // Richiesta reset password
 const requestPasswordReset = async (req, res) => {
   try {
@@ -273,6 +304,7 @@ module.exports = {
   checkAuthLevel,
   registerUser,
   confirmUser,
+  updateUserData,
   requestPasswordReset,
   resetPassword,
 };
