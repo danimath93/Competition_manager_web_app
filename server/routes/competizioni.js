@@ -33,6 +33,9 @@ router.get('/:competizioneId/riepilogo-iscrizione', competizioneController.getCo
 // GET /api/competizioni/:competizioneId/print-categories - Stampa categorie in PDF
 router.get('/:competizioneId/print-categories', competizioneController.printCategories);
 
+// GET /api/competizioni/:competizioneId/export-categories - Esporta categorie in Excel
+router.get('/:competizioneId/export-categories', competizioneController.exportCategories);
+
 // GET /api/competizioni/:competizioneId/export-reg-athletes?mode=simple|full - Esporta atleti iscritti in Excel
 router.get('/:competizioneId/export-reg-athletes', competizioneController.exportRegisteredAthletes);
 

@@ -471,6 +471,12 @@ const CategoryDefinition = () => {
       
       // Unisci tutti gli atleti delle categorie selezionate
       const allAtleti = categoriesToMerge.reduce((acc, cat) => [...acc, ...cat.atleti], []);
+
+      // Se le categorie hanno genere diverso, imposta il genere della categoria unita a 'U' (Unisex)
+      const hasMixedGender = new Set(categoriesToMerge.map(c => c.genere)).size > 1;
+
+      // Se le categorie hanno gruppi età diversi, unisci anche quelli (rimuovendo eventuali duplicati)
+      const allGruppiEta = [...new Set(categoriesToMerge.flatMap(c => c.gruppiEtaId || []))];
       
       // Usa i dati della prima categoria selezionata come base
       const baseCategoria = categoriesToMerge[0];
@@ -478,7 +484,9 @@ const CategoryDefinition = () => {
       const merged = {
         ...baseCategoria,
         nome: mergedName.trim(),
-        atleti: allAtleti
+        atleti: allAtleti,
+        genere: hasMixedGender ? 'U' : baseCategoria.genere,
+        gruppiEtaId: allGruppiEta
       };
 
       // Rimuovi tutte le categorie unite tranne la prima (che verrà sostituita)
