@@ -28,27 +28,27 @@ exports.generateCategories = async (req, res) => {
         categoriaId: null
       },
       include: [{
-        model: Atleta,
-        as: 'atleta',
-        attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId'],
-        include: [{
-          model: ConfigTipoAtleta,
-          as: 'tipoAtleta'
+          model: Atleta,
+          as: 'atleta',
+          attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId'],
+          include: [{
+            model: ConfigTipoAtleta,
+            as: 'tipoAtleta'
+          }, {
+            model: Club,
+            as: 'club',
+            attributes: ['id', 'denominazione', 'abbreviazione']
+          }],
         }, {
-          model: Club,
-          as: 'club',
-          attributes: ['id', 'denominazione', 'abbreviazione']
-        }],
-      }, {
-        model: ConfigTipoCategoria,
-        as: 'tipoCategoria',
-        attributes: ['id', 'nome', 'tipoCompetizioneId']
-      }, {
-        model: ConfigEsperienza,
-        as: 'esperienza',
-        attributes: ['id', 'nome']
-      }
-    ]
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome', 'tipoCompetizioneId']
+        }, {
+          model: ConfigEsperienza,
+          as: 'esperienza',
+          attributes: ['id', 'nome']
+        }
+      ]
     });
 
     if (registrations.length === 0) {
@@ -338,17 +338,30 @@ exports.getCategoriesByCompetizione = async (req, res) => {
       for (const categoria of categorie) {
         const iscrizioni = await IscrizioneAtleta.findAll({
           where: { categoriaId: categoria.id },
-          attributes: ['id', 'atletaId', 'tipoCategoriaId', 'categoriaId', 'peso'],
+          attributes: ['id', 'atletaId', 'tipoCategoriaId', 'categoriaId', 'peso', 'dettagli'],
           include: [{
             model: Atleta,
             as: 'atleta',
-            attributes: ['id', 'nome', 'cognome', 'dataNascita', 'sesso'],
+            attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId'],
             include: [{
+              model: ConfigTipoAtleta,
+              attributes: ['id', 'nome'],
+              as: 'tipoAtleta'
+            }, {
               model: Club,
               as: 'club',
               attributes: ['id', 'denominazione', 'abbreviazione']
-            }]
-          }]
+            }],
+          }, {
+            model: ConfigTipoCategoria,
+            as: 'tipoCategoria',
+            attributes: ['id', 'nome', 'tipoCompetizioneId']
+          }, {
+            model: ConfigEsperienza,
+            as: 'esperienza',
+            attributes: ['id', 'nome']
+          }
+        ]
         });
         categoria.dataValues.iscrizioni = iscrizioni;
       }

@@ -584,8 +584,9 @@ const CategoryDefinition = () => {
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
     const isSelected = isGeneratedCard ? selectedGenCategories.includes(categoria.key) : selectedSavedCategories.includes(categoria.id);
-    const isQuyenCategory = categoria.tipoCompetizioneId === CompetitionTipology.MANI_NUDE || categoria.tipoCompetizioneId === CompetitionTipology.ARMI;
-    const isFightCategory = categoria.tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
+    const tipoCompetizioneId = isGeneratedCard ? categoria.tipoCompetizioneId : categoria?.tipoCategoria?.tipoCompetizione?.id;
+    const isQuyenCategory = tipoCompetizioneId === CompetitionTipology.MANI_NUDE || tipoCompetizioneId === CompetitionTipology.ARMI;
+    const isFightCategory = tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
 
     const getBirthYear = (dataNascita) => {
       if (!dataNascita) return null;
@@ -758,6 +759,8 @@ const CategoryDefinition = () => {
                       {atleti.map((item, idx) => {
                         const atleta = isGeneratedCard ? item : item.atleta;
                         const club = isGeneratedCard ? item.club : item.atleta?.club;
+                        const esperienza = isGeneratedCard ? item.esperienza : item.esperienza?.nome;
+                        const dettagli = isGeneratedCard ? item.dettagli : item.dettagli?.nome;
                         return (
                           <TableRow key={idx} hover>
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
@@ -769,21 +772,21 @@ const CategoryDefinition = () => {
                             </TableCell>
                             { isFightCategory ? (
                               <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                {atleta.peso || item.peso || '-'}
+                                {item.peso || '-'}
                               </TableCell>
                              ) : (
                               <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                {getBirthYear(atleta.dataNascita) || getBirthYear(item.dataNascita) || '-'}
+                                {getBirthYear(atleta.dataNascita)}
                               </TableCell>
                               )
                             }
                             { isQuyenCategory && (
                               <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                {item.dettagli || '-'}
+                                {dettagli || '-'}
                               </TableCell>
                             )}
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {item.esperienza || '-'}
+                              {esperienza || '-'}
                             </TableCell>
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
                               {club?.abbreviazione || club?.denominazione || '-'}
