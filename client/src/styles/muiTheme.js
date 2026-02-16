@@ -199,13 +199,17 @@ const muiCustomTheme = createTheme({
       },
       styleOverrides: {
         root: {
-          width: '250px',
+          minWidth: '250px',
           '& .MuiInputBase-root': {
             fontFamily: "'Outfit', sans-serif",
             height: '56px',
           },
           '& .MuiInputLabel-root': {
             fontFamily: "'Outfit', sans-serif",
+            transform: 'translate(14px, 16px) scale(1)',
+          },
+          '& .MuiInputLabel-shrink': {
+            transform: 'translate(14px, -9px) scale(0.75)',
           },
         },
       },
@@ -218,12 +222,19 @@ const muiCustomTheme = createTheme({
       },
       styleOverrides: {
         root: {
-          width: '250px',
+          minWidth: '250px',
           '& .MuiInputBase-root': {
             fontFamily: "'Outfit', sans-serif",
             height: '56px',
             paddingTop: '0',
             paddingBottom: '0',
+          },
+          '& .MuiInputLabel-root': {
+            fontFamily: "'Outfit', sans-serif",
+            transform: 'translate(14px, 16px) scale(1)',
+          },
+          '& .MuiInputLabel-shrink': {
+            transform: 'translate(14px, -9px) scale(0.75)',
           },
         },
         option: {

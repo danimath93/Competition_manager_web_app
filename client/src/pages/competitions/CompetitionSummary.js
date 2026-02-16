@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton, FormControl, InputLabel, MenuItem, Select, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { ArrowBack, Description, Download, Info} from '@mui/icons-material';
+import { Autocomplete, TextField } from '@mui/material';
+import { ArrowBack, Description, Download, Info, Edit} from '@mui/icons-material';
 import MuiButton from '@mui/material/Button';
 import { FaTrophy } from 'react-icons/fa';
 import { format } from 'date-fns';
@@ -22,7 +23,9 @@ import {
 import Button from '../../components/common/Button';
 import PageHeader from '../../components/PageHeader';
 import Tabs from '../../components/common/Tabs';
+import SearchTextField from '../../components/SearchTextField';
 import ClubModal from '../../components/ClubModal';
+import RegistrationModal from '../../components/RegistrationModal';
 import muiTheme from '../../styles/muiTheme';
 
 
@@ -38,14 +41,17 @@ const CompetitionSummary = () => {
   const [isClubInfoModalOpen, setIsClubInfoModalOpen] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
   const [clubFilter, setClubFilter] = useState('');
-  const [athleteFilter, setAthleteFilter] = useState('');
-  const [clubs, setClubs] = useState([]);
-  const [athletes, setAthletes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [clubNames, setClubNames] = useState([]);
+  const [clubName, setClubName] = useState('');
+  const [technicalSearchFilter, setTechnicalSearchFilter] = useState('');
   const [activeTab, setActiveTab] = useState('administrative');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportMode, setExportMode] = useState('simple');
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  const [selectedAthleteForEdit, setSelectedAthleteForEdit] = useState(null);
+  const [selectedRegistrationsForEdit, setSelectedRegistrationsForEdit] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Configurazione dei tabs
   const summaryTabs = [
@@ -61,12 +67,12 @@ const CompetitionSummary = () => {
     setActiveTab(tabValue);
   };
 
-  const handleClubFilterChange = (event) => {
-    setClubFilter(event.target.value);
+  const handleClubSelectChange = (value) => {
+    setClubFilter(value || '');
   };
 
-  const handleAthleteFilterChange = (event) => {
-    setAthleteFilter(event.target.value);
+  const handleTechnicalSearchFilterChange = (event) => {
+    setTechnicalSearchFilter(event.target.value);
   };
 
   const handleDownloadCertificato = async (athlete) => {
@@ -165,6 +171,46 @@ const CompetitionSummary = () => {
     }
   };
 
+  const handleEditAthleteReg = (row) => {
+    setSelectedAthleteForEdit(row.athlete);
+    setSelectedRegistrationsForEdit(row.registrations);
+    setIsRegistrationModalOpen(true);
+  };
+
+  const handleCloseRegistrationModal = () => {
+    setIsRegistrationModalOpen(false);
+    setSelectedAthleteForEdit(null);
+    setSelectedRegistrationsForEdit([]);
+  };
+
+  const handleSaveRegistrationModal = async () => {
+    handleCloseRegistrationModal();
+
+    try {
+      // Ricarica le iscrizioni degli atleti per avere i dati aggiornati
+      const clubRegs = await getClubRegistrationsByCompetition(competitionId);
+
+      // Aggiungo il riepilogo costi e totali iscrizione per club
+      const clubRegsWithSummary = await Promise.all(clubRegs.map(async (clubReg) => {
+        try {
+          const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
+          return { ...clubReg, summary };
+        } catch (err) {
+          console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
+          return { ...clubReg, summary: null };
+        } 
+      }));
+      setClubRegistrations(clubRegsWithSummary);
+
+      // Carica tutte le iscrizioni degli atleti
+      const athleteRegs = await loadRegistrationsByCompetition(competitionId);
+      setAthleteRegistrations(athleteRegs);
+    } catch (err) {
+      console.error('Errore nel ricaricamento dei dati dopo la modifica dell\'iscrizione:', err);
+      setError('Errore nel ricaricamento dei dati dopo la modifica dell\'iscrizione: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -177,7 +223,8 @@ const CompetitionSummary = () => {
 
         // Carica tutti i club
         const clubsData = await loadAllClubs();
-        setClubs(clubsData);
+        const clubNamesData = clubsData.map((club) => club.denominazione);
+        setClubNames(clubNamesData);
 
         // Carica le iscrizioni dei club
         const clubRegs = await getClubRegistrationsByCompetition(competitionId);
@@ -198,14 +245,6 @@ const CompetitionSummary = () => {
         const athleteRegs = await loadRegistrationsByCompetition(competitionId);
         setAthleteRegistrations(athleteRegs);
 
-        // Estrai lista atleti per filtro tecnico
-        const uniqueAthletes = {};
-        athleteRegs.forEach(reg => {
-          if (reg.atleta && !uniqueAthletes[reg.atleta.id]) {
-            uniqueAthletes[reg.atleta.id] = reg.atleta;
-          }
-        });
-        setAthletes(Object.values(uniqueAthletes));
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
         setError('Errore nel caricamento dei dati della competizione: ' + (err.response?.data?.message || err.message));
@@ -723,12 +762,12 @@ const CompetitionSummary = () => {
       headerName: 'Azioni',
       width: 80,
       getActions: (params) => [
-        // <GridActionsCellItem
-        //   icon={<Edit />}
-        //   label="Modifica"
-        //   onClick={() => onEdit(params.row)}
-        //   showInMenu={true}
-        // />,
+        <GridActionsCellItem
+          icon={<Edit />}
+          label="Modifica"
+          onClick={() => handleEditAthleteReg(params.row)}
+          showInMenu={true}
+        />,
       ],
     });
 
@@ -742,7 +781,7 @@ const CompetitionSummary = () => {
     // Filtra per club se è selezionato un club specifico
     if (clubFilter) {
       filteredRegistrations = clubRegistrations.filter(
-        clubReg => clubReg.club?.id === parseInt(clubFilter)
+        clubReg => clubReg.club?.denominazione === clubFilter  
       );
     }
     
@@ -789,11 +828,18 @@ const CompetitionSummary = () => {
 
   const technicalTableRows = useMemo(() => {
     const filteredGroups = Object.values(athleteGroups).filter(group => {
-      // Filtra per id atleta
-      if (athleteFilter) {
-        return group.athlete.id === parseInt(athleteFilter);
+      // Se ho un testo valido, filtro per nome, cognome, club o categorie
+      if (technicalSearchFilter) {
+        const searchText = technicalSearchFilter.toLowerCase();
+        const name = group.athlete.nome?.toLowerCase() || '';
+        const surname = group.athlete.cognome?.toLowerCase() || '';
+        const clubName = group.athlete.club?.denominazione?.toLowerCase() || '';
+        const athleteType = group.athlete.tipoAtleta?.nome?.toLowerCase() || '';
+        return (name.includes(searchText) ||
+                surname.includes(searchText) ||
+                clubName.includes(searchText) ||
+                athleteType.includes(searchText));
       }
-
       return true;
     });
 
@@ -805,7 +851,7 @@ const CompetitionSummary = () => {
       tesseramento: group.tesseramento,
       totalCost: group.totalCost,
     }));
-  }, [athleteGroups, athleteFilter]);
+  }, [athleteGroups, technicalSearchFilter]);
 
   if (loading) {
     return (
@@ -887,22 +933,22 @@ const CompetitionSummary = () => {
             </Box>
 
             <FormControl fullWidth variant="outlined" sx={{ minWidth: 200, maxWidth: 400, mb: 3 }}>
-              <InputLabel>Filtra per Club</InputLabel>
-              <Select
-                name="club"
-                label="Filtra per Club"
-                value={clubFilter}
-                onChange={handleClubFilterChange}
-              >
-                <MenuItem value="">
-                  <em>Tutti</em>
-                </MenuItem>
-                {clubs.map((club) => (
-                  <MenuItem key={club.id} value={club.id}>
-                    {club.denominazione}
-                  </MenuItem>
-                ))}
-              </Select>
+                <Autocomplete
+                  id="club-select-settings"
+                  value={clubName}
+                  groupBy={(club) => club.charAt(0).toUpperCase()}
+                  getOptionLabel={(club) => club}
+                  onChange={(event, value) => handleClubSelectChange(value)}
+                  isOptionEqualToValue={(option, value) => option === value}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Club"
+                      size="small"
+                    />
+                  )}
+                  options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
+                />
             </FormControl>
 
             <DataGrid
@@ -924,24 +970,18 @@ const CompetitionSummary = () => {
         { activeTab === "technical" && (
           <>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={3}>
-              <FormControl variant="outlined" sx={{ minWidth: 250 }}>
-                <InputLabel>Cerca atleta</InputLabel>
-                <Select
-                  name="athlete"
-                  label="Cerca atleta"
-                  value={athleteFilter}
-                  onChange={handleAthleteFilterChange}
-                >
-                  <MenuItem value="">
-                    <em>Tutti</em>
-                  </MenuItem>
-                  {athletes.map((athlete) => (
-                    <MenuItem key={athlete.id} value={athlete.id}>
-                      {athlete.cognome} {athlete.nome}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <SearchTextField
+                value={technicalSearchFilter}
+                onChange={handleTechnicalSearchFilterChange}
+                placeholder="Filtra per Atleta, Club o tipo atleta"
+                sx={{
+                  width: '100%',
+                  maxWidth: "800px",
+                  '& .MuiOutlinedInput-root': {
+                    height: '60px',
+                  }
+                }}
+              />
               <Button
                 icon={Download}
                 onClick={handleOpenExportModal}
@@ -972,6 +1012,18 @@ const CompetitionSummary = () => {
           onClose={handleClubInfoCloseModal}
           club={selectedClub}
           isReadOnlyMode={true}
+        />
+      )}
+
+      {/* Modale per modifica iscrizione */}
+      {isRegistrationModalOpen && (
+        <RegistrationModal
+          open={isRegistrationModalOpen}
+          onClose={handleCloseRegistrationModal}
+          onSubmit={handleSaveRegistrationModal}
+          athlete={selectedAthleteForEdit}
+          registrations={selectedRegistrationsForEdit}
+          competition={competition}
         />
       )}
 

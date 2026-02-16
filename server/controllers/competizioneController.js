@@ -540,7 +540,7 @@ const printCategories = async (req, res) => {
           include: [{
             model: Club,
             as: 'club',
-            attributes: ['id', 'denominazione']
+            attributes: ['id', 'denominazione', 'abbreviazione']
           }]
         }],
         order: [['atleta', 'cognome', 'ASC']]
@@ -646,7 +646,7 @@ const printCategories = async (req, res) => {
           const peso = iscrizione.peso ? `${iscrizione.peso} kg` : '-';
           
           // Club - tronca se troppo lungo
-          let clubName = atleta.club?.denominazione || '-';
+          let clubName = atleta.club?.abbreviazione || atleta.club?.denominazione || '-';
           let clubLine2 = '';
           const maxClubLength = 55;
           if (clubName.length > maxClubLength) {

@@ -952,15 +952,10 @@ const AthleteRegistration = ({
             {categoriesByType[3].length > 0 && (
               <div className="data-section">
                 <h4 className="section-title">Categorie Combattimento</h4>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    padding: '8px'
-                  }}>
+                  <div className="combat-controls-container">
                     {/* Esperienza Combattimento */}
                     {availableExperiencesByType[3]?.length > 0 && (
-                      <div style={{ marginRight: '16px', width: '400px' }}>
+                      <div>
                         <Autocomplete
                           size="small"
                           value={selectedExperiences[3] || null}
@@ -982,7 +977,7 @@ const AthleteRegistration = ({
                     )}
                     {/* Campo peso - sempre in fondo alla sezione combattimento */}
                     {hasWeightRequirement && (
-                      <div style={{ marginLeft: 'auto' }}>
+                      <div>
                         <TextField
                           size="small"
                           label="Peso (kg)"
@@ -992,7 +987,6 @@ const AthleteRegistration = ({
                           disabled={!selectedRequiresWeight}
                           variant="outlined"
                           inputProps={{ step: '0.1', min: '0' }}
-                          style={{ maxWidth: '200px' }}
                         />
                       </div>
                     )}
