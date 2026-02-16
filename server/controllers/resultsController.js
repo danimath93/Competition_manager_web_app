@@ -141,6 +141,118 @@ async function printResults(req, res) {
 }
 
 module.exports.printResults = printResults;
+
+// PDF classifica club per una competizione
+async function printClubResults(req, res) {
+  const { competizioneId } = req.params;
+  try {
+    // Recupera la competizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+    // Calcola la classifica club (usando resultsHelpers)
+    const { buildClubRanking, computeAthletePoints, buildGlobalAthleteList } = require('../utils/resultsHelpers');
+    const categorie = await Categoria.findAll({ where: { competizioneId } });
+    const svolgimenti = await SvolgimentoCategoria.findAll({ where: { categoriaId: categorie.map(c => c.id) } });
+    // Ottieni lista atleti con medaglie
+    const athleteMedals = await buildGlobalAthleteList(svolgimenti);
+    const athleteMedalsWithPoints = computeAthletePoints(athleteMedals);
+    // Calcola classifica club
+    let classifica = await buildClubRanking(athleteMedalsWithPoints);
+    // Calcola punti per ogni club
+    classifica = classifica.map(club => {
+      // Somma i punti degli atleti del club
+      const punti = (club.dettagli || []).reduce((acc, a) => acc + (a.punti || 0), 0);
+      return { ...club, punti };
+    });
+    // Ordina per ori, argenti, bronzi, punti
+    classifica.sort((a, b) => b.oro - a.oro || b.argento - a.argento || b.bronzo - a.bronzo || b.punti - a.punti);
+
+    // Prepara il PDF
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    let buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+      const pdfData = Buffer.concat(buffers);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="classifica-club-${competizioneId}.pdf"`);
+      res.send(pdfData);
+    });
+
+    // Header
+    doc.fontSize(20).text('CLASSIFICA CLUB', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(14).text(`${competizione.nome} - ${competizione.luogo}`, { align: 'center' });
+    doc.moveDown(1);
+
+    // Podio
+    doc.fontSize(13).font('Helvetica-Bold').text('Podio', 40, doc.y);
+    doc.moveDown(0.2);
+    const podio = classifica.slice(0, 3);
+    podio.forEach((club, idx) => {
+      const ori = club.oro ?? 0;
+      const argenti = club.argento ?? 0;
+      const bronzi = club.bronzo ?? 0;
+      doc.fontSize(12).font('Helvetica-Bold').text(`${idx + 1}. ${club.club}`, 60, doc.y, { continued: true });
+      doc.fontSize(12).font('Helvetica').text(`   Ori ${ori} Argenti ${argenti} Bronzi ${bronzi}`);
+    });
+    doc.moveDown(1);
+
+    // Tabella classifica completa
+    doc.fontSize(13).font('Helvetica-Bold').text('Classifica completa', 40, doc.y);
+    doc.moveDown(0.2);
+    // Header tabella
+    const col1 = 50, col2 = 80, col3 = 400, col4 = 450, col5 = 500;
+    const rowHeight = 14;
+    const cellPadding = 2;
+    let tableY = doc.y;
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.fillColor('#f0f0f0').rect(40, tableY, 515, rowHeight).fill();
+    doc.fillColor('black');
+    doc.text('#', col1, tableY + cellPadding);
+    doc.text('Club', col2, tableY + cellPadding);
+    doc.text('Ori', col3, tableY + cellPadding);
+    doc.text('Argenti', col4, tableY + cellPadding);
+    doc.text('Bronzi', col5, tableY + cellPadding);
+    let currentY = tableY + rowHeight + 2;
+    doc.fontSize(10).font('Helvetica');
+    classifica.forEach((club, idx) => {
+      if (currentY > 750) {
+        doc.addPage();
+        tableY = doc.y;
+        doc.fontSize(10).font('Helvetica-Bold');
+        doc.fillColor('#f0f0f0').rect(40, tableY, 515, rowHeight).fill();
+        doc.fillColor('black');
+        doc.text('#', col1, tableY + cellPadding);
+        doc.text('Club', col2, tableY + cellPadding);
+        doc.text('Ori', col3, tableY + cellPadding);
+        doc.text('Argenti', col4, tableY + cellPadding);
+        doc.text('Bronzi', col5, tableY + cellPadding);
+        currentY = tableY + rowHeight + 2;
+        doc.fontSize(10).font('Helvetica');
+      }
+      const ori = club.oro ?? 0;
+      const argenti = club.argento ?? 0;
+      const bronzi = club.bronzo ?? 0;
+      const punti = club.punti ?? 0;
+      doc.text(idx + 1, col1, currentY);
+      doc.text(club.club, col2, currentY, { width: col3 - col2 - 5, ellipsis: true });
+      doc.text(ori, col3, currentY);
+      doc.text(argenti, col4, currentY);
+      doc.text(bronzi, col5, currentY);
+      currentY += rowHeight;
+    });
+    doc.end();
+  } catch (err) {
+    console.error('Errore generazione PDF classifica club:', err);
+    res.status(500).json({ error: 'Errore generazione PDF classifica club' });
+  }
+}
+
+module.exports.printClubResults = printClubResults;
+
 // GET /results/atleti
 exports.getAtletiResults = async (req, res) => {
   try {

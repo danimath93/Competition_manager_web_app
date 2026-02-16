@@ -7,6 +7,7 @@ import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack
 import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
 import { printResults } from '../../api/resultsPrint';
+import { printClubResults } from '../../api/resultsPrintClub';
 import { getCompetitionDetails } from '../../api/competitions';
 import PageHeader from '../../components/PageHeader';
 
@@ -228,6 +229,21 @@ useEffect(() => {
 
       {tab === 1 && club && (
         <Box>
+            {/* Pulsante stampa classifiche club*/}
+            <MuiButton
+              variant="contained"
+              color="primary"
+              sx={{ mb: 2 }}
+              onClick={async () => {
+                try {
+                  await printClubResults(competitionId);
+                } catch (err) {
+                  alert('Errore durante la generazione del PDF delle classifiche');
+                }
+              }}
+            >
+              Stampa Classifiche Club
+            </MuiButton>
           <Typography variant="h6" gutterBottom>Podio Club</Typography>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             {club.podio.map((c, idx) => (

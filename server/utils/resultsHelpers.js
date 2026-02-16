@@ -80,7 +80,8 @@ async function buildClubRanking(athleteMedals) {
       clubMap[club] = { oro: 0, argento: 0, bronzo: 0, dettagli: [] };
     }
 
-    const { oro, argento, bronzo } = a.medaglie;
+    // Fix: default medaglie se undefined
+    const { oro = 0, argento = 0, bronzo = 0 } = a.medaglie || {};
     clubMap[club].oro += oro;
     clubMap[club].argento += argento;
     clubMap[club].bronzo += bronzo;
