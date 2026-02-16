@@ -1,14 +1,16 @@
 export const CompetitionTipology = Object.freeze({
   MANI_NUDE: 1,
   ARMI: 2,
-  COMBATTIMENTO: 3
+  COMBATTIMENTO: 3,
+  COMPLEMENTARI: 4
 });
 
 // Mapping per la compatibilità con i vecchi valori stringa (se necessario)
 export const CompetitionTipologyLabels = Object.freeze({
   [CompetitionTipology.MANI_NUDE]: 'Mani nude',
   [CompetitionTipology.ARMI]: 'Armi',
-  [CompetitionTipology.COMBATTIMENTO]: 'Combattimento'
+  [CompetitionTipology.COMBATTIMENTO]: 'Combattimento',
+  [CompetitionTipology.COMPLEMENTARI]: 'Attività complementari'
 });
 
 // Funzione helper per ottenere il label da un ID

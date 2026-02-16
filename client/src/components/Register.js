@@ -4,7 +4,6 @@ import Header from './Header';
 import { TextInput, PasswordInput, Tabs } from './common';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
-import { checkClubExists, createClub } from '../api/clubs';
 import { registerUser } from '../api/auth';
 import './styles/Layout.css';
 import './styles/Register.css';
@@ -70,6 +69,12 @@ const Register = () => {
       !indirizzoVia.trim() || !indirizzoComune.trim() || !indirizzoCap.trim() ||
       !direttoreTecnico.trim() || !legaleRappresentante.trim() || !clubEmail.trim() || !tesseramento) {
       setError('Tutti i campi del club contrassegnati con * sono obbligatori.');
+      return false;
+    }
+    // Il codice fiscale deve essere di 11 caratteri solo numerici
+    const codiceFiscaleRegex = /^[0-9]{11}$/;
+    if (!codiceFiscaleRegex.test(codiceFiscale)) {
+      setError('Il codice fiscale deve essere di 11 caratteri numerici.');
       return false;
     }
     if (!privacyViewed) {
@@ -239,7 +244,7 @@ const Register = () => {
 
                       <TextInput
                         id="codiceFiscale"
-                        label="Codice Fiscale"
+                        label="Codice Fiscale Associazione"
                         value={codiceFiscale}
                         onChange={(e) => setCodiceFiscale(e.target.value)}
                         placeholder="Codice fiscale"
@@ -249,7 +254,7 @@ const Register = () => {
 
                       <TextInput
                         id="partitaIva"
-                        label="Partita IVA"
+                        label="Partita IVA Associazione"
                         value={partitaIva}
                         onChange={(e) => setPartitaIva(e.target.value)}
                         placeholder="Partita IVA"
@@ -334,7 +339,7 @@ const Register = () => {
                           />
                           <label htmlFor="privacyAccepted" className="privacy-label">
                             <span className="required-asterisk">*</span>
-                            Dichiaro di aver letto e accettato l' 
+                            Dichiaro di aver letto e accettato l'
                             <a
                               href="/trattamento-dati-personali"
                               target="_blank"
@@ -375,7 +380,7 @@ const Register = () => {
                 <span className="register-text">
                   Hai già un account?
                   <a
-                    href="#"
+                    href="/login"
                     className="register-link"
                     onClick={(e) => { e.preventDefault(); navigate('/login'); }}
                   >

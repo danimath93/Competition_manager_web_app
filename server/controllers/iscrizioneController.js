@@ -62,7 +62,9 @@ const getIscrizioniByCompetizione = async (req, res) => {
       const dettaglio = dettagliIscrizioni.find(d => d.atletaId === iscrizione.atletaId);
       return {
         ...iscrizione,
-        quota: dettaglio ? parseFloat(dettaglio.quota) || 0 : 0
+        quota: dettaglio ? parseFloat(dettaglio.quota) || 0 : 0,
+        verificato: dettaglio ? dettaglio.verificato : false,
+        tesseramento: dettaglio ? dettaglio.tesseramento : null
       };
     });
 
@@ -513,7 +515,6 @@ const getClubRegistrationsByCompetition = async (req, res) => {
 
     const clubRegistrations = await IscrizioneClub.findAll({
       where: { competizioneId },
-      attributes: { exclude: [] },
       include: [
         {
           model: Club,
@@ -721,6 +722,7 @@ const confermaIscrizioneClub = async (req, res) => {
 const downloadDocumentoIscrizioneClub = async (req, res) => {
   try {
     const { clubId, competizioneId, tipoDocumento } = req.params;
+    let docId = null;
 
     const iscrizioneClub = await IscrizioneClub.findOne({
       where: { clubId, competizioneId }
@@ -729,36 +731,26 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
     if (!iscrizioneClub) {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
     }
-    let documento = null;
 
     if (tipoDocumento === 'confermaPresidente') {
-      if (!iscrizioneClub.confermaPresidenteId) {
-      return res.status(404).json({
-        success: false,
-        message: 'Conferma del Presidente non trovata'
-      });
-      }
-      documento = await Documento.findByPk(iscrizioneClub.confermaPresidenteId);
+      docId = iscrizioneClub.confermaPresidenteId;
     } else if (tipoDocumento === 'bonifico') {
-      if (!iscrizioneClub.bonificoId) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ricevuta del bonifico non trovata'
-      });
-      }
-      documento = await Documento.findByPk(iscrizioneClub.bonificoId);											   
+      docId = iscrizioneClub.bonificoId;
     } else {
       return res.status(400).json({ error: 'Tipo di documento non valido' });
     }
 
-    if (!documento) {
-      return res.status(404).json({ error: 'Documento non trovato' });
+    if (!docId) {
+      return res.status(404).json({ error: `Documento #${tipoDocumento} non presente nell'iscrizione` });
+    }
+    const doc = await Documento.findByPk(docId);
+    if (!doc) {
+      return res.status(404).json({ error: 'Documento richiesto associato non trovato' });
     }
 
-    res.setHeader('Content-Type', documento.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${documento.nomeFile}"`);
-    console.log('Documento:', documento.id, 'Size:', documento.file ? documento.file.length : 'null');
-    res.send(documento.file);
+    res.setHeader('Content-Type', doc.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${doc.nomeFile}"`);
+    res.send(doc.file);
   } catch (error) {
     logger.error(`Errore nel download del documento ${req.params.tipoDocumento} per club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
@@ -1250,6 +1242,63 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
   }
 };
 
+// Aggiunge o rimuove il toggle di verifica iscrizione club
+const toggleVerificaIscrizioneClub = async (req, res) => {
+  try {
+    const { clubId, competizioneId } = req.body;
+    if (!clubId || !competizioneId) {
+      return res.status(400).json({ error: 'clubId e competizioneId sono obbligatori' });
+    }
+    const iscrizioneClub = await IscrizioneClub.findOne({
+      where: { clubId, competizioneId }
+    });
+    if (!iscrizioneClub) {
+      return res.status(404).json({ error: 'Iscrizione del club non trovata' });
+    }
+    iscrizioneClub.verificato = !iscrizioneClub.verificato;
+    await iscrizioneClub.save();
+    res.status(200).json({
+      message: 'Toggle verifica iscrizione club aggiornato',
+      verificaIscrizione: iscrizioneClub.verificato
+    });
+  } catch (error) {
+    logger.error(`Errore nel toggle verifica iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel toggle verifica iscrizione club',
+      details: error.message
+    });
+  }
+};
+
+// Aggiunge o rimuove il toggle di verifica iscrizione atleta
+const toggleVerificaIscrizioneAtleta = async (req, res) => {
+  try {
+    const { atletaId, competizioneId } = req.body;
+    if (!atletaId || !competizioneId) {
+      return res.status(400).json({ error: 'atletaId e competizioneId sono obbligatori' });
+    }
+    const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
+      where: { atletaId, competizioneId }
+    });
+    if (!dettagliIscrizione) {
+      return res.status(404).json({ error: 'Iscrizione dell\'atleta non trovata' });
+    }
+    dettagliIscrizione.verificato = !dettagliIscrizione.verificato;
+    await dettagliIscrizione.save();
+    res.status(200).json({
+      message: 'Toggle verifica iscrizione atleta aggiornato',
+      verificaIscrizione: dettagliIscrizione.verificato
+    });
+  }
+  catch (error) {
+    logger.error(`Errore nel toggle verifica iscrizione atleta ${req.body.atletaId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nel toggle verifica iscrizione atleta',
+      details: error.message
+    });
+  }
+};
+
 module.exports = {
   getIscrizioniByCompetizione,
   getIscrizioniByCompetitionAndClub,
@@ -1265,5 +1314,7 @@ module.exports = {
   downloadDocumentoIscrizioneClub,
   modificaIscrizioneClub,
   getClubRegistrationCosts,
-  downloadClubCompetitionSummary
+  downloadClubCompetitionSummary,
+  toggleVerificaIscrizioneClub,
+  toggleVerificaIscrizioneAtleta
 };

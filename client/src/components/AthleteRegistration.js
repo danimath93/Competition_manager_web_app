@@ -52,11 +52,11 @@ const AthleteRegistration = ({
   const [athleteType, setAthleteType] = useState(null);
   const [athleteTypes, setAthleteTypes] = useState([]);
   const [tesseramento, setTesseramento] = useState(null);
-  const [tesseramentoTypes, setTesseramentoTypes] = useState([
+  const tesseramentoTypes = [
     { id: MembershipType.FIWUK, nome: 'FIWUK' },
     { id: MembershipType.ASI, nome: 'ASI' },
     { id: MembershipType.REQUEST, nome: 'Richiedi tesseramento' }
-  ]);
+  ];
 
   // Stato fase 2 - Categorie
   const [availableCategories, setAvailableCategories] = useState([]);
@@ -180,6 +180,8 @@ const AthleteRegistration = ({
 
   // Carica le esperienze disponibili dalla competizione
   useEffect(() => {
+    let isMounted = true;
+    
     const loadExperiences = async () => {
       if (!athlete?.tipoAtletaId || !competition?.categorieAtleti) {
         return;
@@ -190,7 +192,9 @@ const AthleteRegistration = ({
       );
 
       if (!athleteConfig?.esperienzaCategorie) {
-        setAvailableExperiencesByType({});
+        if (isMounted) {
+          setAvailableExperiencesByType({});
+        }
         return;
       }
 
@@ -199,12 +203,16 @@ const AthleteRegistration = ({
         
         // Per ogni tipo competizione, carica le esperienze
         for (const expConfig of athleteConfig.esperienzaCategorie) {
+          if (!isMounted) return;
+          
           const tipoCompId = expConfig.configTipoCompetizione;
           const experienceIds = expConfig.idEsperienza || [];
           
           // Carica i dettagli di ogni esperienza
           const experiences = [];
           for (const expId of experienceIds) {
+            if (!isMounted) return;
+            
             try {
               const experience = await loadExperienceById(expId);
               experiences.push(experience);
@@ -216,17 +224,25 @@ const AthleteRegistration = ({
           experiencesByType[tipoCompId] = experiences;
         }
         
-        setAvailableExperiencesByType(experiencesByType);
+        if (isMounted) {
+          setAvailableExperiencesByType(experiencesByType);
+        }
       } catch (err) {
         console.error('Errore caricamento esperienze:', err);
       }
     };
 
     loadExperiences();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [athlete?.tipoAtletaId, competition]);
 
   // Carica le categorie disponibili per l'atleta
   useEffect(() => {
+    let isMounted = true;
+    
     const loadCategories = async () => {
       if (!competition?.categorieAtleti || !athlete?.tipoAtletaId) {
         return;
@@ -237,16 +253,22 @@ const AthleteRegistration = ({
       );
 
       if (!athleteConfig) {
-        setAvailableCategories([]);
+        if (isMounted) {
+          setAvailableCategories([]);
+        }
         return;
       }
 
       const categories = athleteConfig.categorie || [];
-      setAvailableCategories(categories);
+      if (isMounted) {
+        setAvailableCategories(categories);
+      }
 
       // Carica i dettagli di ogni categoria
       const details = {};
       for (const category of categories) {
+        if (!isMounted) return;
+        
         try {
           const categoryDetail = await loadCategoryTypeById(category.configTipoCategoria);
           details[category.configTipoCategoria] = { ...categoryDetail, ...category };
@@ -254,10 +276,17 @@ const AthleteRegistration = ({
           console.error('Errore nel caricamento dettagli categoria:', err);
         }
       }
-      setCategoryDetails(details);
+      
+      if (isMounted) {
+        setCategoryDetails(details);
+      }
     };
 
     loadCategories();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [competition, athlete?.tipoAtletaId]);
 
   useEffect(() => {
@@ -349,15 +378,21 @@ const AthleteRegistration = ({
       switch (activeStep) {
         case 0:
           // Fase 1: aggiorna i dati dell'atleta
-          await updateAthlete(athlete.id, {
+          if (!athlete || !athlete.id) {
+            throw new Error('Dati atleta non validi');
+          }
+          
+          const updateData = {
             ...athlete,
             numeroTessera: cardNumber,
             tipoAtleta: athleteType ? athleteType : null,
-            tipoAtletaId: athleteType ? athleteType.id : null,
+            tipoAtletaId: athleteType && athleteType.id ? athleteType.id : null,
             scadenzaCertificato: endDateCertificate
-          }
-          );
-          if (onUpdateAthlete) {
+          };
+          
+          await updateAthlete(athlete.id, updateData);
+          
+          if (onUpdateAthlete && typeof onUpdateAthlete === 'function') {
             onUpdateAthlete();
           }
           break;
@@ -365,6 +400,7 @@ const AthleteRegistration = ({
           // Fase 2: nessuna operazione specifica
           break;
         default:
+          break;
       }
       return true;
     } catch (err) {
@@ -402,11 +438,22 @@ const AthleteRegistration = ({
 
   // Naviga allo step successivo
   const handleNext = async () => {
-    if (validateCurrentPhase()) {
-      if (await manageCurrentPhase()) {
+    try {
+      if (!validateCurrentPhase()) {
+        return;
+      }
+      
+      const success = await manageCurrentPhase();
+      if (success) {
         setActiveStep(prev => Math.min(prev + 1, steps.length - 1));
         setErrors([]);
       }
+    } catch (err) {
+      console.error('Errore in handleNext:', err);
+      setErrors([
+        'Si è verificato un errore imprevisto. Per favore riprova.',
+        err && err.message ? err.message : 'Errore sconosciuto'
+      ]);
     }
   };
 
@@ -623,6 +670,21 @@ const AthleteRegistration = ({
 
   // Renderizza il contenuto della fase 2
   const renderPhase2 = () => {
+    // Verifica che i dati siano caricati
+    const isLoadingCategories = availableCategories.length > 0 && Object.keys(categoryDetails).length === 0;
+    
+    if (isLoadingCategories) {
+      return (
+        <div className="phase-container">
+          <h3 className="phase-title">
+            <FiCheckCircle className="section-title-icon" />
+            Selezione categorie
+          </h3>
+          <p>Caricamento categorie in corso...</p>
+        </div>
+      );
+    }
+    
     // Verifica se è una categoria di combattimento
     const isFightCategory = (categoryId) => {
       const details = categoryDetails[categoryId];
@@ -745,7 +807,7 @@ const AthleteRegistration = ({
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {categoriesByType[1].map(category => {
+                  {categoriesByType[1].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
@@ -753,26 +815,29 @@ const AthleteRegistration = ({
 
                     return (
                       <div
-                        key={categoryId}
+                        key={`quyen-${categoryId}-${index}`}
                         style={{
                           display: 'flex',
+                          flexWrap: 'wrap',
                           alignItems: 'center',
-                          gap: '16px',
+                          gap: '12px',
                           padding: '8px',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCategoryToggle(categoryId)}
-                          style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                        />
-                        <div style={{ minWidth: '200px', fontWeight: '500' }}>
-                          {details?.nome || 'Categoria'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCategoryToggle(categoryId)}
+                            style={{ cursor: 'pointer', width: '20px', height: '20px', flexShrink: 0 }}
+                          />
+                          <div style={{ fontWeight: '500' }}>
+                            {details?.nome || 'Categoria'}
+                          </div>
                         </div>
                         { /* Dettagli categoria */
                           detailOptions && detailOptions.length > 0 && (
-                            <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
+                            <div style={{ flex: '0 1 400px', minWidth: '250px', maxWidth: '100%', marginLeft: 'auto' }}>
                               <Autocomplete
                                 size="small"
                                 value={categoryDetailSelections[categoryId] || null}
@@ -828,7 +893,7 @@ const AthleteRegistration = ({
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {categoriesByType[2].map(category => {
+                  {categoriesByType[2].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
@@ -836,25 +901,28 @@ const AthleteRegistration = ({
 
                     return (
                       <div
-                        key={categoryId}
+                        key={`quyenvukhi-${categoryId}-${index}`}
                         style={{
                           display: 'flex',
+                          flexWrap: 'wrap',
                           alignItems: 'center',
-                          gap: '16px',
+                          gap: '12px',
                           padding: '8px',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCategoryToggle(categoryId)}
-                          style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                        />
-                        <div style={{ minWidth: '200px', fontWeight: '500' }}>
-                          {details?.nome || 'Categoria'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCategoryToggle(categoryId)}
+                            style={{ cursor: 'pointer', width: '20px', height: '20px', flexShrink: 0 }}
+                          />
+                          <div style={{ fontWeight: '500' }}>
+                            {details?.nome || 'Categoria'}
+                          </div>
                         </div>
                         {detailOptions && detailOptions.length > 0 && (
-                        <div style={{ flex: 1, minWidth: '200px', marginLeft: 'auto', maxWidth: '400px' }}>
+                        <div style={{ flex: '0 1 400px', minWidth: '250px', maxWidth: '100%', marginLeft: 'auto' }}>
                           <Autocomplete
                             size="small"
                             value={categoryDetailSelections[categoryId] || null}
@@ -884,15 +952,10 @@ const AthleteRegistration = ({
             {categoriesByType[3].length > 0 && (
               <div className="data-section">
                 <h4 className="section-title">Categorie Combattimento</h4>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    padding: '8px'
-                  }}>
+                  <div className="combat-controls-container">
                     {/* Esperienza Combattimento */}
                     {availableExperiencesByType[3]?.length > 0 && (
-                      <div style={{ marginRight: '16px', width: '400px' }}>
+                      <div>
                         <Autocomplete
                           size="small"
                           value={selectedExperiences[3] || null}
@@ -914,7 +977,7 @@ const AthleteRegistration = ({
                     )}
                     {/* Campo peso - sempre in fondo alla sezione combattimento */}
                     {hasWeightRequirement && (
-                      <div style={{ marginLeft: 'auto' }}>
+                      <div>
                         <TextField
                           size="small"
                           label="Peso (kg)"
@@ -924,36 +987,38 @@ const AthleteRegistration = ({
                           disabled={!selectedRequiresWeight}
                           variant="outlined"
                           inputProps={{ step: '0.1', min: '0' }}
-                          style={{ maxWidth: '200px' }}
                         />
                       </div>
                     )}
                   </div>
             
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {categoriesByType[3].map(category => {
+                  {categoriesByType[3].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
 
                     return (
                       <div
-                        key={categoryId}
+                        key={`combat-${categoryId}-${index}`}
                         style={{
                           display: 'flex',
+                          flexWrap: 'wrap',
                           alignItems: 'center',
-                          gap: '16px',
+                          gap: '12px',
                           padding: '8px',
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleCategoryToggle(categoryId)}
-                          style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                        />
-                        <div style={{ minWidth: '200px', fontWeight: '500' }}>
-                          {details?.nome || 'Categoria'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleCategoryToggle(categoryId)}
+                            style={{ cursor: 'pointer', width: '20px', height: '20px', flexShrink: 0 }}
+                          />
+                          <div style={{ fontWeight: '500' }}>
+                            {details?.nome || 'Categoria'}
+                          </div>
                         </div>
                       </div>
                     );

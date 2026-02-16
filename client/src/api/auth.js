@@ -37,6 +37,17 @@ const checkAuthLevel = async (token) => {
   }
 };
 
+// Funzione per aggiornare i dati dell'utente (es. clubId, più da aggiungere)
+const updateUserData = async (userData) => {
+  try {
+    const response = await axios.post('/auth/update-user-data/', userData);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante l\'aggiornamento dei dati utente:', error);
+    throw error;
+  }
+};
+
 // Funzione per registrare un nuovo utente
 const registerUser = async (userData) => {
   try {
@@ -80,4 +91,4 @@ const sendConfirmationEmail = async (to, token) => {
   }
 };
 
-export { loginUser, logoutUser, checkAuthLevel, registerUser, sendConfirmationEmail, requestPasswordReset, resetPassword };
+export { loginUser, logoutUser, checkAuthLevel, registerUser, updateUserData, sendConfirmationEmail, requestPasswordReset, resetPassword };

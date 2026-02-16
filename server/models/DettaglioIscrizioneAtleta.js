@@ -36,6 +36,11 @@ const DettaglioIscrizioneAtleta = sequelize.define('DettaglioIscrizioneAtleta', 
   quota: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
+  },
+  verificato: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
   }
 }, {
   tableName: 'dettagli_iscrizione_atleti',

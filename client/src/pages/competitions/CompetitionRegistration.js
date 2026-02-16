@@ -299,16 +299,15 @@ const CompetitionRegistration = () => {
       <MuiButton
         startIcon={<ArrowBack />}
         onClick={handleGoBack}
-        sx={{ mb: 1 }}
       >
         Torna alle Competizioni
       </MuiButton>
 
       {/* Contenuto della pagina */}
-      <div className="page-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 210px)' }}>
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column'}}>
         <div className={isClubRegistered ? "page-grid-full" : "page-grid-25-75"}>
           {!isClubRegistered && (
-            <div className="page-card-with-external-title">
+            <div className="page-card-with-external-title page-card-compact">
               <h2 className="page-card-external-title">Atleti del Club</h2>
               <div className="page-card-scrollable">
                 <div className="page-card-scrollable-body">
@@ -323,7 +322,7 @@ const CompetitionRegistration = () => {
               </div>
             </div>
           )}
-          <div className="page-card-with-external-title">
+          <div className="page-card-with-external-title page-card-expanded">
             <h2 className="page-card-external-title">Atleti Iscritti alla Gara</h2>
             <div className="page-card-scrollable">
               <div className="page-card-scrollable-body" style={{ padding: '0' }}>
@@ -340,19 +339,19 @@ const CompetitionRegistration = () => {
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: { xs: 'stretch', md: 'center' },
                 gap: 2,
                 mt: 4,
                 flexShrink: 0
               }}
             >
               {/* Costi totali */}
-              <Box display="flex" alignItems="center" gap={1}>
+              <Box display="flex" alignItems="center" gap={2}>
                 {costLoading ? (
                   <CircularProgress size={20} />
                 ) : totalCost !== null && (
-                  <>
                     <Chip
                       icon={<EuroIcon />}
                       label={`Totale: ${totalCost.toFixed(2)} €`}
@@ -360,12 +359,18 @@ const CompetitionRegistration = () => {
                       size="large"
                       sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
                     />
-                  </>
+                )}
+                {/* Alert conferma iscrizione */}
+                {isClubRegistered && (
+                  <Alert severity="success" sx={{ ml: "auto" }}>
+                    Iscrizione confermata il {clubRegistration?.dataConferma ? new Date(clubRegistration.dataConferma).toLocaleDateString() : ''}
+                  </Alert>
                 )}
               </Box>
 
+
               {/* Bottoni azioni */}
-              <Box display="flex" gap={2}>
+              <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                 {/* Bottone finalizza iscrizione - visibile solo se atleti iscritti */}
                 {!isClubRegistered && (
                   <Button
@@ -379,10 +384,7 @@ const CompetitionRegistration = () => {
 
                 {/* Iscrizione confermata */}
                 {isClubRegistered && (
-                  <Box display="flex" alignItems="center" gap={3}>
-                    <Alert severity="success" sx={{ mb: 0 }}>
-                      Iscrizione confermata il {clubRegistration?.dataConferma ? new Date(clubRegistration.dataConferma).toLocaleDateString() : ''}
-                    </Alert>
+                  <Box display="inline-flex" alignItems="center" gap={3}>
                     <Button
                       onClick={handleEditRegistration()}
                     >
@@ -412,9 +414,9 @@ const CompetitionRegistration = () => {
         </div>
       </div>
 
-      <Box sx={{ mb: 2, flexShrink: 0 }}>
+      <Box sx={{ p: 1, flexShrink: 0 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error">
             {error}
           </Alert>
         )}

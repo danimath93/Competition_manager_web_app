@@ -2,27 +2,26 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
-  TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from '@mui/material';
 import { FaUsers } from 'react-icons/fa';
-import { Add, Height } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
-import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../api/athletes';
-import { loadAllClubs } from '../api/clubs';
-import { loadAthleteTypes, loadAgeGroups } from '../api/config';
-import AthletesTable from '../components/AthletesTable';
-import AthleteModal from '../components/AthleteModal';
-import CertificatoModal from '../components/CertificatoModal';
-import AuthComponent from '../components/AuthComponent';
-import PageHeader from '../components/PageHeader';
-import { Button } from '../components/common';
-import ConfirmActionModal from '../components/common/ConfirmActionModal';
-import SearchTextField from '../components/SearchTextField';
-import '../pages/styles/CommonPageStyles.css';
+import { Add } from '@mui/icons-material';
+import { useAuth } from '../../context/AuthContext';
+import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../../api/athletes';
+import { loadAllClubs } from '../../api/clubs';
+import { loadAthleteTypes, loadAgeGroups } from '../../api/config';
+import AthletesTable from '../../components/AthletesTable';
+import AthleteModal from '../../components/AthleteModal';
+import CertificatoModal from '../../components/CertificatoModal';
+import AuthComponent from '../../components/AuthComponent';
+import PageHeader from '../../components/PageHeader';
+import { Button } from '../../components/common';
+import ConfirmActionModal from '../../components/common/ConfirmActionModal';
+import SearchTextField from '../../components/SearchTextField';
+import '../styles/CommonPageStyles.css';
 
 const Athletes = () => {
   const { user } = useAuth();
@@ -218,6 +217,7 @@ const Athletes = () => {
                 onChange={handleFilterNameChange}
                 placeholder="Filtra per Nome/Cognome"
                 sx={{
+                  width: '100%',
                   maxWidth: "800px",
                   '& .MuiOutlinedInput-root': {
                     height: '60px',
@@ -226,7 +226,6 @@ const Athletes = () => {
               />
               <Button
                 icon={Add}
-                size='s'
                 onClick={() => handleOpenModal()}
               >
                 Aggiungi Atleta
@@ -237,7 +236,7 @@ const Athletes = () => {
               <Box sx={{ mt: 2 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 250 }}>
                       <InputLabel>Filtra per Club</InputLabel>
                       <Select
                         name="club"
@@ -257,7 +256,7 @@ const Athletes = () => {
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 250 }}>
                       <InputLabel>Filtra per Gruppo Età</InputLabel>
                       <Select
                         name="ageGroup"

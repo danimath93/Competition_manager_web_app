@@ -550,7 +550,7 @@ const RegistrationModal = ({
               <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', alignItems: 'center' }}>
                 {/* Esperienza Combattimento */}
                 {availableExperiencesByType[3]?.length > 0 && (
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, maxWidth: '300px' }}>
                     <Autocomplete
                       size="small"
                       value={selectedExperiences[3] || null}

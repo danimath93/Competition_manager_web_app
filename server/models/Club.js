@@ -17,7 +17,6 @@ const Club = sequelize.define('Club', {
   codiceFiscale: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     }
@@ -76,7 +75,14 @@ const Club = sequelize.define('Club', {
 },
   {
     tableName: 'clubs',
-    timestamps: true
+    timestamps: true,
+    indexes: [
+      {
+        name: 'unique_club_denominazione',
+        unique: true,
+        fields: ['denominazione']
+      }
+    ]
   }
 );
 

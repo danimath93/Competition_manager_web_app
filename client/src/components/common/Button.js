@@ -6,7 +6,7 @@ import './Button.css';
  * 
  * @param {Object} props - Proprietà del componente
  * @param {string} props.variant - Variante del bottone ('primary', 'secondary', 'info', 'success', 'warning', 'danger', 'outline')
- * @param {string} props.size - Dimensione del bottone ('xs', 's', 'medium', 'l', 'xl')
+ * @param {string} props.size - Dimensione del bottone ('xs', 's', 'm', 'l', 'xl')
  * @param {React.ReactNode} props.icon - Icona da mostrare a sinistra (componente React Icon)
  * @param {React.ReactNode} props.children - Contenuto del bottone
  * @param {boolean} props.disabled - Se il bottone è disabilitato

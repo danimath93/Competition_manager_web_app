@@ -17,6 +17,7 @@
   text-decoration: none;
   white-space: nowrap;
   line-height: 1;
+  box-sizing: border-box;
 }
 
 .btn:focus-visible {
@@ -29,12 +30,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  margin: 0;
   flex-shrink: 0;
+  width: 1.25em;
+  height: 1.25em;
+  line-height: 1;
 }
 
 .btn-text {
   display: inline-flex;
   align-items: center;
+  line-height: 1;
 }
 
 /* Full width */
@@ -63,22 +70,35 @@
 
 /* Small - Con scaling responsive */
 .btn-s {
-  padding: clamp(0.375rem, 0.5rem, 0.625rem) clamp(0.75rem, 1rem, 1.25rem);
+  padding: clamp(0.25rem, 0.375rem, 0.5rem) clamp(0.5rem, 0.75rem, 1rem);
   font-size: clamp(0.8rem, 0.875rem, 0.95rem);
 }
 
 .btn-s .btn-icon {
-  font-size: clamp(0.95rem, 1rem, 1.1rem);
+  font-size: clamp(0.85rem, 0.9rem, 1rem);
 }
 
-/* Medium (default) - Con scaling responsive */
+/* Medium (default) - Allineato con componenti MUI (56px altezza, 300px larghezza) */
 .btn-m {
-  padding: clamp(0.75rem, 1rem, 1.25rem) clamp(1rem, 1.5rem, 2rem);
-  font-size: clamp(0.9rem, 1rem, 1.1rem);
+  height: 56px;
+  width: 250px;
+  padding: 0 24px;
+  font-size: 1rem;
 }
 
 .btn-m .btn-icon {
-  font-size: clamp(1.1rem, 1.25rem, 1.4rem);
+  font-size: 1.25rem;
+}
+
+/* Variante inline per btn-m mantiene altezza ma non larghezza fissa */
+.btn-m.btn-inline {
+  width: auto;
+  min-width: fit-content;
+}
+
+/* Variante full-width per btn-m */
+.btn-m.btn-full-width {
+  width: 100%;
 }
 
 /* Large - Con scaling responsive */
@@ -272,9 +292,16 @@
     gap: 0.35rem;
   }
   
-  /* Riduzione padding aggiuntiva su mobile */
+  /* Mantiene altezza fissa per btn-m ma riduce larghezza */
   .btn-m {
-    padding: clamp(0.7rem, 0.875rem, 1rem) clamp(1rem, 1.25rem, 1.5rem);
+    height: 56px;
+    width: 100%;
+    padding: 0 16px;
+  }
+  
+  .btn-m.btn-inline {
+    width: auto;
+    min-width: fit-content;
   }
   
   .btn-l {
@@ -298,9 +325,11 @@
     width: 100%;
   }
   
-  /* Font sizes ancora più compatti */
+  /* Mantiene font-size e altezza per btn-m */
   .btn-m {
-    font-size: clamp(0.85rem, 0.9rem, 1rem);
+    height: 56px;
+    font-size: 0.9rem;
+    padding: 0 12px;
   }
   
   .btn-l {

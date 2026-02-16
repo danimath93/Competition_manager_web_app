@@ -20,7 +20,7 @@ import { getBlobDocumento } from '../api/documents';
 import { loadClubByID } from '../api/clubs';
 import ConfirmActionModal from './common/ConfirmActionModal';
 
-const Sidebar = ({ isOpen, toggleSidebar }) => {
+const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
   const { t } = useLanguage();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -107,6 +107,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     }
   };
 
+  // Gestisce il click sui link di navigazione
+  const handleNavClick = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  };
+
   return (
     <>
       {/* Overlay per mobile */}
@@ -135,19 +142,25 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           title={!isOpen ? `${user?.username || 'Utente'}${user?.clubName ? `\n${user.clubName}` : ''}` : ''}
         >
           {/* Logo del club o placeholder */}
-          {logoSource ? (
-            <img 
-              src={logoSource} 
-              alt="Club Logo" 
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-          ) : (
-            <div className="sidebar-club-logo-placeholder">
-              <FaUniversity />
-            </div>
+          {!loadingLogo && (
+            <>
+              {logoSource ? (
+                <img 
+                  src={logoSource} 
+                  alt="Club Logo" 
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className="sidebar-club-logo-placeholder" 
+                style={{ display: logoSource ? 'none' : 'flex' }}
+              >
+                <FaUniversity />
+              </div>
+            </>
           )}
         </div>
         {isOpen && (
@@ -175,6 +188,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   `nav-link ${isActive ? 'active' : ''}`
                 }
                 title={!isOpen ? item.label : ''}
+                onClick={handleNavClick}
               >
                 <item.icon className="nav-icon" />
                 {isOpen && <span className="nav-label">{item.label}</span>}
@@ -196,6 +210,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   `nav-link ${isActive ? 'active' : ''}`
                 }
                 title={!isOpen ? t('settings') : ''}
+                onClick={handleNavClick}
               >
                 <FaCog className="nav-icon" />
                 {isOpen && <span className="nav-label">{t('settings')}</span>}

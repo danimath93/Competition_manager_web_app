@@ -6,6 +6,7 @@ import { PersonRemove, Edit } from '@mui/icons-material';
 import { loadCategoryTypeById } from '../api/config';
 import RegistrationModal from './RegistrationModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
+import muiTheme from '../styles/muiTheme';
 
 const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered, onRegistrationChange, onDeleteAthlete }) => {
   const [categoryDetailsCache, setCategoryDetailsCache] = useState({});
@@ -323,33 +324,17 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
         rows={rows}
         columns={columns}
         initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10, page: 0 },
-          },
+          ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
           sorting: {
             sortModel: [{ field: 'athlete', sort: 'asc' }],
           },
         }}
-        pageSizeOptions={[5, 10, 25, 50, 100]}
-        disableRowSelectionOnClick
         disableColumnMenu={false}
-        disableColumnSelector={true}
         localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
         getRowHeight={() => 'auto'}
         sx={{
-          border: 'none',
           '& .MuiDataGrid-cell': {
             padding: '8px',
-          },
-          '& .MuiDataGrid-cell:focus': {
-            outline: 'none',
-          },
-          '& .MuiDataGrid-row:hover': {
-            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-          },
-          '& .MuiDataGrid-columnHeaders': {
-            backgroundColor: 'var(--bg-secondary, #f8f9fa)',
-            fontWeight: 600,
           },
         }}
       />

@@ -10,7 +10,6 @@ const ConfigTipoCompetizione = sequelize.define('ConfigTipoCompetizione', {
   nome: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     }
@@ -26,7 +25,14 @@ const ConfigTipoCompetizione = sequelize.define('ConfigTipoCompetizione', {
   }
 }, {
   tableName: 'config_tipo_competizioni',
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    {
+      name: 'unique_nome_tipo_competizione',
+      unique: true,
+      fields: ['nome']
+    }
+  ]
 });
 
 module.exports = ConfigTipoCompetizione;

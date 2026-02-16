@@ -184,12 +184,32 @@ export const downloadClubRegistrationSummary = async (clubId, competizioneId) =>
   }
 };
 
+export const toggleVerificaIscrizioneClub = async (competizioneId, clubId) => {
+  try {
+    const response = await axios.post('/iscrizioni/club-iscrizione/verifica', { competizioneId, clubId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la verifica dell\'iscrizione del club:', error);
+    throw error;
+  }
+};
+
+export const toggleVerificaIscrizioneAtleta = async (competizioneId, atletaId) => {
+  try {
+    const response = await axios.post('/iscrizioni/atleta/verifica', { atletaId, competizioneId });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante la verifica dell\'iscrizione dell\'atleta:', error);
+    throw error;
+  }
+};
+
 // ============ COSTI ISCRIZIONE ============
 
 // Funzione per ottenere i costi totali per un club in una competizione
-export const getClubRegistrationCosts = async (clubId, competitionId) => {
+export const getClubRegistrationCosts = async (clubId, competizioneId) => {
   try {
-    const response = await axios.get(`/iscrizioni/costs/${clubId}/${competitionId}`);
+    const response = await axios.get(`/iscrizioni/costs/${clubId}/${competizioneId}`);
     return response.data;
   } catch (error) {
     console.error('Errore durante il recupero dei costi:', error);

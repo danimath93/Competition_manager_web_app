@@ -4,12 +4,10 @@ import {
   Container,
   Typography,
   Box,
-  Button,
   Paper,
   Grid,
   Card,
   CardContent,
-  CardActions,
   Chip,
   Alert,
   CircularProgress,
@@ -42,7 +40,9 @@ import {
   FormControlLabel,
   Switch
 } from '@mui/material';
-import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, DeleteSweep, Settings, Summarize } from '@mui/icons-material';
+import MuiButton from '@mui/material/Button';
+import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, Settings, Summarize } from '@mui/icons-material';
+import { FaTags } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCompetitionDetails } from '../../api/competitions';
@@ -56,9 +56,12 @@ import {
   getGruppiEta
 } from '../../api/categories';
 import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
-import { loadAllJudges } from '../../api/judges';
 import CategorySplit from './CategorySplit';
 import CategorySummaryModal from '../../components/CategorySummaryModal';
+import PageHeader from '../../components/PageHeader';
+import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
+import Button from '../../components/common/Button';
+import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -98,21 +101,73 @@ const CategoryDefinition = () => {
   const [mergeDialog, setMergeDialog] = useState({ open: false, mergedName: '' });
   const [splitDialog, setSplitDialog] = useState({ open: false, categoria: null });
   
-  // Merge mode state
-  const [isMergeMode, setIsMergeMode] = useState(false);
-  const [selectedForMerge, setSelectedForMerge] = useState([]);
-
+  // Confirm modals
+  const [cancelCategoriesModal, setCancelCategoriesModal] = useState(false);
+  const [deleteCategoryModal, setDeleteCategoryModal] = useState({ open: false, categoriaId: null });
+  const [saveSelectedModal, setSaveSelectedModal] = useState(false);
+  const [deleteSelectedModal, setDeleteSelectedModal] = useState(false);
+  const [deleteSelectedSavedModal, setDeleteSelectedSavedModal] = useState(false);
+  
+  // Selection states
+  const [selectedGenCategories, setSelectedGenCategories] = useState([]);
+  const [selectedSavedCategories, setSelectedSavedCategories] = useState([]);
+  
   // Opzioni di generazione personalizzata
   const [showGenerationOptions, setShowGenerationOptions] = useState(false);
   const [generationOptions, setGenerationOptions] = useState({
     unisciAttivitaComplementari: false,
-    unisciLivelloEsperienza: false
+    unisciLivelloEsperienza: false,
+    utilizzaDateValiditaGruppiEta: false,
+    utilizzaEtaAtletiInizioGara: false
   });
 
   // Modals for summary and print
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   useEffect(() => {
+    const loadCompetitionData = async () => {
+      try {
+        setLoading(true);
+        const data = await getCompetitionDetails(competizioneId);
+        setCompetition(data);
+        
+        // Controllo permessi
+        const userPermissions = user?.permissions || '';
+        const userClubId = user?.clubId;
+        
+        const isAdmin = userPermissions === 'admin' || userPermissions === 'superAdmin';
+        const isOrganizer = userPermissions === 'club' && userClubId === data.organizzatoreClubId;
+        
+        setHasPermission(isAdmin || isOrganizer);
+        
+        if (isAdmin || isOrganizer) {
+          await loadCategories();
+        }
+        
+        setError(null);
+      } catch (error) {
+        console.error('Errore nel caricamento della competizione:', error);
+        setError('Impossibile caricare i dati della competizione: ' + (error?.message || 'Errore sconosciuto'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const loadConfigData = async () => {
+      try {
+        const [tipiAtleta, categorie, gruppiEta] = await Promise.all([
+          loadAthleteTypes(),
+          loadAllCategoryTypes(),
+          getGruppiEta()
+        ]);
+        setAllTipiAtleta(tipiAtleta || []);
+        setAllCategorie(categorie || []);
+        setAllGruppiEta(gruppiEta || []);
+      } catch (error) {
+        console.error('Errore nel caricamento dei config:', error);
+      }
+    };
+    
     if (!competizioneId) {
       setError('ID competizione mancante');
       setLoading(false);
@@ -123,55 +178,12 @@ const CategoryDefinition = () => {
     loadConfigData();
   }, [competizioneId, user]);
 
-  const loadCompetitionData = async () => {
-    try {
-      setLoading(true);
-      const data = await getCompetitionDetails(competizioneId);
-      setCompetition(data);
-      
-      // Controllo permessi
-      const userPermissions = user?.permissions || '';
-      const userClubId = user?.clubId;
-      
-      const isAdmin = userPermissions === 'admin' || userPermissions === 'superAdmin';
-      const isOrganizer = userPermissions === 'club' && userClubId === data.organizzatoreClubId;
-      
-      setHasPermission(isAdmin || isOrganizer);
-      
-      if (isAdmin || isOrganizer) {
-        await loadCategories();
-      }
-      
-      setError(null);
-    } catch (error) {
-      console.error('Errore nel caricamento della competizione:', error);
-      setError('Impossibile caricare i dati della competizione');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadCategories = async () => {
     try {
       const data = await getCategoriesByCompetizione(competizioneId);
       setCategories(data);
     } catch (error) {
       console.error('Errore nel caricamento delle categorie:', error);
-    }
-  };
-
-  const loadConfigData = async () => {
-    try {
-      const [tipiAtleta, categorie, gruppiEta] = await Promise.all([
-        loadAthleteTypes(),
-        loadAllCategoryTypes(),
-        getGruppiEta()
-      ]);
-      setAllTipiAtleta(tipiAtleta || []);
-      setAllCategorie(categorie || []);
-      setAllGruppiEta(gruppiEta || []);
-    } catch (error) {
-      console.error('Errore nel caricamento dei config:', error);
     }
   };
 
@@ -194,7 +206,7 @@ const CategoryDefinition = () => {
       setShowGenerationOptions(false);
     } catch (error) {
       console.error('Errore nella generazione:', error);
-      setError(error.response?.data?.message || 'Errore nella generazione delle categorie');
+      setError('Errore nella generazione delle categorie: ' + (error?.message || 'Errore sconosciuto'));
     } finally {
       setLoading(false);
     }
@@ -205,47 +217,6 @@ const CategoryDefinition = () => {
       ...prev,
       [option]: !prev[option]
     }));
-  };
-
-  const handleSaveCategories = async () => {
-    if (generatedCategories.length === 0) {
-      setError('Nessuna categoria da salvare');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      let categoriesToSave = [...generatedCategories];
-
-      // Rimuovo le info atleti non necessarie
-      categoriesToSave = categoriesToSave.map(cat => ({ 
-        ...cat,
-        atleti: cat.atleti.map(atleta => {
-          return {
-            id: atleta.id,
-            iscrizioneId: atleta.iscrizioneId
-           };
-        })
-      }));
-          
-
-      await saveCategories(competizioneId, {
-        categorie: categoriesToSave
-      });
-
-      setSuccess('Categorie salvate con successo!');
-      setIsGenerated(false);
-      setGeneratedCategories([]);
-      await loadCategories();
-    } catch (error) {
-      console.error('Errore nel salvataggio:', error);
-      setError(error.response?.data?.message || 'Errore nel salvataggio delle categorie');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSaveSingleCategory = async (categoria) => {
@@ -280,53 +251,38 @@ const CategoryDefinition = () => {
       await loadCategories();
     } catch (error) {
       console.error('Errore nel salvataggio:', error);
-      setError(error.response?.data?.message || 'Errore nel salvataggio della categoria');
+      setError('Errore nel salvataggio della categoria: ' + (error?.message || 'Errore sconosciuto'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancelCategories = () => {
-    if (!window.confirm('Sei sicuro di voler annullare tutte le categorie generate? Questa azione non può essere annullata.')) {
-      return;
-    }
+    setCancelCategoriesModal(true);
+  };
 
+  const confirmCancelCategories = () => {
     setGeneratedCategories([]);
     setIsGenerated(false);
     setSuccess('Categorie generate annullate con successo');
+    setCancelCategoriesModal(false);
   };
 
   const handleDelete = async (categoriaId) => {
-    if (!window.confirm('Sei sicuro di voler eliminare questa categoria?')) {
-      return;
-    }
+    setDeleteCategoryModal({ open: true, categoriaId });
+  };
 
+  const confirmDeleteCategory = async () => {
+    const { categoriaId } = deleteCategoryModal;
     setLoading(true);
     setError(null);
+    setDeleteCategoryModal({ open: false, categoriaId: null });
     try {
       await deleteCategoria(categoriaId);
       setSuccess('Categoria eliminata con successo');
       await loadCategories();
     } catch (error) {
-      setError(error.response?.data?.message || 'Errore nell\'eliminazione della categoria');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteAllCategories = async () => {
-    if (!window.confirm(`Sei sicuro di voler eliminare tutte le ${categories.length} categorie? Questa azione non può essere annullata.`)) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      await deleteCategoriesByCompetition(competizioneId);
-      setSuccess('Tutte le categorie sono state eliminate con successo');
-      await loadCategories();
-    } catch (error) {
-      setError(error.response?.data?.message || 'Errore nell\'eliminazione delle categorie');
+      setError('Errore nell\'eliminazione della categoria: ' + (error?.message || 'Errore sconosciuto'));
     } finally {
       setLoading(false);
     }
@@ -359,42 +315,147 @@ const CategoryDefinition = () => {
         await updateCategoria(categoria.id, categoria); 
         setCategories(updated);
       } catch (error) {
-        setError(error.response?.data?.message || 'Errore nella modifica della categoria');
+        setError('Errore nella modifica della categoria: ' + (error?.message || 'Errore sconosciuto'));
       }
     }
 
     setEditDialog({ open: false, categoria: null, originalNome: null });
   };
 
-  const handleOpenMerge = () => {
-    if (isGenerated) {
-      setIsMergeMode(true);
-      setSelectedForMerge([]);
-    }
+  const handleToggleGeneratedSelection = (categoriaKey) => {
+    setSelectedGenCategories(prev => {
+      if (prev.includes(categoriaKey)) {
+        return prev.filter(key => key !== categoriaKey);
+      } else {
+        return [...prev, categoriaKey];
+      }
+    });
   };
 
-  const handleToggleMergeSelection = (categoriaNome) => {
-    setSelectedForMerge(prev => {
-      if (prev.includes(categoriaNome)) {
-        return prev.filter(nome => nome !== categoriaNome);
+  const handleToggleSavedSelection = (categoriaId) => {
+    setSelectedSavedCategories(prev => {
+      if (prev.includes(categoriaId)) {
+        return prev.filter(id => id !== categoriaId);
       } else {
-        return [...prev, categoriaNome];
+        return [...prev, categoriaId];
       }
     });
   };
 
   const handleConfirmMerge = () => {
-    if (selectedForMerge.length < 2) {
+    if (selectedGenCategories.length < 2) {
       setError('Seleziona almeno due categorie da unire');
       return;
     }
 
-    setMergeDialog({ open: true, mergedName: selectedForMerge.join('_') });
+    // Cerco la prima categoria per key e prendo il nome da usare come base per il merge
+    const firstCategory = generatedCategories.find(c => c.key === selectedGenCategories[0]);
+    const mergedName = (firstCategory ? firstCategory.nome : '') + '_Merged';
+
+    setMergeDialog({ open: true, mergedName });
   };
 
-  const handleCancelMerge = () => {
-    setIsMergeMode(false);
-    setSelectedForMerge([]);
+  const handleSaveSelected = async () => {
+    if (selectedGenCategories.length === 0) {
+      setError('Seleziona almeno una categoria da salvare');
+      return;
+    }
+
+    setSaveSelectedModal(true);
+  };
+
+  const confirmSaveSelected = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    setSaveSelectedModal(false);
+
+    try {
+      const categoriesToSave = generatedCategories.filter(c => selectedGenCategories.includes(c.key));
+      
+      // Prepara le categorie per il salvataggio
+      const categoriesData = categoriesToSave.map(categoria => ({
+        ...categoria,
+        atleti: categoria.atleti.map(atleta => ({
+          id: atleta.id,
+          iscrizioneId: atleta.iscrizioneId
+        }))
+      }));
+
+      await saveCategories(competizioneId, {
+        categorie: categoriesData
+      });
+
+      // Rimuovi le categorie salvate dalla lista delle generate
+      const updated = generatedCategories.filter(c => !selectedGenCategories.includes(c.key));
+      setGeneratedCategories(updated);
+      setSelectedGenCategories([]);
+      
+      // Se non ci sono più categorie generate, disattiva la modalità generata
+      if (updated.length === 0) {
+        setIsGenerated(false);
+      }
+
+      setSuccess(`${categoriesToSave.length} categoria/e salvata/e con successo!`);
+      await loadCategories();
+    } catch (error) {
+      console.error('Errore nel salvataggio:', error);
+      setError('Errore nel salvataggio delle categorie: ' + (error?.message || 'Errore sconosciuto'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedGenCategories.length === 0) {
+      setError('Seleziona almeno una categoria da eliminare');
+      return;
+    }
+
+    setDeleteSelectedModal(true);
+  };
+
+  const confirmDeleteSelected = () => {
+    const count = selectedGenCategories.length;
+    const updated = generatedCategories.filter(c => !selectedGenCategories.includes(c.key));
+    setGeneratedCategories(updated);
+    setSelectedGenCategories([]);
+    setSuccess(`${count} categoria/e eliminata/e con successo`);
+    setDeleteSelectedModal(false);
+    
+    // Se non ci sono più categorie, disattiva la modalità generata
+    if (updated.length === 0) {
+      setIsGenerated(false);
+    }
+  };
+
+  const handleDeleteSelectedSaved = async () => {
+    if (selectedSavedCategories.length === 0) {
+      setError('Seleziona almeno una categoria da eliminare');
+      return;
+    }
+
+    setDeleteSelectedSavedModal(true);
+  };
+
+  const confirmDeleteSelectedSaved = async () => {
+    const count = selectedSavedCategories.length;
+    setLoading(true);
+    setError(null);
+    setDeleteSelectedSavedModal(false);
+
+    try {
+      // Elimina tutte le categorie selezionate
+      await Promise.all(selectedSavedCategories.map(id => deleteCategoria(id)));
+      
+      setSelectedSavedCategories([]);
+      setSuccess(`${count} categoria/e eliminata/e con successo`);
+      await loadCategories();
+    } catch (error) {
+      setError('Errore nell\'eliminazione delle categorie: ' + (error?.message || 'Errore sconosciuto'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMerge = async () => {
@@ -405,11 +466,17 @@ const CategoryDefinition = () => {
       return;
     }
 
-    if (isGenerated && selectedForMerge.length >= 2) {
-      const categoriesToMerge = generatedCategories.filter(c => selectedForMerge.includes(c.nome));
+    if (isGenerated && selectedGenCategories.length >= 2) {
+      const categoriesToMerge = generatedCategories.filter(c => selectedGenCategories.includes(c.key));
       
       // Unisci tutti gli atleti delle categorie selezionate
       const allAtleti = categoriesToMerge.reduce((acc, cat) => [...acc, ...cat.atleti], []);
+
+      // Se le categorie hanno genere diverso, imposta il genere della categoria unita a 'U' (Unisex)
+      const hasMixedGender = new Set(categoriesToMerge.map(c => c.genere)).size > 1;
+
+      // Se le categorie hanno gruppi età diversi, unisci anche quelli (rimuovendo eventuali duplicati)
+      const allGruppiEta = [...new Set(categoriesToMerge.flatMap(c => c.gruppiEtaId || []))];
       
       // Usa i dati della prima categoria selezionata come base
       const baseCategoria = categoriesToMerge[0];
@@ -417,19 +484,20 @@ const CategoryDefinition = () => {
       const merged = {
         ...baseCategoria,
         nome: mergedName.trim(),
-        atleti: allAtleti
+        atleti: allAtleti,
+        genere: hasMixedGender ? 'U' : baseCategoria.genere,
+        gruppiEtaId: allGruppiEta
       };
 
       // Rimuovi tutte le categorie unite tranne la prima (che verrà sostituita)
       const updated = generatedCategories
-        .filter(c => !selectedForMerge.includes(c.nome) || c.nome === selectedForMerge[0])
-        .map(c => c.nome === selectedForMerge[0] ? merged : c);
+        .filter(c => !selectedGenCategories.includes(c.key) || c.key === selectedGenCategories[0])
+        .map(c => c.key === selectedGenCategories[0] ? merged : c);
       
       setGeneratedCategories(updated);
       setMergeDialog({ open: false, mergedName: '' });
-      setIsMergeMode(false);
-      setSelectedForMerge([]);
-      setSuccess(`${selectedForMerge.length} categorie unite con successo`);
+      setSelectedGenCategories([]);
+      setSuccess(`${selectedGenCategories.length} categorie unite con successo`);
     }
   };
 
@@ -443,7 +511,7 @@ const CategoryDefinition = () => {
   const handleSplit = ({ categoria1, categoria2 }) => {
     if (isGenerated) {
       const updated = generatedCategories.map(c => 
-        c.nome === splitDialog.categoria.nome ? categoria1 : c
+        c.key === splitDialog.categoria.key ? categoria1 : c
       );
       updated.push(categoria2);
 
@@ -483,10 +551,10 @@ const CategoryDefinition = () => {
   const getFilteredCategories = (categoriesList) => {
     return categoriesList.filter(categoria => {
       if (filters.nomeCategoria && !categoria.nome.toLowerCase().includes(filters.nomeCategoria.toLowerCase())) return false;
-      if (filters.tipoAtletaId && !categoria.tipiAtletaId.includes(filters.tipoAtletaId)) return false;
+      if (filters.tipoAtletaId && !categoria?.tipiAtletaId?.includes(filters.tipoAtletaId)) return false;
       if (filters.tipoCategoriaId && categoria.tipoCategoriaId !== filters.tipoCategoriaId) return false;
       if (filters.genere && categoria.genere !== filters.genere) return false;
-      if (filters.gruppoEtaId && !categoria.gruppiEtaId.includes(filters.gruppoEtaId)) return false;
+      if (filters.gruppoEtaId && !categoria?.gruppiEtaId?.includes(filters.gruppoEtaId)) return false;
 
       return true;
     });
@@ -523,7 +591,10 @@ const CategoryDefinition = () => {
     const cardKey = `${isGeneratedCard ? 'gen' : 'saved'}_${index}`;
     const isExpanded = expandedCards[cardKey] || false;
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
-    const isSelected = selectedForMerge.includes(categoria.nome);
+    const isSelected = isGeneratedCard ? selectedGenCategories.includes(categoria.key) : selectedSavedCategories.includes(categoria.id);
+    const tipoCompetizioneId = isGeneratedCard ? categoria.tipoCompetizioneId : categoria?.tipoCategoria?.tipoCompetizione?.id;
+    const isQuyenCategory = tipoCompetizioneId === CompetitionTipology.MANI_NUDE || tipoCompetizioneId === CompetitionTipology.ARMI;
+    const isFightCategory = tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
 
     const getBirthYear = (dataNascita) => {
       if (!dataNascita) return null;
@@ -544,8 +615,14 @@ const CategoryDefinition = () => {
         }}
       >
           <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Titolo con toggle per merge mode */}
+            {/* Titolo con checkbox sempre visibile */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+              <Checkbox
+                checked={isSelected}
+                onChange={() => isGeneratedCard ? handleToggleGeneratedSelection(categoria.key) : handleToggleSavedSelection(categoria.id)}
+                size="small"
+                sx={{ p: 0 }}
+              />
               <Tooltip title={categoria.nome} arrow placement="top">
                 <Typography 
                   variant="subtitle1" 
@@ -561,14 +638,6 @@ const CategoryDefinition = () => {
                   {categoria.nome}
                 </Typography>
               </Tooltip>
-              {isMergeMode && isGeneratedCard && (
-                <Checkbox
-                  checked={isSelected}
-                  onChange={() => handleToggleMergeSelection(categoria.nome)}
-                  size="small"
-                  sx={{ p: 0 }}
-                />
-              )}
             </Box>
 
             {/* Container scrollabile orizzontalmente per chips e bottoni */}
@@ -681,43 +750,55 @@ const CategoryDefinition = () => {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Atleta</strong></TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
-                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
-                        { isGeneratedCard ? (
-                          <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Esperienza</strong></TableCell>
+                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Atleta</strong></TableCell>
+                        { isFightCategory ? (
+                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
                         ) : (
-                          <TableCell sx = {{ fontSize: '0.75rem', py: 0, width: '40%' }}><strong>Club</strong></TableCell>
-                        )
-                         }
+                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
+                        )}
+                        { isQuyenCategory && (
+                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Dettagli</strong></TableCell>
+                        )}
+                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Esperienza</strong></TableCell>
+                        <TableCell sx = {{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Club</strong></TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {atleti.map((item, idx) => {
                         const atleta = isGeneratedCard ? item : item.atleta;
                         const club = isGeneratedCard ? item.club : item.atleta?.club;
+                        const esperienza = isGeneratedCard ? item.esperienza : item.esperienza?.nome;
+                        const dettagli = isGeneratedCard ? item.dettagli : item.dettagli?.nome;
                         return (
                           <TableRow key={idx} hover>
                             <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {atleta.nome} {atleta.cognome}
+                              <Tooltip title={`${atleta.cognome} ${atleta.nome}`} arrow placement="top">
+                                <span>
+                              {atleta.cognome} {atleta.nome ? `${atleta.nome.charAt(0)}.` : ''}
+                                </span>
+                              </Tooltip>
                             </TableCell>
-                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {getBirthYear(atleta.dataNascita) || getBirthYear(item.dataNascita) || '-'}
-                            </TableCell>
-                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {atleta.peso || item.peso || '-'}
-                            </TableCell>
-                            {
-                              isGeneratedCard ? (
-                                <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                  {item.esperienza || '-'}
-                                </TableCell>
-                              ) : (
-                                <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                  {club?.denominazione || club?.nome || '-'}
-                                </TableCell>
+                            { isFightCategory ? (
+                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                                {item.peso || '-'}
+                              </TableCell>
+                             ) : (
+                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                                {getBirthYear(atleta.dataNascita)}
+                              </TableCell>
                               )
                             }
+                            { isQuyenCategory && (
+                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                                {dettagli || '-'}
+                              </TableCell>
+                            )}
+                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {esperienza || '-'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {club?.abbreviazione || club?.denominazione || '-'}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -735,56 +816,41 @@ const CategoryDefinition = () => {
     );
   };  if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <div className="page-container">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <CircularProgress />
         </Box>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-        <Button 
-          startIcon={<ArrowBack />} 
-          onClick={handleGoBack}
-          sx={{ mt: 2 }}
-        >
-          Torna a tutte le categorie
-        </Button>
-      </Container>
+      </div>
     );
   }
 
   if (!competition) {
     return (
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <div className="page-container">
         <Alert severity="warning">Competizione non trovata</Alert>
-        <Button 
+        <MuiButton 
           startIcon={<ArrowBack />} 
           onClick={handleGoBack}
           sx={{ mt: 2 }}
         >
           Torna a tutte le categorie
-        </Button>
-      </Container>
+        </MuiButton>
+      </div>
     );
   }
 
   // Controllo permessi - mostra messaggio se l'utente non ha i permessi
   if (!hasPermission) {
     return (
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <div className="page-container">
         <Box sx={{ mb: 3 }}>
-          <Button 
+          <MuiButton 
             startIcon={<ArrowBack />} 
             onClick={handleGoBack}
             sx={{ mb: 2 }}
           >
             Torna a tutte le categorie
-          </Button>
+          </MuiButton>
         </Box>
         
         <Alert severity="error">
@@ -810,47 +876,28 @@ const CategoryDefinition = () => {
             </Typography>
           )}
         </Paper>
-      </Container>
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Header con bottone torna indietro */}
-      <Box sx={{ mb: 3 }}>
-        <Button 
-          startIcon={<ArrowBack />} 
-          onClick={handleGoBack}
-          sx={{ mb: 2 }}
-        >
-          Torna a tutte le categorie
-        </Button>
-        
-        <Typography variant="h4" gutterBottom>
-          Definizione Categorie
-        </Typography>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          {competition.nome}
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {new Date(competition.dataInizio).toLocaleDateString('it-IT')} - {new Date(competition.dataFine).toLocaleDateString('it-IT')}
-          </Typography>
-          <Chip label={competition.stato} color="primary" size="small" />
-        </Box>
-        {competition.organizzatore && (
-          <Typography variant="body2" color="text.secondary">
-            Organizzatore: {competition.organizzatore.denominazione}
-          </Typography>
-        )}
-      </Box>
-
-      <Divider sx={{ mb: 3 }} />
-
+    <div className="page-container">
+      <PageHeader
+        icon={FaTags}
+        title="Definizione Categorie"
+        subtitle={`${competition.nome} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
+      />
+      <MuiButton
+        startIcon={<ArrowBack />}
+        onClick={handleGoBack}
+      >
+        Torna alle Competizioni
+      </MuiButton>
+    
       {/* Messaggi di errore e successo */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+          {error.message || error}
         </Alert>
       )}
       
@@ -862,7 +909,12 @@ const CategoryDefinition = () => {
 
       {/* Bottone Genera Categorie */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', md: 'center' },
+        }}>
           <Box>
             <Typography variant="h6" gutterBottom>
               Generazione Categorie
@@ -871,22 +923,19 @@ const CategoryDefinition = () => {
               Genera automaticamente le categorie per questa competizione
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, mt: { xs: 2, md: 0 } }}>
             <Button
               variant="outlined"
-              startIcon={<Settings />}
+              icon={Settings}
               onClick={() => setShowGenerationOptions(!showGenerationOptions)}
               disabled={loading || isGenerated}
-              size="large"
             >
               Opzioni
             </Button>
             <Button
-              variant="contained"
-              startIcon={loading ? <CircularProgress size={20} /> : <Refresh />}
+              icon={loading ? CircularProgress: Refresh}
               onClick={handleGenerateCategories}
               disabled={loading || isGenerated}
-              size="large"
             >
               Genera Categorie
             </Button>
@@ -938,220 +987,266 @@ const CategoryDefinition = () => {
                 </Box>
               }
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={generationOptions.utilizzaDateValiditaGruppiEta}
+                  onChange={() => handleToggleGenerationOption('utilizzaDateValiditaGruppiEta')}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body1">Utilizza date di validità dei gruppi di età</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Considera le date di validità dei gruppi di età per la generazione delle categorie
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={generationOptions.utilizzaEtaAtletiInizioGara}
+                  onChange={() => handleToggleGenerationOption('utilizzaEtaAtletiInizioGara')}
+                  color="primary"
+                />
+              }
+              label={
+                <Box>
+                  <Typography variant="body1">Utilizza età atleti all'inizio gara</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Considera l'età degli atleti all'inizio della gara per la generazione delle categorie
+                  </Typography>
+                </Box>
+              }
+            />
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-            <Button
+            <MuiButton
               variant="outlined"
               onClick={() => setShowGenerationOptions(false)}
             >
               Chiudi
-            </Button>
+            </MuiButton>
           </Box>
         </Collapse>
-      </Paper>
 
-      {/* Categorie Generate (Prima del salvataggio) */}
-      {isGenerated && generatedCategories.length > 0 && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              Anteprima Categorie Generate ({generatedCategories.length})
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {!isMergeMode ? (
-                <>
-                  <Button
-                    variant="outlined"
-                    startIcon={<MergeType />}
-                    onClick={handleOpenMerge}
-                  >
-                    Unisci
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={handleCancelCategories}
-                    disabled={loading}
-                  >
-                    Annulla Categorie
-                  </Button>
-                  <Button
-                    variant="contained"
-                    startIcon={<Save />}
-                    onClick={handleSaveCategories}
-                    disabled={loading}
-                  >
-                    Salva Categorie
-                  </Button>
-                </>
-              ) : (
-                <>
+        {/* Categorie Generate (Prima del salvataggio) */}
+        {isGenerated && generatedCategories.length > 0 && (
+          <>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between', 
+              alignItems: { xs: 'flex-start', md: 'center' },
+              mb: 2, mt: 4
+            }}>
+              <Typography variant="h6">
+                Anteprima Categorie Generate ({generatedCategories.length})
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
+                {selectedGenCategories.length > 0 && (
                   <Chip 
-                    label={`${selectedForMerge.length} categorie selezionate`} 
+                    label={`${selectedGenCategories.length} selezionate`} 
                     color="primary"
-                    sx={{ mr: 1 }}
+                    onDelete={() => setSelectedGenCategories([])}
                   />
-                  <Button
-                    variant="outlined"
-                    onClick={handleCancelMerge}
-                  >
-                    Annulla Unione
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleConfirmMerge}
-                    disabled={selectedForMerge.length < 2}
-                  >
-                    Conferma Unione
-                  </Button>
-                </>
+                )}
+                <MuiButton
+                  variant="contained"
+                  color="success"
+                  startIcon={<Save />}
+                  onClick={handleSaveSelected}
+                  disabled={selectedGenCategories.length === 0 || loading}
+                >
+                  Salva
+                </MuiButton>
+                <MuiButton
+                  variant="outlined"
+                  startIcon={<MergeType />}
+                  onClick={handleConfirmMerge}
+                  disabled={selectedGenCategories.length < 2}
+                >
+                  Unisci
+                </MuiButton>
+                <MuiButton
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Delete />}
+                  onClick={handleDeleteSelected}
+                  disabled={selectedGenCategories.length === 0}
+                >
+                  Elimina
+                </MuiButton>
+                <MuiButton
+                  variant="outlined"
+                  color="error"
+                  onClick={handleCancelCategories}
+                  disabled={loading}
+                >
+                  Annulla
+                </MuiButton>
+              </Box>
+            </Box>
+
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Queste categorie non sono ancora state salvate. Puoi modificarle, unirle o dividerle prima di confermare.
+            </Alert>
+
+            {/* Filtri per categorie generate */}
+            <Paper elevation={0} sx={{ py: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Tipo Atleta</InputLabel>
+                    <Select
+                      value={filters.tipoAtletaId}
+                      onChange={(e) => handleFilterChange('tipoAtletaId', e.target.value)}
+                      label="Tipo Atleta"
+                    >
+                      <MenuItem value="">Tutti</MenuItem>
+                      {getUniqueFilterValues(generatedCategories).tipiAtleta.map((tipo) => (
+                        <MenuItem key={tipo.id} value={tipo.id}>{tipo.nome}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Categoria</InputLabel>
+                    <Select
+                      value={filters.tipoCategoriaId}
+                      onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)}
+                      label="Categoria"
+                    >
+                      <MenuItem value="">Tutte</MenuItem>
+                      {getUniqueFilterValues(generatedCategories).categorie.map((cat) => (
+                        <MenuItem key={cat.id} value={cat.id}>{cat.nome}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Genere</InputLabel>
+                    <Select
+                      value={filters.genere}
+                      onChange={(e) => handleFilterChange('genere', e.target.value)}
+                      label="Genere"
+                    >
+                      <MenuItem value="">Tutti</MenuItem>
+                      {getUniqueFilterValues(generatedCategories).generi.map((gen, idx) => (
+                        <MenuItem key={idx} value={gen}>{gen}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Gruppo Età</InputLabel>
+                    <Select
+                      value={filters.gruppoEtaId}
+                      onChange={(e) => handleFilterChange('gruppoEtaId', e.target.value)}
+                      label="Gruppo Età"
+                    >
+                      <MenuItem value="">Tutti</MenuItem>
+                      {allGruppiEta.map((gruppo) => (
+                        <MenuItem key={gruppo.id} value={gruppo.id}>
+                          {gruppo.nome} ({gruppo.etaMinima}-{gruppo.etaMassima} anni)
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Divider sx={{ mb: 2 }} />
+
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
+              {getPaginatedCategories(generatedCategories).items.map((categoria, index) => (
+                <Box key={`gen_${(page - 1) * rowsPerPage + index}`}>
+                  {renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}
+                </Box>
+              ))}
+            </Box>
+
+            {/* Controlli paginazione in fondo */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body2">
+                  Mostra per pagina:
+                </Typography>
+                <ToggleButtonGroup
+                  value={rowsPerPage}
+                  exclusive
+                  onChange={handleRowsPerPageChange}
+                  size="small"
+                >
+                  <ToggleButton value={5}>5</ToggleButton>
+                  <ToggleButton value={10}>10</ToggleButton>
+                  <ToggleButton value={25}>25</ToggleButton>
+                  <ToggleButton value={50}>50</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Totale: {getPaginatedCategories(generatedCategories).total} categorie
+              </Typography>
+              {getPaginatedCategories(generatedCategories).totalPages > 1 && (
+                <Pagination
+                  count={getPaginatedCategories(generatedCategories).totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                />
               )}
             </Box>
-          </Box>
-
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Queste categorie non sono ancora state salvate. Puoi modificarle, unirle o dividerle prima di confermare.
-          </Alert>
-
-          {/* Filtri per categorie generate */}
-          <Paper elevation={0} sx={{ py: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Tipo Atleta</InputLabel>
-                  <Select
-                    value={filters.tipoAtletaId}
-                    onChange={(e) => handleFilterChange('tipoAtletaId', e.target.value)}
-                    label="Tipo Atleta"
-                  >
-                    <MenuItem value="">Tutti</MenuItem>
-                    {getUniqueFilterValues(generatedCategories).tipiAtleta.map((tipo) => (
-                      <MenuItem key={tipo.id} value={tipo.id}>{tipo.nome}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Categoria</InputLabel>
-                  <Select
-                    value={filters.tipoCategoriaId}
-                    onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)}
-                    label="Categoria"
-                  >
-                    <MenuItem value="">Tutte</MenuItem>
-                    {getUniqueFilterValues(generatedCategories).categorie.map((cat) => (
-                      <MenuItem key={cat.id} value={cat.id}>{cat.nome}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Genere</InputLabel>
-                  <Select
-                    value={filters.genere}
-                    onChange={(e) => handleFilterChange('genere', e.target.value)}
-                    label="Genere"
-                  >
-                    <MenuItem value="">Tutti</MenuItem>
-                    {getUniqueFilterValues(generatedCategories).generi.map((gen, idx) => (
-                      <MenuItem key={idx} value={gen}>{gen}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Gruppo Età</InputLabel>
-                  <Select
-                    value={filters.gruppoEtaId}
-                    onChange={(e) => handleFilterChange('gruppoEtaId', e.target.value)}
-                    label="Gruppo Età"
-                  >
-                    <MenuItem value="">Tutti</MenuItem>
-                    {allGruppiEta.map((gruppo) => (
-                      <MenuItem key={gruppo.id} value={gruppo.id}>
-                        {gruppo.nome} ({gruppo.etaMinima}-{gruppo.etaMassima} anni)
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          <Divider sx={{ mb: 2 }} />
-
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
-            {getPaginatedCategories(generatedCategories).items.map((categoria, index) => (
-              <Box key={`gen_${(page - 1) * rowsPerPage + index}`}>
-                {renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}
-              </Box>
-            ))}
-          </Box>
-
-          {/* Controlli paginazione in fondo */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body2">
-                Mostra per pagina:
-              </Typography>
-              <ToggleButtonGroup
-                value={rowsPerPage}
-                exclusive
-                onChange={handleRowsPerPageChange}
-                size="small"
-              >
-                <ToggleButton value={5}>5</ToggleButton>
-                <ToggleButton value={10}>10</ToggleButton>
-                <ToggleButton value={25}>25</ToggleButton>
-                <ToggleButton value={50}>50</ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-            <Typography variant="body2" color="text.secondary">
-              Totale: {getPaginatedCategories(generatedCategories).total} categorie
-            </Typography>
-            {getPaginatedCategories(generatedCategories).totalPages > 1 && (
-              <Pagination
-                count={getPaginatedCategories(generatedCategories).totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                showFirstButton
-                showLastButton
-              />
-            )}
-          </Box>
-        </Paper>
-      )}
+          </>
+        )}
+      </Paper>
 
       {/* Categorie Salvate */}
       {categories.length > 0 ? (
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ 
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between', 
+            alignItems: { xs: 'flex-start', md: 'center' },
+            mb: 2
+          }}>
             <Typography variant="h6">
               Categorie Salvate ({categories.length})
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
+              {selectedSavedCategories.length > 0 && (
+                <Chip 
+                  label={`${selectedSavedCategories.length} selezionate`} 
+                  color="primary"
+                  onDelete={() => setSelectedSavedCategories([])}
+                />
+              )}
+              <MuiButton
                 variant="outlined"
                 startIcon={<Summarize />}
                 onClick={() => setShowSummaryModal(true)}
                 disabled={loading}
               >
-                Riepilogo Generale
-              </Button>
-              <Button
+                Riepilogo
+              </MuiButton>
+              <MuiButton
                 variant="outlined"
                 color="error"
-                startIcon={<DeleteSweep />}
-                onClick={handleDeleteAllCategories}
-                disabled={loading}
+                startIcon={<Delete />}
+                onClick={handleDeleteSelectedSaved}
+                disabled={selectedSavedCategories.length === 0 || loading}
               >
-                Elimina Tutte
-              </Button>
+                Elimina
+              </MuiButton>
             </Box>
           </Box>
 
@@ -1159,17 +1254,22 @@ const CategoryDefinition = () => {
           <Paper elevation={0} sx={{ py: 2 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} md={4}>
-                <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <TextField
-                    name="name"
-                    label="Cerca nome categoria"
-                    placeholder="Inserisci categoria..."
-                    variant="outlined"
-                    fullWidth
-                    value={filters.nomeCategoria}
-                    onChange={(e) => handleFilterChange('nomeCategoria', e.target.value)}
-                  />
-                </FormControl>
+                <TextField
+                  name="name"
+                  label="Cerca nome categoria"
+                  placeholder="Inserisci categoria..."
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  margin="none"
+                  value={filters.nomeCategoria}
+                  onChange={(e) => handleFilterChange('nomeCategoria', e.target.value)}
+                  sx={{ 
+                    '& .MuiInputBase-root': { 
+                      height: '40px' 
+                    }
+                  }}
+                />
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
@@ -1289,12 +1389,12 @@ const CategoryDefinition = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>
+          <MuiButton onClick={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>
             Annulla
-          </Button>
-          <Button onClick={handleSaveEdit} variant="contained">
+          </MuiButton>
+          <MuiButton onClick={handleSaveEdit} variant="contained">
             Salva
-          </Button>
+          </MuiButton>
         </DialogActions>
       </Dialog>
 
@@ -1303,16 +1403,16 @@ const CategoryDefinition = () => {
         <DialogTitle>Unisci Categorie Selezionate</DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-            Stai per unire {selectedForMerge.length} categorie:
+            Stai per unire {selectedGenCategories.length} categorie:
           </Typography>
           
           <List dense>
-            {selectedForMerge.map((nome, idx) => {
-              const cat = generatedCategories.find(c => c.nome === nome);
+            {selectedGenCategories.map((key, idx) => {
+              const cat = generatedCategories.find(c => c.key === key);
               return (
                 <ListItem key={idx}>
                   <ListItemText 
-                    primary={nome}
+                    primary={cat?.nome}
                     secondary={`${cat?.atleti?.length || 0} atleti`}
                   />
                 </ListItem>
@@ -1330,12 +1430,12 @@ const CategoryDefinition = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMergeDialog({ open: false, mergedName: '' })}>
+          <MuiButton onClick={() => setMergeDialog({ open: false, mergedName: '' })}>
             Annulla
-          </Button>
-          <Button onClick={handleMerge} variant="contained">
+          </MuiButton>
+          <MuiButton onClick={handleMerge} variant="contained">
             Unisci
-          </Button>
+          </MuiButton>
         </DialogActions>
       </Dialog>
 
@@ -1353,7 +1453,78 @@ const CategoryDefinition = () => {
         onClose={() => setShowSummaryModal(false)}
         competitionId={competizioneId}
       />
-    </Container>
+
+      {/* Confirm Action Modals */}
+      <ConfirmActionModal
+        open={cancelCategoriesModal}
+        title="Annulla Categorie Generate"
+        message="Sei sicuro di voler annullare tutte le categorie generate? Questa azione non può essere annullata."
+        primaryButton={{
+          text: 'Annulla Categorie',
+          onClick: confirmCancelCategories,
+        }}
+        secondaryButton={{
+          text: 'Chiudi',
+          onClick: () => setCancelCategoriesModal(false),
+        }}
+      />
+
+      <ConfirmActionModal
+        open={deleteCategoryModal.open}
+        title="Elimina Categoria"
+        message="Sei sicuro di voler eliminare questa categoria?"
+        primaryButton={{
+          text: 'Elimina',
+          onClick: confirmDeleteCategory,
+        }}
+        secondaryButton={{
+          text: 'Annulla',
+          onClick: () => setDeleteCategoryModal({ open: false, categoriaId: null }),
+        }}
+      />
+
+      <ConfirmActionModal
+        open={saveSelectedModal}
+        title="Salva Categorie Selezionate"
+        message={`Sei sicuro di voler salvare ${selectedGenCategories.length} categoria/e selezionata/e?`}
+        primaryButton={{
+          text: 'Salva',
+          onClick: confirmSaveSelected,
+        }}
+        secondaryButton={{
+          text: 'Annulla',
+          onClick: () => setSaveSelectedModal(false),
+        }}
+      />
+
+      <ConfirmActionModal
+        open={deleteSelectedModal}
+        title="Elimina Categorie Selezionate"
+        message={`Sei sicuro di voler eliminare ${selectedGenCategories.length} categoria/e selezionata/e? Questa azione non può essere annullata.`}
+        primaryButton={{
+          text: 'Elimina',
+          onClick: confirmDeleteSelected,
+        }}
+        secondaryButton={{
+          text: 'Annulla',
+          onClick: () => setDeleteSelectedModal(false),
+        }}
+      />
+
+      <ConfirmActionModal
+        open={deleteSelectedSavedModal}
+        title="Elimina Categorie Salvate"
+        message={`Sei sicuro di voler eliminare ${selectedSavedCategories.length} categoria/e selezionata/e? Questa azione non può essere annullata.`}
+        primaryButton={{
+          text: 'Elimina',
+          onClick: confirmDeleteSelectedSaved,
+        }}
+        secondaryButton={{
+          text: 'Annulla',
+          onClick: () => setDeleteSelectedSavedModal(false),
+        }}
+      />
+    </div>
   );
 };
 

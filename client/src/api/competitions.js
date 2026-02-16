@@ -39,9 +39,9 @@ export const loadCompetitionCategories = async (competitionId) => {
 
 
 // Ottiene il riepilogo costi dettagliato per una competizione e club
-export const getCompetitionCostSummary = async (clubId, competitionId) => {
+export const getClubCompetitionRegistrationSummary = async (competitionId, clubId) => {
   try {
-    const response = await axios.get(`/competizioni/${competitionId}/riepilogo-costi?clubId=${clubId}`);
+    const response = await axios.get(`/competizioni/${competitionId}/riepilogo-iscrizione?clubId=${clubId}`);
     return response.data;
   } catch (error) {
     console.error('Errore nel caricamento del riepilogo costi:', error);
@@ -88,6 +88,20 @@ export const deleteCompetition = async (id) => {
     await axios.delete(`/competizioni/${id}`);
   } catch (error) {
     console.error('Errore durante l\'eliminazione della competizione:', error);
+    throw error;
+  }
+};
+
+// Scarica il report Excel degli atleti iscritti a una competizione
+export const downloadExcelRegisteredAthletes = async (competitionId, mode = 'simple') => {
+  try {
+    const response = await axios.get(`/competizioni/${competitionId}/export-reg-athletes`, {
+      params: { mode },
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il download del report Excel:', error);
     throw error;
   }
 };

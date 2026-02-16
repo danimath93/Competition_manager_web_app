@@ -4,50 +4,36 @@ import {
   CardContent,
   Typography,
   CardActions,
-  IconButton,
   Button,
   Box,
   Chip,
   Tooltip
 } from '@mui/material';
-import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts, InfoOutline, CalendarToday, LocationOn } from '@mui/icons-material';
+import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts } from '@mui/icons-material';
 import { FaCalendar, FaTags } from 'react-icons/fa';
 import { FaLocationDot } from 'react-icons/fa6';
 import { format } from 'date-fns';
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
+import { getCompetitionStatusColor } from '../utils/helperCompetitions';
 import AuthComponent from './AuthComponent';
 
 const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onSummary, onEditClubOrganizer, onDocuments, onCategories, userClubId }) => {
   const isCompOpen = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
   const isCompInPreparation = (competition.stato === CompetitionStatus.IN_PREPARATION);
-  const isCompOngoing = (competition.stato === CompetitionStatus.ONGOING)
-  const isCompCompleted = (competition.stato === CompetitionStatus.COMPLETED);
   const isClubRegistered = competition?.clubIscritti?.includes(userClubId) || false;
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case CompetitionStatus.PLANNED:
-        return 'default';
-      case CompetitionStatus.IN_PREPARATION:
-        return 'info';
-      case CompetitionStatus.OPEN:
-        return 'info';
-      case CompetitionStatus.ONGOING:
-        return 'warning';
-      case CompetitionStatus.COMPLETED:
-        return 'success';
-      case CompetitionStatus.CANCELLED:
-        return 'error';
-    }
-  }
-
   return (
-    <Card sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-      <CardContent sx={{ flexGrow: 1 }}>
+    <Card sx={{ 
+      display: 'flex', 
+      flexDirection: { xs: 'column', md: 'row' },
+      justifyContent: 'space-between', 
+      mb: 2 
+    }}>
+      <CardContent sx={{ flexGrow: 1, gap: 1.5, display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h5" component="div">
           {competition.nome}
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <FaCalendar style={{ fontSize: '0.8rem', color: 'text.secondary' }} />
           <Typography color="text.secondary" variant="body2">
             {format(new Date(competition.dataInizio), 'dd/MM/yyyy')} - {format(new Date(competition.dataFine), 'dd/MM/yyyy')}
@@ -60,15 +46,21 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
           </Typography>
         </Box>
 
-        <Box sx={{ mt: 1 }}>
-          <Chip label={"Stato: " + competition.stato.toUpperCase()} color={getStatusColor(competition.stato)} size="small" />
+        <Box>
+          <Chip label={"Stato: " + competition.stato.toUpperCase()} color={getCompetitionStatusColor(competition.stato)} size="small" />
           {isClubRegistered && (
             <Chip label="Iscritto" color="primary" size="small" sx={{ ml: 1 }} />
           )}
         </Box>
       </CardContent>
-      <CardActions sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
-          <Box sx={{ mt: 1, ml: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
+      <CardActions sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: { xs: 'flex-start', md: 'center' },
+        alignItems: { xs: 'stretch', md: 'center' },
+        p: 2, pt: 0, ml: 'auto'
+      }}>
+          <Box sx={{ ml: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
             {/* Selezione specifica per club organizzatore: */}
             {competition.organizzatoreClubId === userClubId && (
               <AuthComponent requiredRoles={['club']}>

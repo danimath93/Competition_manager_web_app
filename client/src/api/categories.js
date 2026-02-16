@@ -159,6 +159,28 @@ export const printCategories = async (competizioneId) => {
   }
 };
 
+// Esporta categorie in Excel o altro formato
+export const exportCategories = async (competizioneId) => {
+  try {
+    const response = await axios.get(`/competizioni/${competizioneId}/export-categories`, {
+      responseType: 'blob'
+    });
+    // Crea un URL blob e trigger il download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `categorie-${competizioneId}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('Errore nell\'esportazione delle categorie:', error);
+    throw error;
+  }
+};
+
 // Salva la lettera estratta per una competizione
 export const saveExtractedLetter = async (competizioneId, lettera) => {
   try {

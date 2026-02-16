@@ -10,7 +10,6 @@ const ConfigTipoCosti = sequelize.define('ConfigTipoCosti', {
   nome: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: {
       notEmpty: true
     }
@@ -28,7 +27,14 @@ const ConfigTipoCosti = sequelize.define('ConfigTipoCosti', {
   tableName: 'config_tipo_costi',
   timestamps: true,
   createdAt: 'created_at',
-  updatedAt: 'updated_at'
+  updatedAt: 'updated_at',
+  indexes: [
+    {
+      name: 'unique_nome_tipo_costi',
+      unique: true,
+      fields: ['nome']
+    }
+  ]
 });
 
 module.exports = ConfigTipoCosti;

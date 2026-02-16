@@ -1,44 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Tabs, Tab, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, Button } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Box, Container, Typography, Tabs, Tab, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert } from '@mui/material';
+import MuiButton from '@mui/material/Button';
+import { FaTags } from 'react-icons/fa';
+import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack } from '@mui/icons-material';
+import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
-import { ArrowBack } from '@mui/icons-material';
-const medalEmoji = {
-  oro: '🥇',
-  argento: '🥈',
-  bronzo: '🥉'
-};
+import { getCompetitionDetails } from '../../api/competitions';
+import PageHeader from '../../components/PageHeader';
+
 
 function MedalIcons({ ori, argenti, bronzi }) {
   return <span>{'🥇'.repeat(ori)}{'🥈'.repeat(argenti)}{'🥉'.repeat(bronzi)}</span>;
 }
 
-const CategoryResults = ({ competitionId: propCompetitionId }) => {
-  const params = useParams();
+const CategoryResults = () => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
-  const effectiveCompetitionId = propCompetitionId || params.competitionId || query.get('competitionId') || query.get('competizioneId') || null;
+  const competitionId = query.get('competizioneId');
+
 
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [competition, setCompetition] = useState(null);
   const [atleti, setAtleti] = useState(null);
   const [club, setClub] = useState(null);
-  const [error, setError] = useState(null);
   const [clubDetails, setClubDetails] = useState({});
   const [bestByFascia, setBestByFascia] = useState(null);
   const navigate = useNavigate();
 
 useEffect(() => {
   let cancelled = false;
-  const fetch = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const [atletiRes, clubRes] = await Promise.all([
-        getAtletiResults(effectiveCompetitionId),
-        getClubResults(effectiveCompetitionId),
-      ]);
+      const atletiRes = await getAtletiResults(competitionId);
+      const clubRes = await getClubResults(competitionId);
+      const loadedCompetition = await getCompetitionDetails(competitionId);
 
       if (cancelled) return;
 
@@ -46,6 +45,7 @@ useEffect(() => {
       setAtleti(listaAtleti);
       setClub(clubRes);
       setBestByFascia(atletiRes.miglioriPerFasce);
+      setCompetition(loadedCompetition);
       setLoading(false);
     } catch (err) {
       console.error('Errore risultati:', err);
@@ -56,9 +56,9 @@ useEffect(() => {
     }
   };
 
-  fetch();
+  fetchData();
   return () => { cancelled = true; };
-}, [effectiveCompetitionId]);
+}, [competitionId]);
 
   const handleTab = (e, v) => setTab(v);
 
@@ -69,24 +69,43 @@ useEffect(() => {
 
   const handleAccordion = async (clubId) => {
     if (clubDetails[clubId]) return;
-    const details = await getClubMedalsDetails(clubId, effectiveCompetitionId);
+    const details = await getClubMedalsDetails(clubId, competitionId);
     setClubDetails(prev => ({ ...prev, [clubId]: details }));
   };
 
-  if (loading) return <Box sx={{ mt: 4, textAlign: 'center' }}><CircularProgress /></Box>;
-  if (error) return <Alert severity="error">{error}</Alert>;
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Button
+    <div className="page-container">
+      <PageHeader
+        icon={FaTags}
+        title="Risultati competizione"
+        subtitle={`${competition?.nome} - ${competition?.luogo} - ${format(new Date(competition.dataInizio), 'dd/MM/yyyy')} - ${format(new Date(competition.dataFine), 'dd/MM/yyyy')}`}
+      />
+      <MuiButton
         startIcon={<ArrowBack />}
         onClick={handleGoBack}
-        sx={{ mb: 2 }}
       >
-        Torna a tutte le categorie
-      </Button>
-      <Typography variant="h4" gutterBottom>Risultati Generali</Typography>
-      <Paper sx={{ mb: 3 }}>
+        Torna alle Competizioni
+      </MuiButton>
+
+      <Paper sx={{ mb: 4, mt: 2 }}>
         <Tabs value={tab} onChange={handleTab}>
           <Tab label="Miglior Atleta per Fascia" />
           <Tab label="Miglior Club per Medaglie" />
@@ -257,7 +276,7 @@ useEffect(() => {
           </TableContainer>
         </Box>
       )}
-    </Container>
+    </div>
   );
 };
 

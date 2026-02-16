@@ -38,7 +38,6 @@ const Atleta = sequelize.define('Atleta', {
   codiceFiscale: {
     type: DataTypes.STRING(16),
     allowNull: true,
-    unique: true,
     validate: {
       len: [16, 16]
     },
@@ -91,7 +90,14 @@ const Atleta = sequelize.define('Atleta', {
   },
 }, {
   tableName: 'atleti',
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    {
+      name: 'unique_atleta_codice_fiscale',
+      unique: true,
+      fields: ['codice_fiscale']
+    }
+  ]
 });
 
 module.exports = Atleta;

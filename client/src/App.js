@@ -8,23 +8,24 @@ import Login from './pages/Login';
 import Register from './components/Register';
 import RequestPasswordReset from './components/RequestPasswordReset';
 import ResetPasswordConfirm from './components/ResetPasswordConfirm';
-import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
 import AuthGate from './components/AuthGate';
 import Dashboard from './pages/Dashboard';
 import Competitions from './pages/competitions/Competitions';
 import ClubCategories from './pages/competitions/ClubCategories';
 import CompetitionRegistration from './pages/competitions/CompetitionRegistration';
 import CompetitionSummary from './pages/competitions/CompetitionSummary';
-import Athletes from './pages/Athletes';
-import ClubAdmin from './pages/ClubAdmin';
-import ClubUser from './pages/ClubUser';
-import Judges from './pages/Judges';
+import Athletes from './pages/athletes/Athletes';
+import ClubAdmin from './pages/clubs/ClubAdmin';
+import ClubUser from './pages/clubs/ClubUser';
+import Judges from './pages/judges/Judges';
 import Categories from './pages/categories/Categories';
 import CategoryDefinition from './pages/categories/CategoryDefinition';
 import CategoryExecution from './pages/categories/CategoryExecution';
 import CategoryResults from './pages/categories/CategoryResults';
 import CategoryInProgress from './pages/categories/CategoryInProgress';
-import CompetitionConfigurator from './pages/CompetitionConfigurator';
+import CompetitionConfigurator from './pages/competitions/CompetitionConfigurator';
+import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
+import Settings from './pages/settings/Settings';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
 
@@ -142,7 +143,7 @@ const AppContent = () => {
 
         {/* ClubUser - visualizzazione dati club specifico */}
         <Route path="/club" element={
-          <AuthGate requiredPermissions={["club"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
             <ClubUser />
           </AuthGate>
         } />
@@ -188,10 +189,10 @@ const AppContent = () => {
           </AuthGate>
         } />
 
-        {/* Impostazioni - TODO: al momento in sviluppo, solo superAdmin */}
+        {/* Impostazioni - In sviluppo admin e superAdmin */}
         <Route path="/settings" element={
-          <AuthGate requiredPermissions={["superAdmin"]}>
-            <div>Pagina Impostazioni (da implementare)</div>
+          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
+            <Settings />
           </AuthGate>
         } />
 

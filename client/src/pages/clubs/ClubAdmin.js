@@ -4,19 +4,21 @@ import {
   Grid,
   TextField,
 } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Add, ArrowForward } from '@mui/icons-material';
+import { Alert } from '@mui/material';
 import { FaUniversity } from 'react-icons/fa';
-
-import { useAuth } from '../context/AuthContext';
-import { loadAllClubs, createClub, updateClub, deleteClub } from '../api/clubs';
-import ClubsTable from '../components/ClubsTable';
-import ClubModal from '../components/ClubModal';
-import PageHeader from '../components/PageHeader';
-import Button from '../components/common/Button';
-import ConfirmActionModal from '../components/common/ConfirmActionModal';
+import { Button as MuiButton } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
+import { loadAllClubs, createClub, updateClub, deleteClub } from '../../api/clubs';
+import ClubsTable from '../../components/ClubsTable';
+import ClubModal from '../../components/ClubModal';
+import PageHeader from '../../components/PageHeader';
+import Button from '../../components/common/Button';
+import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 
 const ClubAdmin = () => {
   const { user } = useAuth();
+  const [error, setError] = useState(null);
   const [filteredClubs, setFilteredClubs] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [filters, setFilters] = useState({
@@ -26,6 +28,7 @@ const ClubAdmin = () => {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isReadOnlyMode, setIsReadOnlyMode] = useState(false);
   const [selectedClub, setSelectedClub] = useState(null);
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = useState(false);
 
@@ -36,6 +39,7 @@ const ClubAdmin = () => {
         setClubs(clubsData);
         setFilteredClubs(clubsData);
       } catch (error) {
+        setError('Errore nel caricamento dei dati dei club: ' + (error.message));
         console.error('Errore nel caricamento dei dati:', error);
       }
     };
@@ -54,7 +58,8 @@ const ClubAdmin = () => {
     }
     if (filters.codiceFiscale) {
       result = result.filter((club) =>
-        club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
+        club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase()) ||
+        club.partitaIva?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
       );
     }
     if (filters.rappresentanti) {
@@ -72,13 +77,22 @@ const ClubAdmin = () => {
 
   const handleOpenModal = (club = null) => {
     setIsEditMode(!!club);
+    setIsReadOnlyMode(false);
     setSelectedClub(club);
     setIsModalOpen(true);
   };
 
+  const handleOpenModalInfo = (club) => {
+    setIsEditMode(false);
+    setIsReadOnlyMode(true);
+    setSelectedClub(club);
+    setIsModalOpen(true);
+  }
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedClub(null);
+    setIsReadOnlyMode(false);
   };
 
   const handleSaveClub = async (clubData) => {
@@ -92,7 +106,8 @@ const ClubAdmin = () => {
       setClubs(clubsData);
       handleCloseModal();
     } catch (error) {
-      throw error;
+      console.error("Errore nel salvataggio del club:", error);
+      setError("Errore nel salvataggio del club: " + (error.message));
     }
   };
 
@@ -107,15 +122,37 @@ const ClubAdmin = () => {
       setClubs(clubsData);
     } catch (error) {
       console.error("Errore nell'eliminazione del club:", error);
+      setError("Errore nell'eliminazione del club: " + (error.message));
+    }
+  };
+
+  const handleGoUserClub = () => {
+    if (user && user.clubId) {
+      window.location.href = `/club`;
+    } else {
+      alert('Non sei associato a nessun club.');
     }
   };
 
   return (
-    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div className="page-container" >
       <PageHeader
         title="Gestione Club" 
         icon={FaUniversity}
       />
+      <MuiButton
+        startIcon={<ArrowForward />}
+        onClick={handleGoUserClub}
+      >
+        Vai al mio club
+      </MuiButton>
+
+      {/* Messaggi di errore e successo */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       {/* Contenuto della pagina */}
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -135,7 +172,7 @@ const ClubAdmin = () => {
                 <Grid item xs={12} sm={4}>
                   <TextField
                     name="codiceFiscale"
-                    label="Filtra per Codice Fiscale"
+                    label="Filtra per Cod. Fiscale o P. IVA"
                     variant="outlined"
                     fullWidth
                     onChange={handleFilterChange}
@@ -153,7 +190,6 @@ const ClubAdmin = () => {
               </Grid>
               <Button
                 icon={Add}
-                size='s'
                 onClick={() => handleOpenModal()}
               >
                 Aggiungi Club
@@ -167,6 +203,7 @@ const ClubAdmin = () => {
             <ClubsTable
               clubs={filteredClubs || []}
               onEdit={handleOpenModal}
+              onInfo={handleOpenModalInfo}
               onDelete={handleDeleteClubConfirm}
             />
           </div>
@@ -180,6 +217,7 @@ const ClubAdmin = () => {
           onSubmit={handleSaveClub}
           onDelete={handleDeleteClub}
           isEditMode={isEditMode}
+          isReadOnlyMode={isReadOnlyMode}
           club={selectedClub}
           user={user}
         />

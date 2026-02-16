@@ -29,7 +29,6 @@ const Giudice = sequelize.define('Giudice', {
   codiceFiscale: {
     type: DataTypes.STRING(16),
     allowNull: false,
-    unique: true,
     validate: {
       len: [16, 16]
     },
@@ -72,7 +71,14 @@ const Giudice = sequelize.define('Giudice', {
   }
 }, {
   tableName: 'giudici',
-  timestamps: true
+  timestamps: true,
+  indexes: [
+    {
+      name: 'unique_codice_fiscale_giudice',
+      unique: true,
+      fields: ['codice_fiscale']
+    }
+  ]
 });
 
 module.exports = Giudice;

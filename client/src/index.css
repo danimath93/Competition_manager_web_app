@@ -149,20 +149,76 @@ p {
 }
 
 /* Stili per scrollbar personalizzata */
+/* Scrollbar verticale */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-primary);
   border-radius: var(--radius-sm);
+  border: 2px solid var(--bg-tertiary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hover);
+}
+
+/* Scrollbar corner (angolo dove si incontrano scrollbar verticale e orizzontale) */
+::-webkit-scrollbar-corner {
+  background: var(--bg-tertiary);
+}
+
+/* Stili scrollbar per componenti MUI */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) var(--bg-tertiary);
+}
+
+/* Stili specifici per MUI */
+.MuiPaper-root::-webkit-scrollbar,
+.MuiDialog-paper::-webkit-scrollbar,
+.MuiPopover-paper::-webkit-scrollbar,
+.MuiMenu-paper::-webkit-scrollbar,
+.MuiDrawer-paper::-webkit-scrollbar,
+.MuiTableContainer-root::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.MuiPaper-root::-webkit-scrollbar-track,
+.MuiDialog-paper::-webkit-scrollbar-track,
+.MuiPopover-paper::-webkit-scrollbar-track,
+.MuiMenu-paper::-webkit-scrollbar-track,
+.MuiDrawer-paper::-webkit-scrollbar-track,
+.MuiTableContainer-root::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.MuiPaper-root::-webkit-scrollbar-thumb,
+.MuiDialog-paper::-webkit-scrollbar-thumb,
+.MuiPopover-paper::-webkit-scrollbar-thumb,
+.MuiMenu-paper::-webkit-scrollbar-thumb,
+.MuiDrawer-paper::-webkit-scrollbar-thumb,
+.MuiTableContainer-root::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--bg-tertiary);
+}
+
+.MuiPaper-root::-webkit-scrollbar-thumb:hover,
+.MuiDialog-paper::-webkit-scrollbar-thumb:hover,
+.MuiPopover-paper::-webkit-scrollbar-thumb:hover,
+.MuiMenu-paper::-webkit-scrollbar-thumb:hover,
+.MuiDrawer-paper::-webkit-scrollbar-thumb:hover,
+.MuiTableContainer-root::-webkit-scrollbar-thumb:hover {
   background: var(--color-hover);
 }
 

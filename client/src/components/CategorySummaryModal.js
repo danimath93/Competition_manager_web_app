@@ -22,12 +22,12 @@ import {
 import { 
   EmojiEvents as TrophyIcon,
   Close as CloseIcon,
-  Print as PrintIcon
+  Print as PrintIcon,
+  GetApp as ExportIcon
 } from '@mui/icons-material';
+import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
 
-const { getCategoriesByCompetizione, printCategories } = await import('../api/categories');
-const TIPO_COMPETIZIONE_COMBATTIMENTO = 3;
-const TIPO_COMPETIZIONE_ATT_COMPLEMENTARI = 4;
+const { getCategoriesByCompetizione, printCategories, exportCategories } = await import('../api/categories');
 
 const CategorySummaryModal = ({ open, onClose, competitionId }) => {
   const [loading, setLoading] = useState(false);
@@ -69,12 +69,12 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
         const athleteCount = category.maxPartecipanti || 0;
         totalAthletes += athleteCount;
 
-        if (category.tipoCategoria?.tipoCompetizione?.id !== TIPO_COMPETIZIONE_ATT_COMPLEMENTARI) {
+        if (category.tipoCategoria?.tipoCompetizione?.id !== CompetitionTipology.COMPLEMENTARI) {
           // Medal calculation based on number of athletes, only for non dimonstrative categories
           if (athleteCount > 3) {
             goldMedals += 1;
             silverMedals += 1;
-            if (category.tipoCategoria?.tipoCompetizione?.id === TIPO_COMPETIZIONE_COMBATTIMENTO) {
+            if (category.tipoCategoria?.tipoCompetizione?.id === CompetitionTipology.COMBATTIMENTO) {
               bronzeMedals += 2;
             } else {
               bronzeMedals += 1;
@@ -113,9 +113,9 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
   };
 
   const getMedalInfo = (athleteCount, competitionTypeId) => {
-    if (competitionTypeId !== TIPO_COMPETIZIONE_ATT_COMPLEMENTARI) {
+    if (competitionTypeId !== CompetitionTipology.COMPLEMENTARI) {
       if (athleteCount > 3) {
-        if (competitionTypeId === TIPO_COMPETIZIONE_COMBATTIMENTO) {
+        if (competitionTypeId === CompetitionTipology.COMBATTIMENTO) {
           return { gold: 1, silver: 1, bronze: 2 };
         } else {
           return { gold: 1, silver: 1, bronze: 1 };
@@ -137,7 +137,19 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       await printCategories(competitionId);
     } catch (err) {
       console.error('Errore nella stampa:', err);
-      setError('Impossibile stampare le categorie');
+      setError('Impossibile stampare le categorie: ' + err.message);
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      setPrinting(true);
+      await exportCategories(competitionId);
+    } catch (err) {
+      console.error('Errore nell\'export:', err);
+      setError('Impossibile esportare le categorie: ' + err.message);
     } finally {
       setPrinting(false);
     }
@@ -184,7 +196,7 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
 
               <Paper sx={{ p: 2, flex: 1, minWidth: 150 }}>
                 <Typography variant="subtitle2" color="textSecondary">
-                  Totale Atleti
+                  Totale Iscrizioni Atleti
                 </Typography>
                 <Typography variant="h4" color="primary">
                   {summary.totalAthletes}
@@ -287,6 +299,14 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       </DialogContent>
 
       <DialogActions>
+        <Button 
+          onClick={handleExport} 
+          variant="outlined"
+          startIcon={<ExportIcon />}
+          disabled={printing || loading}
+        >
+          {printing ? 'Esportazione in corso...' : 'Esporta'}
+        </Button>
         <Button 
           onClick={handlePrint} 
           variant="outlined"

@@ -1,8 +1,12 @@
-const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento } = require('../models');
+const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento, ConfigGruppoEta } = require('../models');
 const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta } = require('../models');
 
 const logger = require('../helpers/logger/logger');
 const PDFDocument = require('pdfkit');
+const ExcelJS = require('exceljs');
+
+const FIGHTING_COMPETITION_TYPE_ID = 3; // ID del tipo di competizione per combattimento  
+const COMPLEMENTARY_ACTIVITIES_TYPE_ID = 4; // ID del tipo di competizione per attività complementari
 
 // Ottieni tutte le competizioni
 const getAllCompetizioni = async (req, res) => {
@@ -312,7 +316,7 @@ const getCompetizioniByTipologia = async (req, res) => {
 };
 
 // Riepilogo costi dettagliato per una competizione e club
-const getCompetitionCostSummary = async (req, res) => {
+const getCompetitionClubRegistrationSummary = async (req, res) => {
   try {
     const { competizioneId } = req.params;
     const { clubId } = req.query;
@@ -351,6 +355,7 @@ const getCompetitionCostSummary = async (req, res) => {
     // Calcola dettagli per tipo atleta
     const athleteTypeTotals = {};
     const categoryBreakdown = {};
+    const categoryTypeTotals = {};
 
     if (iscrizioniAtleti.length === 0) {
       return res.status(404).json({ error: 'Nessuna iscrizione atleta trovata per questo club e competizione' });
@@ -380,6 +385,7 @@ const getCompetitionCostSummary = async (req, res) => {
         if (tipoCategoria && tipoCategoria.nome) {
           iscrizioniPerAtleta[atleta.id].categorie.push(tipoCategoria.nome);
           categoryBreakdown[tipoCategoria.nome] = (categoryBreakdown[tipoCategoria.nome] || 0) + 1;
+          categoryTypeTotals[tipoCategoria.tipoCompetizioneId] = (categoryTypeTotals[tipoCategoria.tipoCompetizioneId] || 0) + 1;
         }
       }
     };
@@ -418,7 +424,8 @@ const getCompetitionCostSummary = async (req, res) => {
         totalCategories,
         totalCost
       },
-      athleteTypeTotals
+      athleteTypeTotals,
+      categoryTypeTotals
     };
     res.json(summary);
   } catch (error) {
@@ -533,7 +540,7 @@ const printCategories = async (req, res) => {
           include: [{
             model: Club,
             as: 'club',
-            attributes: ['id', 'denominazione']
+            attributes: ['id', 'denominazione', 'abbreviazione']
           }]
         }],
         order: [['atleta', 'cognome', 'ASC']]
@@ -639,7 +646,7 @@ const printCategories = async (req, res) => {
           const peso = iscrizione.peso ? `${iscrizione.peso} kg` : '-';
           
           // Club - tronca se troppo lungo
-          let clubName = atleta.club?.denominazione || '-';
+          let clubName = atleta.club?.abbreviazione || atleta.club?.denominazione || '-';
           let clubLine2 = '';
           const maxClubLength = 55;
           if (clubName.length > maxClubLength) {
@@ -700,6 +707,324 @@ const printCategories = async (req, res) => {
   }
 };
 
+const exportCategories = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+    // Recupera la competizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      logger.warn(`Tentativo esportazione categorie per competizione inesistente - ID: ${competizioneId}`);
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Recupera tutte le categorie con i tipi di categoria
+    const categorie = await Categoria.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome'],
+          include: [{
+            model: ConfigTipoCompetizione,
+            as: 'tipoCompetizione',
+            attributes: ['id', 'nome']
+          }]
+        }
+      ],
+      order: [['nome', 'ASC']]
+    });
+ 
+    const gruppiEta = await ConfigGruppoEta.findAll({
+      attributes: ['id', 'nome']
+    });
+
+    // Crea il workbook Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Categorie');
+    // Definisci le colonne
+    worksheet.columns = [
+      { header: 'ID Categoria', key: 'id', width: 15 },
+      { header: 'Categoria', key: 'nome', width: 30 },
+      { header: 'Tipo Categoria', key: 'tipoCategoriaNome', width: 30 },
+      { header: 'Tipo Competizione', key: 'tipoCompetizioneNome', width: 30 },
+      { header: 'Gruppo Età', key: 'gruppoEtaNome', width: 20 },
+      { header: 'Ori', key: 'ori', width: 10 },
+      { header: 'Argenti', key: 'argenti', width: 10 },
+      { header: 'Bronzi', key: 'bronzi', width: 10 }
+    ];
+
+    // Aggiungi i dati delle categorie
+    categorie.forEach(categoria => {
+      let gruppoEtaList = [];
+      if (categoria.gruppiEtaId && categoria.gruppiEtaId.length > 0) {
+        // Per ognni id del gruppo età associato alla categoria, trova il nome corrispondente
+        gruppoEtaList = gruppiEta.filter(ge => categoria.gruppiEtaId.includes(ge.id)).map(ge => ge.nome);
+      }
+      let countOro = categoria.maxPartecipanti && categoria.maxPartecipanti > 0 ? 1 : 0;
+      let countArgento = categoria.maxPartecipanti && categoria.maxPartecipanti > 1 ? 1 : 0;
+      let countBronzo = categoria.maxPartecipanti && categoria.maxPartecipanti > 2 ? 1 : 0;
+      if (categoria.tipoCategoria && categoria.tipoCategoria.tipoCompetizione) {
+        // Per competizioni di combattimento, assegna 2 bronzi se ci sono più di 4 partecipanti
+        if (categoria.tipoCategoria.tipoCompetizione.id === FIGHTING_COMPETITION_TYPE_ID) {
+          countBronzo = categoria.maxPartecipanti && categoria.maxPartecipanti > 4 ? 2 : countBronzo;
+        }
+        // Per competizioni di attività complementari, nessuna medaglia
+        if (categoria.tipoCategoria.tipoCompetizione.id === COMPLEMENTARY_ACTIVITIES_TYPE_ID) {
+          countOro = 0;
+          countArgento = 0;
+          countBronzo = 0;
+        }
+      }
+
+      worksheet.addRow({  
+        id: categoria.id,
+        nome: categoria.nome,
+        tipoCategoriaNome: categoria.tipoCategoria ? categoria.tipoCategoria.nome : '-',
+        tipoCompetizioneNome: categoria.tipoCategoria && categoria.tipoCategoria.tipoCompetizione ? categoria.tipoCategoria.tipoCompetizione.nome : '-',
+        gruppoEtaNome: gruppoEtaList.length > 0 ? gruppoEtaList.join(', ') : '-',
+        ori: countOro,
+        argenti: countArgento,
+        bronzi: countBronzo
+      });
+    });
+
+    // Finalize Excel file
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader('Content-Disposition', `attachment; filename="categorie_${competizione?.nome}.xlsx"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (error) {
+    logger.error(`Errore nell'esportazione delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore nell\'esportazione delle categorie',
+      details: error.message
+    });
+  }
+};
+
+const exportRegisteredAthletes = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+    const { mode = 'simple' } = req.query;
+    if (!competizioneId) {
+      return res.status(400).json({ error: 'competizioneId mancante' });
+    }
+
+    // Recupera la competizione
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      logger.warn(`Tentativo esportazione atleti per competizione inesistente - ID: ${competizioneId}`);
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Recupera tutti gli atleti iscritti tramite DettaglioIscrizioneAtleta
+    const dettagliIscrizioni = await DettaglioIscrizioneAtleta.findAll({
+      where: { competizioneId },
+      include: [
+        {
+          model: Atleta,
+          as: 'atleta',
+          attributes: ['id', 'nome', 'cognome', 'numeroTessera', 'dataNascita', 'sesso', 'scadenzaCertificato'],
+          include: [
+            {
+              model: Club,
+              as: 'club',
+              attributes: ['denominazione', 'tesseramento']
+            },
+            {
+              model: ConfigTipoAtleta,
+              as: 'tipoAtleta',
+              attributes: ['nome']
+            }
+          ]
+        }
+      ],
+      order: [['atleta', 'numeroTessera', 'ASC'], ['atleta', 'cognome', 'ASC'], ['atleta', 'nome', 'ASC']]
+    });
+
+    if (dettagliIscrizioni.length === 0) {
+      logger.warn(`Nessun atleta iscritto per competizione ${competizioneId}`);
+      return res.status(404).json({ error: 'Nessun atleta iscritto a questa competizione' });
+    }
+
+    // Variabili per dati aggiuntivi in modalità full
+    let categorieUniche = [];
+    let iscrizioniPerAtleta = {};
+    let atletiDaEsportare = dettagliIscrizioni.map(d => d.atleta).filter(a => a);
+
+    if (mode === 'full') {
+      // Modalità full: carica categorie e iscrizioni
+      const categorie = await Categoria.findAll({
+        where: { competizioneId },
+        attributes: ['id'],
+        include: [
+          {
+            model: ConfigTipoCategoria,
+            as: 'tipoCategoria',
+            attributes: ['id', 'nome']
+          }
+        ],
+        order: [['nome', 'ASC']]
+      });
+
+      // Crea una mappa delle tipologie di categoria uniche
+      const categorieMap = new Map();
+      categorie.forEach(cat => {
+        if (cat.tipoCategoria) {
+          categorieMap.set(cat.tipoCategoria.id, cat.tipoCategoria.nome);
+        }
+      });
+      categorieUniche = Array.from(categorieMap.entries()).map(([id, nome]) => ({ id, nome }));
+
+      // Recupera tutte le iscrizioni degli atleti alle categorie
+      const iscrizioniAtleti = await IscrizioneAtleta.findAll({
+        where: { competizioneId },
+        include: [
+          {
+            model: ConfigTipoCategoria,
+            as: 'tipoCategoria',
+            attributes: ['id', 'nome']
+          },
+          {
+            model: Categoria,
+            as: 'categoria',
+            attributes: ['id', 'nome']
+          }
+        ]
+      });
+
+      // Raggruppa le iscrizioni per atleta
+      for (const iscrizione of iscrizioniAtleti) {
+        if (!iscrizioniPerAtleta[iscrizione.atletaId]) {
+          iscrizioniPerAtleta[iscrizione.atletaId] = [];
+        }
+        iscrizioniPerAtleta[iscrizione.atletaId].push({
+          tipoCategoriaId: iscrizione.tipoCategoriaId,
+          tipoCategoriaNome: iscrizione.tipoCategoria?.nome,
+          categoriaId: iscrizione.categoriaId,
+          categoriaNome: iscrizione.categoria?.nome,
+          peso: iscrizione.peso,
+          dettagli: iscrizione.dettagli
+        });
+      }
+    }
+
+    // Crea il workbook Excel
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Atleti Iscritti');
+
+    // Definisci le colonne base in base alla modalità
+    const columns = mode === 'full' ? [
+      { header: 'N. Tessera', key: 'tessera', width: 20 },
+      { header: 'Club', key: 'club', width: 30 },
+      { header: 'Atleta', key: 'atleta', width: 30 },
+      { header: 'Data di Nascita', key: 'dataNascita', width: 15 },
+      { header: 'Tipo Atleta', key: 'tipoAtleta', width: 15 },
+      { header: 'Sesso', key: 'sesso', width: 10 },
+      { header: 'Certificato', key: 'certificato', width: 15 },
+      { header: 'Tesseramento', key: 'tesseramento', width: 15 }
+    ] : [
+      { header: 'N. Tessera', key: 'tessera', width: 20 },
+      { header: 'Nome', key: 'nome', width: 25 },
+      { header: 'Cognome', key: 'cognome', width: 25 },
+      { header: 'Club', key: 'club', width: 40 }
+    ];
+
+    // Aggiungi colonne per le categorie in modalità full
+    if (mode === 'full') {
+      categorieUniche.forEach(cat => {
+        columns.push({
+          header: cat.nome,
+          key: `cat_${cat.id}`,
+          width: 20
+        });
+      });
+    }
+
+    worksheet.columns = columns;
+
+    // Formattazione intestazione
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF1976D2' }
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.height = 25;
+
+    // Aggiungi i dati degli atleti
+    atletiDaEsportare.forEach((atleta) => {
+      const rowData = mode === 'full' ? {
+        tessera: atleta.numeroTessera || 'N/A',
+        club: atleta.club?.denominazione || 'N/A',
+        atleta: `${atleta.cognome} ${atleta.nome}`,
+        dataNascita: atleta.dataNascita ? new Date(atleta.dataNascita).toLocaleDateString('it-IT') : 'N/A',
+        tipoAtleta: atleta.tipoAtleta?.nome || 'N/A',
+        sesso: atleta.sesso || 'N/A',
+        certificato: atleta.scadenzaCertificato ? new Date(atleta.scadenzaCertificato).toLocaleDateString('it-IT') : 'N/A',
+        tesseramento: atleta.club?.tesseramento || 'N/A'
+      } : {
+        tessera: atleta.numeroTessera || '',
+        nome: atleta.nome || '',
+        cognome: atleta.cognome || '',
+        club: atleta.club?.denominazione || ''
+      };
+
+      // Aggiungi i dati delle categorie solo in modalità full
+      if (mode === 'full') {
+        const iscrizioniAtleta = iscrizioniPerAtleta[atleta.id] || [];
+        categorieUniche.forEach(cat => {
+          const iscrizione = iscrizioniAtleta.find(i => i.tipoCategoriaId === cat.id);
+          if (iscrizione) {
+            if (iscrizione.dettagli?.nome) {
+              rowData[`cat_${cat.id}`] = iscrizione.dettagli.nome;
+            } else if (iscrizione.peso) {
+              rowData[`cat_${cat.id}`] = `${iscrizione.peso} kg`;
+            } else {
+              rowData[`cat_${cat.id}`] = 'Iscritto';
+            }
+          } else {
+            rowData[`cat_${cat.id}`] = '-';
+          }
+        });
+      }
+
+      worksheet.addRow(rowData);
+    });
+
+    // Formattazione delle celle dati
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) { // Salta l'intestazione
+        row.alignment = { vertical: 'middle', horizontal: 'left' };
+        row.border = {
+          top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }
+        };
+      }
+    });
+
+    // Imposta le intestazioni della risposta
+    const fileName = `atleti-iscritti-${competizione.nome.replace(/\s+/g, '_')}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    // Invia il file
+    await workbook.xlsx.write(res);
+    
+    logger.info(`File Excel atleti iscritti generato per competizione ${competizioneId} - ${atletiDaEsportare.length} atleti`);
+    res.end();
+  } catch (error) {
+    logger.error(`Errore nella generazione del file Excel atleti iscritti per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore nella generazione del file Excel',
+      details: error.message 
+    });
+  }
+};
+
 module.exports = {
   getAllCompetizioni,
   getTipoCategorieByCompetizione,
@@ -709,6 +1034,8 @@ module.exports = {
   deleteCompetizione,
   getCompetizioniByStato,
   getCompetizioniByTipologia,
-  getCompetitionCostSummary,
-  printCategories
+  getCompetitionClubRegistrationSummary,
+  printCategories,
+  exportCategories,
+  exportRegisteredAthletes
 };

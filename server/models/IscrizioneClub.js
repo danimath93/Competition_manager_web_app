@@ -61,6 +61,11 @@ const IscrizioneClub = sequelize.define('IscrizioneClub', {
     field: 'bonifico_id',
     comment: 'Riferimento al documento del bonifico'
   },
+  verificato: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false
+  },
   note: {
     type: DataTypes.TEXT,
     allowNull: true
@@ -70,6 +75,7 @@ const IscrizioneClub = sequelize.define('IscrizioneClub', {
   timestamps: true,
   indexes: [
     {
+      name: 'unique_iscrizione_club',
       unique: true,
       fields: ['club_id', 'competizione_id']
     }
