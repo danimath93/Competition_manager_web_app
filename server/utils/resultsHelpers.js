@@ -48,7 +48,7 @@ async function buildGlobalAthleteList(svolgimenti) {
     {
       model: Club,
       as: "club",
-      attributes: ["denominazione"]
+      attributes: ["abbreviazione", "denominazione"]
     }
   ],
     where: { id: athleteIds },
@@ -59,6 +59,7 @@ async function buildGlobalAthleteList(svolgimenti) {
       atletaId: a.id,
       nome: a.nome,
       cognome: a.cognome,
+      clubAbbr: a.club?.abbreviazione,
       club: a.club?.denominazione,
       sesso: a.sesso,
       dataNascita: a.dataNascita,

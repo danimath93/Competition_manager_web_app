@@ -169,7 +169,7 @@ const CompetitionSummary = () => {
       console.error('Errore durante il download del report Excel:', err);
       setError(err.response?.data?.message || 'Errore durante il download del report Excel');
     }
-  };*/
+  };
 
   const handleEditAthleteReg = (row) => {
     setSelectedAthleteForEdit(row.athlete);

@@ -6,10 +6,11 @@ import { FaTags } from 'react-icons/fa';
 import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
+import { printResults } from '../../api/resultsPrint';
 import { getCompetitionDetails } from '../../api/competitions';
 import PageHeader from '../../components/PageHeader';
 
-
+// non serve più ma teniamola al momento
 function MedalIcons({ ori, argenti, bronzi }) {
   return <span>{'🥇'.repeat(ori)}{'🥈'.repeat(argenti)}{'🥉'.repeat(bronzi)}</span>;
 }
@@ -113,6 +114,21 @@ useEffect(() => {
       </Paper>
         {tab === 0 && atleti && (
           <Box>
+            {/* Pulsante stampa classifiche */}
+            <MuiButton
+              variant="contained"
+              color="primary"
+              sx={{ mb: 2 }}
+              onClick={async () => {
+                try {
+                  await printResults(competitionId);
+                } catch (err) {
+                  alert('Errore durante la generazione del PDF delle classifiche');
+                }
+              }}
+            >
+              Stampa Classifiche
+            </MuiButton>
             <Box sx={{ mb: 4 }}>
               <Typography variant="h5" sx={{ mb: 2 }}>
                 Migliori per Fascia di Età
@@ -197,7 +213,7 @@ useEffect(() => {
                       .map(a => (
                     <TableRow key={a.atletaId}>
                       <TableCell>{a.nome} {a.cognome}</TableCell>
-                      <TableCell>{a.club}</TableCell>
+                      <TableCell>{a.clubAbbr || a.club}</TableCell>
                       <TableCell>{a.punti}</TableCell>
                       <TableCell>{a.medaglie.oro}</TableCell>
                       <TableCell>{a.medaglie.argento}</TableCell>
@@ -220,8 +236,19 @@ useEffect(() => {
                   <EmojiEventsIcon color={idx === 0 ? 'warning' : 'disabled'} />
                   <Typography variant="subtitle1">{c.club}</Typography>
                 </Box>
-                <MedalIcons ori={c.ori} argenti={c.argenti} bronzi={c.bronzi} />
-                <Typography variant="body2">Punti: {c.punti}</Typography>
+                <Box
+                  sx={{
+                    ml: 1,
+                    display: "flex",
+                    gap: 3,
+                    alignItems: "center",
+                    fontSize: "1.6rem"
+                  }}
+                >
+                  <span>🥇 {c.ori}</span>
+                  <span>🥈 {c.argenti}</span>
+                  <span>🥉 {c.bronzi}</span>
+                </Box>
               </Paper>
             ))}
           </Box>
@@ -231,7 +258,6 @@ useEffect(() => {
               <TableHead>
                 <TableRow>
                   <TableCell>Club</TableCell>
-                  <TableCell>Punti</TableCell>
                   <TableCell>🥇</TableCell>
                   <TableCell>🥈</TableCell>
                   <TableCell>🥉</TableCell>
@@ -242,7 +268,6 @@ useEffect(() => {
                 {club.classifica.map(c => (
                   <TableRow key={c.clubId}>
                     <TableCell>{c.club}</TableCell>
-                    <TableCell>{c.punti}</TableCell>
                     <TableCell>{c.ori}</TableCell>
                     <TableCell>{c.argenti}</TableCell>
                     <TableCell>{c.bronzi}</TableCell>
