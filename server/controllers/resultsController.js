@@ -48,7 +48,7 @@ async function printResults(req, res) {
       // Se manca spazio sulla pagina, vai a nuova pagina
       if (doc.y > 700) doc.addPage();
       // Titolo categoria sempre allineato a sinistra
-      doc.fontSize(13).font('Helvetica-Bold').fillColor('black').text(`${categoria.nome}`, 40, doc.y, { underline: true });
+      doc.fontSize(13).font('Helvetica-Bold').fillColor('#1976d2').text(`${categoria.nome}`, 40, doc.y, { underline: true });
       doc.moveDown(0.2);
       const svolgimento = svolgimentoMap[categoria.id];
       let classifica = [];

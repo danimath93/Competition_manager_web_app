@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Container, Typography, Tabs, Tab, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert } from '@mui/material';
+import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import MuiButton from '@mui/material/Button';
 import { FaTags } from 'react-icons/fa';
 import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack } from '@mui/icons-material';
@@ -196,44 +197,44 @@ useEffect(() => {
 
             <Typography variant="h6" gutterBottom>Classifica completa medagliati</Typography>
 
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Atleta</TableCell>
-                    <TableCell>Club</TableCell>
-                    <TableCell>Sesso</TableCell>
-                    <TableCell>Tipo Atleta</TableCell>
-                    <TableCell>Fascia Età</TableCell>
-                    <TableCell>Punteggio</TableCell>
-                    <TableCell>🥇</TableCell>
-                    <TableCell>🥈</TableCell>
-                    <TableCell>🥉</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {[...atleti]
-                      .sort((a, b) => b.punti - a.punti)
-                      .map(a => (
-                    <TableRow key={a.atletaId}>
-                      <TableCell>{a.nome} {a.cognome}</TableCell>
-                      <TableCell>{a.clubAbbr || a.club}</TableCell>
-                      <TableCell>{a.sesso}</TableCell>
-                      <TableCell>{a.tipoAtleta}</TableCell>
-                      <TableCell>{a.fasciaEta}
-                        {a.fasciaEta === 'Non Definita' && a.fasciaEtaNote && (
-                          <span style={{ color: 'red', fontSize: '0.8em', marginLeft: 4 }}>({a.fasciaEtaNote})</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{a.punti}</TableCell>
-                      <TableCell>{a.medaglie.oro}</TableCell>
-                      <TableCell>{a.medaglie.argento}</TableCell>
-                      <TableCell>{a.medaglie.bronzo}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <Paper sx={{ width: '100%', height: 600, mt: 2 }}>
+              <DataGrid
+                rows={atleti.map(a => ({
+                  ...a,
+                  id: a.atletaId,
+                  atleta: `${a.nome} ${a.cognome}`,
+                  clubDisplay: a.clubAbbr || a.club,
+                  fasciaEtaDisplay: a.fasciaEta === 'Non Definita' && a.fasciaEtaNote
+                    ? `${a.fasciaEta} (${a.fasciaEtaNote})`
+                    : a.fasciaEta,
+                  oro: a.medaglie?.oro || 0,
+                  argento: a.medaglie?.argento || 0,
+                  bronzo: a.medaglie?.bronzo || 0,
+                }))}
+                columns={[
+                  { field: 'atleta', headerName: 'Atleta', flex: 1, minWidth: 140 },
+                  { field: 'clubDisplay', headerName: 'Club', flex: 1, minWidth: 120 },
+                  { field: 'sesso', headerName: 'Sesso', flex: 0.5, minWidth: 80 },
+                  { field: 'tipoAtleta', headerName: 'Tipo Atleta', flex: 1, minWidth: 120 },
+                  { field: 'fasciaEtaDisplay', headerName: 'Fascia Età', flex: 1, minWidth: 120 },
+                  { field: 'punti', headerName: 'Punteggio', flex: 0.7, minWidth: 90, type: 'number', sortable: true },
+                  { field: 'oro', headerName: '🥇', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+                  { field: 'argento', headerName: '🥈', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+                  { field: 'bronzo', headerName: '🥉', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+                ]}
+                initialState={{
+                  sorting: {
+                    sortModel: [{ field: 'punti', sort: 'desc' }],
+                  },
+                }}
+                disableColumnMenu={false}
+                pageSize={25}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                components={{ Toolbar: GridToolbar }}
+                autoHeight={false}
+                localeText={{ toolbarColumns: 'Colonne', toolbarFilters: 'Filtri', toolbarDensity: 'Densità', toolbarExport: 'Esporta' }}
+              />
+            </Paper>
           </Box>
       )}
 
@@ -280,51 +281,51 @@ useEffect(() => {
           </Box>
           <Typography variant="h6" gutterBottom>Tutti i Club</Typography>
           <TableContainer component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Club</TableCell>
-                  <TableCell>🥇</TableCell>
-                  <TableCell>🥈</TableCell>
-                  <TableCell>🥉</TableCell>
-                  <TableCell>Dettagli</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {club.classifica.map(c => (
-                  <TableRow key={c.clubId}>
-                    <TableCell>{c.club}</TableCell>
-                    <TableCell>{c.ori}</TableCell>
-                    <TableCell>{c.argenti}</TableCell>
-                    <TableCell>{c.bronzi}</TableCell>
-                    <TableCell>
-                      <Accordion onChange={() => handleAccordion(c.clubId)}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          Dettagli medaglie
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          {clubDetails[c.clubId] && clubDetails[c.clubId].atleti ? (
-                              clubDetails[c.clubId].atleti.length > 0 ? (
-                                  clubDetails[c.clubId].atleti.map(a => (
-                                      <Box key={a.atletaId} sx={{ mb: 1 }}>
-                                        <b>{a.nome} {a.cognome}</b>: 
-                                        <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
-                                      </Box>
-                                  ))
-                              ) : (
-                                  <Typography>Nessun atleta con medaglie</Typography>
-                              )
-                          ) : (
-                              <CircularProgress size={20} />
-                          )}
-                        </AccordionDetails>
-                      </Accordion>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Club</TableCell>
+                            <TableCell>🥇</TableCell>
+                            <TableCell>🥈</TableCell>
+                            <TableCell>🥉</TableCell>
+                            <TableCell>Dettagli</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {club.classifica.map(c => (
+                            <TableRow key={c.clubId}>
+                              <TableCell>{c.club}</TableCell>
+                              <TableCell>{c.ori}</TableCell>
+                              <TableCell>{c.argenti}</TableCell>
+                              <TableCell>{c.bronzi}</TableCell>
+                              <TableCell>
+                                <Accordion onChange={() => handleAccordion(c.clubId)}>
+                                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                    Dettagli medaglie
+                                  </AccordionSummary>
+                                  <AccordionDetails>
+                                    {clubDetails[c.clubId] && clubDetails[c.clubId].atleti ? (
+                                        clubDetails[c.clubId].atleti.length > 0 ? (
+                                            clubDetails[c.clubId].atleti.map(a => (
+                                                <Box key={a.atletaId} sx={{ mb: 1 }}>
+                                                  <b>{a.nome} {a.cognome}</b>: 
+                                                  <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
+                                                </Box>
+                                            ))
+                                        ) : (
+                                            <Typography>Nessun atleta con medaglie</Typography>
+                                        )
+                                    ) : (
+                                        <CircularProgress size={20} />
+                                    )}
+                                  </AccordionDetails>
+                                </Accordion>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
         </Box>
       )}
     </div>
