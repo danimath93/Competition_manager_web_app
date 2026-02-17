@@ -202,6 +202,9 @@ useEffect(() => {
                   <TableRow>
                     <TableCell>Atleta</TableCell>
                     <TableCell>Club</TableCell>
+                    <TableCell>Sesso</TableCell>
+                    <TableCell>Tipo Atleta</TableCell>
+                    <TableCell>Fascia Età</TableCell>
                     <TableCell>Punteggio</TableCell>
                     <TableCell>🥇</TableCell>
                     <TableCell>🥈</TableCell>
@@ -215,6 +218,13 @@ useEffect(() => {
                     <TableRow key={a.atletaId}>
                       <TableCell>{a.nome} {a.cognome}</TableCell>
                       <TableCell>{a.clubAbbr || a.club}</TableCell>
+                      <TableCell>{a.sesso}</TableCell>
+                      <TableCell>{a.tipoAtleta}</TableCell>
+                      <TableCell>{a.fasciaEta}
+                        {a.fasciaEta === 'Non Definita' && a.fasciaEtaNote && (
+                          <span style={{ color: 'red', fontSize: '0.8em', marginLeft: 4 }}>({a.fasciaEtaNote})</span>
+                        )}
+                      </TableCell>
                       <TableCell>{a.punti}</TableCell>
                       <TableCell>{a.medaglie.oro}</TableCell>
                       <TableCell>{a.medaglie.argento}</TableCell>

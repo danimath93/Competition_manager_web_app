@@ -105,7 +105,7 @@ async function printResults(req, res) {
           doc.fontSize(10).font('Helvetica');
         }
         // Club - tronca se troppo lungo
-        let clubName = atleta.club?.nome || atleta.club?.denominazione || '-';
+        let clubName = atleta.club?.abbreviazione || atleta.club?.nome || atleta.club?.denominazione || '-';
         let clubLine2 = '';
         const maxClubLength = 40;
         if (clubName.length > maxClubLength) {
