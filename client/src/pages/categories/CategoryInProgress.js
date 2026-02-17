@@ -10,16 +10,17 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  Paper  
+  Tooltip
 } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import { FaTags } from 'react-icons/fa';
-import { ArrowBack, Print } from '@mui/icons-material';
+import { ArrowBack, Print, Delete } from '@mui/icons-material';
 import { getSvolgimentoCategoria, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { loadAllJudges } from '../../api/judges';
 import { getCategoriesByCompetizione } from '../../api/categories';
 import CategoryNotebookPrint from './print/CategoryNotebookPrint';
 import PageHeader from '../../components/PageHeader';
+import AuthComponent from '../../components/AuthComponent';
 import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
 import { CategoryStates } from '../../constants/enums/CategoryEnums';
 
@@ -79,7 +80,7 @@ const CategoryInProgress = () => {
       setAtleti(svolg.atleti || []);
       
       // Genera tabellone di default per combattimenti se non presente
-      if (tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO) {
+      if (tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString()) {
         if (!svolg.tabellone || !svolg.tabellone.rounds || svolg.tabellone.rounds.length === 0) {
           const defaultBracket = generateTabelloneFromAtleti(svolg.atleti || []);
           setTabellone(defaultBracket);
@@ -157,33 +158,31 @@ const CategoryInProgress = () => {
     return { rounds };
   };
 
-  // Handler per cambio lettera (Quyen/Armi)
-  const handleLetterChange = async (newLetter) => {
-    setLetter(newLetter);
-    await patchSvolgimentoCategoria(svolgimentoId, { 
-      letteraEstratta: newLetter, 
-      stato: CategoryStates.IN_DEFINIZIONE 
-    });
-  };
-
   // Handler per cambio tabellone (Combattimenti)
   const handleTabelloneChange = (newTabellone) => {
     setTabellone(newTabellone);
   };
 
   // Handler per conferma definizione
-  const handleConfirmDefinition = async () => {
-    if ((tipoCompetizioneId == CompetitionTipology.MANI_NUDE || tipoCompetizioneId == CompetitionTipology.ARMI) && !letter) {
+  const handleConfirmDefinition = async (loadedLetter) => {
+    if ((tipoCompetizioneId === CompetitionTipology.MANI_NUDE.toString() || tipoCompetizioneId === CompetitionTipology.ARMI.toString()) && !loadedLetter) {
       alert('Devi prima estrarre o impostare una lettera');
       return;
     }
-    if (tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO && (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0)) {
+    if (tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString() && (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0)) {
       alert('Devi prima generare il tabellone');
       return;
     }
     
     const updates = { stato: CategoryStates.IN_ATTESA_DI_AVVIO };
-    if (tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO) {
+    
+    // Se è quyen/armi, salva la lettera
+    if (loadedLetter) {
+      updates.letteraEstratta = loadedLetter;
+      setLetter(loadedLetter);
+    }
+    
+    if (tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString()) {
       updates.tabellone = tabellone;
     }
     
@@ -197,50 +196,53 @@ const CategoryInProgress = () => {
     setStato(CategoryStates.IN_CORSO);
   };
 
+  // Handler per reset categoria
+  const handleResetCategory = async () => {
+    try {
+      if (window.confirm('Sei sicuro di voler resettare questa categoria? Tutti i dati inseriti andranno persi.')) {
+        await patchSvolgimentoCategoria(svolgimentoId, {
+          stato: CategoryStates.IN_DEFINIZIONE,
+          letteraEstratta: '',
+          punteggi: {},
+          commissione: Array(10).fill(''),
+          classifica: [],
+          tabellone: null
+        });
+        setStato(CategoryStates.IN_DEFINIZIONE);
+      }
+    } catch (e) {
+      console.error('Errore reset categoria:', e);
+    }
+  };
+
+  // Handler per concludere categoria
+  const handleConcludeQuyenCategory = async (classifica) => {
+    
+    await patchSvolgimentoCategoria(svolgimentoId, { 
+      stato: CategoryStates.CONCLUSA,
+      classifica: classifica
+    });
+    setStato(CategoryStates.CONCLUSA);
+  };
+
   // Handler per cambio punteggio (Quyen/Armi)
   const handlePunteggioChange = async (atletaId, votoIdx, value) => {
-    const punteggiAtleti = { ...punteggi };
-    const prevAtleta = punteggiAtleti[atletaId] || [null, null, null, null, null];
-    const newAtleta = [...prevAtleta];
-    newAtleta[votoIdx] = value;
-    const updated = { ...punteggiAtleti, [atletaId]: newAtleta };
-    
-    setPunteggi(updated);
-    
     try {
-      // Calcola classifica
-      const listaQuyen = atleti.map(a => ({
-        media: parseFloat(getMedia(updated[a.id])),
-        atleta: { id: a.id, nome: a.nome, cognome: a.cognome, club: a.club || null }
-      })).filter(x => !isNaN(x.media));
-
-      const nuovaClassifica = computeQuyenPodium(listaQuyen);
-      setClassifica(nuovaClassifica);
-
+      const punteggiAtleti = { ...punteggi };
+      const prevAtleta = punteggiAtleti[atletaId] || [null, null, null, null, null];
+     const newAtleta = [...prevAtleta];
+      newAtleta[votoIdx] = value;
+      const updated = { ...punteggiAtleti, [atletaId]: newAtleta };
+    
+      setPunteggi(updated);
+    
       await patchSvolgimentoCategoria(svolgimentoId, { 
         punteggi: updated, 
-        classifica: nuovaClassifica,
         stato: CategoryStates.IN_CORSO 
       });
     } catch (e) {
       console.error('Errore salvataggio punteggi:', e);
     }
-  };
-
-  const getMedia = (arr) => {
-    const nums = (arr || []).map((v) => parseFloat(v)).filter((v) => !isNaN(v));
-    if (nums.length === 0) return '';
-    return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2);
-  };
-
-  const computeQuyenPodium = (listaQuyen) => {
-    if (!Array.isArray(listaQuyen)) return [];
-    const ordinati = [...listaQuyen].sort((a, b) => b.media - a.media);
-    const classifica = [];
-    if (ordinati[0]) classifica.push({ pos: 1, atletaId: ordinati[0].atleta.id });
-    if (ordinati[1]) classifica.push({ pos: 2, atletaId: ordinati[1].atleta.id });
-    if (ordinati[2]) classifica.push({ pos: 3, atletaId: ordinati[2].atleta.id });
-    return classifica;
   };
 
   // Handler per cambio commissione (Quyen/Armi)
@@ -283,15 +285,14 @@ const CategoryInProgress = () => {
 
   // Determina se è una competizione Quyen/Armi o Combattimento
   const isQuyenCompetition = 
-    tipoCompetizioneId == CompetitionTipology.MANI_NUDE || 
-    tipoCompetizioneId == CompetitionTipology.ARMI;
-  const isFightingCompetition = tipoCompetizioneId == CompetitionTipology.COMBATTIMENTO;
+    tipoCompetizioneId === CompetitionTipology.MANI_NUDE.toString() || 
+    tipoCompetizioneId === CompetitionTipology.ARMI.toString();
+  const isFightingCompetition = tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString();
 
   // Determina quale componente mostrare in base a tipo e stato
-  const showDefinitionPhase = 
-    stato === CategoryStates.IN_DEFINIZIONE || 
-    stato === CategoryStates.IN_ATTESA_DI_AVVIO;
-  const showExecutionPhase = 
+  const showDefinitionPhase = stato === CategoryStates.IN_DEFINIZIONE;
+  const showExecutionPhase =
+    stato === CategoryStates.IN_ATTESA_DI_AVVIO || 
     stato === CategoryStates.IN_CORSO || 
     stato === CategoryStates.CONCLUSA;
 
@@ -299,8 +300,7 @@ const CategoryInProgress = () => {
     <div className="page-container">
       <PageHeader
         icon={FaTags}
-        title={`${decodeURIComponent(categoriaNome)}`}
-        subtitle="Svolgimento categoria"
+        title="Svolgimento categoria"
       />
       <MuiButton
         startIcon={<ArrowBack />}
@@ -309,107 +309,119 @@ const CategoryInProgress = () => {
         Torna a tutte le categorie
       </MuiButton>
     
-      {/* Lista categorie */}
-      <Paper sx={{ width: '100%', height: '100%', p:3 }}>
-        <Typography variant="h4" gutterBottom>
-          Svolgimento Categoria
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 3, borderWidth: 1.5 }}  />
 
+      {/* Status indicator */}
+      <Box sx={{ 
+        mb: 2,
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: { xs: 'flex-start', md: 'space-between' },
+        alignItems: { xs: 'flex-start', md: 'center' },
+        gap: 2 
+      }}>
         {categoriaNome && (
-          <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography variant="h4">
             <b>{decodeURIComponent(categoriaNome)}</b>
           </Typography>
         )}
 
-        {/* Status indicator */}
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="body1"><b>Stato:</b></Typography>
-          <Chip 
-            label={stato} 
-            color={
-              stato === CategoryStates.IN_DEFINIZIONE ? 'warning' :
-              stato === CategoryStates.IN_ATTESA_DI_AVVIO ? 'info' :
-              stato === CategoryStates.IN_CORSO ? 'primary' : 'success'
-            }
-          />
-        </Box>
-
-        {/* State transition buttons */}
-        {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
-          <Box sx={{ mb: 3 }}>
-            <Button 
-              variant="contained" 
-              color="primary"
-              onClick={handleStartCategory}
-              size="large"
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+            <Button
+              variant="outlined"
+              startIcon={<Delete />}
+              onClick={handleResetCategory}
             >
-              Avvia Categoria
+              Reset categoria
             </Button>
-          </Box>
-        )}
+          </AuthComponent>
 
-        {/* Componenti condizionali in base a tipo competizione e stato */}
-        {isQuyenCompetition && showDefinitionPhase && (
-          <QuyenDefinition
-            atleti={atleti}
-            letter={letter}
-            stato={stato}
-            onLetterChange={handleLetterChange}
-            onConfirmDefinition={handleConfirmDefinition}
-            onUpdateSvolgimento={handleUpdateSvolgimento}
-          />
-        )}
+          <Tooltip title="Stampa il quaderno della categoria">
+            <Button
+              variant="outlined"
+              startIcon={<Print />}
+              onClick={() => setShowPrintModal(true)}
+            >
+              Stampa quaderno
+            </Button>
+          </Tooltip>
+        </Box>
+      </Box>
 
-        {isQuyenCompetition && showExecutionPhase && (
-          <QuyenExecution
-            atleti={atleti}
-            letter={letter}
-            punteggi={punteggi}
-            commissione={commissione}
-            classifica={classifica}
-            stato={stato}
-            onPunteggioChange={handlePunteggioChange}
-            onCommissioneChange={handleCommissioneChange}
-          />
-        )}
 
-        {isFightingCompetition && showDefinitionPhase && (
-          <FightingDefinition
-            atleti={atleti}
-            tabellone={tabellone}
-            stato={stato}
-            onTabelloneChange={handleTabelloneChange}
-            onConfirmDefinition={handleConfirmDefinition}
-          />
-        )}
-
-        {isFightingCompetition && showExecutionPhase && (
-          <FightingExecution
-            atleti={atleti}
-            tabellone={tabellone}
-            classifica={classifica}
-            stato={stato}
-            onTabelloneChange={handleTabelloneChange}
-            onUpdateSvolgimento={handleUpdateSvolgimento}
-          />
-        )}
-
-        {!isQuyenCompetition && !isFightingCompetition && (
-          <Alert severity="info">
-            La gestione dello svolgimento per questa tipologia di competizione non è ancora attiva.
-          </Alert>
-        )}
-
-        {/* Competition Notebook Print Modal */}
-        <CategoryNotebookPrint
-          open={showPrintModal}
-          onClose={() => setShowPrintModal(false)}
-          category={currentCategory}
-          tabellone={tabellone}
-          judges={judges}
+      {/* Status indicator */}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Typography variant="h6"><b>Stato:</b></Typography>
+        <Chip 
+          label={stato} 
+          color={
+            stato === CategoryStates.IN_DEFINIZIONE ? 'warning' :
+            stato === CategoryStates.IN_ATTESA_DI_AVVIO ? 'info' :
+            stato === CategoryStates.IN_CORSO ? 'primary' : 'success'
+          }
         />
-      </Paper>
+      </Box>
+
+      {/* Componenti condizionali in base a tipo competizione e stato */}
+      {isQuyenCompetition && showDefinitionPhase && (
+        <QuyenDefinition
+          atleti={atleti}
+          letter={letter}
+          onConfirmDefinition={handleConfirmDefinition}
+        />
+      )}
+
+      {isQuyenCompetition && showExecutionPhase && (
+        <QuyenExecution
+          atleti={atleti}
+          letter={letter}
+          punteggi={punteggi}
+          commissione={commissione}
+          classifica={classifica}
+          stato={stato}
+          onPunteggioChange={handlePunteggioChange}
+          onCommissioneChange={handleCommissioneChange}
+          onStartCategory={handleStartCategory}
+          onConcludeCategory={handleConcludeQuyenCategory}
+        />
+      )}
+
+      {isFightingCompetition && showDefinitionPhase && (
+        <FightingDefinition
+          atleti={atleti}
+          tabellone={tabellone}
+          stato={stato}
+          onTabelloneChange={handleTabelloneChange}
+          onConfirmDefinition={handleConfirmDefinition}
+        />
+      )}
+
+      {isFightingCompetition && showExecutionPhase && (
+        <FightingExecution
+          atleti={atleti}
+          tabellone={tabellone}
+          classifica={classifica}
+          stato={stato}
+          onTabelloneChange={handleTabelloneChange}
+          onUpdateSvolgimento={handleUpdateSvolgimento}
+        />
+      )}
+
+      {!isQuyenCompetition && !isFightingCompetition && (
+        <Alert severity="info">
+          La gestione dello svolgimento per questa tipologia di competizione non è ancora attiva.
+        </Alert>
+      )}
+
+      {/* Competition Notebook Print Modal */}
+      <CategoryNotebookPrint
+        open={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        category={currentCategory}
+        tabellone={tabellone}
+        judges={judges}
+      />      
     </div>
   );
 };

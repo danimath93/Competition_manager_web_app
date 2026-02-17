@@ -4,7 +4,6 @@ import {
   Paper,
   Typography,
   Box,
-  Button,
   TextField,
   Table,
   TableBody,
@@ -12,11 +11,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Divider,
+  Tooltip,
   Alert
 } from '@mui/material';
-import { Shuffle } from '@mui/icons-material';
-import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
+import { Refresh } from '@mui/icons-material';
+import Button from '../../../../components/common/Button';
 
 /**
  * Componente per la definizione dell'ordine di esecuzione delle forme (Quyen/Armi)
@@ -25,12 +24,10 @@ import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
 const QuyenDefinition = ({ 
   atleti, 
   letter, 
-  stato,
-  onLetterChange, 
-  onConfirmDefinition,
-  onUpdateSvolgimento
+  onConfirmDefinition
 }) => {
-  const [manualLetter, setManualLetter] = useState('');
+  const [categoryLetter, setCategoryLetter] = useState(letter || '');
+  const [error, setError] = useState('');
 
   // Ordina gli atleti in base alla lettera estratta
   const orderAthletesByKeyLetter = (atletiList, keyLetter) => {
@@ -64,85 +61,58 @@ const QuyenDefinition = ({
   const handleGenerateRandomLetter = () => {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-    onLetterChange(randomLetter);
+    setCategoryLetter(randomLetter);
   };
 
-  const handleSetManualLetter = () => {
-    if (!manualLetter || manualLetter.length !== 1) {
-      alert('Inserisci una lettera valida');
+  const handleConfirmDefinition = () => {
+    if (!categoryLetter) {
+      setError('Per favore, imposta una lettera prima di confermare.');
       return;
     }
-    const upperLetter = manualLetter.toUpperCase();
-    onLetterChange(upperLetter);
-    setManualLetter('');
+    onConfirmDefinition(categoryLetter);
+    setError('');
   };
 
-  const orderedAthletes = orderAthletesByKeyLetter(atleti, letter);
+  const orderedAthletes = orderAthletesByKeyLetter(atleti, categoryLetter);
 
   return (
     <Box>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      
       {/* Sezione estrazione lettera */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Box sx={{ 
+        mb: 2,
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: 'flex-start',
+        alignItems: { xs: 'flex-start', md: 'center' },
+        gap: 2 
+      }}>
         <Typography variant="h6" gutterBottom>
-          Definizione Ordine di Esecuzione
+          Imposta la lettera per l'ordine di esecuzione della categoria
         </Typography>
-        <Divider sx={{ mb: 2 }} />
 
-        {stato === CategoryStates.IN_DEFINIZIONE && (
-          <>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
-              <Typography variant="body1">
-                <b>Lettera estratta:</b> {letter || 'Non ancora estratta'}
-              </Typography>
-            </Box>
+        <TextField
+          label="Lettera"
+          value={categoryLetter}
+          onChange={(e) => setCategoryLetter(e.target.value.toUpperCase())}
+          inputProps={{ maxLength: 1 }}
+        />
 
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button 
-                variant="contained" 
-                startIcon={<Shuffle />}
-                onClick={handleGenerateRandomLetter}
-              >
-                Estrai Lettera Casuale
-              </Button>
-
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <TextField
-                  label="Lettera Manuale"
-                  value={manualLetter}
-                  onChange={(e) => setManualLetter(e.target.value.toUpperCase())}
-                  size="small"
-                  sx={{ width: 100 }}
-                  inputProps={{ maxLength: 1 }}
-                />
-                <Button 
-                  variant="outlined"
-                  onClick={handleSetManualLetter}
-                >
-                  Imposta
-                </Button>
-              </Box>
-            </Box>
-
-            {letter && (
-              <Button 
-                variant="contained" 
-                color="success"
-                onClick={onConfirmDefinition}
-                sx={{ mb: 2 }}
-              >
-                Conferma Definizione
-              </Button>
-            )}
-          </>
-        )}
-
-        {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Ordine di esecuzione confermato. La categoria è pronta per essere avviata.
-          </Alert>
-        )}
-      </Paper>
-
+        <Tooltip title="Estrai una nuova lettera">
+          <Button 
+            icon={Refresh}
+            onClick={handleGenerateRandomLetter}
+            size='s'
+          />
+        </Tooltip>
+      </Box>
+      <Button
+        variant='success'
+        onClick={handleConfirmDefinition}
+      >
+        Conferma categoria
+      </Button>
       {/* Tabella ordine atleti */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
