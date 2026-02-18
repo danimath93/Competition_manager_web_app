@@ -7,8 +7,7 @@ import { FaTags } from 'react-icons/fa';
 import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
-import { printResults } from '../../api/resultsPrint';
-import { printClubResults } from '../../api/resultsPrintClub';
+import { printResults, printClubResults } from '../../api/results';
 import { getCompetitionDetails } from '../../api/competitions';
 import PageHeader from '../../components/PageHeader';
 
