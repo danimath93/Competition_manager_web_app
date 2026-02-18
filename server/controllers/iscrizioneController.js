@@ -520,16 +520,6 @@ const getClubRegistrationsByCompetition = async (req, res) => {
           model: Club,
           as: 'club',
           attributes: { exclude: ['logo'] }
-        },        
-        {
-          model: require('../models').Documento,
-          as: 'confermaPresidenteDocumento',
-          attributes: ['id', 'nomeFile']
-        },
-        {
-          model: require('../models').Documento,
-          as: 'bonificoDocumento',
-          attributes: ['id', 'nomeFile']
         }
       ],
       order: [
@@ -537,18 +527,7 @@ const getClubRegistrationsByCompetition = async (req, res) => {
       ]
     });
 
-    // Aggiungi il campo tesseramento direttamente nella risposta principale per comodità frontend
-    const clubRegistrationsWithAffiliation = clubRegistrations.map(reg => {
-      const regJson = reg.toJSON();
-      regJson.affiliazione = regJson.club?.tesseramento || '';
-      regJson.confermaPresidenteDocId = regJson.confermaPresidenteDocumento?.id || null;
-      regJson.confermaPresidenteDocName = regJson.confermaPresidenteDocumento?.nomeFile || null;
-      regJson.bonificoDocId = regJson.bonificoDocumento?.id || null;
-      regJson.bonificoDocName = regJson.bonificoDocumento?.nomeFile || null;
-      return regJson;
-    });
-
-    res.status(200).json(clubRegistrationsWithAffiliation);
+    res.status(200).json(clubRegistrations);
   } catch (error) {
     logger.error(`Errore nel recupero delle iscrizioni dei club per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
@@ -754,7 +733,6 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nel download del documento ${req.params.tipoDocumento} per club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      success: false,
       error: 'Errore nel download del documento',
       details: error.message
     });
