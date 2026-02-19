@@ -126,7 +126,7 @@ const CategoryInProgress = () => {
       matchesRound0.push({
         id: `r0m${matchesRound0.length}`,
         players: [p1, p2],
-        scores: {},
+        roundResults: [null, null, null],
         winner: null,
         from: []
       });
@@ -145,7 +145,7 @@ const CategoryInProgress = () => {
         curMatches.push({
           id: `r${roundIdx}m${curMatches.length}`,
           players: [null, null],
-          scores: {},
+          roundResults: [null, null, null],
           winner: null,
           from: [left.id, right ? right.id : null]
         });
@@ -221,6 +221,18 @@ const CategoryInProgress = () => {
     await patchSvolgimentoCategoria(svolgimentoId, { 
       stato: CategoryStates.CONCLUSA,
       classifica: classifica
+    });
+    setStato(CategoryStates.CONCLUSA);
+  };
+
+  // Handler per concludere categoria (Combattimenti)
+  const handleConcludeFightingCategory = async (classifica) => {
+    setClassifica(classifica);
+    
+    await patchSvolgimentoCategoria(svolgimentoId, {
+      stato: CategoryStates.CONCLUSA,
+      classifica: classifica,
+      tabellone: tabellone
     });
     setStato(CategoryStates.CONCLUSA);
   };
@@ -402,9 +414,13 @@ const CategoryInProgress = () => {
           atleti={atleti}
           tabellone={tabellone}
           classifica={classifica}
+          commissione={commissione}
           stato={stato}
           onTabelloneChange={handleTabelloneChange}
           onUpdateSvolgimento={handleUpdateSvolgimento}
+          onCommissioneChange={handleCommissioneChange}
+          onStartCategory={handleStartCategory}
+          onConcludeCategory={handleConcludeFightingCategory}
         />
       )}
 

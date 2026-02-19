@@ -8,14 +8,16 @@ import {
   List,
   ListItem,
   ListItemText,
-  IconButton,
   Grid,
   Divider,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
-import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
-import { SingleEliminationBracket, Match, SVGViewer } from '@g-loot/react-tournament-brackets';
 import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
+import MatchComponent from './MatchComponent';
 
 /**
  * Componente per la definizione del tabellone dei combattimenti
@@ -28,130 +30,140 @@ const FightingDefinition = ({
   onTabelloneChange,
   onConfirmDefinition
 }) => {
-  const [orderedFightingAthletes, setOrderedFightingAthletes] = useState([]);
+  const [availableAthletes, setAvailableAthletes] = useState([]);
+  const [selectedMatch, setSelectedMatch] = useState(null);
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    setOrderedFightingAthletes(atleti || []);
-  }, [atleti]);
+    // Inizializza tabellone vuoto se non esiste
+    if (!tabellone || !tabellone.rounds) {
+      initializeEmptyBracket();
+    } else {
+      updateAvailableAthletes();
+    }
+  }, [atleti, tabellone]);
 
-  // Genera tabellone da lista ordinata di atleti
-  const generateTabelloneFromAtleti = (atletiList) => {
-    const matchesRound0 = [];
-    let idx = 0;
+  const initializeEmptyBracket = () => {
+    const numAtleti = atleti?.length || 0;
+    if (numAtleti < 2) return;
+
+    // Determina quanti round visualizzare (primi 2 round max)
+    const numMatchesFirstRound = Math.pow(2, Math.ceil(Math.log2(numAtleti)) - 1);
     
-    while (idx < atletiList.length) {
-      const p1 = atletiList[idx]?.id || null;
-      const p2 = atletiList[idx + 1]?.id || null;
-      matchesRound0.push({
-        id: `r0m${matchesRound0.length}`,
-        players: [p1, p2],
-        scores: {},
+    // Crea primo round con match vuoti
+    const firstRoundMatches = [];
+    for (let i = 0; i < numMatchesFirstRound; i++) {
+      firstRoundMatches.push({
+        id: `r0m${i}`,
+        players: [null, null],
+        roundResults: [null, null, null],
         winner: null,
         from: []
       });
-      idx += 2;
     }
 
-    const rounds = [{ matches: matchesRound0 }];
-    let prevMatches = matchesRound0;
-    let roundIdx = 1;
+    // Crea secondo round
+    const secondRoundMatches = [];
+    for (let i = 0; i < numMatchesFirstRound / 2; i++) {
+      secondRoundMatches.push({
+        id: `r1m${i}`,
+        players: [null, null],
+        roundResults: [null, null, null],
+        winner: null,
+        from: [`r0m${i * 2}`, `r0m${i * 2 + 1}`]
+      });
+    }
+
+    const newTabellone = {
+      rounds: [
+        { matches: firstRoundMatches },
+        { matches: secondRoundMatches }
+      ]
+    };
+
+    onTabelloneChange(newTabellone);
+  };
+
+  const updateAvailableAthletes = () => {
+    if (!tabellone || !atleti) return;
     
-    while (prevMatches.length > 1) {
-      const curMatches = [];
-      for (let i = 0; i < prevMatches.length; i += 2) {
-        const left = prevMatches[i];
-        const right = prevMatches[i + 1] || null;
-        curMatches.push({
-          id: `r${roundIdx}m${curMatches.length}`,
-          players: [null, null],
-          scores: {},
-          winner: null,
-          from: [left.id, right ? right.id : null]
-        });
+    // Trova tutti gli atleti già assegnati
+    const assignedIds = new Set();
+    tabellone.rounds.forEach(round => {
+      round.matches.forEach(match => {
+        if (match.players[0]) assignedIds.add(match.players[0]);
+        if (match.players[1]) assignedIds.add(match.players[1]);
+      });
+    });
+
+    // Filtra atleti disponibili
+    const available = atleti.filter(a => !assignedIds.has(a.id));
+    setAvailableAthletes(available);
+  };
+
+  const handleAtletaClick = (matchId, position) => {
+    if (stato !== CategoryStates.IN_DEFINIZIONE) return;
+    
+    setSelectedMatch(matchId);
+    setSelectedPosition(position === 'red' ? 0 : 1);
+    setDialogOpen(true);
+  };
+
+  const handleAtletaSelection = (atletaId) => {
+    const copy = JSON.parse(JSON.stringify(tabellone));
+    
+    // Trova il match
+    let targetMatch = null;
+    for (const round of copy.rounds) {
+      const match = round.matches.find(m => m.id === selectedMatch);
+      if (match) {
+        targetMatch = match;
+        break;
       }
-      rounds.push({ matches: curMatches });
-      prevMatches = curMatches;
-      roundIdx += 1;
     }
-    
-    return { rounds };
+
+    if (targetMatch) {
+      targetMatch.players[selectedPosition] = atletaId;
+      onTabelloneChange(copy);
+    }
+
+    setDialogOpen(false);
+    setSelectedMatch(null);
+    setSelectedPosition(null);
   };
 
-  const handleMoveFightingAthlete = (index, direction) => {
-    const newList = [...orderedFightingAthletes];
-    if (direction === 'up' && index > 0) {
-      [newList[index], newList[index - 1]] = [newList[index - 1], newList[index]];
-    } else if (direction === 'down' && index < newList.length - 1) {
-      [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
-    }
-    setOrderedFightingAthletes(newList);
-    
-    // Rigenera automaticamente il tabellone
-    const updatedBracket = generateTabelloneFromAtleti(newList);
-    onTabelloneChange(updatedBracket);
-  };
-
-  const getRoundName = (roundIndex, totalRounds, matchesCount) => {
-    if (roundIndex === totalRounds - 1) return "Finale";
-    if (roundIndex === totalRounds - 2) return "Semifinale";
-    if (matchesCount >= 8) return "Ottavi di finale";
-    if (matchesCount < 8) return "Quarti di finale";
+  const getRoundName = (roundIndex, numMatches) => {
+    if (numMatches === 1) return "Finale";
+    if (numMatches === 2) return "Semifinale";
+    if (numMatches === 4) return "Quarti di finale";
+    if (numMatches === 8) return "Ottavi di finale";
     return `Turno ${roundIndex + 1}`;
   };
 
   const getAthleteById = (id) => {
-    return atleti.find(a => a.id === id) || null;
+    return atleti?.find(a => a.id === id) || null;
   };
 
-  // Converte il tabellone interno nel formato richiesto da @g-loot/react-tournament-brackets
-  const convertToLibraryFormat = (tabellone) => {
-    if (!tabellone || !tabellone.rounds) return [];
-
-    const matches = [];
+  const isTabelloneComplete = () => {
+    if (!tabellone || !tabellone.rounds) return false;
     
-    tabellone.rounds.forEach((round, roundIndex) => {
-      round.matches.forEach((match) => {
-        const player1 = getAthleteById(match.players[0]);
-        const player2 = getAthleteById(match.players[1]);
-        
-        matches.push({
-          id: match.id,
-          name: `Match ${match.id}`,
-          nextMatchId: roundIndex < tabellone.rounds.length - 1 
-            ? tabellone.rounds[roundIndex + 1].matches.find(m => m.from?.includes(match.id))?.id 
-            : null,
-          tournamentRoundText: getRoundName(roundIndex, tabellone.rounds.length, round.matches.length),
-          state: 'SCHEDULED',
-          participants: [
-            {
-              id: match.players[0] || 'TBD-1',
-              name: player1 ? `${player1.cognome} ${player1.nome}` : 'TBD',
-              isWinner: false,
-              status: null,
-              resultText: null,
-              picture: player1?.club?.denominazione || ''
-            },
-            {
-              id: match.players[1] || 'TBD-2',
-              name: player2 ? `${player2.cognome} ${player2.nome}` : 'TBD',
-              isWinner: false,
-              status: null,
-              resultText: null,
-              picture: player2?.club?.denominazione || ''
-            }
-          ]
-        });
-      });
-    });
-
-    return matches;
+    // Verifica che il primo round sia completo
+    const firstRound = tabellone.rounds[0];
+    for (const match of firstRound.matches) {
+      if (!match.players[0] || !match.players[1]) {
+        return false;
+      }
+    }
+    return true;
   };
 
   return (
     <Box>
       {stato === CategoryStates.IN_DEFINIZIONE && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          Modifica l'ordine degli atleti per definire gli accoppiamenti. Il tabellone si aggiorna automaticamente.
+          Clicca sulle caselle del tabellone per assegnare gli atleti agli incontri.
+          Solo i primi due turni sono visualizzati per la definizione.
         </Alert>
       )}
 
@@ -162,67 +174,49 @@ const FightingDefinition = ({
       )}
 
       <Grid container spacing={3}>
-        {/* Lista ordinabile atleti */}
+        {/* Lista atleti disponibili - Sinistra */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Ordine Accoppiamenti
+              Atleti Disponibili
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
-            {stato === CategoryStates.IN_DEFINIZIONE && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                Usa le frecce per riordinare gli atleti. Gli accoppiamenti sono definiti in ordine sequenziale.
-              </Typography>
-            )}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+              Totale atleti: {atleti?.length || 0} | Assegnati: {(atleti?.length || 0) - availableAthletes.length}
+            </Typography>
 
             <List dense>
-              {orderedFightingAthletes.map((atleta, idx) => (
-                <ListItem 
-                  key={atleta.id}
-                  sx={{ 
-                    bgcolor: idx % 2 === 0 ? 'action.hover' : 'background.paper',
-                    borderRadius: 1,
-                    mb: 0.5,
-                    border: '1px solid',
-                    borderColor: 'divider'
-                  }}
-                  secondaryAction={
-                    stato === CategoryStates.IN_DEFINIZIONE && (
-                      <Box>
-                        <IconButton 
-                          size="small"
-                          onClick={() => handleMoveFightingAthlete(idx, 'up')}
-                          disabled={idx === 0}
-                        >
-                          <ArrowUpward fontSize="small" />
-                        </IconButton>
-                        <IconButton 
-                          size="small"
-                          onClick={() => handleMoveFightingAthlete(idx, 'down')}
-                          disabled={idx === orderedFightingAthletes.length - 1}
-                        >
-                          <ArrowDownward fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    )
-                  }
-                >
-                  <ListItemText
-                    primary={
-                      <Typography variant="body2" fontWeight="bold">
-                        {idx + 1}. {atleta.cognome} {atleta.nome}
-                      </Typography>
-                    }
-                    secondary={
-                      <Typography variant="caption" color="text.secondary">
-                        {atleta.club?.denominazione || '-'}
-                        {atleta.peso && ` • ${atleta.peso} kg`}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              ))}
+              {atleti?.map((atleta) => {
+                const isAssigned = !availableAthletes.some(a => a.id === atleta.id);
+                return (
+                  <ListItem 
+                    key={atleta.id}
+                    sx={{ 
+                      bgcolor: isAssigned ? 'action.disabledBackground' : 'background.paper',
+                      borderRadius: 1,
+                      mb: 0.5,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      opacity: isAssigned ? 0.5 : 1
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Typography variant="body2" fontWeight={isAssigned ? 'normal' : 'bold'}>
+                          {atleta.cognome} {atleta.nome}
+                          {isAssigned && ' ✓'}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography variant="caption" color="text.secondary">
+                          {atleta.club?.denominazione || '-'} • {atleta.peso || '-'} kg
+                        </Typography>
+                      }
+                    />
+                  </ListItem>
+                );
+              })}
             </List>
 
             {stato === CategoryStates.IN_DEFINIZIONE && (
@@ -232,7 +226,7 @@ const FightingDefinition = ({
                 onClick={onConfirmDefinition}
                 fullWidth
                 sx={{ mt: 2 }}
-                disabled={!tabellone || !tabellone.rounds || tabellone.rounds.length === 0}
+                disabled={!isTabelloneComplete()}
               >
                 Conferma Tabellone
               </Button>
@@ -240,46 +234,91 @@ const FightingDefinition = ({
           </Paper>
         </Grid>
 
-        {/* Anteprima Tabellone */}
+        {/* Tabellone - Destra */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Anteprima Tabellone
+              Tabellone Incontri
             </Typography>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 3 }} />
 
             {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
-              <Box sx={{ 
-                height: 600, 
-                width: '100%',
-                '& .bracket': {
-                  fontSize: '12px'
-                }
-              }}>
-                <SingleEliminationBracket
-                  matches={convertToLibraryFormat(tabellone)}
-                  matchComponent={Match}
-                  svgWrapper={({ children, ...props }) => (
-                    <SVGViewer 
-                      width={800} 
-                      height={600}
-                      background="#FAFAFA"
-                      SVGBackground="#FAFAFA"
-                      {...props}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {tabellone.rounds.slice(0, 2).map((round, roundIndex) => (
+                  <Box key={roundIndex}>
+                    <Typography 
+                      variant="subtitle1" 
+                      fontWeight="bold" 
+                      sx={{ mb: 2, color: 'primary.main' }}
                     >
-                      {children}
-                    </SVGViewer>
-                  )}
-                />
+                      {getRoundName(roundIndex, round.matches.length)}
+                    </Typography>
+                    
+                    <Grid container spacing={2}>
+                      {round.matches.map((match) => {
+                        const atleta1 = getAthleteById(match.players[0]);
+                        const atleta2 = getAthleteById(match.players[1]);
+                        
+                        return (
+                          <Grid item xs={12} sm={6} md={round.matches.length > 2 ? 6 : 12} key={match.id}>
+                            <MatchComponent
+                              match={match}
+                              atleta1={atleta1}
+                              atleta2={atleta2}
+                              isEditable={stato === CategoryStates.IN_DEFINIZIONE}
+                              onAtletaClick={handleAtletaClick}
+                            />
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                ))}
               </Box>
             ) : (
               <Alert severity="warning">
-                Nessun tabellone disponibile. Il tabellone verrà generato automaticamente dall'ordine degli atleti.
+                Inizializzazione tabellone in corso...
               </Alert>
             )}
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Dialog per selezione atleta */}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Seleziona Atleta</DialogTitle>
+        <DialogContent>
+          <List>
+            {availableAthletes.map((atleta) => (
+              <ListItem
+                key={atleta.id}
+                button
+                onClick={() => handleAtletaSelection(atleta.id)}
+                sx={{ 
+                  borderRadius: 1,
+                  mb: 1,
+                  '&:hover': {
+                    bgcolor: 'action.hover'
+                  }
+                }}
+              >
+                <ListItemText
+                  primary={`${atleta.cognome} ${atleta.nome}`}
+                  secondary={`${atleta.club?.denominazione || '-'} • ${atleta.peso || '-'} kg`}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>Annulla</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

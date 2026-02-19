@@ -134,7 +134,7 @@ const QuyenDefinition = ({
                   <TableCell>{idx + 1}</TableCell>
                   <TableCell>{atleta.cognome}</TableCell>
                   <TableCell>{atleta.nome}</TableCell>
-                  <TableCell>{atleta.club?.denominazione || '-'}</TableCell>
+                  <TableCell>{atleta.club?.abbreviazione || atleta.club?.denominazione || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

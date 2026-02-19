@@ -1,34 +1,38 @@
 // FightingExecution.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Paper,
   Typography,
   Box,
   Divider,
   Alert,
-  Grid
+  Grid,
+  Button,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from '@mui/material';
-import { SingleEliminationBracket, SVGViewer, createTheme } from '@g-loot/react-tournament-brackets';
 import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
-import CustomMatchComponent from './CustomMatchComponent';
+import MatchComponent from './MatchComponent';
+import ConfirmActionModal from '../../../../components/common/ConfirmActionModal';
+import AuthComponent from '../../../../components/AuthComponent';
 
-// Tema personalizzato per il bracket
-const BracketTheme = createTheme({
-  textColor: { main: '#000000', highlighted: '#07090D', dark: '#3E414D' },
-  matchBackground: { wonColor: '#e3f2fd', lostColor: '#ffffff' },
-  score: {
-    background: { wonColor: '#2196f3', lostColor: '#bdbdbd' },
-    text: { highlightedWonColor: '#ffffff', highlightedLostColor: '#ffffff' },
-  },
-  border: {
-    color: '#CED1F2',
-    highlightedColor: '#2196f3',
-  },
-  roundHeader: { backgroundColor: '#2196f3', fontColor: '#fff' },
-  connectorColor: '#CED1F2',
-  connectorColorHighlight: '#2196f3',
-  svgBackground: '#FAFAFA',
-});
+const COMMISSIONE_LABELS = [
+  'Capo Commissione',
+  'Giudice 1',
+  'Giudice 2',
+  'Giudice 3',
+  'Giudice 4',
+  'Giudice 5',
+  'Giudice di Riserva',
+  '1° Addetto al Tavolo',
+  '2° Addetto al Tavolo',
+  '3° Addetto al Tavolo'
+];
 
 /**
  * Componente per l'esecuzione dei combattimenti e visualizzazione risultati
@@ -38,324 +42,378 @@ const FightingExecution = ({
   atleti, 
   tabellone,
   classifica,
+  commissione,
   stato,
   onTabelloneChange,
-  onUpdateSvolgimento
+  onUpdateSvolgimento,
+  onCommissioneChange,
+  onStartCategory,
+  onConcludeCategory
 }) => {
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isConfirmingConcludeDialogOpen, setIsConfirmingConcludeDialogOpen] = useState(false);
+  const [localClassifica, setLocalClassifica] = useState([]);
+
+  const canEdit = stato === CategoryStates.IN_CORSO || isEditMode;
+
+  useEffect(() => {
+    // Calcola classifica automaticamente quando cambia il tabellone
+    if (tabellone) {
+      const newClassifica = calculateClassifica();
+      setLocalClassifica(newClassifica);
+    }
+  }, [tabellone]);
+
+  const calculateClassifica = () => {
+    if (!tabellone || !tabellone.rounds || tabellone.rounds.length === 0) return [];
+
+    const finalRound = tabellone.rounds[tabellone.rounds.length - 1];
+    const finalMatch = finalRound.matches[0];
+
+    if (!finalMatch || !finalMatch.winner) return [];
+
+    // Primo posto: vincitore finale
+    const winner = finalMatch.winner;
+    // Secondo posto: perdente finale
+    const finalLoser = finalMatch.players.find(p => p && p !== winner);
+
+    // Terzi posti: perdenti semifinali
+    const semiRound = tabellone.rounds.length > 1 ? tabellone.rounds[tabellone.rounds.length - 2] : null;
+    const semiLosers = [];
+    
+    if (semiRound) {
+      semiRound.matches.forEach(match => {
+        if (match.winner) {
+          const loser = match.players.find(p => p && p !== match.winner);
+          if (loser && loser !== winner && loser !== finalLoser) {
+            semiLosers.push(loser);
+          }
+        }
+      });
+    }
+
+    const result = [
+      { pos: 1, atletaId: winner },
+      finalLoser ? { pos: 2, atletaId: finalLoser } : null,
+      ...semiLosers.slice(0, 2).map(id => ({ pos: 3, atletaId: id }))
+    ].filter(Boolean);
+
+    return result;
+  };
 
   const getAthleteById = (id) => {
-    return atleti.find(a => a.id === id) || null;
+    return atleti?.find(a => a.id === id) || null;
   };
 
-  const renderAthleteData = (id, field) => {
-    const atleta = getAthleteById(id);
-    if (!atleta) return '-';
-    if (field && atleta[field]) {
-      if (field === 'club' && atleta[field]?.denominazione) {
-        return atleta[field].denominazione;
-      }
-      return atleta[field];
-    }
-    return `${atleta.nome} ${atleta.cognome}`;
-  };
-
-  const getRoundName = (roundIndex, totalRounds, matchesCount) => {
-    if (roundIndex === totalRounds - 1) return "Finale";
-    if (roundIndex === totalRounds - 2) return "Semifinale";
-    if (matchesCount >= 8) return "Ottavi di finale";
-    if (matchesCount < 8) return "Quarti di finale";
-    return `Turno ${roundIndex + 1}`;
-  };
-
-  // Converte il tabellone interno nel formato richiesto da @g-loot/react-tournament-brackets
-  const convertToLibraryFormat = (tabellone) => {
-    if (!tabellone || !tabellone.rounds) return [];
-
-    const matches = [];
-    
-    tabellone.rounds.forEach((round, roundIndex) => {
-      round.matches.forEach((match) => {
-        const player1 = getAthleteById(match.players[0]);
-        const player2 = getAthleteById(match.players[1]);
-        
-        const p1Score = match.scores?.[match.players[0]];
-        const p2Score = match.scores?.[match.players[1]];
-        
-        matches.push({
-          id: match.id,
-          name: `Match ${match.id}`,
-          nextMatchId: roundIndex < tabellone.rounds.length - 1 
-            ? tabellone.rounds[roundIndex + 1].matches.find(m => m.from?.includes(match.id))?.id 
-            : null,
-          tournamentRoundText: getRoundName(roundIndex, tabellone.rounds.length, round.matches.length),
-          state: match.winner ? 'DONE' : 'SCHEDULED',
-          participants: [
-            {
-              id: match.players[0] || 'TBD-1',
-              name: player1 ? `${player1.cognome} ${player1.nome}` : 'TBD',
-              isWinner: match.winner === match.players[0],
-              status: match.winner ? 'PLAYED' : null,
-              resultText: p1Score != null ? String(p1Score) : '',
-              picture: player1?.club?.denominazione || ''
-            },
-            {
-              id: match.players[1] || 'TBD-2',
-              name: player2 ? `${player2.cognome} ${player2.nome}` : 'TBD',
-              isWinner: match.winner === match.players[1],
-              status: match.winner ? 'PLAYED' : null,
-              resultText: p2Score != null ? String(p2Score) : '',
-              picture: player2?.club?.denominazione || ''
-            }
-          ]
-        });
-      });
-    });
-
-    return matches;
-  };
-
-  const handleScoreChange = (matchId, atletaId, val) => {
-    const score = parseInt(val);
+  const handleRoundClick = (matchId, roundIndex) => {
+    if (!canEdit) return;
 
     const copy = JSON.parse(JSON.stringify(tabellone));
     
-    // Trova il match nel tabellone
+    // Trova il match
     let targetMatch = null;
-    let roundIndex = -1;
+    let roundIdx = -1;
     
     for (let rIdx = 0; rIdx < copy.rounds.length; rIdx++) {
       const match = copy.rounds[rIdx].matches.find(m => m.id === matchId);
       if (match) {
         targetMatch = match;
-        roundIndex = rIdx;
+        roundIdx = rIdx;
         break;
       }
     }
 
-    if (!targetMatch) return;
+    if (!targetMatch || !targetMatch.roundResults) return;
 
-    targetMatch.scores = targetMatch.scores || {};
-    targetMatch.scores[atletaId] = isNaN(score) ? null : score;
+    // Cicla tra: null -> red -> blue -> yellow -> null
+    const current = targetMatch.roundResults[roundIndex];
+    let next = null;
+    if (current === null) next = 'red';
+    else if (current === 'red') next = 'blue';
+    else if (current === 'blue') next = 'yellow';
+    else if (current === 'yellow') next = null;
 
-    const p1 = targetMatch?.players[0];
-    const p2 = targetMatch?.players[1];
+    targetMatch.roundResults[roundIndex] = next;
 
-    if (p1 && p2) {
-      const s1 = targetMatch.scores[p1];
-      const s2 = targetMatch.scores[p2];
+    // Calcola vincitore automaticamente
+    const redWins = targetMatch.roundResults.filter(r => r === 'red').length;
+    const blueWins = targetMatch.roundResults.filter(r => r === 'blue').length;
 
-      if (s1 != null && s2 != null) {
-        if (s1 > s2) {
-          targetMatch.winner = targetMatch.players[0];
-        } else if (s2 > s1) {
-          targetMatch.winner = targetMatch.players[1];
-        } else {
-          targetMatch.winner = null;
-        }
-      }
-    }
-
-    // Propaga il vincitore al turno successivo
-    if (targetMatch.winner) {
-      const nextRound = copy.rounds[roundIndex + 1];
-      if (nextRound) {
-        nextRound.matches.forEach(nm => {
-          const pos = nm.from.indexOf(targetMatch.id);
-          if (pos !== -1) {
-            nm.players[pos] = targetMatch.winner;
-          }
-        });
-      }
-    }
-
-    // Calcolo podio automatico se è la finale
-    const finalRound = copy.rounds[copy.rounds.length - 1];
-    const finalMatch = finalRound.matches[0];
-
-    if (finalMatch && finalMatch.winner) {
-      const finalWinnerReal = finalMatch.winner;
-      const finalLoserPlayer = finalMatch.players.find(p => p && p !== finalMatch.winner);
-      const finalLoserReal = finalLoserPlayer || null;
-
-      // Semiclassificati: losers delle semifinali
-      const semiRound = copy.rounds.length > 1 ? copy.rounds[copy.rounds.length - 2] : null;
-      let semisReal = [];
-      if (semiRound) {
-        for (const sm of semiRound.matches) {
-          if (sm.winner) {
-            const loserSnapshot = sm.players.find(p => p && p !== sm.winner);
-            if (loserSnapshot) {
-              const rid = loserSnapshot;
-              if (rid) semisReal.push(rid);
-            }
-          }
-        }
-      }
-
-      const used = new Set([finalWinnerReal, finalLoserReal].filter(Boolean));
-      semisReal = semisReal.filter(rid => rid && !used.has(rid));
-      if (semisReal.length < 2) {
-        const allReal = atleti.map(a => a.id).filter(Boolean);
-        for (const rid of allReal) {
-          if (semisReal.length >= 2) break;
-          if (!used.has(rid) && !semisReal.includes(rid)) semisReal.push(rid);
-        }
-      }
-
-      const uniqueSemis = [];
-      for (const rid of semisReal) {
-        if (!uniqueSemis.includes(rid)) uniqueSemis.push(rid);
-        if (uniqueSemis.length >= 2) break;
-      }
-
-      const classificaToSave = [
-        finalWinnerReal ? { pos: 1, atletaId: finalWinnerReal } : null,
-        finalLoserReal ? { pos: 2, atletaId: finalLoserReal } : null,
-        uniqueSemis[0] ? { pos: 3, atletaId: uniqueSemis[0] } : null,
-        uniqueSemis[1] ? { pos: 3, atletaId: uniqueSemis[1] } : null,
-      ].filter(Boolean);
-
-      onUpdateSvolgimento({
-        tabellone: copy,
-        classifica: classificaToSave,
-        stato: CategoryStates.CONCLUSA
-      });
-    } else {
-      onUpdateSvolgimento({
-        tabellone: copy,
-        stato: CategoryStates.IN_CORSO
-      });
-    }
-
-    // Caso BYE: un solo giocatore -> auto-winner e propagate
-    if (targetMatch.players[0] && !targetMatch.players[1]) {
+    if (redWins > 1) {
       targetMatch.winner = targetMatch.players[0];
+    } else if (blueWins > 1) {
+      targetMatch.winner = targetMatch.players[1];
+    } else {
+      targetMatch.winner = null;
+    }
 
-      const nextRound = copy.rounds[roundIndex + 1];
-      if (nextRound) {
-        nextRound.matches.forEach(nm => {
-          const pos = nm.from.indexOf(targetMatch.id);
-          if (pos !== -1) {
-            nm.players[pos] = targetMatch.winner;
-          }
-        });
-      }
-
-      onUpdateSvolgimento({
-        tabellone: copy,
-        stato: CategoryStates.IN_CORSO
+    // Propaga vincitore al turno successivo
+    if (targetMatch.winner && roundIdx < copy.rounds.length - 1) {
+      const nextRound = copy.rounds[roundIdx + 1];
+      nextRound.matches.forEach(nm => {
+        const pos = nm.from?.indexOf(targetMatch.id);
+        if (pos !== -1 && pos !== undefined) {
+          nm.players[pos] = targetMatch.winner;
+        }
       });
     }
+
+    onTabelloneChange(copy);
+  };
+
+  const handleWinnerClick = (matchId) => {
+    if (!canEdit) return;
+    // Implementazione futura per gestione parità
+    alert('Funzionalità di gestione parità in sviluppo');
+  };
+
+  const getRoundName = (roundIndex, numMatches) => {
+    if (numMatches === 1) return "Finale";
+    if (numMatches === 2) return "Semifinale";
+    if (numMatches === 4) return "Quarti di finale";
+    if (numMatches === 8) return "Ottavi di finale";
+    return `Turno ${roundIndex + 1}`;
   };
 
   const getClassifiedAthlete = (position) => {
-    const entry = classifica.find(c => c.pos === position);
-    if (!entry) return null;
-    return renderAthleteData(entry.atletaId);
+    const entries = localClassifica.filter(c => c.pos === position);
+    if (entries.length === 0) return null;
+    
+    if (entries.length === 1) {
+      const atleta = getAthleteById(entries[0].atletaId);
+      return atleta ? `${atleta.cognome} ${atleta.nome}` : '-';
+    }
+    
+    // Più atleti nella stessa posizione
+    return entries.map(e => {
+      const atleta = getAthleteById(e.atletaId);
+      return atleta ? `${atleta.cognome} ${atleta.nome}` : '-';
+    }).join('\n');
   };
 
-  const libraryMatches = convertToLibraryFormat(tabellone);
+  const handleStartCategory = async () => {
+    if (onStartCategory) {
+      await onStartCategory();
+    }
+  };
+
+  const handleConcludeCategory = async () => {
+    if (onConcludeCategory) {
+      // Salva la classifica calcolata
+      await onConcludeCategory(localClassifica);
+      setIsConfirmingConcludeDialogOpen(false);
+      setIsEditMode(false);
+    }
+  };
+
+  const handleConfirmConclude = () => {
+    setIsConfirmingConcludeDialogOpen(true);
+  };
 
   return (
-    <Box>
-      {stato === CategoryStates.CONCLUSA && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          Categoria conclusa. Il podio è stato determinato automaticamente.
-        </Alert>
-      )}
+    <div className="page-grid-75-25">
+      {/* Tabellone - Sinistra */}
+      <div className="page-card-with-external-title page-card-expanded">
+        <div className="page-card-scrollable">
+          <div className="page-card-scrollable-body" style={{ padding: '1rem' }}>
 
-      <Grid container spacing={3}>
-        {/* Tabellone */}
-        <Grid item xs={12} lg={9}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                Tabellone Incontri
-              </Typography>
-            </Box>
-            <Divider sx={{ mb: 3 }} />
-
-            <Box sx={{ height: 700, width: '100%' }}>
-              <SingleEliminationBracket
-                matches={libraryMatches}
-                theme={BracketTheme}
-                options={{
-                  style: {
-                    roundHeader: {
-                      backgroundColor: BracketTheme.roundHeader.backgroundColor,
-                      fontColor: BracketTheme.roundHeader.fontColor,
-                    },
-                    connectorColor: BracketTheme.connectorColor,
-                    connectorColorHighlight: BracketTheme.connectorColorHighlight,
-                  },
-                }}
-                matchComponent={(props) => (
-                  <CustomMatchComponent
-                    {...props}
-                    onScoreChange={handleScoreChange}
-                    stato={stato}
-                    isEditable={stato === CategoryStates.IN_CORSO}
-                  />
-                )}
-                svgWrapper={({ children, ...props }) => (
-                  <SVGViewer
-                    background={BracketTheme.svgBackground}
-                    SVGBackground={BracketTheme.svgBackground}
-                    width={900}
-                    height={700}
-                    {...props}
-                  >
-                    {children}
-                  </SVGViewer>
-                )}
-              />
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Podio */}
-        <Grid item xs={12} lg={3}>
-          <Paper sx={{ p: 3, position: 'sticky', top: 20 }}>
             <Typography variant="h6" gutterBottom>
-              🏆 Podio
+              Tabellone Incontri
             </Typography>
-            <Divider sx={{ mb: 2 }} />
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[1, 2, 3].map((pos) => {
-                const athlete = getClassifiedAthlete(pos);
-                return (
-                  <Box
-                    key={pos}
-                    sx={{
-                      p: 2,
-                      border: '2px solid',
-                      borderColor: pos === 1 ? 'warning.main' : pos === 2 ? 'grey.400' : 'warning.dark',
-                      borderRadius: 2,
-                      bgcolor: pos === 1 ? 'warning.light' : pos === 2 ? 'grey.100' : 'warning.lighter',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <Typography variant="h4" fontWeight="bold" color="primary">
-                      {pos}°
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {athlete || '-'}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-
-            {classifica.filter(c => c.pos === 3).length === 2 && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                Doppio terzo posto
+            {stato === CategoryStates.CONCLUSA && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Categoria conclusa. Il podio è stato determinato automaticamente.
               </Alert>
             )}
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
+
+            {isEditMode && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Attenzione, è necessario concludere la categoria per salvare le modifiche alla classifica.
+              </Alert>
+            )}
+
+            <Divider sx={{ mb: 3 }} />
+
+            {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {tabellone.rounds.map((round, roundIndex) => (
+                  <Box key={roundIndex}>
+                    <Typography 
+                      variant="subtitle1" 
+                      fontWeight="bold" 
+                      sx={{ mb: 2, color: 'primary.main' }}
+                    >
+                      {getRoundName(roundIndex, round.matches.length)}
+                    </Typography>
+                    
+                    <Grid container spacing={2}>
+                      {round.matches.map((match) => {
+                        const atleta1 = getAthleteById(match.players[0]);
+                        const atleta2 = getAthleteById(match.players[1]);
+                        
+                        return (
+                          <Grid item xs={12} sm={6} md={round.matches.length > 2 ? 6 : 12} key={match.id}>
+                            <MatchComponent
+                              match={match}
+                              atleta1={atleta1}
+                              atleta2={atleta2}
+                              isEditable={canEdit}
+                              onRoundClick={handleRoundClick}
+                              onWinnerClick={handleWinnerClick}
+                            />
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  </Box>
+                ))}
+              </Box>
+            ) : (
+              <Alert severity="warning">
+                Nessun tabellone disponibile.
+              </Alert>
+            )}
+
+            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
+              <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+                {stato !== CategoryStates.IN_CORSO && !isEditMode && (
+                  <Button variant="warning" onClick={() => setIsEditMode(true)}>
+                    Modifica
+                  </Button>
+                )}
+                
+                {stato !== CategoryStates.IN_CORSO && isEditMode && (
+                  <Button variant="info" onClick={() => setIsEditMode(false)}>
+                    Annulla Modifica
+                  </Button>
+                )}
+              </AuthComponent>
+              
+              {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
+                <Button variant="success" onClick={handleStartCategory}>
+                  Avvia categoria
+                </Button>
+              )}
+
+              {(stato === CategoryStates.IN_CORSO || isEditMode) && canEdit && (
+                <Button onClick={handleConfirmConclude}>
+                  Concludi Categoria
+                </Button>
+              )}
+            </Box>
+          </div>
+        </div>
+      </div>
+
+      {/* Colonna Destra: Classifica e Commissione */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Classifica */}
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            🏆 Classifica
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><b>Pos.</b></TableCell>
+                  <TableCell><b>Atleta</b></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {[1, 2, 3, 4].map((pos) => {
+                  const athlete = getClassifiedAthlete(pos);
+                  const isTied = pos === 3 && localClassifica.filter(c => c.pos === 3).length === 2;
+                  
+                  return (
+                    <TableRow key={pos}>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: pos === 1 ? 'warning.main' : pos === 2 ? 'grey.400' : pos === 3 ? 'warning.dark' : 'grey.300',
+                            color: '#fff',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          {pos}°
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            whiteSpace: 'pre-line',
+                            fontWeight: pos <= 3 ? 'bold' : 'normal'
+                          }}
+                        >
+                          {athlete || '-'}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {localClassifica.filter(c => c.pos === 3).length === 2 && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Doppio terzo posto
+            </Alert>
+          )}
+        </Paper>
+
+        {/* Commissione */}
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Commissione
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {COMMISSIONE_LABELS.map((label, idx) => (
+              <Box key={label}>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  {label}
+                </Typography>
+                <TextField
+                  value={commissione?.[idx] || ''}
+                  onChange={(e) => onCommissioneChange(idx, e.target.value)}
+                  size="small"
+                  fullWidth
+                  disabled={!canEdit}
+                  placeholder="Nome e Cognome"
+                />
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      </div>
+
+      <ConfirmActionModal 
+        open={isConfirmingConcludeDialogOpen}
+        onClose={() => setIsConfirmingConcludeDialogOpen(false)}
+        title="Conferma conclusione categoria"
+        message="Sei sicuro di voler concludere la categoria? Questa azione è irreversibile e salverà la classifica finale."
+        primaryButton={{
+          text: 'Concludi',
+          onClick: handleConcludeCategory,
+        }}
+        secondaryButton={{
+          text: 'Annulla',
+          onClick: () => setIsConfirmingConcludeDialogOpen(false),
+        }}
+      />
+    </div>
   );
 };
 
