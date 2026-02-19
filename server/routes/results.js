@@ -11,4 +11,10 @@ router.get('/club', resultsController.getClubResults);
 // Dettaglio medaglie per club
 router.get('/club/:id', resultsController.getClubMedalsDetails);
 
+// Stampa PDF delle classifiche finali per una competizione
+router.get('/competizioni/:competizioneId/print-results', resultsController.printResults);
+
+// Stampa PDF classifica club per una competizione
+router.get('/competizioni/:competizioneId/print-club-results', resultsController.printClubResults);
+
 module.exports = router;

@@ -59,3 +59,41 @@ TO-DO
 - Filtro dei vari club nella sezione atleti con utente admin o superAdmin e no filtro con utenza di club -> DONE ma bruttissimoooo, perchè è così piccolo???
 - Pagina club con info di tutti i club per utente admin e superAdmin mentre visuale delle proprie INFO se utenza di club -> DONE a metà, la chiamata funziona quindi abbiamo già tutti i dati, manca da scegliere una interfaccia bella per vedere le cose, magari ne conosci qualcuna
 - Matchare array tipologia nella pagina competizioni sul pulsante modifica per admin e superAdmin -> CI STO IMPAZZENDOOOOOOOOOOO, riesco a convertirlo nella chiamata ma poi non riesco a farglielo visualizzare, mi sa chiederò all'AI D:
+
+
+27-12 
+TO-DO
+
+Modifica sezione Atleti
+(v) - nascondere luogo di nascita
+(v) - inserire campo n. tessera
+(v)- togliere tesseramento dagli atleti e legarlo solo alliscrizione
+(v)- inserimento certificato e data scadenza certificato
+(v)- togliere peso dalla sezione atleti
+(v)- nascondere email e telefono
+
+Modifica sezione Club
+(v) - inserire campo abbreviazione per Club (max dieci caratteri)
+(v) - aggiungere campo obbligatorio per iscrizione assicurativa club, in fase di iscrizione e in visualizzazione
+
+Modifica sezione Iscrizione
+(v) - area atleti, toglie aggiunta nuovo atleta, togliere modifica e aggiungere filtro per ricerca. Lasciare solo iscrizione
+(v) - modificare i campi livelli da DB e aggiungere un comando per velocizzare inserimento livelli
+(v) - aggiunta scelta tesseramente RICHIEDI TESSERAMENTO
+(v) - GRIGLIONE con tutti i dati in sequenza e pulsanti finali 
+(v) - Rimuovere file certificati medici e autorizzazioni dai doc obbligatori. Lasciare solo e obbligatoria la dichiarazione presidente
+(v) - informazioni federazione --> Info: ASD Viet Vo Dao Italia
+
+(v) - nascondere dettagli in iscrizione se non presenti
+
+(v) - aggiungere controllo per categoria combattimento
+(v) - validazioni in fase iscrizioni e aggiunta atleti
+(v) - aggiungere doc bonifico avvenuto e fix flusso
+- aggiungere stampa riepilogo iscrizioni per club
+
+(v) - migliorare modale riepilogo costi
+(v) - modificare UI iscrizione competizione
+(v) - modificare UI competizioni
+
+- migliorare gestione definizione gara
+- export con formato excel per VVD italia con iscrizioni

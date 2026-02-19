@@ -68,6 +68,15 @@ const Categoria = sequelize.define('Categoria', {
     },
     field: 'max_partecipanti'
   },
+  tableUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'utenti_login',
+      key: 'id'
+    },
+    field: 'table_user_id',
+  },
   descrizione: {
     type: DataTypes.TEXT,
     allowNull: true

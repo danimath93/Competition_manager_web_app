@@ -210,7 +210,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                             {getUppercase(athlete.cognome)} {getUpperLowerCase(athlete.nome)}
                           </TableCell>
                           <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
-                            {athlete.club?.denominazione || 'N/D'}
+                            {athlete.club?.abbreviazione || athlete.club?.denominazione || 'N/D'}
                           </TableCell>
                         </TableRow>
                       ))}

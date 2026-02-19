@@ -131,6 +131,14 @@
   height: 100%;
 }
 
+/* Grid con proporzioni personalizzate inverse */
+.page-grid-75-25 {
+  display: grid;
+  grid-template-columns: minmax(500px, 1fr) minmax(280px, 25%);
+  gap: 1.5rem;
+  height: 100%;
+}
+
 /* Grid a colonna singola (quando l'iscrizione è confermata) */
 .page-grid-full {
   display: grid;
@@ -142,6 +150,11 @@
 /* Responsive: layout a colonna su mobile */
 @media (max-width: 1024px) {
   .page-grid-25-75 {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  
+  .page-grid-75-25 {
     grid-template-columns: 1fr;
     height: auto;
   }

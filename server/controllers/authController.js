@@ -297,6 +297,26 @@ const resetPassword = async (req, res) => {
      });
   }
 };
+const getTableUsers = async (req, res) => {
+  try {
+    const tableUsers = await UtentiLogin.findAll({
+      where: {
+        permissions: 'table',
+        status: 'E'
+      },
+      attributes: ['id', 'username', 'email'],
+      order: [['username', 'ASC']]
+    });
+
+    res.status(200).json({ ok: true, users: tableUsers });
+  } catch (error) {
+    logger.error(`Errore durante il recupero degli utenti tavolo: ${error.message}`, { stack: error.stack });
+    res.status(500).json({
+      error: 'Errore durante il recupero degli utenti tavolo',
+      details: error.message
+    });
+  }
+};
 
 module.exports = {
   loginUser,
@@ -307,4 +327,5 @@ module.exports = {
   updateUserData,
   requestPasswordReset,
   resetPassword,
+  getTableUsers,
 };

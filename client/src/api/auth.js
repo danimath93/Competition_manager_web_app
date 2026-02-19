@@ -91,4 +91,15 @@ const sendConfirmationEmail = async (to, token) => {
   }
 };
 
-export { loginUser, logoutUser, checkAuthLevel, registerUser, updateUserData, sendConfirmationEmail, requestPasswordReset, resetPassword };
+// Funzione per ottenere tutti gli utenti con permesso 'table'
+const getTableUsers = async () => {
+  try {
+    const response = await axios.get('/auth/table-users/');
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il recupero degli utenti tavolo:', error);
+    throw error;
+  }
+};
+
+export { loginUser, logoutUser, checkAuthLevel, registerUser, updateUserData, sendConfirmationEmail, requestPasswordReset, resetPassword, getTableUsers };

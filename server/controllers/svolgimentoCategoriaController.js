@@ -111,7 +111,7 @@ exports.getSvolgimentoByCategoriaId = async (req, res) => {
             {
               model: Club,
               as: 'club',
-              attributes: ['id', 'denominazione']
+              attributes: ['id', 'denominazione', 'abbreviazione']
             }
           ]
         }

@@ -746,6 +746,7 @@ const exportCategories = async (req, res) => {
     worksheet.columns = [
       { header: 'ID Categoria', key: 'id', width: 15 },
       { header: 'Categoria', key: 'nome', width: 30 },
+      { header: 'N. Iscritti', key: 'numIscritti', width: 15 },
       { header: 'Tipo Categoria', key: 'tipoCategoriaNome', width: 30 },
       { header: 'Tipo Competizione', key: 'tipoCompetizioneNome', width: 30 },
       { header: 'Gruppo Età', key: 'gruppoEtaNome', width: 20 },
@@ -780,6 +781,7 @@ const exportCategories = async (req, res) => {
       worksheet.addRow({  
         id: categoria.id,
         nome: categoria.nome,
+        numIscritti: categoria.maxPartecipanti || '-',
         tipoCategoriaNome: categoria.tipoCategoria ? categoria.tipoCategoria.nome : '-',
         tipoCompetizioneNome: categoria.tipoCategoria && categoria.tipoCategoria.tipoCompetizione ? categoria.tipoCategoria.tipoCompetizione.nome : '-',
         gruppoEtaNome: gruppoEtaList.length > 0 ? gruppoEtaList.join(', ') : '-',
