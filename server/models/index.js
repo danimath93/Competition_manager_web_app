@@ -81,6 +81,17 @@ Categoria.belongsToMany(Atleta, {
   as: 'atleti'
 });
 
+// User Table -> Categoria (One-to-Many)
+UtentiLogin.hasMany(Categoria, {
+  foreignKey: 'tableUserId',
+  as: 'categorie',
+  onDelete: 'SET NULL'
+});
+Categoria.belongsTo(UtentiLogin, {
+  foreignKey: 'tableUserId',
+  as: 'tableUser'
+});
+
 // Associazioni dirette per IscrizioneAtleta
 IscrizioneAtleta.belongsTo(Atleta, {
   foreignKey: 'atletaId',

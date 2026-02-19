@@ -14,8 +14,8 @@ import MuiButton from '@mui/material/Button';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import { FaTags } from 'react-icons/fa';
-import { PlayArrow, Print, ArrowBack } from '@mui/icons-material';
-import { getCategoriesByCompetizione } from '../../api/categories';
+import { PlayArrow, Print, ArrowBack, Person } from '@mui/icons-material';
+import { getCategoriesByCompetizione, updateCategoria } from '../../api/categories';
 import { startSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { getCompetitionDetails } from '../../api/competitions';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +24,8 @@ import { loadAllCategoryTypes } from '../../api/config';
 import { getSvolgimentiByCompetizione } from '../../api/svolgimentoCategorie';
 import CategoryNotebookPrint from './print/CategoryNotebookPrint';
 import PageHeader from '../../components/PageHeader';
+import TableUserSelectorModal from '../../components/TableUserSelectorModal';
+import { getTableUsers } from '../../api/auth';
 import { CategoryStates } from '../../constants/enums/CategoryEnums';
 import muiTheme from '../../styles/muiTheme';
 
@@ -42,6 +44,14 @@ const CategoryExecution = () => {
   const [printCategory, setPrintCategory] = useState(null);
   const [allCategorie, setAllCategorie] = useState([]);
   const [categoryStates, setCategoryStates] = useState({});
+  const [showTableUserModal, setShowTableUserModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [tableUsers, setTableUsers] = useState([]);
+
+  // Verifica se l'utente è admin o superAdmin
+  const isAdminOrSuperAdmin = useMemo(() => {
+    return user?.permissions === 'admin' || user?.permissions === 'superAdmin';
+  }, [user]);
 
   const getStatusColor = (stato) => {
     switch (stato) {
@@ -74,6 +84,28 @@ const CategoryExecution = () => {
 
   const handleGoBack = () => {
     navigate('/categories');
+  };
+
+  const handleOpenTableUserModal = (category) => {
+    setSelectedCategory(category);
+    setShowTableUserModal(true);
+  };
+
+  const handleCloseTableUserModal = () => {
+    setShowTableUserModal(false);
+    setSelectedCategory(null);
+  };
+
+  const handleConfirmTableUser = async (userId) => {
+    try {
+      await updateCategoria(selectedCategory.id, { tableUserId: userId });
+      // Ricarica le categorie per aggiornare la tabella
+      const data = await getCategoriesByCompetizione(competizioneId, false);
+      setCategories(data);
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento dell\'utente tavolo:', error);
+      setError('Errore nell\'aggiornamento dell\'utente tavolo');
+    }
   };
 
   // Definizione delle colonne
@@ -155,6 +187,24 @@ const CategoryExecution = () => {
       },
     ];
 
+    // Aggiungi colonna Tavolo per admin e superAdmin
+    if (isAdminOrSuperAdmin) {
+      baseColumns.push({
+        field: 'tableUserId',
+        headerName: 'Tavolo',
+        flex: 1.5,
+        minWidth: 140,
+        align: 'center',
+        headerAlign: 'center',
+        sortable: true,
+        filterable: false,
+        renderCell: (params) => {
+          const tableUser = tableUsers.find(u => u.id === params.row.tableUserId);
+          return tableUser ? tableUser.username : '-';
+        },
+      });
+    }
+
     // Colonna Azioni
     baseColumns.push({
       field: 'actions',
@@ -162,24 +212,40 @@ const CategoryExecution = () => {
       headerName: 'Azioni',
       flex: 0.5,
       minWidth: 80,
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<PlayArrow />}
-          label="Avvia Svolgimento"
-          onClick={() => handlePlay(params.row)}
-          showInMenu={true}
-        />,
-        <GridActionsCellItem
-          icon={<Print />}
-          label="Stampa Quaderno di Gara"
-          onClick={() => handlePrintCategory(params.row)}
-          showInMenu={true}
-        />,
-      ],
+      getActions: (params) => {
+        const actions = [
+          <GridActionsCellItem
+            icon={<PlayArrow />}
+            label="Avvia Svolgimento"
+            onClick={() => handlePlay(params.row)}
+            showInMenu={true}
+          />,
+          <GridActionsCellItem
+            icon={<Print />}
+            label="Stampa Quaderno di Gara"
+            onClick={() => handlePrintCategory(params.row)}
+            showInMenu={true}
+          />,
+        ];
+
+        // Aggiungi azione per selezionare utente tavolo solo per admin/superAdmin
+        if (isAdminOrSuperAdmin) {
+          actions.push(
+            <GridActionsCellItem
+              icon={<Person />}
+              label="Seleziona Utente Tavolo"
+              onClick={() => handleOpenTableUserModal(params.row)}
+              showInMenu={true}
+            />
+          );
+        }
+
+        return actions;
+      },
     });
 
     return baseColumns;
-  }, [allCategorie, categoryStates, competizioneId]);
+  }, [allCategorie, categoryStates, competizioneId, isAdminOrSuperAdmin, tableUsers]);
 
     useEffect(() => {
 
@@ -230,6 +296,15 @@ const CategoryExecution = () => {
       }
     };
 
+    const loadTableUsers = async () => {
+      try {
+        const response = await getTableUsers();
+        setTableUsers(response.users || []);
+      } catch (error) {
+        console.error('Errore nel caricamento degli utenti tavolo:', error);
+      }
+    };
+
     if (!competizioneId) {
       setError('ID competizione mancante');
       setLoading(false);
@@ -239,7 +314,10 @@ const CategoryExecution = () => {
     loadCategories();
     loadCategoryType();
     loadCategoryStates();
-  }, [competizioneId]);
+    if (isAdminOrSuperAdmin) {
+      loadTableUsers();
+    }
+  }, [competizioneId, isAdminOrSuperAdmin]);
 
   if (loading) {
     return (
@@ -305,6 +383,14 @@ const CategoryExecution = () => {
         open={showPrintModal}
         onClose={() => { handleClosePrintModal(); }}
         category={printCategory}
+      />
+
+      {/* Table User Selector Modal */}
+      <TableUserSelectorModal
+        open={showTableUserModal}
+        onClose={handleCloseTableUserModal}
+        onConfirm={handleConfirmTableUser}
+        currentUserId={selectedCategory?.tableUserId}
       />
     </div>
   );

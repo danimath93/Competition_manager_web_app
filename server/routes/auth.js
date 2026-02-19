@@ -27,4 +27,7 @@ router.post('/request-password-reset', authController.requestPasswordReset);
 // POST /api/reset-password - Reset user password
 router.post('/reset-password', authController.resetPassword);
 
+// GET /api/table-users - Get all users with table permissions
+router.get('/table-users', authController.getTableUsers);
+
 module.exports = router;
