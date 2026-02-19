@@ -159,7 +159,7 @@ function findBestAthletesByGender(athletes) {
   };
 }
 
-async function assignAgeGroupAndTipo(athletes) {
+async function assignAgeGroupAndTipo(athletes, competizioneFine) {
 
   const gruppi = await ConfigGruppoEta.findAll();
   const tipi = await ConfigTipoAtleta.findAll();
@@ -168,12 +168,13 @@ async function assignAgeGroupAndTipo(athletes) {
   tipi.forEach(t => tipoMap[t.id] = t.nome);
 
   // Calcola età in anni
-  function getAge(dateString) {
-    const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+  function getAge(dateNascita, dataFineCompetizione) {
+    if (!dateNascita || !dataFineCompetizione) return undefined;
+    const birthDate = new Date(dateNascita);
+    const refDate = new Date(dataFineCompetizione);
+    let age = refDate.getFullYear() - birthDate.getFullYear();
+    const m = refDate.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && refDate.getDate() < birthDate.getDate())) {
       age--;
     }
     return age;
@@ -185,7 +186,7 @@ async function assignAgeGroupAndTipo(athletes) {
     let eta = undefined;
     let nascitaDate = undefined;
     if (a.dataNascita) {
-      eta = getAge(a.dataNascita);
+      eta = getAge(a.dataNascita, competizioneFine?.dataFine);
       nascitaDate = new Date(a.dataNascita);
       // Primo tentativo: etaMinima/etaMassima
       for (const g of gruppi) {

@@ -266,7 +266,7 @@ exports.getAtletiResults = async (req, res) => {
       where,
       raw: true
     });
-
+    const competizioneFine = await Competizione.findByPk(competitionId);
     // lista con medaglie
     let lista = await buildGlobalAthleteList(svolgimenti);
 
@@ -274,7 +274,7 @@ exports.getAtletiResults = async (req, res) => {
     lista = computeAthletePoints(lista);
 
     // aggiungo tipo e fascia
-    lista = await assignAgeGroupAndTipo(lista);
+    lista = await assignAgeGroupAndTipo(lista, competizioneFine);
 
     // migliori raggruppati
     const miglioriPerFasce = bestAthletesByTipoFascia(lista);
