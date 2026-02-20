@@ -157,7 +157,7 @@ const AppContent = () => {
 
         {/* Categorie - superAdmin, admin, table */}
         <Route path="/categories" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
             <Categories />
           </AuthGate>
         } />
@@ -171,20 +171,20 @@ const AppContent = () => {
 
         {/* Svolgimento Categorie - superAdmin, admin, club organizzatore */}
         <Route path="/categories/execution" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
             <CategoryExecution />
           </AuthGate>
         } />
 
         <Route path="/category-execution/:id/category-in-progress" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
             <CategoryInProgress />
           </AuthGate>
         } />
 
         {/* Risultati Categorie - superAdmin, admin, club organizzatore */}
         <Route path="/categories/results" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
             <CategoryResults />
           </AuthGate>
         } />
