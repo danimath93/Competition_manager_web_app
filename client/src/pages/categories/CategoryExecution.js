@@ -12,9 +12,17 @@ import {
 } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField
+} from '@mui/material';
 import { itIT } from '@mui/x-data-grid/locales';
 import { FaTags } from 'react-icons/fa';
-import { PlayArrow, Print, ArrowBack, Person } from '@mui/icons-material';
+import { PlayArrow, Print, ArrowBack, Person, FormatListNumbered } from '@mui/icons-material';
 import { getCategoriesByCompetizione, updateCategoria } from '../../api/categories';
 import { startSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { getCompetitionDetails } from '../../api/competitions';
@@ -47,6 +55,9 @@ const CategoryExecution = () => {
   const [showTableUserModal, setShowTableUserModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [tableUsers, setTableUsers] = useState([]);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderValue, setOrderValue] = useState('');
+  const [orderError, setOrderError] = useState('');
 
   // Verifica se l'utente è admin o superAdmin
   const isAdminOrSuperAdmin = useMemo(() => {
@@ -96,15 +107,66 @@ const CategoryExecution = () => {
     setSelectedCategory(null);
   };
 
+  const handleOpenOrderSelectorModal = (category) => {
+    setSelectedCategory(category);
+    setOrderValue(category.ordine?.toString() || '');
+    setOrderError('');
+    setShowOrderModal(true);
+  };
+
+  const handleCloseOrderModal = () => {
+    setShowOrderModal(false);
+    setSelectedCategory(null);
+    setOrderValue('');
+    setOrderError('');
+  };
+
   const handleConfirmTableUser = async (userId) => {
     try {
       await updateCategoria(selectedCategory.id, { tableUserId: userId });
-      // Ricarica le categorie per aggiornare la tabella
-      const data = await getCategoriesByCompetizione(competizioneId, false);
-      setCategories(data);
+      // Aggiorna solo lo stato locale invece di ricaricare tutto
+      setCategories(prevCategories => 
+        prevCategories.map(cat => 
+          cat.id === selectedCategory.id 
+            ? { ...cat, tableUserId: userId }
+            : cat
+        )
+      );
+      handleCloseTableUserModal();
     } catch (error) {
       console.error('Errore nell\'aggiornamento dell\'utente tavolo:', error);
       setError('Errore nell\'aggiornamento dell\'utente tavolo');
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    const orderNum = parseInt(orderValue, 10);
+    
+    // Validazione
+    if (!orderValue || isNaN(orderNum)) {
+      setOrderError('Inserire un numero valido');
+      return;
+    }
+    
+    if (orderNum < 1 || orderNum > 999) {
+      setOrderError('Il numero deve essere compreso tra 1 e 999');
+      return;
+    }
+
+    try {
+      await updateCategoria(selectedCategory.id, { ordine: orderNum });
+      // Aggiorna solo lo stato locale invece di ricaricare tutto
+      setCategories(prevCategories => 
+        prevCategories.map(cat => 
+          cat.id === selectedCategory.id 
+            ? { ...cat, ordine: orderNum }
+            : cat
+        )
+      );
+      handleCloseOrderModal();
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento dell\'ordine:', error);
+      setOrderError('Errore nell\'aggiornamento dell\'ordine');
     }
   };
 
@@ -164,6 +226,15 @@ const CategoryExecution = () => {
         sortable: false,
       },
       {
+        field: 'ordine',
+        headerName: 'Ordine',
+        width: 120,
+        align: 'center',
+        headerAlign: 'center',
+        filterable: true,
+        sortable: true,
+      },
+      {
         field: 'stato',
         headerName: 'Stato',
         flex: 2,
@@ -216,13 +287,13 @@ const CategoryExecution = () => {
         const actions = [
           <GridActionsCellItem
             icon={<PlayArrow />}
-            label="Avvia Svolgimento"
+            label="Avvia svolgimento"
             onClick={() => handlePlay(params.row)}
             showInMenu={true}
           />,
           <GridActionsCellItem
             icon={<Print />}
-            label="Stampa Quaderno di Gara"
+            label="Stampa quaderno di gara"
             onClick={() => handlePrintCategory(params.row)}
             showInMenu={true}
           />,
@@ -233,8 +304,16 @@ const CategoryExecution = () => {
           actions.push(
             <GridActionsCellItem
               icon={<Person />}
-              label="Seleziona Utente Tavolo"
+              label="Seleziona utente tavolo"
               onClick={() => handleOpenTableUserModal(params.row)}
+              showInMenu={true}
+            />
+          );
+          actions.push(
+            <GridActionsCellItem
+              icon={<FormatListNumbered />}
+              label="Imposta l'ordine esecuzione"
+              onClick={() => handleOpenOrderSelectorModal(params.row)}
               showInMenu={true}
             />
           );
@@ -366,12 +445,6 @@ const CategoryExecution = () => {
           <DataGrid
             rows={categories}
             columns={columns}
-            initialState={{
-              ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-              sorting: {
-                sortModel: [{ field: 'nome', sort: 'asc' }],
-              },
-            }}
             disableColumnMenu={false}
             localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
           />
@@ -392,6 +465,51 @@ const CategoryExecution = () => {
         onConfirm={handleConfirmTableUser}
         currentUserId={selectedCategory?.tableUserId}
       />
+
+      {/* Order Selector Modal */}
+      <Dialog open={showOrderModal} onClose={handleCloseOrderModal} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          Imposta ordine di esecuzione
+          {selectedCategory && (
+            <Typography variant="body2" color="text.secondary">
+              {selectedCategory.nome}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Ordine di esecuzione"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={orderValue}
+            onChange={(e) => {
+              setOrderValue(e.target.value);
+              setOrderError('');
+            }}
+            error={!!orderError}
+            helperText={orderError}
+            inputProps={{
+              min: 1,
+              max: 999,
+              step: 1
+            }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleConfirmOrder();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseOrderModal}>Annulla</Button>
+          <Button onClick={handleConfirmOrder} variant="contained" color="primary">
+            Conferma
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

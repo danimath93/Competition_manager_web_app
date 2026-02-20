@@ -43,10 +43,9 @@ const TableUserSelectorModal = ({ open, onClose, onConfirm, currentUserId }) => 
   };
 
   const handleConfirm = () => {
-    if (selectedUserId) {
-      onConfirm(selectedUserId);
-      onClose();
-    }
+    // Invia null se la stringa è vuota, altrimenti invia l'ID
+    onConfirm(selectedUserId || null);
+    onClose();
   };
 
   const handleClose = () => {
@@ -101,7 +100,7 @@ const TableUserSelectorModal = ({ open, onClose, onConfirm, currentUserId }) => 
           onClick={handleConfirm} 
           color="primary" 
           variant="contained"
-          disabled={loading || !selectedUserId}
+          disabled={loading}
         >
           Conferma
         </Button>

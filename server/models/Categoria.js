@@ -77,6 +77,13 @@ const Categoria = sequelize.define('Categoria', {
     },
     field: 'table_user_id',
   },
+  ordine: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 1
+    }
+  },
   descrizione: {
     type: DataTypes.TEXT,
     allowNull: true
