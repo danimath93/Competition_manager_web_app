@@ -42,6 +42,7 @@ const FightingDefinition = ({
     } else {
       updateAvailableAthletes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atleti, tabellone]);
 
   const initializeEmptyBracket = () => {
@@ -133,6 +134,28 @@ const FightingDefinition = ({
     setSelectedPosition(null);
   };
 
+  const handleRemoveAtleta = (matchId, position) => {
+    if (stato !== CategoryStates.IN_DEFINIZIONE) return;
+    
+    const copy = JSON.parse(JSON.stringify(tabellone));
+    
+    // Trova il match
+    let targetMatch = null;
+    for (const round of copy.rounds) {
+      const match = round.matches.find(m => m.id === matchId);
+      if (match) {
+        targetMatch = match;
+        break;
+      }
+    }
+
+    if (targetMatch) {
+      const posIndex = position === 'red' ? 0 : 1;
+      targetMatch.players[posIndex] = null;
+      onTabelloneChange(copy);
+    }
+  };
+
   const getRoundName = (roundIndex, numMatches) => {
     if (numMatches === 1) return "Finale";
     if (numMatches === 2) return "Semifinale";
@@ -146,16 +169,56 @@ const FightingDefinition = ({
   };
 
   const isTabelloneComplete = () => {
-    if (!tabellone || !tabellone.rounds) return false;
+    if (!tabellone || !tabellone.rounds || !atleti) return false;
     
-    // Verifica che il primo round sia completo
-    const firstRound = tabellone.rounds[0];
-    for (const match of firstRound.matches) {
-      if (!match.players[0] || !match.players[1]) {
-        return false;
-      }
+    // Verifica che tutti gli atleti siano stati assegnati
+    const assignedIds = new Set();
+    tabellone.rounds.forEach(round => {
+      round.matches.forEach(match => {
+        if (match.players[0]) assignedIds.add(match.players[0]);
+        if (match.players[1]) assignedIds.add(match.players[1]);
+      });
+    });
+    
+    // Il tabellone è completo se tutti gli atleti sono stati assegnati
+    return assignedIds.size === atleti.length;
+  };
+
+  const propagateByes = (tabelloneData) => {
+    const copy = JSON.parse(JSON.stringify(tabelloneData));
+    
+    // Per ogni round, propaga i vincitori BYE al round successivo
+    for (let roundIdx = 0; roundIdx < copy.rounds.length - 1; roundIdx++) {
+      const currentRound = copy.rounds[roundIdx];
+      const nextRound = copy.rounds[roundIdx + 1];
+      
+      currentRound.matches.forEach((match) => {
+        // Se un match ha solo un giocatore, è un BYE
+        if (match.players[0] && !match.players[1]) {
+          match.winner = match.players[0];
+          
+          // Propaga al match successivo
+          nextRound.matches.forEach(nm => {
+            const pos = nm.from?.indexOf(match.id);
+            if (pos !== -1 && pos !== undefined) {
+              nm.players[pos] = match.winner;
+            }
+          });
+        } else if (!match.players[0] && match.players[1]) {
+          match.winner = match.players[1];
+          
+          // Propaga al match successivo
+          nextRound.matches.forEach(nm => {
+            const pos = nm.from?.indexOf(match.id);
+            if (pos !== -1 && pos !== undefined) {
+              nm.players[pos] = match.winner;
+            }
+          });
+        }
+      });
     }
-    return true;
+    
+    return copy;
   };
 
   return (
@@ -163,6 +226,7 @@ const FightingDefinition = ({
       {stato === CategoryStates.IN_DEFINIZIONE && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Clicca sulle caselle del tabellone per assegnare gli atleti agli incontri.
+          Gli atleti senza avversario riceveranno un BYE e avanzeranno automaticamente al turno successivo.
           Solo i primi due turni sono visualizzati per la definizione.
         </Alert>
       )}
@@ -210,7 +274,7 @@ const FightingDefinition = ({
                       }
                       secondary={
                         <Typography variant="caption" color="text.secondary">
-                          {atleta.club?.denominazione || '-'} • {atleta.peso || '-'} kg
+                          {atleta.club?.abbreviazione || atleta.club?.denominazione || '-'} • {atleta.peso || '-'} kg
                         </Typography>
                       }
                     />
@@ -223,7 +287,12 @@ const FightingDefinition = ({
               <Button 
                 variant="contained"
                 color="success"
-                onClick={onConfirmDefinition}
+                onClick={() => {
+                  // Propaga i BYE prima di confermare
+                  const updatedTabellone = propagateByes(tabellone);
+                  onTabelloneChange(updatedTabellone);
+                  setTimeout(() => onConfirmDefinition(), 100);
+                }}
                 fullWidth
                 sx={{ mt: 2 }}
                 disabled={!isTabelloneComplete()}
@@ -243,37 +312,82 @@ const FightingDefinition = ({
             <Divider sx={{ mb: 3 }} />
 
             {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {tabellone.rounds.slice(0, 2).map((round, roundIndex) => (
-                  <Box key={roundIndex}>
-                    <Typography 
-                      variant="subtitle1" 
-                      fontWeight="bold" 
-                      sx={{ mb: 2, color: 'primary.main' }}
-                    >
-                      {getRoundName(roundIndex, round.matches.length)}
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      {round.matches.map((match) => {
-                        const atleta1 = getAthleteById(match.players[0]);
-                        const atleta2 = getAthleteById(match.players[1]);
-                        
-                        return (
-                          <Grid item xs={12} sm={6} md={round.matches.length > 2 ? 6 : 12} key={match.id}>
-                            <MatchComponent
-                              match={match}
-                              atleta1={atleta1}
-                              atleta2={atleta2}
-                              isEditable={stato === CategoryStates.IN_DEFINIZIONE}
-                              onAtletaClick={handleAtletaClick}
-                            />
-                          </Grid>
-                        );
-                      })}
-                    </Grid>
-                  </Box>
-                ))}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'row', 
+                gap: 8,
+                alignItems: 'flex-start',
+                overflowX: 'auto',
+                pb: 1
+              }}>
+                {tabellone.rounds.slice(0, 2).map((round, roundIndex) => {
+                  const MATCH_HEIGHT = 200;
+                  const MATCH_SPACING = 50;
+                  
+                  // Calcola margine per centrare rispetto al turno precedente
+                  const calculateMargin = (matchIndex) => {
+                    if (roundIndex === 0) return MATCH_SPACING / 2; // Primo round, margine standard
+                    // Ogni match del turno corrente deve essere centrato tra due match del turno precedente
+                    // Match i si centra tra i match 2*i e 2*i+1 del turno precedente
+                    // return matchIndex * 2 * (MATCH_HEIGHT + MATCH_SPACING) + (MATCH_HEIGHT + MATCH_SPACING) / 2;
+                    return ((MATCH_SPACING / 2 + MATCH_HEIGHT + MATCH_SPACING / 2 + MATCH_SPACING / 2 + MATCH_HEIGHT + MATCH_SPACING / 2) - MATCH_HEIGHT)/ 2;
+                  };
+                  
+                  return (
+                    <Box key={roundIndex} sx={{ minWidth: 350 }}>
+                      <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold" 
+                        sx={{ mb: 3, color: 'primary.main', textAlign: 'center' }}
+                      >
+                        {getRoundName(roundIndex, round.matches.length)}
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                        {round.matches.map((match, matchIndex) => {
+                          const atleta1 = getAthleteById(match.players[0]);
+                          const atleta2 = getAthleteById(match.players[1]);
+                          const emptyBoxSize = calculateMargin(matchIndex);
+                          
+                          return (
+                            <>
+                              <Box 
+                                key={`empty-top-box-match-${match.id}`}
+                                sx={{
+                                  height: emptyBoxSize,
+                                }}
+                              />
+                              <Box 
+                                key={match.id}
+                                sx={{
+                                  height: MATCH_HEIGHT,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                }}
+                              >
+                                <MatchComponent
+                                  match={match}
+                                  atleta1={atleta1}
+                                  atleta2={atleta2}
+                                  isEditable={stato === CategoryStates.IN_DEFINIZIONE && roundIndex === 0}
+                                  onAtletaClick={handleAtletaClick}
+                                  onRemoveAtleta={handleRemoveAtleta}
+                                />
+                              </Box>
+                              <Box 
+                                key={`empty-bottom-box-match-${match.id}`}
+                                sx={{
+                                  height: emptyBoxSize,
+                                }}
+                              />
+                            </>
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                  );
+                })}
               </Box>
             ) : (
               <Alert severity="warning">

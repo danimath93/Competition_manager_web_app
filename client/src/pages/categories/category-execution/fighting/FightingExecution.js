@@ -6,7 +6,6 @@ import {
   Box,
   Divider,
   Alert,
-  Grid,
   Button,
   TextField,
   Table,
@@ -62,6 +61,7 @@ const FightingExecution = ({
       const newClassifica = calculateClassifica();
       setLocalClassifica(newClassifica);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabellone]);
 
   const calculateClassifica = () => {
@@ -236,38 +236,80 @@ const FightingExecution = ({
             <Divider sx={{ mb: 3 }} />
 
             {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {tabellone.rounds.map((round, roundIndex) => (
-                  <Box key={roundIndex}>
-                    <Typography 
-                      variant="subtitle1" 
-                      fontWeight="bold" 
-                      sx={{ mb: 2, color: 'primary.main' }}
-                    >
-                      {getRoundName(roundIndex, round.matches.length)}
-                    </Typography>
-                    
-                    <Grid container spacing={2}>
-                      {round.matches.map((match) => {
-                        const atleta1 = getAthleteById(match.players[0]);
-                        const atleta2 = getAthleteById(match.players[1]);
-                        
-                        return (
-                          <Grid item xs={12} sm={6} md={round.matches.length > 2 ? 6 : 12} key={match.id}>
-                            <MatchComponent
-                              match={match}
-                              atleta1={atleta1}
-                              atleta2={atleta2}
-                              isEditable={canEdit}
-                              onRoundClick={handleRoundClick}
-                              onWinnerClick={handleWinnerClick}
-                            />
-                          </Grid>
-                        );
-                      })}
-                    </Grid>
-                  </Box>
-                ))}
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'row', 
+                gap: 8,
+                alignItems: 'flex-start',
+                overflowX: 'auto',
+                pb: 1
+              }}>
+                {tabellone.rounds.map((round, roundIndex) => {
+                  const MATCH_HEIGHT = 200;
+                  const MATCH_SPACING = 50;
+                  
+                  // Calcola margine per centrare rispetto al turno precedente
+                  const calculateMargin = (matchIndex) => {
+                    if (roundIndex === 0) return MATCH_SPACING / 2; // Primo round, margine standard
+                    // Ogni match del turno corrente deve essere centrato tra due match del turno precedente
+                    return (Math.pow(2, roundIndex-1) * 2 * (MATCH_SPACING + MATCH_HEIGHT) - MATCH_HEIGHT) / 2;
+                  };
+                  
+                  return (
+                    <Box key={roundIndex} sx={{ minWidth: 350 }}>
+                      <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold" 
+                        sx={{ mb: 3, color: 'primary.main', textAlign: 'center' }}
+                      >
+                        {getRoundName(roundIndex, round.matches.length)}
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                        {round.matches.map((match, matchIndex) => {
+                          const atleta1 = getAthleteById(match.players[0]);
+                          const atleta2 = getAthleteById(match.players[1]);
+                          const emptyBoxSize = calculateMargin(matchIndex);
+                          
+                          return (
+                            <>
+                              <Box 
+                                key={`empty-top-box-match-${match.id}`}
+                                sx={{
+                                  height: emptyBoxSize,
+                                }}
+                              />
+                              <Box 
+                                key={match.id}
+                                sx={{
+                                  height: MATCH_HEIGHT,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                }}
+                              >
+                                <MatchComponent
+                                  match={match}
+                                  atleta1={atleta1}
+                                  atleta2={atleta2}
+                                  isEditable={canEdit}
+                                  onRoundClick={handleRoundClick}
+                                  onWinnerClick={handleWinnerClick}
+                                />
+                              </Box>
+                              <Box 
+                                key={`empty-bottom-box-match-${match.id}`}
+                                sx={{
+                                  height: emptyBoxSize,
+                                }}
+                              />
+                            </>
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                  );
+                })}
               </Box>
             ) : (
               <Alert severity="warning">
@@ -319,14 +361,13 @@ const FightingExecution = ({
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell><b>Pos.</b></TableCell>
+                  <TableCell></TableCell>
                   <TableCell><b>Atleta</b></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {[1, 2, 3, 4].map((pos) => {
                   const athlete = getClassifiedAthlete(pos);
-                  const isTied = pos === 3 && localClassifica.filter(c => c.pos === 3).length === 2;
                   
                   return (
                     <TableRow key={pos}>

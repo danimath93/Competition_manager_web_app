@@ -44,7 +44,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!category) return;
+      if (!category || !open) return;
       try {
         // Carica dettagli competizione
         const compDetails = await getCompetitionDetails(category.competizioneId);
@@ -74,7 +74,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
       }
     };
     loadData();
-  }, [category]);
+  }, [category, open]);
   
   // TODO: inserire la gestione della commisione caricando i dati necessari
 
@@ -154,10 +154,32 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
               .MuiTableContainer-root {
                 break-inside: avoid;
                 page-break-inside: avoid;
+                overflow: visible !important;
+                max-height: none !important;
+              }
+              /* Nascondi barre di scroll durante la stampa */
+              * {
+                overflow: visible !important;
+              }
+              /* Assicura che le tabelle si adattino alla pagina */
+              table {
+                page-break-inside: auto;
+              }
+              tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
               }
               @page {
                 size: A4 landscape;
                 margin: 10mm;
+                /* Rimuovi header e footer predefiniti del browser (URL, data, ecc.) */
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+              }
+              /* Nascondi header e footer in alcuni browser */
+              @page {
+                margin-header: 0mm;
+                margin-footer: 0mm;
               }
             }
           `}
@@ -324,7 +346,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                           return (
                             <TableRow key={`reserve-${num}`}>
                               <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', fontStyle: 'italic', fontSize: '0.65rem', p: 0.3 }}>
-                                Giudice Riserva {num}
+                                Giudice R. {num}
                               </TableCell>
                               <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
                                 {judge ? `${judge.cognome} ${judge.nome}` : ''}
@@ -338,9 +360,9 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                         {[1, 2].map((num) => {
                           const judge = null;
                           return (
-                            <TableRow key={`reserve-${num}`}>
+                            <TableRow key={`table-${num}`}>
                               <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', fontStyle: 'italic', fontSize: '0.65rem', p: 0.3 }}>
-                                Addetto Tavolo {num}
+                                Addetto T. {num}
                               </TableCell>
                               <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
                                 {judge ? `${judge.cognome} ${judge.nome}` : ''}

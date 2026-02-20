@@ -326,12 +326,20 @@ exports.getCategoriesByCompetizione = async (req, res) => {
       ]
     });
 
-    // Ordina le categorie in modo "intelligente" considerando i numeri
+    // Ordina per 'ordine' se presente, altrimenti per nome in modo "intelligente" considerando i numeri
     categorie.sort((a, b) => {
-      return a.nome.localeCompare(b.nome, undefined, {
-        numeric: true,
-        sensitivity: 'base'
-      });
+      if (a.ordine !== null && b.ordine !== null) {
+        return a.ordine - b.ordine;
+      } else if (a.ordine !== null) {
+        return -1;
+      } else if (b.ordine !== null) {
+        return 1;
+      } else {
+        return a.nome.localeCompare(b.nome, undefined, {
+          numeric: true,
+          sensitivity: 'base'
+        });
+      }
     });
 
     if (includiIscrizioni) {

@@ -1,6 +1,7 @@
 // MatchComponent.js
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 
 /**
  * Componente personalizzato per visualizzare un match nel tabellone
@@ -13,7 +14,8 @@ const MatchComponent = ({
   isEditable = false,
   onAtletaClick,
   onRoundClick,
-  onWinnerClick
+  onWinnerClick,
+  onRemoveAtleta
 }) => {
   // Funzione per ottenere il colore di un round indicator
   const getRoundColor = (roundResult) => {
@@ -51,13 +53,13 @@ const MatchComponent = ({
     >
       {/* Atleta 1 (Rosso) */}
       <Box
-        onClick={() => isEditable && onAtletaClick && onAtletaClick(match?.id, 'red')}
+        onClick={() => isEditable && !atleta1 && onAtletaClick && onAtletaClick(match?.id, 'red')}
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1.5,
-          bgcolor: winner === 'red' ? '#ffcdd2' : '#ffebee',
+          bgcolor: winner === 'red' ? '#ffcdd2' : atleta1 ? '#ffebee' : '#f5f5f5',
           borderBottom: '2px solid #f44336',
           borderLeft: '6px solid #f44336',
           cursor: isEditable && !atleta1 ? 'pointer' : 'default',
@@ -73,17 +75,35 @@ const MatchComponent = ({
             variant="body2"
             sx={{
               fontWeight: winner === 'red' ? 'bold' : 'normal',
-              color: 'text.primary'
+              color: atleta1 ? 'text.primary' : 'text.secondary',
+              fontStyle: !atleta1 ? 'italic' : 'normal'
             }}
           >
-            {atleta1 ? `${atleta1.cognome} ${atleta1.nome}` : 'Clicca per selezionare'}
+            {atleta1 ? `${atleta1.cognome} ${atleta1.nome}` : (atleta2 ? 'BYE' : 'Clicca per selezionare')}
           </Typography>
           {atleta1 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              {atleta1.club?.denominazione || '-'} • {atleta1.peso || '-'} kg
+              {atleta1.club?.abbreviazione || atleta1.club?.denominazione || '-'} • {atleta1.peso || '-'} kg
             </Typography>
           )}
         </Box>
+        {isEditable && atleta1 && onRemoveAtleta && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveAtleta(match?.id, 'red');
+            }}
+            sx={{
+              color: '#d32f2f',
+              '&:hover': {
+                bgcolor: 'rgba(211, 47, 47, 0.1)'
+              }
+            }}
+          >
+            <Delete fontSize="small" />
+          </IconButton>
+        )}
       </Box>
 
       {/* Round Indicators */}
@@ -154,13 +174,13 @@ const MatchComponent = ({
 
       {/* Atleta 2 (Blu) */}
       <Box
-        onClick={() => isEditable && onAtletaClick && onAtletaClick(match?.id, 'blue')}
+        onClick={() => isEditable && !atleta2 && onAtletaClick && onAtletaClick(match?.id, 'blue')}
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1.5,
-          bgcolor: winner === 'blue' ? '#bbdefb' : '#e3f2fd',
+          bgcolor: winner === 'blue' ? '#bbdefb' : atleta2 ? '#e3f2fd' : '#f5f5f5',
           borderTop: '2px solid #2196f3',
           borderLeft: '6px solid #2196f3',
           cursor: isEditable && !atleta2 ? 'pointer' : 'default',
@@ -176,17 +196,35 @@ const MatchComponent = ({
             variant="body2"
             sx={{
               fontWeight: winner === 'blue' ? 'bold' : 'normal',
-              color: 'text.primary'
+              color: atleta2 ? 'text.primary' : 'text.secondary',
+              fontStyle: !atleta2 ? 'italic' : 'normal'
             }}
           >
-            {atleta2 ? `${atleta2.cognome} ${atleta2.nome}` : 'Clicca per selezionare'}
+            {atleta2 ? `${atleta2.cognome} ${atleta2.nome}` : (atleta1 ? 'BYE' : 'Clicca per selezionare')}
           </Typography>
           {atleta2 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-              {atleta2.club?.denominazione || '-'} • {atleta2.peso || '-'} kg
+              {atleta2.club?.abbreviazione || atleta2.club?.denominazione || '-'} • {atleta2.peso || '-'} kg
             </Typography>
           )}
         </Box>
+        {isEditable && atleta2 && onRemoveAtleta && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveAtleta(match?.id, 'blue');
+            }}
+            sx={{
+              color: '#1976d2',
+              '&:hover': {
+                bgcolor: 'rgba(25, 118, 210, 0.1)'
+              }
+            }}
+          >
+            <Delete fontSize="small" />
+          </IconButton>
+        )}
       </Box>
     </Box>
   );
