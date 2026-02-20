@@ -129,7 +129,7 @@ exports.getSvolgimentoByCategoriaId = async (req, res) => {
 exports.patchSvolgimentoCategoria = async (req, res) => {
   try {
     const { id } = req.params;
-    const { punteggi, commissione, classifica, tabellone, stato } = req.body;
+    const { punteggi, commissione, classifica, tabellone, stato, letteraEstratta } = req.body;
     const svolg = await SvolgimentoCategoria.findByPk(id);
     if (!svolg) return res.status(404).json({ error: 'Svolgimento non trovato' });
     if (punteggi !== undefined) svolg.punteggi = punteggi;
@@ -137,6 +137,7 @@ exports.patchSvolgimentoCategoria = async (req, res) => {
     if (classifica !== undefined) svolg.classifica = classifica;
     if (tabellone !== undefined) svolg.tabellone = tabellone;
     if (stato !== undefined) svolg.stato = stato;
+    if (letteraEstratta !== undefined) svolg.letteraEstratta = letteraEstratta;
     await svolg.save();
     res.json(svolg);
   } catch (err) {

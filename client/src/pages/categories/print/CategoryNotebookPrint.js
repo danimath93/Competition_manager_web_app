@@ -44,7 +44,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!category) return;
+      if (!category || !open) return;
       try {
         // Carica dettagli competizione
         const compDetails = await getCompetitionDetails(category.competizioneId);
@@ -74,7 +74,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
       }
     };
     loadData();
-  }, [category]);
+  }, [category, open]);
   
   // TODO: inserire la gestione della commisione caricando i dati necessari
 
