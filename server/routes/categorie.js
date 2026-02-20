@@ -11,6 +11,9 @@ router.post('/competizioni/:competizioneId/save', categoriaController.saveCatego
 // Ottieni le categorie di una competizione
 router.get('/competizioni/:competizioneId/', categoriaController.getCategoriesByCompetizione);
 
+// Ottieni le categorie assegnate all'utente tavolo per una competizione
+router.get('/competizioni/:competizioneId/table-user', categoriaController.getCategoriesByTableUser);
+
 // Ottieni le categorie di una competizione filtrate per club
 router.get('/competizioni/:competizioneId/club/:clubId', categoriaController.getCategoriesByClub);
 

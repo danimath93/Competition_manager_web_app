@@ -46,6 +46,17 @@ export const getCategoriesByClub = async (competizioneId, clubId) => {
   }
 };
 
+// Ottieni le categorie assegnate all'utente tavolo per una competizione
+export const getCategoriesByTableUser = async (competizioneId) => {
+  try {
+    const response = await axios.get(`/categorie/competizioni/${competizioneId}/table-user`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel recupero delle categorie dell\'utente tavolo:', error);
+    throw error;
+  }
+};
+
 // Aggiorna una categoria
 export const updateCategoria = async (id, data) => {
   try {

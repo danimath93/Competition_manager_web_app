@@ -385,6 +385,57 @@ exports.getCategoriesByCompetizione = async (req, res) => {
   }
 };
 
+// Recupera le categorie assegnate ad un utente tavolo per una competizione
+exports.getCategoriesByTableUser = async (req, res) => {
+  try {
+    const { competizioneId } = req.params;
+    const userId = req.user.id; // ID dell'utente autenticato
+
+    const categorie = await Categoria.findAll({
+      where: { 
+        competizioneId,
+        tableUserId: userId
+      },
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome'],
+          include: [{
+            model: ConfigTipoCompetizione,
+            as: 'tipoCompetizione',
+            attributes: ['id', 'nome']
+          }]
+        }
+      ]
+    });
+
+    // Ordina per 'ordine' se presente, altrimenti per nome in modo "intelligente" considerando i numeri
+    categorie.sort((a, b) => {
+      if (a.ordine !== null && b.ordine !== null) {
+        return a.ordine - b.ordine;
+      } else if (a.ordine !== null) {
+        return -1;
+      } else if (b.ordine !== null) {
+        return 1;
+      } else {
+        return a.nome.localeCompare(b.nome, undefined, {
+          numeric: true,
+          sensitivity: 'base'
+        });
+      }
+    });
+
+    res.json(categorie);
+  } catch (error) {
+    logger.error(`Errore nel recupero delle categorie per utente tavolo - competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    res.status(500).json({ 
+      error: 'Errore durante il recupero delle categorie',
+      details: error.message 
+    });
+  }
+};
+
 // Aggiorna una categoria
 exports.updateCategoria = async (req, res) => {
   try {
