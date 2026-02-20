@@ -159,7 +159,7 @@ function findBestAthletesByGender(athletes) {
   };
 }
 
-async function assignAgeGroupAndTipo(athletes) {
+async function assignAgeGroupAndTipo(athletes, competizioneInizio) {
 
   const gruppi = await ConfigGruppoEta.findAll();
   const tipi = await ConfigTipoAtleta.findAll();
@@ -168,14 +168,11 @@ async function assignAgeGroupAndTipo(athletes) {
   tipi.forEach(t => tipoMap[t.id] = t.nome);
 
   // Calcola età in anni
-  function getAge(dateString) {
-    const today = new Date();
-    const birthDate = new Date(dateString);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
+  function getAge(dateNascita, dataInizio) {
+    if (!dateNascita || !dataInizio) return undefined;
+    const birthDate = new Date(dateNascita);
+    const refDate = new Date(dataInizio);
+    let age = refDate.getYear() - birthDate.getYear();
     return age;
   }
 
@@ -184,19 +181,13 @@ async function assignAgeGroupAndTipo(athletes) {
     let fasciaEtaNote = undefined;
     let eta = undefined;
     let nascitaDate = undefined;
+    
     if (a.dataNascita) {
-      eta = getAge(a.dataNascita);
+      eta = getAge(a.dataNascita, competizioneInizio?.dataInizio);
       nascitaDate = new Date(a.dataNascita);
-      // Primo tentativo: etaMinima/etaMassima
+      // Primo tentativo: inizioValidità/fineValidità, Secondo tentativo: etaMinima/etaMassima
       for (const g of gruppi) {
-        if (g.etaMinima <= eta && eta <= g.etaMassima) {
-          fascia = g.nome;
-          break;
-        }
-      }
-      // Secondo tentativo: inizioValidita/fineValidita
-      if (!fascia) {
-        for (const g of gruppi) {
+        if (g.inizioValidita!=null){
           const start = g.inizioValidita ? new Date(g.inizioValidita) : null;
           const end = g.fineValidita ? new Date(g.fineValidita) : null;
           if ((!start || nascitaDate >= start) && (!end || nascitaDate <= end)) {
@@ -204,14 +195,51 @@ async function assignAgeGroupAndTipo(athletes) {
             fasciaEtaNote = `Assegnato tramite data validità gruppo (nascita: ${a.dataNascita}, gruppo: ${g.nome})`;
             break;
           }
-        }
-      }
+        } else if (g.etaMinima <= eta && eta <= g.etaMassima) {
+            fascia = g.nome;
+            fasciaEtaNote = `Assegnato tramite fascia d'età (nascita: ${a.dataNascita}, gruppo: ${g.nome}, età: ${eta})`;
+            break;
+          }
+      }  
       if (!fascia) {
-        fasciaEtaNote = `Età atleta: ${eta} fuori da tutti i gruppi [${gruppi.map(g=>g.nome+':'+g.etaMinima+'-'+g.etaMassima).join(', ')}] e nessuna data validità compatibile`;
+        fasciaEtaNote = `Età atleta: ${eta}, data di nascita ${a.dataNascita} fuori da tutti i gruppi [${gruppi.map(g=>g.nome+':'+g.etaMinima+'-'+g.etaMassima).join(', ')}] e nessuna data validità compatibile`;
       }
     } else {
       fasciaEtaNote = 'Data di nascita mancante';
-    }
+    }/*
+    if (a.dataNascita) {
+      eta = getAge(a.dataNascita, competizioneInizio?.dataInizio);
+      nascitaDate = new Date(a.dataNascita);
+      // Primo tentativo: etaMinima/etaMassima
+      
+      for (const g of gruppi) {
+        if (g.etaMinima <= eta && eta <= g.etaMassima) {
+          fascia = g.nome;
+          fasciaEtaNote = `Assegnato tramite fascia d'età (nascita: ${a.dataNascita}, gruppo: ${g.nome}, età: ${eta})`;
+          break;
+        }
+      }
+      // Secondo tentativo: inizioValidita/fineValidita
+      if (!fascia) {
+        for (const g of gruppi) {
+          if (g.inizioValidita!=null){
+            const start = g.inizioValidita ? new Date(g.inizioValidita) : null;
+            const end = g.fineValidita ? new Date(g.fineValidita) : null;
+            if ((!start || nascitaDate >= start) && (!end || nascitaDate <= end)) {
+              fascia = g.nome;
+              fasciaEtaNote = `Assegnato tramite data validità gruppo (nascita: ${a.dataNascita}, gruppo: ${g.nome})`;
+              break;
+            }
+          }
+        }
+      }
+      if (!fascia) {
+        fasciaEtaNote = `Età atleta: ${eta}, data di nascita ${a.dataNascita} fuori da tutti i gruppi [${gruppi.map(g=>g.nome+':'+g.etaMinima+'-'+g.etaMassima).join(', ')}] e nessuna data validità compatibile`;
+      }
+    } else {
+      fasciaEtaNote = 'Data di nascita mancante';
+    }*/
+
     return {
       ...a,
       tipoAtleta: tipoMap[a.tipoAtletaId] || "Sconosciuto",
