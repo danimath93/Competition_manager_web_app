@@ -268,7 +268,7 @@ async function printResults(req, res) {
     res.status(500).json({ error: 'Errore generazione PDF classifiche' });
   }
 }
-
+module.exports.printResults = printResults;
 // PDF classifica club per una competizione
 async function printClubResults(req, res) {
   const { competizioneId } = req.params;
@@ -331,7 +331,7 @@ async function printClubResults(req, res) {
     doc.fontSize(13).font('Helvetica-Bold').text('Classifica completa', 40, doc.y);
     doc.moveDown(0.2);
     // Header tabella
-    const col1 = 50, col2 = 80, col3 = 400, col4 = 450, col5 = 500;
+    const col1 = 50, col2 = 80, col3 = 400, col4 = 435, col5 = 480, col6 = 520;
     const rowHeight = 14;
     const cellPadding = 2;
     let tableY = doc.y;
@@ -343,6 +343,7 @@ async function printClubResults(req, res) {
     doc.text('Ori', col3, tableY + cellPadding);
     doc.text('Argenti', col4, tableY + cellPadding);
     doc.text('Bronzi', col5, tableY + cellPadding);
+    doc.text('Totale', col6, tableY + cellPadding);
     let currentY = tableY + rowHeight + 2;
     doc.fontSize(10).font('Helvetica');
     classifica.forEach((club, idx) => {
@@ -357,6 +358,7 @@ async function printClubResults(req, res) {
         doc.text('Ori', col3, tableY + cellPadding);
         doc.text('Argenti', col4, tableY + cellPadding);
         doc.text('Bronzi', col5, tableY + cellPadding);
+        doc.text('Totale', col6, tableY + cellPadding);
         currentY = tableY + rowHeight + 2;
         doc.fontSize(10).font('Helvetica');
       }
@@ -369,8 +371,81 @@ async function printClubResults(req, res) {
       doc.text(ori, col3, currentY);
       doc.text(argenti, col4, currentY);
       doc.text(bronzi, col5, currentY);
+      doc.text(ori + argenti + bronzi, col6, currentY);
       currentY += rowHeight;
     });
+    // --- Migliori atleti per fascia di età ---
+    doc.addPage();
+    doc.fontSize(16).font('Helvetica-Bold').text('Migliori Atleti per Fascia di Età', { align: 'center' });
+    doc.moveDown(1);
+
+    // Calcolo migliori per fascia
+    // Serve la data di inizio/fine competizione per il calcolo età
+    const competizioneFull = await Competizione.findByPk(competizioneId);
+    let listaAtleti = computeAthletePoints(athleteMedalsWithPoints);
+    listaAtleti = await assignAgeGroupAndTipo(listaAtleti, competizioneFull);
+    const bestByFascia = bestAthletesByTipoFascia(listaAtleti);
+
+    // --- Migliori assoluti CN e CB Adulti ---
+    const tipiAssoluti = ['CN', 'CB Adulti'];
+    tipiAssoluti.forEach(tipo => {
+      if (bestByFascia[tipo]) {
+        // Unisci tutti gli atleti di tutte le fasce e sessi
+        let allAtleti = [];
+        Object.values(bestByFascia[tipo]).forEach(sesso => {
+          allAtleti = allAtleti.concat(sesso.M, sesso.F);
+        });
+        allAtleti = allAtleti.filter(Boolean);
+        if (allAtleti.length > 0) {
+          const best = allAtleti.reduce((max, curr) => (curr.punti > max.punti ? curr : max), allAtleti[0]);
+          doc.fontSize(13).font('Helvetica-Bold').fillColor('black').text(`${tipo} - Miglior atleta assoluto`, { underline: true });
+          doc.fontSize(11).font('Helvetica').fillColor('black')
+            .text(`  ${best.nome} ${best.cognome} - ${best.club}`)
+            .text(`    Oro: ${best.medaglie.oro} Argento: ${best.medaglie.argento} Bronzo: ${best.medaglie.bronzo} | Punti: ${best.punti}`);
+          doc.moveDown(0.5);
+        }
+      }
+    });
+
+    // Layout: tipo cintura -> fascia età -> maschi/femmine
+    for (const tipo in bestByFascia) {
+      doc.fontSize(13).font('Helvetica-Bold').fillColor('black').text(tipo, { underline: true });
+      const fasce = bestByFascia[tipo];
+      for (const fascia in fasce) {
+        doc.fontSize(12).font('Helvetica-Bold').text(`  ${fascia}`);
+        const sesso = fasce[fascia];
+        // Maschi
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('blue').text('    Maschile:');
+        if (sesso.M.length > 0) {
+          sesso.M.forEach(a => {
+            doc.fontSize(11).font('Helvetica')
+            .fillColor('black')
+            .text(
+              `      ${a.nome} ${a.cognome} - ${a.club}`)
+              .text(`        Oro: ${a.medaglie.oro} Argento: ${a.medaglie.argento} Bronzo: ${a.medaglie.bronzo} | Punti: ${a.punti}`
+            );
+          });
+        } else {
+          doc.fontSize(10).font('Helvetica-Oblique').fillColor('gray').text('      Nessun atleta');
+        }
+        // Femmine
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('red').text('    Femminile:');
+        if (sesso.F.length > 0) {
+          sesso.F.forEach(a => {
+            doc.fontSize(11).font('Helvetica')
+            .fillColor('black')
+            .text(
+              `      ${a.nome} ${a.cognome} - ${a.club}`)
+              .text(`        Oro: ${a.medaglie.oro} Argento: ${a.medaglie.argento} Bronzo: ${a.medaglie.bronzo} | Punti: ${a.punti}`
+            );
+          });
+        } else {
+          doc.fontSize(10).font('Helvetica-Oblique').fillColor('gray').text('      Nessuna atleta');
+        }
+        doc.moveDown(0.5);
+      }
+      doc.moveDown(1);
+    }
     doc.end();
   } catch (err) {
     console.error('Errore generazione PDF classifica club:', err);
@@ -393,7 +468,7 @@ exports.getAtletiResults = async (req, res) => {
       where,
       raw: true
     });
-    const competizioneFine = await Competizione.findByPk(competitionId);
+    const competizioneInizio = await Competizione.findByPk(competitionId);
     // lista con medaglie
     let lista = await buildGlobalAthleteList(svolgimenti);
 
@@ -401,7 +476,7 @@ exports.getAtletiResults = async (req, res) => {
     lista = computeAthletePoints(lista);
 
     // aggiungo tipo e fascia
-    lista = await assignAgeGroupAndTipo(lista, competizioneFine);
+    lista = await assignAgeGroupAndTipo(lista, competizioneInizio);
 
     // migliori raggruppati
     const miglioriPerFasce = bestAthletesByTipoFascia(lista);
@@ -511,10 +586,3 @@ async function dettagliMedaglieClub(svolgimenti, clubId) {
 
   return { atleti: out };
 }
-module.exports = {
-  getAtletiResults,
-  getClubResults,
-  getClubMedalsDetails,
-  printResults,
-  printClubResults
-};

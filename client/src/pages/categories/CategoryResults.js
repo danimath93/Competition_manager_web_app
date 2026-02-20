@@ -138,59 +138,89 @@ useEffect(() => {
               {!bestByFascia ? (
                 <Typography>Caricamento...</Typography>
               ) : (
-                Object.entries(bestByFascia).map(([tipo, fasce]) => (
-                  <Accordion key={tipo} sx={{ mb: 2 }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="h6">{tipo}</Typography>
-                    </AccordionSummary>
-
-                    <AccordionDetails>
-                      {Object.entries(fasce).map(([fascia, sesso]) => (
-                        <Accordion key={fascia} sx={{ mb: 1, ml: 2 }}>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Typography>{fascia}</Typography>
-                          </AccordionSummary>
-
-                          <AccordionDetails>
-                            {/* Maschi */}
-                            <Typography variant="subtitle1">Maschile</Typography>
-                            {sesso.M.length > 0 ? (
-                              sesso.M.map(a => (
-                                <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
-                                  <b>{a.nome} {a.cognome}</b> – {a.club}
-                                  <Box sx={{ ml: 1 }}>
-                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
-                                  </Box>
-                                  <Typography>Punti: {a.punti}</Typography>
+                Object.entries(bestByFascia).map(([tipo, fasce]) => {
+                  // Determina se mostrare il riepilogo generale
+                  let showSummary = tipo !== 'CB Bambini';
+                  let bestOverall = null;
+                  if (showSummary) {
+                    // Trova il miglior atleta assoluto per questa tipologia
+                    let allAtleti = [];
+                    Object.values(fasce).forEach(sesso => {
+                      allAtleti = allAtleti.concat(sesso.M, sesso.F);
+                    });
+                    // Filtra eventuali null/undefined
+                    allAtleti = allAtleti.filter(Boolean);
+                    if (allAtleti.length > 0) {
+                      bestOverall = allAtleti.reduce((max, curr) => (curr.punti > max.punti ? curr : max), allAtleti[0]);
+                    }
+                  }
+                  return (
+                    <Box key={tipo} sx={{ mb: 2 }}>
+                      <Accordion sx={{ mb: 2 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="h6">{tipo}</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          {/* Riepilogo miglior atleta assoluto per CN e CB Adulti, sopra le fasce */}
+                          {showSummary && bestOverall && (
+                            <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Miglior atleta assoluto</Typography>
+                              <Box sx={{ ml: 1 }}>
+                                <b>{bestOverall.nome} {bestOverall.cognome}</b> – {bestOverall.club}
+                                <Box sx={{ ml: 1 }}>
+                                  🥇{bestOverall.medaglie.oro} 🥈{bestOverall.medaglie.argento} 🥉{bestOverall.medaglie.bronzo}
                                 </Box>
-                              ))
-                            ) : (
-                              <Typography sx={{ ml: 2, color: "gray" }}>Nessun atleta</Typography>
-                            )}
-
-                            {/* Femmine */}
-                            <Typography variant="subtitle1" sx={{ mt: 2 }}>
-                              Femminile
-                            </Typography>
-                            {sesso.F.length > 0 ? (
-                              sesso.F.map(a => (
-                                <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
-                                  <b>{a.nome} {a.cognome}</b> – {a.club}
-                                  <Box sx={{ ml: 1 }}>
-                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
-                                  </Box>
-                                  <Typography>Punti: {a.punti}</Typography>
-                                </Box>
-                              ))
-                            ) : (
-                              <Typography sx={{ ml: 2, color: "gray" }}>Nessuna atleta</Typography>
-                            )}
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
-                    </AccordionDetails>
-                  </Accordion>
-                ))
+                                <Typography>Punti: {bestOverall.punti}</Typography>
+                              </Box>
+                            </Box>
+                          )}
+                          {/* Accordion per fasce di età */}
+                          {Object.entries(fasce).map(([fascia, sesso]) => (
+                            <Accordion key={fascia} sx={{ mb: 1, ml: 2 }}>
+                              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography>{fascia}</Typography>
+                              </AccordionSummary>
+                              <AccordionDetails>
+                                {/* Maschi */}
+                                <Typography variant="subtitle1">Maschile</Typography>
+                                {sesso.M.length > 0 ? (
+                                  sesso.M.map(a => (
+                                    <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
+                                      <b>{a.nome} {a.cognome}</b> – {a.club}
+                                      <Box sx={{ ml: 1 }}>
+                                        🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
+                                      </Box>
+                                      <Typography>Punti: {a.punti}</Typography>
+                                    </Box>
+                                  ))
+                                ) : (
+                                  <Typography sx={{ ml: 2, color: "gray" }}>Nessun atleta</Typography>
+                                )}
+                                {/* Femmine */}
+                                <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                                  Femminile
+                                </Typography>
+                                {sesso.F.length > 0 ? (
+                                  sesso.F.map(a => (
+                                    <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
+                                      <b>{a.nome} {a.cognome}</b> – {a.club}
+                                      <Box sx={{ ml: 1 }}>
+                                        🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
+                                      </Box>
+                                      <Typography>Punti: {a.punti}</Typography>
+                                    </Box>
+                                  ))
+                                ) : (
+                                  <Typography sx={{ ml: 2, color: "gray" }}>Nessuna atleta</Typography>
+                                )}
+                              </AccordionDetails>
+                            </Accordion>
+                          ))}
+                        </AccordionDetails>
+                      </Accordion>
+                    </Box>
+                  );
+                })
               )}
             </Box>
 
@@ -206,6 +236,7 @@ useEffect(() => {
                   fasciaEtaDisplay: a.fasciaEta === 'Non Definita' && a.fasciaEtaNote
                     ? `${a.fasciaEta} (${a.fasciaEtaNote})`
                     : a.fasciaEta,
+                  note: a.fasciaEtaNote,
                   oro: a.medaglie?.oro || 0,
                   argento: a.medaglie?.argento || 0,
                   bronzo: a.medaglie?.bronzo || 0,
@@ -216,6 +247,7 @@ useEffect(() => {
                   { field: 'sesso', headerName: 'Sesso', flex: 0.5, minWidth: 80 },
                   { field: 'tipoAtleta', headerName: 'Tipo Atleta', flex: 1, minWidth: 120 },
                   { field: 'fasciaEtaDisplay', headerName: 'Fascia Età', flex: 1, minWidth: 120 },
+                  { field: 'note', headerName: 'Note', flex: 1, minWidth: 200 },
                   { field: 'punti', headerName: 'Punteggio', flex: 0.7, minWidth: 90, type: 'number', sortable: true },
                   { field: 'oro', headerName: '🥇', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
                   { field: 'argento', headerName: '🥈', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
@@ -287,6 +319,7 @@ useEffect(() => {
                             <TableCell>🥇</TableCell>
                             <TableCell>🥈</TableCell>
                             <TableCell>🥉</TableCell>
+                            <TableCell>Totale Medaglie</TableCell>
                             <TableCell>Dettagli</TableCell>
                           </TableRow>
                         </TableHead>
@@ -297,6 +330,7 @@ useEffect(() => {
                               <TableCell>{c.ori}</TableCell>
                               <TableCell>{c.argenti}</TableCell>
                               <TableCell>{c.bronzi}</TableCell>
+                              <TableCell>{c.ori + c.argenti + c.bronzi}</TableCell>
                               <TableCell>
                                 <Accordion onChange={() => handleAccordion(c.clubId)}>
                                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
