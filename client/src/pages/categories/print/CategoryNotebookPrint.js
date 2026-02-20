@@ -147,15 +147,29 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                 page-break-before: always;
                 break-before: page;
               }
-              .MuiBox-root {
-                break-inside: avoid;
+              .second-page-content {
                 page-break-inside: avoid;
+                break-inside: avoid;
               }
               .MuiTableContainer-root {
                 break-inside: avoid;
                 page-break-inside: avoid;
                 overflow: visible !important;
                 max-height: none !important;
+              }
+              /* Gestione specifica per tabelloni combattimenti */
+              .bracket-wrapper {
+                break-inside: avoid;
+                page-break-inside: avoid;
+              }
+              .bracket-container {
+                break-inside: avoid;
+                page-break-inside: avoid;
+              }
+              .bracket-round {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                page-break-after: auto;
               }
               /* Nascondi barre di scroll durante la stampa */
               * {
@@ -381,27 +395,33 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
 
           {/* SECONDA PAGINA - Tabelle Punteggi o Tabellone Combattimenti */}
           <Box className="page-break" sx={{ pt: 3 }}>
-            {/* Intestazione seconda pagina */}
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
-                {category.nome} - {competitionTipology === CompetitionTipology.COMBATTIMENTO ? 'Tabellone Combattimenti' : 'Tabella Punteggi'}
-              </Typography>
-              <Divider sx={{ my: 1 }} />
-            </Box>
+            <Box className="second-page-content">
+              {/* Intestazione seconda pagina */}
+              {
+                competitionTipology === CompetitionTipology.COMBATTIMENTO ? null : (
+                  <Box sx={{ textAlign: 'center', mb: 1.5 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                      {category.nome} - {competitionTipology === CompetitionTipology.COMBATTIMENTO ? 'Tabellone Combattimenti' : 'Tabella Punteggi'}
+                    </Typography>
+                    <Divider sx={{ my: 1 }} />
+                  </Box>
+                )
+              }
 
-            {/* Visualizzazione condizionale: Tabellone o Griglia */}
-            {competitionTipology === CompetitionTipology.COMBATTIMENTO ? (
-              <CategoryNotebookPrintBracketView
-                tabellone={tabellone}
-                athletes={athletes}
-              />
-            ) : (
-              <CategoryNotebookPrintTableView 
-                orderedAthletes={orderedAthletes}
-                getUppercase={getUppercase}
-                getUpperLowerCase={getUpperLowerCase}
-              />
-            )}
+              {/* Visualizzazione condizionale: Tabellone o Griglia */}
+              {competitionTipology === CompetitionTipology.COMBATTIMENTO ? (
+                <CategoryNotebookPrintBracketView
+                  tabellone={tabellone}
+                  athletes={athletes}
+                />
+              ) : (
+                <CategoryNotebookPrintTableView 
+                  orderedAthletes={orderedAthletes}
+                  getUppercase={getUppercase}
+                  getUpperLowerCase={getUpperLowerCase}
+                />
+              )}
+            </Box>
           </Box>
         </Box>
       </DialogContent>

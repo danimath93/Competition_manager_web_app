@@ -5,7 +5,8 @@ import {
 } from '@mui/material';
 
 /**
- * Componente per visualizzare il tabellone di un torneo di combattimento
+ * Componente per visualizzare il tabellone di un torneo di combattimento per la stampa
+ * Replica la struttura verticale di FightingExecution ma ottimizzata per stampa B/N
  * 
  * @param {Object} tabellone - Struttura JSON del tabellone con rounds e matches
  * @param {Array} athletes - Array di atleti per ottenere i nomi dai player IDs
@@ -22,161 +23,203 @@ const CategoryNotebookPrintBracketView = ({ tabellone, athletes }) => {
     );
   }
 
-  // Funzione helper per ottenere il nome dell'atleta dall'ID
-  const getAthleteName = (playerId) => {
-    if (!playerId) return '';
-    const athlete = athletes.find(a => a.id === playerId);
-    if (!athlete) return `ID: ${playerId}`;
-    return `${(athlete.cognome || '').toUpperCase()} ${
-      (athlete.nome || '').charAt(0).toUpperCase() + (athlete.nome || '').slice(1).toLowerCase()
-    }`;
-  };
-
-  // Funzione helper per ottenere il club dell'atleta
-  const getAthleteClub = (playerId) => {
-    if (!playerId) return '';
-    const athlete = athletes.find(a => a.id === playerId);
-    return athlete?.club?.denominazione || '';
-  };
-
   const rounds = tabellone.rounds;
 
-  // Calcola l'altezza di ogni match in base al round
-  const getMatchHeight = (roundIndex) => {
-    return 60 * Math.pow(2, roundIndex);
+  // Funzione helper per ottenere l'atleta dall'ID
+  const getAthleteById = (playerId) => {
+    if (!playerId) return null;
+    return athletes.find(a => a.id === playerId) || null;
   };
 
-  // Renderizza un singolo atleta nel bracket
-  const renderPlayer = (playerId, isWinner) => {
-    const athleteName = getAthleteName(playerId);
-    const clubName = getAthleteClub(playerId);
-    
+  // Determina il nome del round (come in FightingExecution)
+  const getRoundName = (roundIndex, numMatches) => {
+    if (numMatches === 1) return "Finale";
+    if (numMatches === 2) return "Semifinale";
+    if (numMatches === 3 || numMatches === 4) return "Quarti di finale";
+    if (numMatches > 4 && numMatches <= 8) return "Ottavi di finale";
+    return `Turno ${roundIndex + 1}`;
+  };
+
+  // Configurazione layout verticale - dimensioni ridotte per stampa
+  const MATCH_HEIGHT = 120;
+  const MATCH_SPACING = 30;
+
+  /**
+   * Componente per renderizzare un singolo match per la stampa
+   * Layout semplificato con solo R e B separati da | dalle info atleta
+   */
+  const PrintMatchComponent = ({ match, atleta1, atleta2, roundIndex = 0 }) => {
     return (
       <Box
         sx={{
-          height: '50%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          p: 1,
-          borderBottom: '1px solid #ddd',
-          bgcolor: playerId ? (isWinner ? '#e8f5e9' : 'white') : '#f5f5f5',
-          '&:last-child': {
-            borderBottom: 'none'
-          }
+          width: '100%',
+          bgcolor: 'white',
+          border: '1px solid black',
+          overflow: 'hidden',
+          height: MATCH_HEIGHT,
         }}
       >
-        <Typography
+        {/* Atleta 1 (Rosso) */}
+        <Box
           sx={{
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            lineHeight: 1.2,
-            color: playerId ? 'text.primary' : 'text.disabled'
+            display: 'flex',
+            alignItems: 'center',
+            p: 0.5,
+            height: MATCH_HEIGHT / 2,
+            borderBottom: '1px solid black',
           }}
         >
-          {athleteName || 'TBD'}
-        </Typography>
-        {clubName && (
-          <Typography
-            sx={{
-              fontSize: '0.55rem',
-              color: 'text.secondary',
-              fontStyle: 'italic',
-              lineHeight: 1.1,
-              mt: 0.3
-            }}
-          >
-            {clubName}
+          <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', mr: 0.5 }}>
+            R
           </Typography>
-        )}
+          <Typography sx={{ fontSize: '0.6rem', mr: 0.5 }}>|</Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 'normal',
+                color: 'black',
+                lineHeight: 1.1
+              }}
+            >
+              {atleta1 ? `${atleta1.cognome} ${atleta1.nome}` : (atleta2 && roundIndex === 0 ? 'BYE' : '')}
+            </Typography>
+            {atleta1 && (
+              <Typography sx={{ fontSize: '0.45rem', color: 'text.secondary', lineHeight: 1 }}>
+                {atleta1.club?.abbreviazione || atleta1.club?.denominazione || '-'} • {atleta1.peso || '-'} kg
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        {/* Atleta 2 (Blu) */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            p: 0.5,
+            height: MATCH_HEIGHT / 2,
+          }}
+        >
+          <Typography sx={{ fontSize: '0.65rem', fontWeight: 'bold', mr: 0.5 }}>
+            B
+          </Typography>
+          <Typography sx={{ fontSize: '0.6rem', mr: 0.5 }}>|</Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 'normal',
+                color: 'black',
+                lineHeight: 1.1
+              }}
+            >
+              {atleta2 ? `${atleta2.cognome} ${atleta2.nome}` : (atleta1 && roundIndex === 0 ? 'BYE' : '')}
+            </Typography>
+            {atleta2 && (
+              <Typography sx={{ fontSize: '0.45rem', color: 'text.secondary', lineHeight: 1 }}>
+                {atleta2.club?.abbreviazione || atleta2.club?.denominazione || '-'} • {atleta2.peso || '-'} kg
+              </Typography>
+            )}
+          </Box>
+        </Box>
       </Box>
     );
   };
 
-  return (
-    <Box sx={{ width: '100%', overflowX: 'auto', py: 2 }}>
-      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, fontSize: '0.95rem', textAlign: 'center' }}>
-        Tabellone Combattimenti
-      </Typography>
+  // Calcola margine per centrare rispetto al turno precedente
+  const calculateMargin = (roundIndex) => {
+    if (roundIndex === 0) return MATCH_SPACING / 2;
+    return (Math.pow(2, roundIndex-1) * 2 * (MATCH_SPACING + MATCH_HEIGHT) - MATCH_HEIGHT) / 2;
+  };
 
-      {/* Container del bracket orizzontale */}
-      <Box sx={{ display: 'flex', gap: 2, minWidth: 'fit-content', justifyContent: 'center' }}>
+  // Calcola gap tra i round in base al numero di round totali
+  const getRoundGapByRounds = (numRounds) => {
+    if (numRounds <= 3) return 10;
+    if (numRounds > 3 && numRounds <= 4) return 8;
+    if (numRounds > 4 && numRounds <= 8) return 6;
+    return 4;
+  };
+
+  return (
+    <Box sx={{ width: '100%' }}>
+      <style>
+        {`
+          @media print {
+            .bracket-container {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            .bracket-round {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+          }
+        `}
+      </style>
+
+      {/* Container del bracket verticale */}
+      <Box 
+        className="bracket-container"
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          gap: getRoundGapByRounds(rounds.length),
+          alignItems: 'flex-start',
+          overflowX: 'visible'
+        }}
+      >
         {rounds.map((round, roundIndex) => {
-          const matchHeight = getMatchHeight(roundIndex);
-          
           return (
-            <Box key={roundIndex} sx={{ display: 'flex', flexDirection: 'column', minWidth: 180 }}>
-              {/* Etichetta del round */}
-              <Typography
-                sx={{
+            <Box 
+              key={roundIndex} 
+              className="bracket-round"
+              sx={{ width: 250 }}
+            >
+              {/* Titolo del round */}
+              <Typography 
+                sx={{ 
                   fontWeight: 'bold',
                   fontSize: '0.7rem',
                   textAlign: 'center',
-                  mb: 1,
-                  bgcolor: 'grey.200',
-                  py: 0.5,
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'grey.400'
+                  mb: 1.2,
+                  pb: 0.25,
+                  borderBottom: '2px solid black'
                 }}
               >
-                {getRoundLabel(roundIndex, rounds.length)}
+                {getRoundName(roundIndex, round.matches.length)}
               </Typography>
-
-              {/* Matches del round */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-around' }}>
+              
+              {/* Matches del round disposti verticalmente */}
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                 {round.matches.map((match, matchIndex) => {
-                  const player1Id = match.players[0];
-                  const player2Id = match.players[1];
-                  const winnerId = match.winner;
-
+                  const atleta1 = getAthleteById(match.players[0]);
+                  const atleta2 = getAthleteById(match.players[1]);
+                  const boxSize = calculateMargin(roundIndex);
+                  
                   return (
-                    <Box
-                      key={match.id}
-                      sx={{
-                        height: `${matchHeight}px`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        position: 'relative',
-                        mb: roundIndex === 0 ? 1 : 0
-                      }}
-                    >
-                      {/* Box del match */}
-                      <Box
+                    <>
+                      <Box 
+                        key={`empty-top-box-match-${match.id}`}
                         sx={{
-                          border: '2px solid',
-                          borderColor: 'grey.800',
-                          borderRadius: 1,
-                          overflow: 'hidden',
-                          bgcolor: 'white',
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          boxShadow: 1
+                          height: boxSize,
                         }}
-                      >
-                        {/* Atleta 1 */}
-                        {renderPlayer(player1Id, winnerId === player1Id)}
-                        
-                        {/* Atleta 2 */}
-                        {renderPlayer(player2Id, winnerId === player2Id)}
-                      </Box>
-
-                      {/* Linea di connessione al round successivo */}
-                      {roundIndex < rounds.length - 1 && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            right: -16,
-                            top: '50%',
-                            width: 16,
-                            height: 2,
-                            bgcolor: 'grey.600',
-                            transform: 'translateY(-50%)'
-                          }}
-                        />
-                      )}
-                    </Box>
+                      />
+                      <PrintMatchComponent
+                        match={match}
+                        atleta1={atleta1}
+                        atleta2={atleta2}
+                        roundIndex={roundIndex}
+                      />
+                      <Box 
+                        key={`empty-bottom-box-match-${match.id}`}
+                        sx={{
+                          height: boxSize ,
+                        }}
+                      />
+                    </>
                   );
                 })}
               </Box>
@@ -184,37 +227,8 @@ const CategoryNotebookPrintBracketView = ({ tabellone, athletes }) => {
           );
         })}
       </Box>
-
-      {/* Legenda */}
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 3, fontSize: '0.7rem' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 20, height: 20, bgcolor: '#e8f5e9', border: '1px solid #ddd' }} />
-          <Typography sx={{ fontSize: '0.65rem' }}>Vincitore</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 20, height: 20, bgcolor: '#f5f5f5', border: '1px solid #ddd' }} />
-          <Typography sx={{ fontSize: '0.65rem' }}>TBD</Typography>
-        </Box>
-      </Box>
     </Box>
   );
-};
-
-/**
- * Funzione helper per ottenere l'etichetta del round
- * @param {number} roundIndex - Indice del round (0-based)
- * @param {number} totalRounds - Numero totale di rounds
- * @returns {string}
- */
-const getRoundLabel = (roundIndex, totalRounds) => {
-  const roundsFromEnd = totalRounds - roundIndex - 1;
-  
-  if (roundsFromEnd === 0) return 'FINALE';
-  if (roundsFromEnd === 1) return 'SEMIFINALI';
-  if (roundsFromEnd === 2) return 'QUARTI DI FINALE';
-  if (roundsFromEnd === 3) return 'OTTAVI DI FINALE';
-  
-  return `TURNO ${roundIndex + 1}`;
 };
 
 export default CategoryNotebookPrintBracketView;

@@ -11,6 +11,7 @@ const MatchComponent = ({
   match,
   atleta1 = null,
   atleta2 = null,
+  roundIndex = 0,
   isEditable = false,
   onAtletaClick,
   onRoundClick,
@@ -26,16 +27,42 @@ const MatchComponent = ({
   };
 
   // Calcola il vincitore in base ai round
+  // Un atleta deve vincere ALMENO 2 round per essere dichiarato vincitore automatico
   const calculateWinner = () => {
     if (!match?.roundResults) return null;
     const redWins = match.roundResults.filter(r => r === 'red').length;
     const blueWins = match.roundResults.filter(r => r === 'blue').length;
-    if (redWins > blueWins) return 'red';
-    if (blueWins > redWins) return 'blue';
+    
+    // Richiede almeno 2 vittorie per vincere automaticamente
+    if (redWins >= 2) return match.players[0];
+    if (blueWins >= 2) return match.players[1];
     return null; // Parità o non determinato
   };
 
-  const winner = match?.winner || calculateWinner();
+  // Determina il colore del vincitore (rosso o blu)
+  const getWinnerColor = () => {
+    const winnerId = match?.winner || calculateWinner();
+    if (!winnerId) return null;
+    
+    if (winnerId === match?.players[0]) return 'red';
+    if (winnerId === match?.players[1]) return 'blue';
+    return null;
+  };
+
+  // Controlla se il match è in parità e richiede selezione manuale
+  const isDrawRequiringManualSelection = () => {
+    if (!match?.roundResults || match?.winner) return false;
+    const redWins = match.roundResults.filter(r => r === 'red').length;
+    const blueWins = match.roundResults.filter(r => r === 'blue').length;
+    const nullCount = match.roundResults.filter(r => r === null).length;
+    
+    // Se tutti e 3 i round sono assegnati ma nessuno ha 2 vittorie
+    if (nullCount === 0 && redWins < 2 && blueWins < 2) return true;
+    return false;
+  };
+
+  const winnerColor = getWinnerColor();
+  const needsManualSelection = isDrawRequiringManualSelection();
 
   return (
     <Box
@@ -59,7 +86,7 @@ const MatchComponent = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1.5,
-          bgcolor: winner === 'red' ? '#ffcdd2' : atleta1 ? '#ffebee' : '#f5f5f5',
+          bgcolor: winnerColor === 'red' ? '#ffcdd2' : atleta1 ? '#ffebee' : '#f5f5f5',
           borderBottom: '2px solid #f44336',
           borderLeft: '6px solid #f44336',
           cursor: isEditable && !atleta1 ? 'pointer' : 'default',
@@ -74,12 +101,12 @@ const MatchComponent = ({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: winner === 'red' ? 'bold' : 'normal',
+              fontWeight: winnerColor === 'red' ? 'bold' : 'normal',
               color: atleta1 ? 'text.primary' : 'text.secondary',
               fontStyle: !atleta1 ? 'italic' : 'normal'
             }}
           >
-            {atleta1 ? `${atleta1.cognome} ${atleta1.nome}` : (atleta2 ? 'BYE' : 'Clicca per selezionare')}
+            {atleta1 ? `${atleta1.cognome} ${atleta1.nome}` : (atleta2 && roundIndex === 0 ? 'BYE' : 'Clicca per selezionare')}
           </Typography>
           {atleta1 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
@@ -148,27 +175,37 @@ const MatchComponent = ({
             width: 36,
             height: 36,
             borderRadius: '50%',
-            bgcolor: winner === 'red' ? '#f44336' : winner === 'blue' ? '#2196f3' : '#e0e0e0',
+            bgcolor: winnerColor === 'red' ? '#f44336' : winnerColor === 'blue' ? '#2196f3' : needsManualSelection ? '#ff9800' : '#e0e0e0',
             border: '3px solid',
-            borderColor: winner ? '#fff' : 'grey.400',
+            borderColor: winnerColor ? '#fff' : needsManualSelection ? '#ff6f00' : 'grey.400',
             ml: 1,
             cursor: isEditable ? 'pointer' : 'default',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: winner ? 3 : 0,
+            boxShadow: winnerColor ? 3 : needsManualSelection ? 2 : 0,
             transition: 'all 0.2s',
+            animation: needsManualSelection ? 'pulse 1.5s infinite' : 'none',
             '&:hover': isEditable ? {
               transform: 'scale(1.15)',
               boxShadow: 4
-            } : {}
+            } : {},
+            '@keyframes pulse': {
+              '0%': { opacity: 1 },
+              '50%': { opacity: 0.6 },
+              '100%': { opacity: 1 }
+            }
           }}
         >
-          {winner && (
+          {winnerColor ? (
             <Typography variant="caption" sx={{ color: '#fff', fontWeight: 'bold' }}>
               W
             </Typography>
-          )}
+          ) : needsManualSelection ? (
+            <Typography variant="caption" sx={{ color: '#fff', fontWeight: 'bold', fontSize: '0.65rem' }}>
+              !
+            </Typography>
+          ) : null}
         </Box>
       </Box>
 
@@ -180,7 +217,7 @@ const MatchComponent = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 1.5,
-          bgcolor: winner === 'blue' ? '#bbdefb' : atleta2 ? '#e3f2fd' : '#f5f5f5',
+          bgcolor: winnerColor === 'blue' ? '#bbdefb' : atleta2 ? '#e3f2fd' : '#f5f5f5',
           borderTop: '2px solid #2196f3',
           borderLeft: '6px solid #2196f3',
           cursor: isEditable && !atleta2 ? 'pointer' : 'default',
@@ -195,12 +232,12 @@ const MatchComponent = ({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: winner === 'blue' ? 'bold' : 'normal',
+              fontWeight: winnerColor === 'blue' ? 'bold' : 'normal',
               color: atleta2 ? 'text.primary' : 'text.secondary',
               fontStyle: !atleta2 ? 'italic' : 'normal'
             }}
           >
-            {atleta2 ? `${atleta2.cognome} ${atleta2.nome}` : (atleta1 ? 'BYE' : 'Clicca per selezionare')}
+            {atleta2 ? `${atleta2.cognome} ${atleta2.nome}` : (atleta1 && roundIndex === 0 ? 'BYE' : 'Clicca per selezionare')}
           </Typography>
           {atleta2 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>

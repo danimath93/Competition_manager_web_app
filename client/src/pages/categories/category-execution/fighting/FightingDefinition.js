@@ -49,7 +49,7 @@ const FightingDefinition = ({
     const numAtleti = atleti?.length || 0;
     if (numAtleti < 2) return;
 
-    // Determina quanti round visualizzare (primi 2 round max)
+    // Determina quanti match nel primo round: 2^(ceil(log2(numAtleti)) - 1)
     const numMatchesFirstRound = Math.pow(2, Math.ceil(Math.log2(numAtleti)) - 1);
     
     // Crea primo round con match vuoti
@@ -187,8 +187,9 @@ const FightingDefinition = ({
   const propagateByes = (tabelloneData) => {
     const copy = JSON.parse(JSON.stringify(tabelloneData));
     
-    // Per ogni round, propaga i vincitori BYE al round successivo
-    for (let roundIdx = 0; roundIdx < copy.rounds.length - 1; roundIdx++) {
+    // Propagazione solo dal primo round, dove si assegnano i BYE
+    const roundIdx = 0; 
+    {
       const currentRound = copy.rounds[roundIdx];
       const nextRound = copy.rounds[roundIdx + 1];
       
@@ -370,6 +371,7 @@ const FightingDefinition = ({
                                   match={match}
                                   atleta1={atleta1}
                                   atleta2={atleta2}
+                                  roundIndex={roundIndex}
                                   isEditable={stato === CategoryStates.IN_DEFINIZIONE && roundIndex === 0}
                                   onAtletaClick={handleAtletaClick}
                                   onRemoveAtleta={handleRemoveAtleta}

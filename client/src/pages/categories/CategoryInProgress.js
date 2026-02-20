@@ -117,20 +117,31 @@ const CategoryInProgress = () => {
 
   // Genera tabellone per combattimenti
   const generateTabelloneFromAtleti = (atletiList) => {
-    const matchesRound0 = [];
-    let idx = 0;
+    const numAtleti = atletiList.length;
+    if (numAtleti < 2) return { rounds: [] };
     
-    while (idx < atletiList.length) {
-      const p1 = atletiList[idx]?.id || null;
-      const p2 = atletiList[idx + 1]?.id || null;
+    // Calcola il numero di match necessari nel primo round
+    // Formula: 2^(ceil(log2(numAtleti)) - 1)
+    // Es: 5 atleti -> ceil(log2(5)) = 3, quindi 2^(3-1) = 4 match (8 posizioni, 3 BYE)
+    const numMatchesFirstRound = Math.pow(2, Math.ceil(Math.log2(numAtleti)) - 1);
+    
+    // Crea i match del primo round
+    const matchesRound0 = [];
+    let atletaIdx = 0;
+    
+    for (let i = 0; i < numMatchesFirstRound; i++) {
+      const p1 = atletaIdx < numAtleti ? atletiList[atletaIdx]?.id || null : null;
+      atletaIdx++;
+      const p2 = atletaIdx < numAtleti ? atletiList[atletaIdx]?.id || null : null;
+      atletaIdx++;
+      
       matchesRound0.push({
-        id: `r0m${matchesRound0.length}`,
+        id: `r0m${i}`,
         players: [p1, p2],
         roundResults: [null, null, null],
         winner: null,
         from: []
       });
-      idx += 2;
     }
 
     const rounds = [{ matches: matchesRound0 }];
@@ -208,7 +219,8 @@ const CategoryInProgress = () => {
           classifica: [],
           tabellone: null
         });
-        setStato(CategoryStates.IN_DEFINIZIONE);
+        // Ricarica i dati per rigenerare il tabellone
+        await loadSvolgimento();
       }
     } catch (e) {
       console.error('Errore reset categoria:', e);

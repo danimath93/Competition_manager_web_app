@@ -6,7 +6,6 @@ import {
   Box,
   Divider,
   Alert,
-  Button,
   TextField,
   Table,
   TableBody,
@@ -18,6 +17,7 @@ import {
 import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
 import MatchComponent from './MatchComponent';
 import ConfirmActionModal from '../../../../components/common/ConfirmActionModal';
+import Button from '../../../../components/common/Button';
 import AuthComponent from '../../../../components/AuthComponent';
 
 const COMMISSIONE_LABELS = [
@@ -163,8 +163,65 @@ const FightingExecution = ({
 
   const handleWinnerClick = (matchId) => {
     if (!canEdit) return;
-    // Implementazione futura per gestione parità
-    alert('Funzionalità di gestione parità in sviluppo');
+
+    const copy = JSON.parse(JSON.stringify(tabellone));
+    
+    // Trova il match
+    let targetMatch = null;
+    let roundIdx = -1;
+    
+    for (let rIdx = 0; rIdx < copy.rounds.length; rIdx++) {
+      const match = copy.rounds[rIdx].matches.find(m => m.id === matchId);
+      if (match) {
+        targetMatch = match;
+        roundIdx = rIdx;
+        break;
+      }
+    }
+
+    if (!targetMatch) return;
+
+    // Se non ci sono atleti, non fare nulla
+    if (!targetMatch.players[0] && !targetMatch.players[1]) return;
+
+    // Cicla tra: null -> player1 -> player2 -> null
+    const currentWinner = targetMatch.winner;
+    let nextWinner = null;
+
+    if (currentWinner === null) {
+      // Imposta vincitore al primo player disponibile
+      nextWinner = targetMatch.players[0] || targetMatch.players[1];
+    } else if (currentWinner === targetMatch.players[0]) {
+      // Passa al secondo player se disponibile, altrimenti null
+      nextWinner = targetMatch.players[1] || null;
+    } else if (currentWinner === targetMatch.players[1]) {
+      // Torna a null
+      nextWinner = null;
+    }
+
+    targetMatch.winner = nextWinner;
+
+    // Propaga vincitore al turno successivo
+    if (targetMatch.winner && roundIdx < copy.rounds.length - 1) {
+      const nextRound = copy.rounds[roundIdx + 1];
+      nextRound.matches.forEach(nm => {
+        const pos = nm.from?.indexOf(targetMatch.id);
+        if (pos !== -1 && pos !== undefined) {
+          nm.players[pos] = targetMatch.winner;
+        }
+      });
+    } else if (!targetMatch.winner && roundIdx < copy.rounds.length - 1) {
+      // Rimuovi il vincitore dal turno successivo se viene resettato
+      const nextRound = copy.rounds[roundIdx + 1];
+      nextRound.matches.forEach(nm => {
+        const pos = nm.from?.indexOf(targetMatch.id);
+        if (pos !== -1 && pos !== undefined) {
+          nm.players[pos] = null;
+        }
+      });
+    }
+
+    onTabelloneChange(copy);
   };
 
   const getRoundName = (roundIndex, numMatches) => {
@@ -214,13 +271,11 @@ const FightingExecution = ({
     <div className="page-grid-75-25">
       {/* Tabellone - Sinistra */}
       <div className="page-card-with-external-title page-card-expanded">
+        <Typography variant="h4" gutterBottom sx={{ flexShrink: 0 }}>
+          Tabellone Incontri
+        </Typography>
         <div className="page-card-scrollable">
           <div className="page-card-scrollable-body" style={{ padding: '1rem' }}>
-
-            <Typography variant="h6" gutterBottom>
-              Tabellone Incontri
-            </Typography>
-
             {stato === CategoryStates.CONCLUSA && (
               <Alert severity="success" sx={{ mb: 2 }}>
                 Categoria conclusa. Il podio è stato determinato automaticamente.
@@ -232,8 +287,6 @@ const FightingExecution = ({
                 Attenzione, è necessario concludere la categoria per salvare le modifiche alla classifica.
               </Alert>
             )}
-
-            <Divider sx={{ mb: 3 }} />
 
             {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
               <Box sx={{ 
@@ -260,7 +313,7 @@ const FightingExecution = ({
                       <Typography 
                         variant="subtitle1" 
                         fontWeight="bold" 
-                        sx={{ mb: 3, color: 'primary.main', textAlign: 'center' }}
+                        sx={{ mb: 3, color: 'primary.main', textAlign: 'center', borderBottom: '1px solid black', pb: 1 }}
                       >
                         {getRoundName(roundIndex, round.matches.length)}
                       </Typography>
@@ -292,6 +345,7 @@ const FightingExecution = ({
                                   match={match}
                                   atleta1={atleta1}
                                   atleta2={atleta2}
+                                  roundIndex={roundIndex}
                                   isEditable={canEdit}
                                   onRoundClick={handleRoundClick}
                                   onWinnerClick={handleWinnerClick}
@@ -317,35 +371,36 @@ const FightingExecution = ({
               </Alert>
             )}
 
-            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
-              <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-                {stato !== CategoryStates.IN_CORSO && !isEditMode && (
-                  <Button variant="warning" onClick={() => setIsEditMode(true)}>
-                    Modifica
-                  </Button>
-                )}
-                
-                {stato !== CategoryStates.IN_CORSO && isEditMode && (
-                  <Button variant="info" onClick={() => setIsEditMode(false)}>
-                    Annulla Modifica
-                  </Button>
-                )}
-              </AuthComponent>
-              
-              {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
-                <Button variant="success" onClick={handleStartCategory}>
-                  Avvia categoria
-                </Button>
-              )}
-
-              {(stato === CategoryStates.IN_CORSO || isEditMode) && canEdit && (
-                <Button onClick={handleConfirmConclude}>
-                  Concludi Categoria
-                </Button>
-              )}
-            </Box>
           </div>
         </div>
+        <Box className="page-card-actions" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
+          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+            {stato !== CategoryStates.IN_CORSO && !isEditMode && (
+              <Button variant="warning" onClick={() => setIsEditMode(true)}>
+                Modifica
+              </Button>
+            )}
+            
+            {stato !== CategoryStates.IN_CORSO && isEditMode && (
+              <Button variant="info" onClick={() => setIsEditMode(false)}>
+                Annulla Modifica
+              </Button>
+            )}
+          </AuthComponent>
+          
+          {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
+            <Button variant="success" onClick={handleStartCategory}>
+              Avvia categoria
+            </Button>
+          )}
+
+          {(stato === CategoryStates.IN_CORSO || isEditMode) && canEdit && (
+            <Button onClick={handleConfirmConclude}>
+              Concludi Categoria
+            </Button>
+          )}
+        </Box>
+
       </div>
 
       {/* Colonna Destra: Classifica e Commissione */}

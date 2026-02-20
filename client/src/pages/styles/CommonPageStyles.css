@@ -137,6 +137,8 @@
   grid-template-columns: minmax(500px, 1fr) minmax(280px, 25%);
   gap: 1.5rem;
   height: 100%;
+  max-height: calc(100vh - 200px); /* Limita l'altezza totale del grid */
+  align-items: start; /* Allinea gli elementi all'inizio */
 }
 
 /* Grid a colonna singola (quando l'iscrizione è confermata) */
@@ -172,6 +174,21 @@
   min-height: 0; /* Importante per permettere lo scroll */
   width: 100%;
   max-width: 100%;
+  overflow: hidden;
+}
+
+/* Versione espansa per contenuti grandi (es. tabellone combattimenti) */
+.page-card-with-external-title.page-card-expanded {
+  max-height: calc(100vh - 200px); /* Lascia spazio per header e padding */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card scrollabile dentro container espanso: prende spazio disponibile */
+.page-card-expanded > .page-card-scrollable {
+  flex: 1;
+  min-height: 0;
+  max-height: none; /* Sovrascrive il max-height predefinito */
   overflow: hidden;
 }
 
@@ -213,6 +230,16 @@
   color: var(--text-primary, #333333);
   max-width: 100%;
   word-wrap: break-word;
+  height: 100%; /* Assicura che prenda tutta l'altezza disponibile */
+}
+
+/* Contenitore azioni/bottoni sempre visibile */
+.page-card-actions {
+  flex-shrink: 0; /* Non si rimpicciolisce mai */
+  flex-grow: 0; /* Non cresce */
+  padding: 1rem 0 0 0;
+  background-color: var(--bg-primary, #ffffff);
+  z-index: 1;
 }
 
 /* Responsive: altezza card su mobile */
