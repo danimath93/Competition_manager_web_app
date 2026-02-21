@@ -9,7 +9,7 @@ import {
   Chip,
   Tooltip
 } from '@mui/material';
-import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts } from '@mui/icons-material';
+import { EditDocument, Notes, Delete, AppRegistration, Description, ManageAccounts, EmojiEvents } from '@mui/icons-material';
 import { FaCalendar, FaTags } from 'react-icons/fa';
 import { FaLocationDot } from 'react-icons/fa6';
 import { format } from 'date-fns';
@@ -17,10 +17,15 @@ import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
 import { getCompetitionStatusColor } from '../utils/helperCompetitions';
 import AuthComponent from './AuthComponent';
 
-const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onSummary, onEditClubOrganizer, onDocuments, onCategories, userClubId }) => {
-  const isCompOpen = (competition.stato === CompetitionStatus.OPEN) && (new Date(competition.dataFine) >= new Date());
-  const isCompInPreparation = (competition.stato === CompetitionStatus.IN_PREPARATION);
+const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails, onSummary, onEditClubOrganizer, onDocuments, onCategories, onResults, userClubId }) => {
+  const isRegistrationOpen = (competition.stato === CompetitionStatus.OPEN) && 
+    (new Date(competition.dataFine) >= new Date()) && 
+    (new Date(competition.dataScadenzaIscrizioni) >= new Date());
   const isClubRegistered = competition?.clubIscritti?.includes(userClubId) || false;
+
+  const checkCompetitionStatus = (enabledStatuses) => {
+    return enabledStatuses.includes(competition.stato);
+  }
 
   return (
     <Card sx={{ 
@@ -131,27 +136,18 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                   variant="contained"
                   color='info'
                   onClick={() => onRegister(competition.id)}
-                  disabled={!isCompOpen}
+                  disabled={!isRegistrationOpen}
                 >
                   <AppRegistration />
                 </Button>
               </Tooltip>
             </AuthComponent>
-            {/* <Tooltip title="Dettagli Competizione" arrow>
-              <Button
-                variant="contained"
-                color='info'
-                onClick={() => onDetails(competition)}
-              >
-                <InfoOutline />
-              </Button>
-            </Tooltip> */}
             <Tooltip title="Visualizza documenti competizione" arrow>
               <Button
                 variant="contained"
                 color='info'
                 onClick={() => onDocuments(competition)}
-                disabled={!(isCompOpen || isCompInPreparation)}
+                disabled={!checkCompetitionStatus([CompetitionStatus.OPEN, CompetitionStatus.IN_PREPARATION, CompetitionStatus.ONGOING])}
               >
                 <Description />
               </Button>
@@ -161,9 +157,19 @@ const CompetitionCard = ({ competition, onRegister, onEdit, onDelete, onDetails,
                 variant="contained"
                 color='info'
                 onClick={() => onCategories(competition.id)}
-                disabled={!isCompInPreparation}
+                disabled={!checkCompetitionStatus([CompetitionStatus.IN_PREPARATION, CompetitionStatus.ONGOING, CompetitionStatus.COMPLETED])}
               >
                 <FaTags size={24} />
+              </Button>
+            </Tooltip>
+            <Tooltip title="Visualizza risultati competizione" arrow>
+              <Button
+                variant="contained"
+                color='info'
+                onClick={() => onResults(competition.id)}
+                disabled={!checkCompetitionStatus([CompetitionStatus.ONGOING, CompetitionStatus.COMPLETED])}
+              >
+                <EmojiEvents size={24} />
               </Button>
             </Tooltip>
           </Box>
