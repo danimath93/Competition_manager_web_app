@@ -36,7 +36,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Credenziali errate" });
     }
 
-    const token = jwt.sign({ username: user.username, permissions: user?.permissions }, JWT_SECRET, { expiresIn: "2h" });
+    const token = jwt.sign({ username: user.username, permissions: user?.permissions }, JWT_SECRET, { expiresIn: "8h" });
     const outUser = {
       username: user.username,
       email: user.email,
