@@ -172,7 +172,12 @@ async function assignAgeGroupAndTipo(athletes, competizioneInizio) {
     if (!dateNascita || !dataInizio) return undefined;
     const birthDate = new Date(dateNascita);
     const refDate = new Date(dataInizio);
-    let age = refDate.getYear() - birthDate.getYear();
+    //let age = refDate.getYear() - birthDate.getYear();
+    let age = refDate.getFullYear() - birthDate.getFullYear();
+    const m = refDate.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && refDate.getDate() < birthDate.getDate())) {
+      age--;
+    }
     return age;
   }
 
