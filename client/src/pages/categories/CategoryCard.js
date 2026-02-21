@@ -13,6 +13,7 @@ import { Category, PlayArrow, EmojiEvents } from '@mui/icons-material';
 import { FaCalendar, FaUniversity } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { getCompetitionStatusColor } from '../../utils/helperCompetitions';
+import AuthComponent from '../../components/AuthComponent';
 
 const CategoryCard = ({ competition, onDefinition, onExecution, onCheckResults }) => {
   return (
@@ -51,15 +52,17 @@ const CategoryCard = ({ competition, onDefinition, onExecution, onCheckResults }
         p: 2, pt: 0, ml: 'auto'
       }}>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'row', gap: 2 }}>
-            <Tooltip title="Definisci categorie" arrow>
-              <Button
-                variant="contained"
-                color='info'
-                onClick={() => onDefinition(competition.id)}
-              >
-                <Category />
-              </Button>
-            </Tooltip>
+            <AuthComponent requiredRoles={['admin', 'superAdmin', 'club']}>
+              <Tooltip title="Definisci categorie" arrow>
+                <Button
+                  variant="contained"
+                  color='info'
+                  onClick={() => onDefinition(competition.id)}
+                >
+                  <Category />
+                </Button>
+              </Tooltip>
+            </AuthComponent>
             <Tooltip title="Svolgimento categorie" arrow>
               <Button
                 variant="contained"

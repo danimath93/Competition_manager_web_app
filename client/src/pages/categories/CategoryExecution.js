@@ -23,7 +23,7 @@ import {
 import { itIT } from '@mui/x-data-grid/locales';
 import { FaTags } from 'react-icons/fa';
 import { PlayArrow, Print, ArrowBack, Person, FormatListNumbered } from '@mui/icons-material';
-import { getCategoriesByCompetizione, updateCategoria } from '../../api/categories';
+import { getCategoriesByCompetizione, getCategoriesByTableUser, updateCategoria } from '../../api/categories';
 import { startSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { getCompetitionDetails } from '../../api/competitions';
 import { useAuth } from '../../context/AuthContext';
@@ -35,7 +35,6 @@ import PageHeader from '../../components/PageHeader';
 import TableUserSelectorModal from '../../components/TableUserSelectorModal';
 import { getTableUsers } from '../../api/auth';
 import { CategoryStates } from '../../constants/enums/CategoryEnums';
-import muiTheme from '../../styles/muiTheme';
 
 const CategoryExecution = () => {
   const { t } = useLanguage();
@@ -62,6 +61,10 @@ const CategoryExecution = () => {
   // Verifica se l'utente è admin o superAdmin
   const isAdminOrSuperAdmin = useMemo(() => {
     return user?.permissions === 'admin' || user?.permissions === 'superAdmin';
+  }, [user]);
+
+  const isTableUser = useMemo(() => {
+    return user?.permissions === 'table';
   }, [user]);
 
   const getStatusColor = (stato) => {
@@ -340,8 +343,14 @@ const CategoryExecution = () => {
     const loadCategories = async () => {
       try {
         setLoading(true);
-        const data = await getCategoriesByCompetizione(competizioneId, false);
-        setCategories(data);
+        if (isTableUser) {
+          const data = await getCategoriesByTableUser(competizioneId);
+          setCategories(data);
+          return;
+        } else {
+          const data = await getCategoriesByCompetizione(competizioneId, false);
+          setCategories(data);
+        }
       } catch (e) {
         setError('Impossibile caricare le categorie');
       } finally {

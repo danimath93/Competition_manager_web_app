@@ -1,4 +1,4 @@
-const { Categoria, IscrizioneAtleta, Atleta, Competizione, SvolgimentoCategoria, Club } = require('../models');
+const { Categoria, IscrizioneAtleta, Atleta, Competizione, SvolgimentoCategoria, Club, UtentiLogin } = require('../models');
 const { ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
@@ -389,8 +389,14 @@ exports.getCategoriesByCompetizione = async (req, res) => {
 exports.getCategoriesByTableUser = async (req, res) => {
   try {
     const { competizioneId } = req.params;
-    const userId = req.user.id; // ID dell'utente autenticato
+    const username = req.user.username;
 
+    const user = await UtentiLogin.findOne({ where: { username } });
+    if (!user) {
+      return res.status(404).json({ error: 'Utente non trovato' });
+    }
+
+    const userId = user.id;
     const categorie = await Categoria.findAll({
       where: { 
         competizioneId,

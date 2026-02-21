@@ -17,11 +17,10 @@ import { FaTags } from 'react-icons/fa';
 import { ArrowBack, Print, Delete } from '@mui/icons-material';
 import { getSvolgimentoCategoria, patchSvolgimentoCategoria } from '../../api/svolgimentoCategorie';
 import { loadAllJudges } from '../../api/judges';
-import { getCategoriesByCompetizione, getCategoriesByTableUser } from '../../api/categories';
+import { getCategoriesByCompetizione } from '../../api/categories';
 import CategoryNotebookPrint from './print/CategoryNotebookPrint';
 import PageHeader from '../../components/PageHeader';
 import AuthComponent from '../../components/AuthComponent';
-import { useAuth } from '../../context/AuthContext';
 import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
 import { CategoryStates } from '../../constants/enums/CategoryEnums';
 
@@ -33,7 +32,6 @@ import FightingExecution from './category-execution/fighting/FightingExecution';
 
 const CategoryInProgress = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const svolgimentoId = searchParams.get('svolgimentoId');
   const categoriaNome = searchParams.get('categoriaNome');
@@ -98,10 +96,7 @@ const CategoryInProgress = () => {
 
   const loadJudgesAndCategory = async () => {
     try {
-      // Usa l'API appropriata in base ai permessi dell'utente
-      const categoriesPromise = user?.permissions === 'table'
-        ? getCategoriesByTableUser(competizioneId)
-        : getCategoriesByCompetizione(competizioneId, false);
+      const categoriesPromise = getCategoriesByCompetizione(competizioneId, false);
       
       const [judgesData, categoriesData] = await Promise.all([
         loadAllJudges(),
