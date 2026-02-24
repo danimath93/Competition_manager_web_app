@@ -8,6 +8,7 @@ import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack
 import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
 import { printResults, printClubResults } from '../../api/results';
+import { getCategoriesByCompetizione, getCategoryExecution } from '../../api/categories';
 import { getCompetitionDetails } from '../../api/competitions';
 import PageHeader from '../../components/PageHeader';
 
@@ -23,6 +24,44 @@ const CategoryResults = () => {
 
 
   const [tab, setTab] = useState(0);
+  // Stato per classifiche categorie
+  const [categories, setCategories] = useState([]);
+  const [categoryExecutions, setCategoryExecutions] = useState({}); // { [categoriaId]: execution }
+  const [catLoading, setCatLoading] = useState(false);
+  const [catError, setCatError] = useState(null);
+  // Carica categorie e classifiche per tab Classifiche
+  useEffect(() => {
+    if (tab !== 0) return;
+    let cancelled = false;
+    const fetchCategories = async () => {
+      try {
+        setCatLoading(true);
+        setCatError(null);
+        const cats = await getCategoriesByCompetizione(competitionId);
+        if (cancelled) return;
+        setCategories(cats);
+        // Carica tutte le execution in parallelo
+        const executions = {};
+        await Promise.all(
+          cats.map(async cat => {
+            try {
+              const exec = await getCategoryExecution(cat.id);
+              executions[cat.id] = exec;
+            } catch (e) {
+              executions[cat.id] = null;
+            }
+          })
+        );
+        if (!cancelled) setCategoryExecutions(executions);
+        setCatLoading(false);
+      } catch (e) {
+        setCatError('Errore caricamento classifiche categorie');
+        setCatLoading(false);
+      }
+    };
+    fetchCategories();
+    return () => { cancelled = true; };
+  }, [tab, competitionId]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [competition, setCompetition] = useState(null);
@@ -109,27 +148,14 @@ useEffect(() => {
 
       <Paper sx={{ mb: 4, mt: 2 }}>
         <Tabs value={tab} onChange={handleTab}>
+          <Tab label="Classifiche" />
           <Tab label="Miglior Atleta per Fascia" />
           <Tab label="Miglior Club per Medaglie" />
+
         </Tabs>
       </Paper>
-        {tab === 0 && atleti && (
+        {tab === 1 && atleti && (
           <Box>
-            {/* Pulsante stampa classifiche */}
-            <MuiButton
-              variant="contained"
-              color="primary"
-              sx={{ mb: 2 }}
-              onClick={async () => {
-                try {
-                  await printResults(competitionId);
-                } catch (err) {
-                  alert('Errore durante la generazione del PDF delle classifiche');
-                }
-              }}
-            >
-              Stampa Classifiche
-            </MuiButton>
             <Box sx={{ mb: 4 }}>
               <Typography variant="h5" sx={{ mb: 2 }}>
                 Migliori per Fascia di Età
@@ -271,7 +297,7 @@ useEffect(() => {
           </Box>
       )}
 
-      {tab === 1 && club && (
+      {tab === 2 && club && (
         <Box>
             {/* Pulsante stampa classifiche club*/}
             <MuiButton
@@ -361,6 +387,90 @@ useEffect(() => {
                         </TableBody>
                       </Table>
                     </TableContainer>
+        </Box>
+      )}
+
+      {/* TAB CLASSIFICHE */}
+      {tab === 0 && (
+        <Box>
+          {/* Pulsante stampa classifiche */}
+          <MuiButton
+            variant="contained"
+            color="primary"
+            sx={{ mb: 2 }}
+            onClick={async () => {
+              try {
+                await printResults(competitionId);
+              } catch (err) {
+                alert('Errore durante la generazione del PDF delle classifiche');
+              }
+            }}
+          >
+            Stampa Classifiche
+          </MuiButton>
+          <Typography variant="h5" sx={{ mb: 2 }}>Classifiche per Categoria</Typography>
+          {catLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <CircularProgress />
+            </Box>
+          ) : catError ? (
+            <Alert severity="error">{catError}</Alert>
+          ) : (
+            <Paper sx={{ width: '100%', mt: 2 }}>
+              <DataGrid
+                rows={categories.map(cat => {
+                    const exec = categoryExecutions[cat.id];
+                    let oro = '-';
+                    let argento = '-';
+                    let bronzo = '-';
+                    // Recupero lista atleti già caricata
+                    const atletiList = atleti || [];
+                    const getAtletaDisplay = (atletaId) => {
+                      const atleta = atletiList.find(a => a.atletaId === atletaId || a.id === atletaId);
+                      if (!atleta) return '-';
+                      const club = atleta.clubAbbr || atleta.club || atleta.clubDenominazione || atleta.clubNome || '-';
+                      return `${atleta.nome} ${atleta.cognome} - ${club}`;
+                    };
+                    if (exec && exec.classifica && Array.isArray(exec.classifica)) {
+                      const oroObj = exec.classifica.find(x => x.pos === 1);
+                      const argObj = exec.classifica.find(x => x.pos === 2);
+                      const bronziObj = exec.classifica.filter(x => x.pos === 3);
+                      oro = oroObj ? getAtletaDisplay(oroObj.atletaId) : '-';
+                      argento = argObj ? getAtletaDisplay(argObj.atletaId) : '-';
+                      if (bronziObj.length === 1) {
+                        bronzo = getAtletaDisplay(bronziObj[0].atletaId);
+                      } else if (bronziObj.length > 1) {
+                        bronzo = bronziObj.map(b => getAtletaDisplay(b.atletaId)).join(' / ');
+                      }
+                    }
+                    return {
+                      id: cat.id,
+                      nomeCategoria: cat.nome,
+                      oro,
+                      argento,
+                      bronzo,
+                    };
+                })}
+                columns={[
+                  { field: 'nomeCategoria', headerName: 'Nome Categoria', flex: 1, minWidth: 180 },
+                  { field: 'oro', headerName: 'Medaglia d\'oro 🥇', flex: 1, minWidth: 180, renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span> },
+                  { field: 'argento', headerName: 'Medaglia d\'argento 🥈', flex: 1, minWidth: 180, renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span> },
+                  { field: 'bronzo', headerName: 'Medaglia di bronzo 🥉', flex: 1, minWidth: 180, renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span> },
+                ]}
+                initialState={{
+                  sorting: {
+                    sortModel: [{ field: 'nomeCategoria', sort: 'asc' }],
+                  },
+                }}
+                disableColumnMenu={false}
+                pageSize={25}
+                rowsPerPageOptions={[10, 25, 50, 100]}
+                components={{ Toolbar: GridToolbar }}
+                autoHeight={true}
+                localeText={{ toolbarColumns: 'Colonne', toolbarFilters: 'Filtri', toolbarDensity: 'Densità', toolbarExport: 'Esporta' }}
+              />
+            </Paper>
+          )}
         </Box>
       )}
     </div>
