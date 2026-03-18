@@ -1,5 +1,4 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
 
 let sequelize;
 
@@ -23,7 +22,7 @@ if (process.env.NODE_ENV === 'production') {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
       dialect: 'postgres',
-      logging: console.log,
+      logging: process.env.DB_LOGGING === 'true' ? console.log : false,
       pool: {
         max: 5,
         min: 0,

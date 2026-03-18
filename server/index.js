@@ -1,37 +1,23 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 
 const { sequelize } = require('./models');
-const apiRoutes = require('./routes');
 const { authenticateToken } = require('./middleware/auth');
+const { errorHandler } = require('./middleware/errorHandler');
+const packageJson = require('./package.json');
+const apiRoutes = require('./routes');
 const logger = require('./helpers/logger/logger');
 const requestLogger = require('./middleware/requestLogger');
-const { errorHandler } = require('./middleware/errorHandler');
-
 
 const app = express();
 const PORT = process.env.PORT || 3050;
 
 // Middleware
-app.use(cors({
-  exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length'],
-  origin: process.env.FRONTEND_URL || '*',
-}));
+app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Request logging
 app.use(requestLogger);
-
-// Routes pubbliche (senza autenticazione)
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Martial Arts Competition Management API',
-    version: '1.0.0',
-    status: 'running'
-  });
-});
 
 // Test database connection (pubblico)
 app.get('/api/health', async (req, res) => {
@@ -60,25 +46,33 @@ app.use('/api', authenticateToken, apiRoutes);
 // Error handler (deve essere l'ultimo middleware)
 app.use(errorHandler);
 
-// Initialize database and start server
-const startServer = async () => {
-  try {
-    // Test database connection
-    await sequelize.authenticate();
-    logger.info('✅ Database connection established successfully.');
+(async () => {
+  console.log(`<< Competition manager backend >> (${packageJson.version})`);
+  logger.info(`${packageJson.name} v${packageJson.version}`);
 
-    // Sync database (create tables if they don't exist)
+  // Inizializza il database e sincronizza i modelli
+  try {
+    await sequelize.authenticate();
+    logger.info('Database connection established successfully.');
     await sequelize.sync({ alter: true });
-    logger.info('✅ Database synchronized successfully.');
-    // Start server
-    app.listen(PORT, () => {
-      logger.info(`🚀 Server running on port ${PORT}`);
-      logger.info(`📊 Health check: ${process.env.BACKEND_URL}/health`);
-    });
+    logger.info('Database synchronized successfully.');
   } catch (error) {
-    logger.error('❌ Unable to start server:', error);
+    logger.error("Errore durante la sincronizzazione del database:", error);
     process.exit(1);
   }
-};
 
-startServer();
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Health check: ${process.env.BACKEND_URL}/health`);
+  });
+
+    // Listener globale per errori non catturati
+  process.on('uncaughtException', (err) => {
+    logger.error(`Errore non catturato: ${err.message}`, err);
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error('Promessa non gestita:', reason);
+  });
+
+})();
