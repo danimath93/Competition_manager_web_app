@@ -4,10 +4,8 @@ import {
   Container,
   Typography,
   Box,
-  Button,
   Card,
   CardContent,
-  TextField,
   Alert,
   CircularProgress,
   Table,
@@ -16,16 +14,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Grid,
   Tooltip
 } from '@mui/material';
+import { Button as MuiButton } from '@mui/material';
+import { FaTags } from 'react-icons/fa';
 import {
   ArrowBack,
   ExpandMore,
   ExpandLess,
   FiberManualRecord
 } from '@mui/icons-material';
+import PageHeader from '../../components/PageHeader';
+import SearchTextField from '../../components/SearchTextField';
 import { useAuth } from '../../context/AuthContext';
 import { getCompetitionDetails } from '../../api/competitions';
 import { getCategoriesByClub } from '../../api/categories';
@@ -43,13 +43,48 @@ const ClubCategories = () => {
   const [error, setError] = useState(null);
 
   // Filtri
-  const [categoryNameFilter, setCategoryNameFilter] = useState('');
-  const [athleteNameFilter, setAthleteNameFilter] = useState('');
+  const [clubCategorySearchFilter, setClubCategorySearchFilter] = useState('');
   
   // Stato per espandere/collassare le card
   const [expandedCards, setExpandedCards] = useState({});
 
+  const handleGoBack = () => {
+    navigate('/competitions');
+  };
+
+  const handleClubCategorySearchFilterChange = (event) => {
+    setClubCategorySearchFilter(event.target.value);
+  }
+
+  const toggleCard = (categoryId) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Carica i dettagli della competizione
+        const competitionData = await getCompetitionDetails(competitionId);
+        setCompetition(competitionData);
+
+        // Carica le categorie del club
+        const categoriesData = await getCategoriesByClub(competitionId, clubId);
+        setCategories(categoriesData);
+        setFilteredCategories(categoriesData);
+      } catch (err) {
+        console.error('Errore nel caricamento dei dati:', err);
+        setError('Impossibile caricare le categorie');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (!competitionId) {
       setError('ID competizione mancante');
       setLoading(false);
@@ -66,137 +101,79 @@ const ClubCategories = () => {
   }, [competitionId, clubId]);
 
   useEffect(() => {
+    const applyFilters = () => {
+      let filtered = [...categories];
+
+      // Filtro per nome categoria
+      if (clubCategorySearchFilter) {
+        filtered = filtered.filter(cat =>
+          cat.nome.toLowerCase().includes(clubCategorySearchFilter.toLowerCase())
+        );
+      }
+
+      // Filtro per nome atleta
+      if (clubCategorySearchFilter) {
+        filtered = filtered.filter(cat =>
+          cat.atleti.some(atleta => {
+            const fullName = `${atleta.nome} ${atleta.cognome}`.toLowerCase();
+            return fullName.includes(clubCategorySearchFilter.toLowerCase());
+          })
+        );
+      }
+
+      setFilteredCategories(filtered);
+    };
+
     applyFilters();
-  }, [categories, categoryNameFilter, athleteNameFilter]);
+  }, [categories, clubCategorySearchFilter]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Carica i dettagli della competizione
-      const competitionData = await getCompetitionDetails(competitionId);
-      setCompetition(competitionData);
-
-      // Carica le categorie del club
-      const categoriesData = await getCategoriesByClub(competitionId, clubId);
-      setCategories(categoriesData);
-      setFilteredCategories(categoriesData);
-    } catch (err) {
-      console.error('Errore nel caricamento dei dati:', err);
-      setError('Impossibile caricare le categorie');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...categories];
-
-    // Filtro per nome categoria
-    if (categoryNameFilter) {
-      filtered = filtered.filter(cat =>
-        cat.nome.toLowerCase().includes(categoryNameFilter.toLowerCase())
-      );
-    }
-
-    // Filtro per nome atleta
-    if (athleteNameFilter) {
-      filtered = filtered.filter(cat =>
-        cat.atleti.some(atleta => {
-          const fullName = `${atleta.nome} ${atleta.cognome}`.toLowerCase();
-          return fullName.includes(athleteNameFilter.toLowerCase());
-        })
-      );
-    }
-
-    setFilteredCategories(filtered);
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const toggleCard = (categoryId) => {
-    setExpandedCards(prev => ({
-      ...prev,
-      [categoryId]: !prev[categoryId]
-    }));
-  };
 
   if (loading) {
     return (
-      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <CircularProgress />
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-        <Button 
-          startIcon={<ArrowBack />} 
-          onClick={handleBack}
-          sx={{ mt: 2 }}
-        >
-          Torna a tutte le categorie
-        </Button>
+      <Container>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <CircularProgress />
+        </Box>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={handleBack}
-          sx={{ mt: 2 }}
-        >
-          Torna a tutte le categorie
-        </Button>
-
-        <Typography variant="h4" gutterBottom>
-          Categorie del Club
-        </Typography>
-
-        {competition && (
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            {competition.nome}
-          </Typography>
-        )}
-      </Box>
+    <div className="page-container">
+      <PageHeader
+        icon={FaTags}
+        title="Categorie iscritti del Club"
+        subtitle={`${competition.nome} - Luogo: ${competition.luogo} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
+      />
+      <MuiButton
+        startIcon={<ArrowBack />}
+        onClick={handleGoBack}
+      >
+        Torna alle Competizioni
+      </MuiButton>
+    
+      {/* Messaggi di errore e successo */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       {/* Filtri */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              name="name"
-              label="Cerca nome categoria"
-              placeholder="Inserisci categoria..."
-              variant="outlined"
-              fullWidth
-              value={categoryNameFilter}
-              onChange={(e) => setCategoryNameFilter(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <TextField
-              name="name"
-              label="Cerca per nome/cognome atleta"
-              placeholder="Inserisci atleta..."
-              variant="outlined"
-              fullWidth
-              value={athleteNameFilter}
-              onChange={(e) => setAthleteNameFilter(e.target.value)}
-            />
-          </Grid>
-        </Grid>
-      </Paper>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <SearchTextField
+          value={clubCategorySearchFilter}
+          onChange={handleClubCategorySearchFilterChange}
+          placeholder="Filtra per atleta o per nome categoria"
+          sx={{
+            width: '100%',
+            maxWidth: "800px",
+            '& .MuiOutlinedInput-root': {
+              height: '60px',
+            }
+          }}
+        />
+      </Box>
 
       {/* Lista Categorie */}
       {filteredCategories.length === 0 ? (
@@ -217,14 +194,14 @@ const ClubCategories = () => {
                       {category.nome}
                     </Typography>
                   </Box>
-                  <Button
+                  <MuiButton
                     variant="outlined"
                     size="small"
                     onClick={() => toggleCard(category.id)}
                     endIcon={expandedCards[category.id] ? <ExpandLess /> : <ExpandMore />}
                   >
                     {expandedCards[category.id] ? 'Nascondi' : 'Mostra'} Atleti
-                  </Button>
+                  </MuiButton>
                 </Box>
 
                 {/* Tabella Atleti */}
@@ -294,7 +271,7 @@ const ClubCategories = () => {
           ))}
         </Box>
       )}
-    </Container>
+    </div>
   );
 };
 
