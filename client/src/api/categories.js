@@ -235,3 +235,5 @@ export const getCategoryExecution = async (categoriaId) => {
     throw error;
   }
 };
+
+

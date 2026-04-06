@@ -24,6 +24,12 @@ export const getClubMedalsDetails = async (clubId, competitionId) => {
   return res.data;
 };
 
+// Categorie con risultati inclusi (classifiche per categoria)
+export const getCategoriesResult = async (competitionId) => {
+  const res = await axios.get('/results/categories', { params: { competitionId } });
+  return res.data;
+};
+
 // Download PDF delle classifiche finali per una competizione
 export const printResults = async (competizioneId) => {
   try {

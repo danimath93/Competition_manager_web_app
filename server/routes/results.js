@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const resultsController = require('../controllers/resultsController');
 
+// Categorie con risultati inclusi
+router.get('/categories', resultsController.getCategoriesWithResults);
+
 // Classifica atleti per fasce di età e genere
 router.get('/atleti', resultsController.getAtletiResults);
 

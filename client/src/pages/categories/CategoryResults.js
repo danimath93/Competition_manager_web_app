@@ -1,26 +1,22 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Paper, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, Tooltip } from '@mui/material';
+import { Box, Container, Typography, Paper, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, Tooltip, Divider, IconButton, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import { Autocomplete, TextField } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import MuiButton from '@mui/material/Button';
 import { FaTags } from 'react-icons/fa';
-import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack } from '@mui/icons-material';
+import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack, NavigateNext as NavigateNextIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
 import { printResults, printClubResults } from '../../api/results';
-import { getCategoriesByCompetizione, getCategoryExecution } from '../../api/categories';
+import { getCategoriesResult } from '../../api/results';
 import { getCompetitionDetails } from '../../api/competitions';
 import PageHeader from '../../components/PageHeader';
 import Tabs from '../../components/common/Tabs';
 import SearchTextField from '../../components/SearchTextField';
 import muiTheme from '../../styles/muiTheme';
-
-// non serve più ma teniamola al momento
-function MedalIcons({ ori, argenti, bronzi }) {
-  return <span>{'🥇'.repeat(ori)}{'🥈'.repeat(argenti)}{'🥉'.repeat(bronzi)}</span>;
-}
+import DrawerModal from '../../components/common/DrawerModal';
 
 const CategoryResults = () => {
   const location = useLocation();
@@ -28,10 +24,7 @@ const CategoryResults = () => {
   const competitionId = query.get('competizioneId');
 
   const [activeTab, setActiveTab] = useState("categoryResults");
-  const [categories, setCategories] = useState([]);
-  const [categoryExecutions, setCategoryExecutions] = useState({});
-  const [catLoading, setCatLoading] = useState(false);
-  const [catError, setCatError] = useState(null);
+  const [categoriesResult, setCategoriesResult] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [competition, setCompetition] = useState(null);
@@ -42,6 +35,10 @@ const CategoryResults = () => {
   const [categorySearchFilter, setCategorySearchFilter] = useState('');
   const [athleteSearchFilter, setAthleteSearchFilter] = useState('');
   const [clubFilter, setClubFilter] = useState('');
+  const [drawerBestByAgeOpen, setDrawerBestByAgeOpen] = useState(false);
+  const [selectedTipo, setSelectedTipo] = useState(null);
+  const [clubDrawerOpen, setClubDrawerOpen] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState(null);
   const navigate = useNavigate();
 
   // Configurazione dei tabs
@@ -57,14 +54,12 @@ const CategoryResults = () => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        setCatLoading(true);
-        setCatError(null);
 
-        const [atletiRes, clubRes, loadedCompetition, cats] = await Promise.all([
+        const [atletiRes, clubRes, loadedCompetition, catsResult] = await Promise.all([
           getAtletiResults(competitionId),
           getClubResults(competitionId),
           getCompetitionDetails(competitionId),
-          getCategoriesByCompetizione(competitionId),
+          getCategoriesResult(competitionId),
         ]);
 
         if (cancelled) return;
@@ -73,33 +68,13 @@ const CategoryResults = () => {
         setClub(clubRes);
         setBestByFascia(atletiRes.miglioriPerFasce);
         setCompetition(loadedCompetition);
-        setCategories(cats);
-
-        // Carica le execution delle categorie in parallelo
-        const executions = {};
-        await Promise.all(
-          cats.map(async cat => {
-            try {
-              const exec = await getCategoryExecution(cat.id);
-              executions[cat.id] = exec;
-            } catch (e) {
-              executions[cat.id] = null;
-            }
-          })
-        );
-        if (!cancelled) {
-          setCategoryExecutions(executions);
-          setCatLoading(false);
-        }
-
+        setCategoriesResult(catsResult);
         setLoading(false);
       } catch (err) {
         console.error('Errore risultati:', err);
         if (!cancelled) {
           setError('Errore caricamento risultati');
-          setCatError('Errore caricamento classifiche categorie');
           setLoading(false);
-          setCatLoading(false);
         }
       }
     };
@@ -115,10 +90,13 @@ const CategoryResults = () => {
     navigate('/categories');
   };
 
-  const handleAccordion = useCallback(async (clubId) => {
-    if (clubDetails[clubId]) return;
-    const details = await getClubMedalsDetails(clubId, competitionId);
-    setClubDetails(prev => ({ ...prev, [clubId]: details }));
+  const handleClubDrawerOpen = useCallback(async (clubId) => {
+    setSelectedClubId(clubId);
+    setClubDrawerOpen(true);
+    if (!clubDetails[clubId]) {
+      const details = await getClubMedalsDetails(clubId, competitionId);
+      setClubDetails(prev => ({ ...prev, [clubId]: details }));
+    }
   }, [clubDetails, competitionId]);
 
   const handleClubFilterChange = (value) => {
@@ -134,32 +112,26 @@ const CategoryResults = () => {
   ], []);
 
   const categoryResultsRows = useMemo(() => {
-    const atletiList = atleti || [];
-    const getAtletaDisplay = (atletaId) => {
-      const atleta = atletiList.find(a => a.atletaId === atletaId || a.id === atletaId);
-      if (!atleta) return '-';
-      const clubName = atleta.clubAbbr || atleta.club || atleta.clubDenominazione || atleta.clubNome || '-';
-      return `${atleta.nome} ${atleta.cognome} - ${clubName}`;
+    const getDisplay = (entry) => {
+      if (!entry?.nomeAtleta) return '-';
+      return `${entry.nomeAtleta} - ${entry.club || '-'}`;
     };
 
-    const allRows = categories.map(cat => {
-      const exec = categoryExecutions[cat.id];
-      let oro = '-';
-      let argento = '-';
-      let bronzo = '-';
-      if (exec?.classifica && Array.isArray(exec.classifica)) {
-        const oroObj = exec.classifica.find(x => x.pos === 1);
-        const argObj = exec.classifica.find(x => x.pos === 2);
-        const bronziObj = exec.classifica.filter(x => x.pos === 3);
-        oro = oroObj ? getAtletaDisplay(oroObj.atletaId) : '-';
-        argento = argObj ? getAtletaDisplay(argObj.atletaId) : '-';
-        if (bronziObj.length === 1) {
-          bronzo = getAtletaDisplay(bronziObj[0].atletaId);
-        } else if (bronziObj.length > 1) {
-          bronzo = bronziObj.map(b => getAtletaDisplay(b.atletaId)).join(' / ');
-        }
-      }
-      return { id: cat.id, nomeCategoria: cat.nome, oro, argento, bronzo };
+    const allRows = categoriesResult.map(cat => {
+      const classifica = cat.classifica || [];
+      const oroEntry = classifica.find(x => x.pos === 1);
+      const argEntry = classifica.find(x => x.pos === 2);
+      const bronziEntries = classifica.filter(x => x.pos === 3);
+      const bronzo = bronziEntries.length === 0 ? '-'
+        : bronziEntries.length === 1 ? getDisplay(bronziEntries[0])
+        : bronziEntries.map(getDisplay).join(' / ');
+      return {
+        id: cat.id,
+        nomeCategoria: cat.nome,
+        oro: getDisplay(oroEntry),
+        argento: getDisplay(argEntry),
+        bronzo,
+      };
     });
 
     if (!categorySearchFilter) return allRows;
@@ -170,7 +142,7 @@ const CategoryResults = () => {
       row.argento?.toLowerCase().includes(search) ||
       row.bronzo?.toLowerCase().includes(search)
     );
-  }, [categories, categoryExecutions, atleti, categorySearchFilter]);
+  }, [categoriesResult, categorySearchFilter]);
 
   // --- Tab 2: Atleti - columns & rows ---
   const athleteResultsColumns = useMemo(() => [
@@ -191,7 +163,7 @@ const CategoryResults = () => {
     const allRows = atleti.map(a => ({
       ...a,
       id: a.atletaId,
-      atleta: `${a.nome} ${a.cognome}`,
+      atleta: `${a.cognome} ${a.nome}`,
       clubDisplay: a.clubAbbr || a.club,
       fasciaEtaDisplay: a.fasciaEta === 'Non Definita' && a.fasciaEtaNote
         ? `${a.fasciaEta} (${a.fasciaEtaNote})`
@@ -210,6 +182,26 @@ const CategoryResults = () => {
     );
   }, [atleti, athleteSearchFilter]);
 
+  // --- Drawer data per fascia di età ---
+  const drawerBestByAgeData = useMemo(() => {
+    if (!selectedTipo || !bestByFascia || !bestByFascia[selectedTipo]) return null;
+    const fasce = bestByFascia[selectedTipo];
+    const showSummary = selectedTipo !== 'CB Bambini';
+    let bestOverall = [];
+    if (showSummary) {
+      let allAtleti = [];
+      Object.values(fasce).forEach(sesso => {
+        allAtleti = allAtleti.concat(sesso.M || [], sesso.F || []);
+      });
+      allAtleti = allAtleti.filter(Boolean);
+      if (allAtleti.length > 0) {
+        const maxPunti = Math.max(...allAtleti.map(a => a.punti));
+        bestOverall = allAtleti.filter(a => a.punti === maxPunti);
+      }
+    }
+    return { fasce, showSummary, bestOverall };
+  }, [selectedTipo, bestByFascia]);
+
   // --- Tab 3: Club - columns & rows ---
   const clubResultsColumns = useMemo(() => [
     { field: 'club', headerName: 'Club', flex: 1, minWidth: 180 },
@@ -220,35 +212,21 @@ const CategoryResults = () => {
     {
       field: 'dettagli',
       headerName: 'Dettagli',
-      flex: 1.5,
-      minWidth: 250,
+      flex: 0.4,
+      minWidth: 80,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Accordion onChange={() => handleAccordion(params.row.clubId)} sx={{ width: '100%', boxShadow: 'none' }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            Dettagli medaglie
-          </AccordionSummary>
-          <AccordionDetails>
-            {clubDetails[params.row.clubId]?.atleti ? (
-              clubDetails[params.row.clubId].atleti.length > 0 ? (
-                clubDetails[params.row.clubId].atleti.map(a => (
-                  <Box key={a.atletaId} sx={{ mb: 1 }}>
-                    <b>{a.nome} {a.cognome}</b>:{' '}
-                    <MedalIcons ori={a.ori} argenti={a.argenti} bronzi={a.bronzi} />
-                  </Box>
-                ))
-              ) : (
-                <Typography>Nessun atleta con medaglie</Typography>
-              )
-            ) : (
-              <CircularProgress size={20} />
-            )}
-          </AccordionDetails>
-        </Accordion>
+        <IconButton
+          size="small"
+          onClick={() => handleClubDrawerOpen(params.row.clubId)}
+          title="Vedi atleti medagliati"
+        >
+          <VisibilityIcon fontSize="small" />
+        </IconButton>
       ),
     },
-  ], [clubDetails, handleAccordion]);
+  ], [handleClubDrawerOpen]);
 
   const clubNames = useMemo(() => {
     if (!club?.classifica) return [];
@@ -287,7 +265,7 @@ const CategoryResults = () => {
       <PageHeader
         icon={FaTags}
         title="Risultati competizione"
-        subtitle={`${competition?.nome} - ${competition?.luogo} - ${format(new Date(competition.dataInizio), 'dd/MM/yyyy')} - ${format(new Date(competition.dataFine), 'dd/MM/yyyy')}`}
+        subtitle={`${competition?.nome} - ${competition?.luogo} - ${format(new Date(competition?.dataInizio), 'dd/MM/yyyy')} - ${format(new Date(competition?.dataFine), 'dd/MM/yyyy')}`}
       />
       <MuiButton
         startIcon={<ArrowBack />}
@@ -331,121 +309,55 @@ const CategoryResults = () => {
                 Stampa Classifiche
               </MuiButton>
             </Box>
-            {catLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-                <CircularProgress />
-              </Box>
-            ) : catError ? (
-              <Alert severity="error">{catError}</Alert>
-            ) : (
-              <DataGrid
-                rows={categoryResultsRows}
-                columns={categoryResultsColumns}
-                initialState={{
-                  ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
-                  sorting: {
-                    sortModel: [{ field: 'nomeCategoria', sort: 'asc' }],
-                  },
-                }}
-                disableColumnMenu={false}
-                localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
-              />
-            )}
+            <DataGrid
+              rows={categoryResultsRows}
+              columns={categoryResultsColumns}
+              initialState={{
+                ...muiTheme.components.MuiDataGrid.defaultProps.initialState,
+                sorting: {
+                  sortModel: [{ field: 'nomeCategoria', sort: 'asc' }],
+                },
+              }}
+              disableColumnMenu={false}
+              localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
+            />
           </Box>
         )}
 
         {/* Tab Panel - Classifiche per atleta */}
         {activeTab === "athleteResults" && atleti && (
           <Box>
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" sx={{ mb: 2 }}>
-                Migliori per Fascia di Età
-              </Typography>
-
-              {!bestByFascia ? (
-                <Typography>Caricamento...</Typography>
-              ) : (
-                Object.entries(bestByFascia).map(([tipo, fasce]) => {
-                  let showSummary = tipo !== 'CB Bambini';
-                  let bestOverall = [];
-                  if (showSummary) {
-                    let allAtleti = [];
-                    Object.values(fasce).forEach(sesso => {
-                      allAtleti = allAtleti.concat(sesso.M, sesso.F);
-                    });
-                    allAtleti = allAtleti.filter(Boolean);
-                    if (allAtleti.length > 0) {
-                      const maxPunti = Math.max(...allAtleti.map(a => a.punti));
-                      bestOverall = allAtleti.filter(a => a.punti === maxPunti);
-                    }
-                  }
-                  return (
-                    <Box key={tipo} sx={{ mb: 2 }}>
-                      <Accordion sx={{ mb: 2 }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="h6">{tipo}</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          {showSummary && bestOverall.length > 0 && (
-                            <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Miglior atleta assoluto</Typography>
-                              {bestOverall.map(a => (
-                                <Box key={a.atletaId} sx={{ ml: 1, mb: 1 }}>
-                                  <b>{a.nome} {a.cognome}</b> – {a.club}
-                                  <Box sx={{ ml: 1 }}>
-                                    🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
-                                  </Box>
-                                  <Typography>Punti: {a.punti}</Typography>
-                                </Box>
-                              ))}
-                            </Box>
-                          )}
-                          {Object.entries(fasce).map(([fascia, sesso]) => (
-                            <Accordion key={fascia} sx={{ mb: 1, ml: 2 }}>
-                              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                <Typography>{fascia}</Typography>
-                              </AccordionSummary>
-                              <AccordionDetails>
-                                <Typography variant="subtitle1">Maschile</Typography>
-                                {sesso.M.length > 0 ? (
-                                  sesso.M.map(a => (
-                                    <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
-                                      <b>{a.nome} {a.cognome}</b> – {a.club}
-                                      <Box sx={{ ml: 1 }}>
-                                        🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
-                                      </Box>
-                                      <Typography>Punti: {a.punti}</Typography>
-                                    </Box>
-                                  ))
-                                ) : (
-                                  <Typography sx={{ ml: 2, color: "gray" }}>Nessun atleta</Typography>
-                                )}
-                                <Typography variant="subtitle1" sx={{ mt: 2 }}>
-                                  Femminile
-                                </Typography>
-                                {sesso.F.length > 0 ? (
-                                  sesso.F.map(a => (
-                                    <Box key={a.atletaId} sx={{ ml: 2, mb: 1 }}>
-                                      <b>{a.nome} {a.cognome}</b> – {a.club}
-                                      <Box sx={{ ml: 1 }}>
-                                        🥇{a.medaglie.oro} 🥈{a.medaglie.argento} 🥉{a.medaglie.bronzo}
-                                      </Box>
-                                      <Typography>Punti: {a.punti}</Typography>
-                                    </Box>
-                                  ))
-                                ) : (
-                                  <Typography sx={{ ml: 2, color: "gray" }}>Nessuna atleta</Typography>
-                                )}
-                              </AccordionDetails>
-                            </Accordion>
-                          ))}
-                        </AccordionDetails>
-                      </Accordion>
-                    </Box>
-                  );
-                })
-              )}
-            </Box>
+            {/* Selettori per tipologia atleta */}
+            {!bestByFascia ? (
+              <Typography>Caricamento...</Typography>
+            ) : (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                {Object.keys(bestByFascia).map(tipo => (
+                  <Box
+                    key={tipo}
+                    onClick={() => { setSelectedTipo(tipo); setDrawerBestByAgeOpen(true); }}
+                    sx={{
+                      flex: '1 1 220px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      bgcolor: 'background.paper',
+                      boxShadow: 1,
+                      '&:hover': { bgcolor: 'action.hover', boxShadow: 2 },
+                      transition: 'box-shadow 0.2s',
+                    }}
+                  >
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>{tipo}</Typography>
+                    <NavigateNextIcon sx={{ color: 'text.secondary' }} />
+                  </Box>
+                ))}
+              </Box>
+            )}
 
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={3}>
               <SearchTextField
@@ -472,6 +384,111 @@ const CategoryResults = () => {
               disableColumnMenu={false}
               localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
             />
+
+            {/* Drawer per fascia di età */}
+            <DrawerModal
+              open={drawerBestByAgeOpen}
+              onClose={() => setDrawerBestByAgeOpen(false)}
+              title={`Migliori per Fascia di Età: ${selectedTipo || ''}`}
+            >
+              {drawerBestByAgeData && (
+                <Box>
+                  {/* Miglior atleta assoluto */}
+                  {drawerBestByAgeData.showSummary && drawerBestByAgeData.bestOverall.length > 0 && (
+                    <Box sx={{ mb: 3, p: 2.5, bgcolor: '#eef2ff', borderRadius: 2 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
+                        Miglior atleta assoluto
+                      </Typography>
+                      {drawerBestByAgeData.bestOverall.map((a, idx) => (
+                        <Box key={a.atletaId}>
+                          <Typography sx={{ fontWeight: 600 }}>
+                            {a.cognome} {a.nome} – {a.club}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, mb: 1, flexWrap: 'wrap' }}>
+                            {[['🥇', a.medaglie.oro], ['🥈', a.medaglie.argento], ['🥉', a.medaglie.bronzo]].map(([medal, count]) => (
+                              <Box key={medal} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, border: '1px solid #d0d0d0', borderRadius: 1 }}>
+                                <span>{medal}</span>
+                                <Typography sx={{ fontWeight: 600 }}>{count}</Typography>
+                              </Box>
+                            ))}
+                            <Typography sx={{ fontWeight: 700 }}>Punti: {a.punti}</Typography>
+                          </Box>
+                          {idx < drawerBestByAgeData.bestOverall.length - 1 && <Divider sx={{ my: 1 }} />}
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* Sezioni per fascia */}
+                  {Object.entries(drawerBestByAgeData.fasce).map(([fascia, sesso]) => (
+                    <Accordion key={fascia} sx={{ mb: 1 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{fascia}</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                          {/* Maschile */}
+                          <Box sx={{ flex: '1 1 200px' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.secondary' }}>
+                              Maschile
+                            </Typography>
+                            {(sesso.M || []).length > 0 ? (
+                              (sesso.M || []).map(a => (
+                                <Box key={a.atletaId} sx={{ mb: 1.5 }}>
+                                  <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                    {a.cognome} {a.nome} – {a.club}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                                    {[['🥇', a.medaglie.oro], ['🥈', a.medaglie.argento], ['🥉', a.medaglie.bronzo]].map(([medal, count]) => (
+                                      <Box key={medal} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, border: '1px solid #d0d0d0', borderRadius: 1 }}>
+                                        <span>{medal}</span>
+                                        <Typography sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{count}</Typography>
+                                      </Box>
+                                    ))}
+                                    <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Punti: {a.punti}</Typography>
+                                  </Box>
+                                </Box>
+                              ))
+                            ) : (
+                              <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>Nessun atleta</Typography>
+                            )}
+                          </Box>
+
+                          <Divider orientation="vertical" flexItem />
+
+                          {/* Femminile */}
+                          <Box sx={{ flex: '1 1 200px' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.secondary' }}>
+                              Femminile
+                            </Typography>
+                            {(sesso.F || []).length > 0 ? (
+                              (sesso.F || []).map(a => (
+                                <Box key={a.atletaId} sx={{ mb: 1.5 }}>
+                                  <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                    {a.cognome} {a.nome} – {a.club}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                                    {[['🥇', a.medaglie.oro], ['🥈', a.medaglie.argento], ['🥉', a.medaglie.bronzo]].map(([medal, count]) => (
+                                      <Box key={medal} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, border: '1px solid #d0d0d0', borderRadius: 1 }}>
+                                        <span>{medal}</span>
+                                        <Typography sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{count}</Typography>
+                                      </Box>
+                                    ))}
+                                    <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Punti: {a.punti}</Typography>
+                                  </Box>
+                                </Box>
+                              ))
+                            ) : (
+                              <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>Nessuna atleta</Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                </Box>
+              )}
+            </DrawerModal>
           </Box>
         )}
 
@@ -583,8 +600,49 @@ const CategoryResults = () => {
               }}
               disableColumnMenu={false}
               localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
-              getRowHeight={() => 'auto'}
             />
+
+            {/* Drawer dettaglio atleti club */}
+            <DrawerModal
+              open={clubDrawerOpen}
+              onClose={() => setClubDrawerOpen(false)}
+              title={`Dettaglio medaglie – ${club?.classifica?.find(c => c.clubId === selectedClubId)?.club || ''}`}
+            >
+              {selectedClubId && (
+                clubDetails[selectedClubId]?.atleti ? (
+                  clubDetails[selectedClubId].atleti.length > 0 ? (
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>Atleta</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Ori</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Argenti</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>Bronzi</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {[...clubDetails[selectedClubId].atleti]
+                          .sort((a, b) => b.ori - a.ori || b.argenti - a.argenti || b.bronzi - a.bronzi)
+                          .map(a => (
+                            <TableRow key={a.atletaId}>
+                              <TableCell>{a.cognome} {a.nome}</TableCell>
+                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>{'🥇'.repeat(a.ori)}</TableCell>
+                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>{'🥈'.repeat(a.argenti)}</TableCell>
+                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>{'🥉'.repeat(a.bronzi)}</TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <Typography sx={{ p: 2, color: 'text.secondary' }}>Nessun atleta con medaglie</Typography>
+                  )
+                ) : (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                )
+              )}
+            </DrawerModal>
           </Box>
         )}
       </Tabs>

@@ -271,9 +271,6 @@ const FightingExecution = ({
     <div className="page-grid-75-25">
       {/* Tabellone - Sinistra */}
       <div className="page-card-with-external-title page-card-expanded">
-        <Typography variant="h4" gutterBottom sx={{ flexShrink: 0 }}>
-          Tabellone Incontri
-        </Typography>
         <div className="page-card-scrollable">
           <div className="page-card-scrollable-body" style={{ padding: '1rem' }}>
             {stato === CategoryStates.CONCLUSA && (
@@ -403,10 +400,10 @@ const FightingExecution = ({
 
       </div>
 
-      {/* Colonna Destra: Classifica e Commissione */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Sidebar: Classifica e Commissione - Destra */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: 'calc(100vh - 280px)', minHeight: 0, overflow: 'hidden' }}>
         {/* Classifica */}
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 2, overflow: 'hidden', flex: 1, minHeight: 280, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" gutterBottom>
             🏆 Classifica
           </Typography>
@@ -421,7 +418,7 @@ const FightingExecution = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {[1, 2, 3, 4].map((pos) => {
+                {[1, 2, 3].map((pos) => {
                   const athlete = getClassifiedAthlete(pos);
                   
                   return (
@@ -448,7 +445,7 @@ const FightingExecution = ({
                           variant="body2" 
                           sx={{ 
                             whiteSpace: 'pre-line',
-                            fontWeight: pos <= 3 ? 'bold' : 'normal'
+                            fontWeight: 'bold'
                           }}
                         >
                           {athlete || '-'}
@@ -460,22 +457,16 @@ const FightingExecution = ({
               </TableBody>
             </Table>
           </TableContainer>
-
-          {localClassifica.filter(c => c.pos === 3).length === 2 && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              Doppio terzo posto
-            </Alert>
-          )}
         </Paper>
 
         {/* Commissione */}
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 2, overflow: 'hidden', flex: 1, minHeight: 100, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" gutterBottom>
             Commissione
           </Typography>
           <Divider sx={{ mb: 2 }} />
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, overflowY: 'auto', flex: 1, minHeight: 0, pr: 1 }}>
             {COMMISSIONE_LABELS.map((label, idx) => (
               <Box key={label}>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>

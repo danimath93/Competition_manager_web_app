@@ -1,5 +1,6 @@
 // Controller per risultati generali (atleti e club)
 const { SvolgimentoCategoria, Categoria, Atleta, Club, Competizione } = require('../models');
+const { ConfigTipoCategoria, ConfigTipoCompetizione } = require('../models');
 const { Op } = require('sequelize');
 const { buildGlobalAthleteList, buildClubRanking, computeAthletePoints, assignAgeGroupAndTipo, bestAthletesByTipoFascia } = require('../utils/resultsHelpers');
 const PDFDocument = require('pdfkit');
@@ -454,6 +455,88 @@ async function printClubResults(req, res) {
 }
 
 module.exports.printClubResults = printClubResults;
+
+// GET /results/categories?competitionId=...
+exports.getCategoriesWithResults = async (req, res) => {
+  const competizioneId = req.query.competitionId || req.query.competizioneId;
+  if (!competizioneId) return res.status(400).json({ error: 'competitionId è richiesto' });
+  try {
+    const categorie = await Categoria.findAll({
+      where: { competizioneId },
+      attributes: ['id', 'nome', 'ordine'],
+      include: [{
+        model: ConfigTipoCategoria,
+        as: 'tipoCategoria',
+        attributes: ['id', 'nome'],
+        include: [{
+          model: ConfigTipoCompetizione,
+          as: 'tipoCompetizione',
+          attributes: ['id', 'nome']
+        }]
+      }]
+    });
+
+    categorie.sort((a, b) => {
+      if (a.ordine !== null && b.ordine !== null) return a.ordine - b.ordine;
+      if (a.ordine !== null) return -1;
+      if (b.ordine !== null) return 1;
+      return a.nome.localeCompare(b.nome, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    const categoriaIds = categorie.map(c => c.id);
+    if (categoriaIds.length === 0) return res.json([]);
+
+    const svolgimenti = await SvolgimentoCategoria.findAll({
+      where: { categoriaId: categoriaIds },
+      attributes: ['categoriaId', 'classifica']
+    });
+
+    const svolgimentiMap = {};
+    svolgimenti.forEach(s => { svolgimentiMap[s.categoriaId] = s.classifica || []; });
+
+    const atletaIdSet = new Set();
+    Object.values(svolgimentiMap).forEach(classifica => {
+      if (Array.isArray(classifica)) {
+        classifica.forEach(entry => { if (entry.atletaId) atletaIdSet.add(entry.atletaId); });
+      }
+    });
+
+    const atletiMap = {};
+    if (atletaIdSet.size > 0) {
+      const atleti = await Atleta.findAll({
+        where: { id: Array.from(atletaIdSet) },
+        attributes: ['id', 'nome', 'cognome'],
+        include: [{ model: Club, as: 'club', attributes: ['id', 'denominazione', 'abbreviazione'] }]
+      });
+      atleti.forEach(a => { atletiMap[a.id] = a; });
+    }
+
+    const result = categorie.map(cat => {
+      const classifica = svolgimentiMap[cat.id] || [];
+      const classificaArricchita = Array.isArray(classifica) ? classifica.map(entry => {
+        const atleta = atletiMap[entry.atletaId];
+        return {
+          pos: entry.pos,
+          atletaId: entry.atletaId,
+          nomeAtleta: atleta ? `${atleta.nome} ${atleta.cognome}` : null,
+          club: atleta?.club?.abbreviazione || atleta?.club?.denominazione || null
+        };
+      }) : [];
+      return {
+        id: cat.id,
+        nome: cat.nome,
+        ordine: cat.ordine,
+        tipoCategoria: cat.tipoCategoria,
+        classifica: classificaArricchita
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Errore nel recupero delle categorie con risultati:', error);
+    res.status(500).json({ error: 'Errore nel recupero categorie con risultati', details: error.message });
+  }
+};
 
 // GET /results/atleti
 exports.getAtletiResults = async (req, res) => {

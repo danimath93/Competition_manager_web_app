@@ -409,9 +409,9 @@ const QuyenExecution = ({
       </div>
 
       {/* Sidebar: Classifica e Commissione - Destra */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: 'calc(100vh - 280px)', minHeight: 0, overflow: 'hidden' }}>
         {/* Classifica */}
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 2, overflow: 'hidden', flex: 1, minHeight: 250, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" gutterBottom>
             Classifica
           </Typography>
@@ -459,13 +459,13 @@ const QuyenExecution = ({
         </Paper>
 
         {/* Commissione */}
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 2, overflow: 'hidden', flex: 1, minHeight: 100, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" gutterBottom>
             Commissione
           </Typography>
           <Divider sx={{ mb: 2 }} />
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, overflowY: 'auto', flex: 1, minHeight: 0, pr: 1 }}>
             {COMMISSIONE_LABELS.map((label, idx) => (
               <Box key={label}>
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
