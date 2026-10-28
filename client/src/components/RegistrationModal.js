@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   TextField,
   Button,
@@ -8,13 +8,14 @@ import {
   Chip,
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import { loadCategoryTypeById, loadExperienceById } from '../api/config';
 import { editAthleteRegistrations } from '../api/registrations';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
-import { checkCategoryConstraints } from '../utils/helperRegistration';
+import { checkCategoryConstraints, getAthleteTypeConfig, loadRegistrationConfig } from '../utils/helperRegistration';
 import './common/DrawerModal.css';
+
+const getRegistrationCategoryId = (reg) => reg.tipoCategoria?.id || reg.tipoCategoriaId;
 
 const RegistrationModal = ({
   open,
@@ -25,130 +26,83 @@ const RegistrationModal = ({
   registrations,
   competition,
 }) => {
-  // Stati per le categorie
-  const [availableCategories, setAvailableCategories] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  // Configurazione della competizione per il tipo atleta
+  const athleteConfig = useMemo(
+    () => getAthleteTypeConfig(competition, athlete?.tipoAtletaId),
+    [competition, athlete?.tipoAtletaId]
+  );
+  const availableCategories = useMemo(() => athleteConfig?.categorie || [], [athleteConfig]);
+
+  // Dati di configurazione caricati (tramite cache)
   const [categoryDetails, setCategoryDetails] = useState({});
-  const [categoryDetailSelections, setCategoryDetailSelections] = useState({});
-  const [weight, setWeight] = useState('');
-  const [selectedExperiences, setSelectedExperiences] = useState({});
-  
-  // Stati per le esperienze - ora organizzate per tipo competizione
   const [availableExperiencesByType, setAvailableExperiencesByType] = useState({});
-  
+  const [categoryDetailOptions, setCategoryDetailOptions] = useState({});
+
+  // Selezioni utente, inizializzate dalle iscrizioni esistenti
+  const [selectedCategories, setSelectedCategories] = useState(
+    () => (registrations || []).map(getRegistrationCategoryId).filter(Boolean)
+  );
+  const [categoryDetailSelections, setCategoryDetailSelections] = useState(() => {
+    const detailSelections = {};
+    (registrations || []).forEach(reg => {
+      const catId = getRegistrationCategoryId(reg);
+      if (reg.dettagli && catId) {
+        detailSelections[catId] = reg.dettagli;
+      }
+    });
+    return detailSelections;
+  });
+  const [weight, setWeight] = useState(
+    () => (registrations || []).find(reg => reg.peso)?.peso?.toString() || ''
+  );
+  const [selectedExperiences, setSelectedExperiences] = useState({});
+
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Carica le categorie disponibili e i dati delle iscrizioni esistenti
+  // Carica i dati di configurazione (categorie, esperienze, dettagli categoria)
   useEffect(() => {
-    const loadData = async () => {
-      if (!open || !competition || !athlete) return;
+    if (!open || !athleteConfig) {
+      setLoading(false);
+      return;
+    }
 
+    let isMounted = true;
+
+    const loadData = async () => {
       try {
         setLoading(true);
-        
-        // Carica le categorie disponibili dalla competizione
-        const categories = [];
-        if (competition?.categorieAtleti) {
-          competition.categorieAtleti.forEach(categorieTipoAtleta => {
-            if (categorieTipoAtleta.idTipoAtleta === athlete.tipoAtletaId && 
-                categorieTipoAtleta.categorie && 
-                Array.isArray(categorieTipoAtleta.categorie)) {
-              categories.push(...categorieTipoAtleta.categorie);
-            }
-          });
-        }
-        setAvailableCategories(categories);
+        const config = await loadRegistrationConfig(athleteConfig);
+        if (!isMounted) return;
 
-        // Carica i dettagli delle categorie
-        const details = {};
-        for (const category of categories) {
-          try {
-            const categoryDetail = await loadCategoryTypeById(category.configTipoCategoria);
-            details[category.configTipoCategoria] = categoryDetail;
-          } catch (error) {
-            console.error(`Errore nel caricamento categoria ${category.configTipoCategoria}:`, error);
+        setCategoryDetails(config.categoryDetails);
+        setAvailableExperiencesByType(config.experiencesByType);
+        setCategoryDetailOptions(config.detailOptionsByCategory);
+
+        // Imposta le esperienze selezionate (raggruppa per tipoCompetizioneId, saranno tutte uguali)
+        const experiences = {};
+        (registrations || []).forEach(reg => {
+          const tipoCompId = config.categoryDetails[getRegistrationCategoryId(reg)]?.tipoCompetizioneId;
+          if (reg.esperienza && tipoCompId && !experiences[tipoCompId]) {
+            experiences[tipoCompId] = reg.esperienza;
           }
-        }
-        setCategoryDetails(details);
-
-        // Carica le esperienze disponibili dalla configurazione della competizione
-        const athleteConfig = competition.categorieAtleti?.find(
-          ca => ca.idTipoAtleta === athlete.tipoAtletaId
-        );
-
-        if (athleteConfig?.esperienzaCategorie) {
-          const experiencesByType = {};
-          
-          // Per ogni tipo competizione, carica le esperienze
-          for (const expConfig of athleteConfig.esperienzaCategorie) {
-            const tipoCompId = expConfig.configTipoCompetizione;
-            const experienceIds = expConfig.idEsperienza || [];
-            
-            // Carica i dettagli di ogni esperienza
-            const experiences = [];
-            for (const expId of experienceIds) {
-              try {
-                const experience = await loadExperienceById(expId);
-                experiences.push(experience);
-              } catch (error) {
-                console.error(`Errore nel caricamento esperienza ${expId}:`, error);
-              }
-            }
-            
-            experiencesByType[tipoCompId] = experiences;
-          }
-          
-          setAvailableExperiencesByType(experiencesByType);
-        }
-
-        // Imposta le categorie selezionate dalle iscrizioni esistenti
-        if (registrations && registrations.length > 0) {
-          const selectedCatIds = registrations.map(reg => reg.tipoCategoria?.id || reg.tipoCategoriaId).filter(Boolean);
-          setSelectedCategories(selectedCatIds);
-
-          // Imposta i dettagli delle categorie selezionate
-          const detailSelections = {};
-          registrations.forEach(reg => {
-            const catId = reg.tipoCategoria?.id || reg.tipoCategoriaId;
-            if (reg.dettagli && catId) {
-              detailSelections[catId] = reg.dettagli;
-            }
-          });
-          setCategoryDetailSelections(detailSelections);
-
-          // Imposta il peso se presente (prende il primo che trova)
-          const registrationWithWeight = registrations.find(reg => reg.peso);
-          if (registrationWithWeight) {
-            setWeight(registrationWithWeight.peso.toString());
-          }
-
-          // Imposta le esperienze selezionate (raggruppa per tipoCompetizioneId)
-          const experiences = {};
-          registrations.forEach(reg => {
-            const catId = reg.tipoCategoria?.id || reg.tipoCategoriaId;
-            if (reg.esperienza && catId) {
-              const catDetail = details[catId];
-              if (catDetail?.tipoCompetizioneId && !experiences[catDetail.tipoCompetizioneId]) {
-                // Salva solo la prima esperienza per tipo competizione (saranno tutte uguali)
-                experiences[catDetail.tipoCompetizioneId] = reg.esperienza;
-              }
-            }
-          });
-          setSelectedExperiences(experiences);
-        }
-
+        });
+        setSelectedExperiences(experiences);
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
-        setError('Errore nel caricamento dei dati dell\'iscrizione');
+        if (isMounted) setError('Errore nel caricamento dei dati dell\'iscrizione');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     loadData();
-  }, [open, competition, athlete, registrations]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, athleteConfig, registrations]);
 
   // Gestisce la selezione/deselezione di una categoria
   const handleCategoryToggle = (categoryId) => {
@@ -222,7 +176,11 @@ const RegistrationModal = ({
       const data = {
         // tesseramento,
         categories: selectedCategories,
-        categoriesDetails: categoryDetailSelections,
+        categoriesDetails: Object.fromEntries(
+          Object.entries(categoryDetailSelections)
+            .filter(([categoryId, detail]) => detail && selectedCategories.includes(Number(categoryId)))
+            .map(([categoryId, detail]) => [categoryId, { id: detail.id, nome: detail.nome }])
+        ),
         experiences: selectedExperiences,
         weight: weight || null,
       };
@@ -247,31 +205,9 @@ const RegistrationModal = ({
     }
   };
 
-  // Opzioni dettagli categoria per categoryId specifici
-  // TODO: Questi valori saranno successivamente caricati dal database tramite configurazione
-  const CategoryDetailOptions = {
-    // Esempio: categoryId 1 - Quyen Song Luyen
-    1: [
-      { id: 1, nome: 'TAN SO MOT', value: 'TAN SO MOT' },
-      { id: 2, nome: 'THIEN MON', value: 'THIEN MON' },
-      { id: 3, nome: 'HUYN LONG THUA VAN ', value: 'HUYN LONG THUA VAN ' },
-      { id: 4, nome: 'LOA THANH', value: 'LOA THANH' },
-      { id: 5, nome: 'VAN SON', value: 'VAN SON' },
-      { id: 6, nome: 'PHUONG HOANG', value: 'PHUONG HOANG' },
-      { id: 7, nome: 'THAP TU', value: 'THAP TU' },
-      { id: 8, nome: 'LONG HO', value: 'LONG HO' },
-      { id: 9, nome: 'LAO HO THUONG SON', value: 'LAO HO THUONG SON' },
-      { id: 10, nome: 'BACH HO', value: 'BACH HO' },
-      { id: 11, nome: 'LAO MAI', value: 'LAO MAI' },
-      { id: 12, nome: 'NGOC TRAN', value: 'NGOC TRAN' }
-    ],
-    // Aggiungi altre categorie qui man mano che vengono definite
-    // categoryId: [ { id, nome, value }, ... ]
-  };
-
-  // Opzioni vuote per dettagli - da implementare con enum
+  // Opzioni dettagli categoria (nomi quyen), presenti solo se configurato almeno un valore
   const getCategoryDetailOptions = (categoryId) => {
-    return CategoryDetailOptions[categoryId] || [];
+    return categoryDetailOptions[categoryId] || [];
   };
 
   // Verifica se è una categoria di combattimento
@@ -438,6 +374,7 @@ const RegistrationModal = ({
                             onChange={(event, newValue) => handleCategoryDetailChange(categoryId, newValue)}
                             options={detailOptions}
                             getOptionLabel={(option) => option.nome || ''}
+                            isOptionEqualToValue={(option, value) => option.nome === value.nome}
                             disabled={!isSelected}
                             renderInput={(params) => (
                               <TextField
@@ -522,6 +459,7 @@ const RegistrationModal = ({
                             onChange={(event, newValue) => handleCategoryDetailChange(categoryId, newValue)}
                             options={detailOptions}
                             getOptionLabel={(option) => option.nome || ''}
+                            isOptionEqualToValue={(option, value) => option.nome === value.nome}
                             disabled={!isSelected}
                             renderInput={(params) => (
                               <TextField

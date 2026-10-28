@@ -110,6 +110,17 @@ export const loadExperiencesByAthleteType = async (tipoAtletaId) => {
   }
 };
 
+// Funzione per ottenere i nomi quyen (dettagli categoria) per tipo categoria
+export const loadNomiQuyenByCategoryType = async (tipoCategoriaId) => {
+  try {
+    const response = await axios.get(`/config/nomi-quyen/tipo-categoria/${tipoCategoriaId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore durante il caricamento dei nomi quyen per tipo categoria:', error);
+    throw error;
+  }
+};
+
 // Funzione per ottenere tutti i gruppi età
 export const loadAgeGroups = async () => {
   try {

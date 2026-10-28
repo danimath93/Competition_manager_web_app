@@ -3,7 +3,7 @@ import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import { Paper, Tooltip, Chip } from '@mui/material';
 import { PersonRemove, Edit } from '@mui/icons-material';
-import { loadCategoryTypeById } from '../api/config';
+import { getCategoryType, getManyById } from '../services/configCacheService';
 import RegistrationModal from './RegistrationModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import muiTheme from '../styles/muiTheme';
@@ -46,31 +46,19 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
     return categories;
   }, [competition?.categorieAtleti]);
 
-  // Carica i dettagli delle categorie
+  // Carica i dettagli delle categorie (tramite cache di configurazione)
   React.useEffect(() => {
-    const loadCategoryDetails = async () => {
-      const newCache = { ...categoryDetailsCache };
-      
-      for (const category of categoryColumns) {
-        if (!newCache[category.id]) {
-          try {
-            const details = await loadCategoryTypeById(category.id);
-            newCache[category.id] = details;
-          } catch (error) {
-            console.error(`Errore nel caricamento categoria ${category.id}:`, error);
-            newCache[category.id] = { nome: `Categoria ${category.id}` };
-          }
-        }
-      }
-      
-      if (Object.keys(newCache).length > Object.keys(categoryDetailsCache).length) {
-        setCategoryDetailsCache(newCache);
-      }
-    };
+    if (categoryColumns.length === 0) return;
 
-    if (categoryColumns.length > 0) {
-      loadCategoryDetails();
-    }
+    let isMounted = true;
+    getManyById(categoryColumns.map(category => category.id), getCategoryType)
+      .then(details => {
+        if (isMounted) setCategoryDetailsCache(details);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [categoryColumns]);
 
   // Raggruppa le iscrizioni per atleta

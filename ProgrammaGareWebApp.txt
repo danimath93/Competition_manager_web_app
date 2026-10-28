@@ -89,7 +89,7 @@ Modifica sezione Iscrizione
 (v) - aggiungere controllo per categoria combattimento
 (v) - validazioni in fase iscrizioni e aggiunta atleti
 (v) - aggiungere doc bonifico avvenuto e fix flusso
-- aggiungere stampa riepilogo iscrizioni per club
+(v)- aggiungere stampa riepilogo iscrizioni per club
 
 (v) - migliorare modale riepilogo costi
 (v) - modificare UI iscrizione competizione

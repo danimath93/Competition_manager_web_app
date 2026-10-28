@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { clearAuthData } from '../utils/auth';
+import { clearConfigCache } from '../services/configCacheService';
 import { loginUser, checkAuthLevel  } from '../api/auth';
 
 const AuthContext = createContext();
@@ -12,6 +13,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await loginUser(username, password);
       setUser(response.user);
+
+      // A ogni login riparte con i dati di configurazione aggiornati
+      clearConfigCache();
 
       // Salvo su localStorage solo le info essenziali
       localStorage.setItem('token', response.token);
