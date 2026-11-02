@@ -193,12 +193,14 @@ const createIscrizione = async (req, res) => {
 
     const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
 
+    // Il tesseramento va salvato prima del calcolo: la quota dipende dal tesseramento richiesto
+    if (dettagliIscrizione.tesseramento !== tesseramento.nome) {
+      await dettagliIscrizione.update({ tesseramento: tesseramento.nome });
+    }
+
     // Calcola e aggiorna la quota dell'iscrizione dell'atleta
     const athleteCost = await calculateSingleAthleteCosts(atletaId, competizioneId);
-    await dettagliIscrizione.update({
-      tesseramento: tesseramento.nome,
-      quota: athleteCost
-    });
+    await dettagliIscrizione.update({ quota: athleteCost });
 
     logger.info(`Iscrizione creata - ID: ${newIscrizione.id}, Atleta: ${atletaId}, Competizione: ${competizioneId}`);
     res.status(201).json(newIscrizione);
@@ -254,7 +256,6 @@ const deleteIscrizione = async (req, res) => {
     if (dettagliIscrizione) {
       const athleteCost = await calculateSingleAthleteCosts(atletaId, competizioneId);
       await dettagliIscrizione.update({
-        tesseramento: tesseramento.nome,
         quota: athleteCost
       });
     }

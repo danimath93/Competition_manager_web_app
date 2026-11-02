@@ -136,6 +136,14 @@ const RegistrationModal = ({
     }));
   };
 
+  // Esperienze disponibili per un tipo competizione (Quyen e Quyen Vu Khi condividono la stessa scelta)
+  const getExperiencesForType = (tipoCompetizioneId) => {
+    if (tipoCompetizioneId === CompetitionTipology.MANI_NUDE || tipoCompetizioneId === CompetitionTipology.ARMI) {
+      return availableExperiencesByType[1] || availableExperiencesByType[2] || [];
+    }
+    return availableExperiencesByType[tipoCompetizioneId] || [];
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -165,7 +173,8 @@ const RegistrationModal = ({
         const details = categoryDetails[categoryId];
         if (details?.tipoCompetizioneId) {
           const tipoCompId = details.tipoCompetizioneId;
-          if (!selectedExperiences[tipoCompId]) {
+          // L'esperienza è obbligatoria solo se configurata per il tipo competizione
+          if (getExperiencesForType(tipoCompId).length > 0 && !selectedExperiences[tipoCompId]) {
             setError('Seleziona il livello di esperienza per tutte le categorie selezionate.');
             return;
           }
@@ -232,7 +241,8 @@ const RegistrationModal = ({
   const categoriesByType = {
     1: [], // Quyen
     2: [], // Quyen Vu Khi
-    3: []  // Combattimento
+    3: [], // Combattimento
+    4: []  // Attività complementari
   };
 
   availableCategories.forEach(category => {
@@ -249,15 +259,6 @@ const RegistrationModal = ({
   const quyenExperiences = availableExperiencesByType[1] || availableExperiencesByType[2] || [];
   const canMergeQuyenTypes = categoriesByType[1].length > 0 && categoriesByType[2].length > 0;
 
-  // Verifica se ci sono categorie selezionate per ogni tipo competizione
-  const hasSelectedQuyenCategories = selectedCategories.some(catId => {
-    const details = categoryDetails[catId];
-    return details?.tipoCompetizioneId === 1 || details?.tipoCompetizioneId === 2;
-  });
-  const hasSelectedFightCategories = selectedCategories.some(catId => {
-    const details = categoryDetails[catId];
-    return details?.tipoCompetizioneId === 3;
-  });
 
   const renderContent = () => {
     if (loading) {
@@ -293,7 +294,7 @@ const RegistrationModal = ({
                     {...params}
                     label="Livello Esperienza Quyen / Quyen Vu Khi"
                     variant="outlined"
-                    required={hasSelectedQuyenCategories}
+                    required
                     size="small"
                   />
                 )}
@@ -321,7 +322,7 @@ const RegistrationModal = ({
                         {...params}
                         label="Livello Esperienza"
                         variant="outlined"
-                        required={hasSelectedQuyenCategories}
+                        required
                         size="small"
                       />
                     )}
@@ -380,6 +381,7 @@ const RegistrationModal = ({
                               <TextField
                                 {...params}
                                 label="Dettagli"
+                                required={isSelected}
                                 variant="outlined"
                                 size="small"
                               />
@@ -414,7 +416,7 @@ const RegistrationModal = ({
                         {...params}
                         label="Livello Esperienza"
                         variant="outlined"
-                        required={hasSelectedQuyenCategories}
+                        required
                         size="small"
                       />
                     )}
@@ -465,6 +467,7 @@ const RegistrationModal = ({
                               <TextField
                                 {...params}
                                 label="Dettagli"
+                                required={isSelected}
                                 variant="outlined"
                                 size="small"
                               />
@@ -500,7 +503,7 @@ const RegistrationModal = ({
                           {...params}
                           label="Livello Esperienza"
                           variant="outlined"
-                          required={hasSelectedFightCategories}
+                          required
                           size="small"
                         />
                       )}
@@ -513,6 +516,7 @@ const RegistrationModal = ({
                     <TextField
                       size="small"
                       label="Peso (kg)"
+                      required={selectedRequiresWeight}
                       type="number"
                       value={weight}
                       onChange={handleWeightChange}
@@ -560,6 +564,68 @@ const RegistrationModal = ({
                             sx={{ ml: 1, height: '20px' }}
                           />
                         )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sezione Attività complementari */}
+        {categoriesByType[4].length > 0 && (
+          <div className="drawer-section">
+            <h3 className="drawer-section-title">Attività complementari</h3>
+            <div className="drawer-section-content">
+              {availableExperiencesByType[4]?.length > 0 && (
+                <div style={{ marginBottom: '16px', maxWidth: '300px' }}>
+                  <Autocomplete
+                    size="small"
+                    value={selectedExperiences[4] || null}
+                    onChange={(event, newValue) => handleExperienceChange(4, newValue)}
+                    options={availableExperiencesByType[4]}
+                    getOptionLabel={(option) => option.nome || ''}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Livello Esperienza"
+                        variant="outlined"
+                        required
+                        size="small"
+                      />
+                    )}
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {categoriesByType[4].map(category => {
+                  const categoryId = category.configTipoCategoria;
+                  const details = categoryDetails[categoryId];
+                  const isSelected = selectedCategories.includes(categoryId);
+
+                  return (
+                    <div
+                      key={categoryId}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        padding: '12px',
+                        backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
+                        borderRadius: '8px',
+                        border: '1px solid #e0e0e0',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleCategoryToggle(categoryId)}
+                        style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+                      />
+                      <div style={{ flex: 1, fontWeight: '500' }}>
+                        {details?.nome || 'Categoria'}
                       </div>
                     </div>
                   );

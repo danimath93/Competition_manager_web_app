@@ -106,7 +106,7 @@ IscrizioneAtleta.belongsTo(Categoria, {
 IscrizioneAtleta.belongsTo(Competizione, {
   foreignKey: 'competizioneId',
   as: 'competizione',
-  onDelete: 'SET NULL'
+  onDelete: 'CASCADE'
 });
 Competizione.hasMany(IscrizioneAtleta, {
   foreignKey: 'competizioneId',

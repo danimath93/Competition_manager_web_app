@@ -1,5 +1,5 @@
 const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento, ConfigGruppoEta } = require('../models');
-const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta } = require('../models');
+const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria } = require('../models');
 
 const logger = require('../helpers/logger/logger');
 const PDFDocument = require('pdfkit');
@@ -197,20 +197,41 @@ const updateCompetizione = async (req, res) => {
 
 // Elimina una competizione
 const deleteCompetizione = async (req, res) => {
+  const transaction = await Competizione.sequelize.transaction();
   try {
     const { id } = req.params;
-    const deletedRowsCount = await Competizione.destroy({
-      where: { id }
-    });
-    
-    if (deletedRowsCount === 0) {
+
+    const competizione = await Competizione.findByPk(id, { transaction });
+    if (!competizione) {
+      await transaction.rollback();
       logger.warn(`Tentativo eliminazione competizione inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
-    
+
+    const statiEliminabili = ['Pianificata', 'Conclusa'];
+    if (!statiEliminabili.includes(competizione.stato)) {
+      await transaction.rollback();
+      logger.warn(`Tentativo eliminazione competizione in stato non consentito - ID: ${id}, stato: ${competizione.stato}`);
+      return res.status(400).json({
+        error: `Non è possibile eliminare la competizione in stato "${competizione.stato}". È possibile eliminare solo competizioni in stato Pianificata o Conclusa.`
+      });
+    }
+
+    // Elimina esplicitamente i dati dipendenti (iscrizioni_atleti.competizione_id è NOT NULL,
+    // quindi il vincolo FK ON DELETE SET NULL farebbe fallire l'eliminazione)
+    await SvolgimentoCategoria.destroy({ where: { competizioneId: id }, transaction });
+    await IscrizioneAtleta.destroy({ where: { competizioneId: id }, transaction });
+    await DettaglioIscrizioneAtleta.destroy({ where: { competizioneId: id }, transaction });
+    await IscrizioneClub.destroy({ where: { competizioneId: id }, transaction });
+    await Categoria.destroy({ where: { competizioneId: id }, transaction });
+
+    await competizione.destroy({ transaction });
+    await transaction.commit();
+
     logger.info(`Competizione eliminata - ID: ${id}`);
     res.status(204).send();
   } catch (error) {
+    await transaction.rollback();
     logger.error(`Errore nell'eliminazione della competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nell\'eliminazione della competizione',

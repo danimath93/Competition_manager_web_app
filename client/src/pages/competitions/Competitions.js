@@ -116,6 +116,7 @@ const Competitions = () => {
         fetchCompetitions();
       } catch (error) {
         console.error("Errore nell'eliminazione della competizione:", error);
+        window.alert(error.response?.data?.error || "Errore nell'eliminazione della competizione");
       }
     }
   };

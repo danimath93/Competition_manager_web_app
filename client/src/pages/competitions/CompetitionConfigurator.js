@@ -95,38 +95,35 @@ const CompetitionConfigurator = () => {
   }, [id, isEditMode]);
 
   const handleFieldChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleCategoriesChange = (categoriesData) => {
-    const newFormData = {
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       categorieAtleti: categoriesData.categorieAtleti,
       tipiCompetizione: categoriesData.tipiCompetizione || [],
-    };
-    setFormData(newFormData);
+    }));
   };
 
-  const handleCostsChange = (costiIscrizione, iban, intestatario, causale) => {
-    setFormData({
-      ...formData,
-      costiIscrizione,
-      iban,
-      intestatario,
-      causale,
-    });
-  };
-
-  const handleSubmit = async () => {
+  // I dati da salvare vengono passati esplicitamente quando lo stato non è ancora
+  // stato aggiornato (es. creazione: il salvataggio parte nello stesso evento del setFormData)
+  const handleSubmit = async (dataToSave = formData) => {
     setError('');
     setEditConfirmModalOpen(false);
     setLoading(true);
-    
+
+    // I campi data non compilati restano '' nel form (input controllati): al backend vanno inviati come null
+    const payload = {
+      ...dataToSave,
+      dataScadenzaIscrizioni: dataToSave.dataScadenzaIscrizioni || null,
+    };
+
     try {
-      if (formData.id) {
-        await updateCompetition(formData.id, formData);
+      if (payload.id) {
+        await updateCompetition(payload.id, payload);
       } else {
-        await createCompetition(formData);
+        await createCompetition(payload);
       }
       navigate('/competitions');
     } catch (err) {
@@ -152,12 +149,13 @@ const CompetitionConfigurator = () => {
     }
   };
 
-  const handleCostsSubmit = (e) => {
-    e.preventDefault();
+  const handleCostsSubmit = (costsData) => {
+    const updatedFormData = { ...formData, ...costsData };
+    setFormData(updatedFormData);
     if (isEditMode) {
       setEditConfirmModalOpen(true);
     } else {
-      handleSubmit();
+      handleSubmit(updatedFormData);
     }
   };
 
@@ -222,8 +220,8 @@ const CompetitionConfigurator = () => {
               iban: formData.iban,
               intestatario: formData.intestatario,
               causale: formData.causale,
-            }} 
-            onChange={handleCostsChange}
+            }}
+            categorieAtleti={formData.categorieAtleti}
             onSubmit={handleCostsSubmit}
           />
         )}
@@ -235,7 +233,7 @@ const CompetitionConfigurator = () => {
           message="Sei sicuro di voler salvare le modifiche apportate alla competizione?"
           primaryButton={{
             text: 'Salva Modifiche',
-            onClick: async () => { await handleSubmit();},
+            onClick: async () => { await handleSubmit(formData); },
           }}
           secondaryButton={{
             text: 'Annulla',

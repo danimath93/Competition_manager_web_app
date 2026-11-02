@@ -3,10 +3,18 @@
  * 
  * Struttura costiIscrizione:
  * {
- *   specials: {
- *     insurance: 5,
- *     otherFee: 10
+ *   tesseramento: {
+ *     enabled: true,
+ *     amount: 5               // applicato agli atleti con "Richiedi tesseramento"
  *   },
+ *   specialCategories: [
+ *     {
+ *       idConfigTipoCategoria: 13,
+ *       singleCost: 15,       // costo se è l'unica categoria dell'atleta (obbligatorio)
+ *       withOthersCost: 5     // costo se iscritto anche ad altre categorie (facoltativo:
+ *                             // se null la categoria rientra nel calcolo standard)
+ *     }
+ *   ],
  *   categories: [
  *     {
  *       idConfigTipoAtleta: 1,
@@ -28,28 +36,55 @@
  * }
  */
 
-/**
- * Calcola il costo speciale (assicurazione, ecc.)
- * @param {Object} specials - Oggetto con i costi speciali
- * @returns {Number} - Totale costi speciali
- */
-const calculateSpecialCosts = (athleteData, specials) => {
-  if (!specials) return 0;
+const REQUEST_MEMBERSHIP = 'RICHIEDI TESSERAMENTO';
 
-  let total = 0;
-  // Devo gestire alcuni casi di costi speciali
-  for (const [key, value] of Object.entries(specials)) {
-    if (key === 'insurance' && typeof value === 'number') {
-      if (athleteData?.tesseramento?.toUpperCase() === 'RICHIEDI TESSERAMENTO') {
-        total += parseFloat(value); 
-      }
-    } 
-    else if (typeof value === 'number') {
-      total += parseFloat(value);
+const isMembershipRequested = (athleteData) =>
+  athleteData?.tesseramento?.toUpperCase() === REQUEST_MEMBERSHIP;
+
+/**
+ * Calcola il costo del tesseramento richiesto in fase di iscrizione
+ * @param {Object} athleteData - Dati atleta con il tesseramento scelto
+ * @param {Object} tesseramento - Configurazione { enabled, amount }
+ * @returns {Number} - Costo tesseramento
+ */
+const calculateMembershipCost = (athleteData, tesseramento) => {
+  if (!tesseramento?.enabled || !isMembershipRequested(athleteData)) return 0;
+  return parseFloat(tesseramento.amount) || 0;
+};
+
+/**
+ * Separa le categorie speciali da quelle standard e ne calcola il costo
+ * - categoria speciale unica iscritta dall'atleta -> singleCost
+ * - categoria speciale insieme ad altre -> withOthersCost, se configurato;
+ *   altrimenti la categoria viene conteggiata come standard
+ * @param {Array} specialCategories - Configurazioni categorie speciali
+ * @param {Array} categories - ID tipo categoria a cui l'atleta è iscritto
+ * @returns {{ cost: Number, standardCategories: Array }}
+ */
+const calculateSpecialCategoriesCost = (specialCategories, categories) => {
+  if (!Array.isArray(specialCategories) || specialCategories.length === 0) {
+    return { cost: 0, standardCategories: categories };
+  }
+
+  let cost = 0;
+  const standardCategories = [];
+  const hasOtherCategories = categories.length > 1;
+
+  for (const categoryId of categories) {
+    const specialConfig = specialCategories.find(sc => sc.idConfigTipoCategoria === categoryId);
+
+    if (!specialConfig) {
+      standardCategories.push(categoryId);
+    } else if (!hasOtherCategories) {
+      cost += parseFloat(specialConfig.singleCost) || 0;
+    } else if (specialConfig.withOthersCost !== null && specialConfig.withOthersCost !== undefined) {
+      cost += parseFloat(specialConfig.withOthersCost) || 0;
+    } else {
+      standardCategories.push(categoryId);
     }
   }
 
-  return total;
+  return { cost, standardCategories };
 };
 
 /**
@@ -111,33 +146,33 @@ const calculateAdditionalCost = (config, numCategories) => {
 /**
  * Calcola il costo totale per un atleta
  * @param {Object} costiIscrizione - Configurazione costi della competizione
- * @param {Number} idConfigTipoAtleta - ID del tipo atleta
- * @param {Number} numCategories - Numero di categorie in cui l'atleta è iscritto
+ * @param {Object} athleteData - Dati atleta ({ tipoAtletaId, tesseramento })
+ * @param {Array} categories - ID tipo categoria a cui l'atleta è iscritto
  * @returns {Number} - Costo totale per l'atleta
  */
 const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
-  const numCategories = categories.length;
-  if (!costiIscrizione || numCategories === 0) return 0;
-  
+  if (!costiIscrizione || categories.length === 0) return 0;
+
   let totalCost = 0;
   const idConfigTipoAtleta = athleteData.tipoAtletaId;
-  
-  // Aggiungi costi speciali
-  totalCost += calculateSpecialCosts(athleteData, costiIscrizione.specials);
-  
+
+  // Tesseramento richiesto in fase di iscrizione
+  totalCost += calculateMembershipCost(athleteData, costiIscrizione.tesseramento);
+
+  // Categorie speciali: hanno un costo dedicato e vengono escluse dal calcolo standard
+  const { cost: specialCategoriesCost, standardCategories } = calculateSpecialCategoriesCost(
+    costiIscrizione.specialCategories,
+    categories
+  );
+  totalCost += specialCategoriesCost;
+  const numCategories = standardCategories.length;
+
   // Trova la configurazione per il tipo atleta
-  if (costiIscrizione.categories && Array.isArray(costiIscrizione.categories)) {
+  if (numCategories > 0 && Array.isArray(costiIscrizione.categories)) {
     const categoryConfig = costiIscrizione.categories.find(
       cat => cat.idConfigTipoAtleta === idConfigTipoAtleta
     );
 
-    // TODO: rimuovere questa impostazione o gestire in modo appropriato
-    const idFestaDiNatale = 13;
-    if (numCategories === 1 && categories[0] === idFestaDiNatale) {
-      totalCost += 15;
-      return parseFloat(totalCost.toFixed(2));
-    }
-    
     if (categoryConfig && categoryConfig.config) {
       switch (categoryConfig.type) {
         case 'fixed':
@@ -159,7 +194,8 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
 };
 
 module.exports = {
-  calculateSpecialCosts,
+  calculateMembershipCost,
+  calculateSpecialCategoriesCost,
   calculateFixedCost,
   calculateMinimumCost,
   calculateAdditionalCost,

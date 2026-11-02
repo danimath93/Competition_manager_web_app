@@ -58,7 +58,39 @@ const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
   // Dialog di conferma per reset
   const [showResetDialog, setShowResetDialog] = useState(false);
 
-  // Carica i dati iniziali
+  // Inizializza la selezione a partire dai dati esistenti (edit mode o ritorno sul tab)
+  const initializeFromExistingData = (competitionTypesData) => {
+    const athleteTypeIds = value.categorieAtleti.map(ca => ca.idTipoAtleta);
+    setSelectedAthleteTypes(athleteTypeIds);
+
+    const selectedCompTypes = competitionTypesData.filter(ct =>
+      value.tipiCompetizione.includes(ct.id)
+    );
+    setSelectedCompetitionTypes(selectedCompTypes);
+    loadCategoriesForCompetitionTypes(selectedCompTypes);
+
+    const categoriesMap = {};
+    value.categorieAtleti.forEach(ca => {
+      categoriesMap[ca.idTipoAtleta] = ca.categorie.map(cat => cat.configTipoCategoria);
+    });
+    setSelectedCategories(categoriesMap);
+
+    const experiencesMap = {};
+    value.categorieAtleti.forEach(ca => {
+      if (ca.esperienzaCategorie) {
+        ca.esperienzaCategorie.forEach(ec => {
+          const key = `${ca.idTipoAtleta}_${ec.configTipoCompetizione}`;
+          experiencesMap[key] = ec.idEsperienza || [];
+        });
+      }
+    });
+    setSelectedExperiences(experiencesMap);
+    loadExperiencesForAthleteTypes(athleteTypeIds);
+    setActiveStep(3);
+  };
+
+  // Carica i dati iniziali e, se presenti, inizializza la selezione dal prop value.
+  // Eseguito solo al mount: il tab viene rimontato a ogni apertura, quindi value è già aggiornato.
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -69,6 +101,10 @@ const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
         ]);
         setAthleteTypes(athleteTypesData);
         setCompetitionTypes(competitionTypesData);
+
+        if (value?.categorieAtleti?.length > 0 && value?.tipiCompetizione?.length > 0) {
+          initializeFromExistingData(competitionTypesData);
+        }
       } catch (error) {
         console.error('Errore nel caricamento dei dati iniziali:', error);
       } finally {
@@ -77,43 +113,8 @@ const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
     };
 
     loadInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Inizializza i dati se siamo in edit mode
-  useEffect(() => {
-    const initializeFromExistingData = () => {
-      const athleteTypeIds = value.categorieAtleti.map(ca => ca.idTipoAtleta);
-      setSelectedAthleteTypes(athleteTypeIds);
-      
-      const selectedCompTypes = competitionTypes.filter(ct => 
-        value.tipiCompetizione.includes(ct.id)
-      );
-      setSelectedCompetitionTypes(selectedCompTypes);
-      loadCategoriesForCompetitionTypes(selectedCompTypes);
-      
-      const categoriesMap = {};
-      value.categorieAtleti.forEach(ca => {
-        categoriesMap[ca.idTipoAtleta] = ca.categorie.map(cat => cat.configTipoCategoria);
-      });
-      setSelectedCategories(categoriesMap);
-      
-      const experiencesMap = {};
-      value.categorieAtleti.forEach(ca => {
-        if (ca.esperienzaCategorie) {
-          ca.esperienzaCategorie.forEach(ec => {
-            const key = `${ca.idTipoAtleta}_${ec.configTipoCompetizione}`;
-            experiencesMap[key] = ec.idEsperienza || [];
-          });
-        }
-      });
-      setSelectedExperiences(experiencesMap);
-      setActiveStep(3);
-    };
-  
-    if (value?.categorieAtleti?.length > 0 && value?.tipiCompetizione?.length > 0 && competitionTypes.length > 0) {
-      initializeFromExistingData();
-    }
-  }, [value, isEditMode, athleteTypes, competitionTypes]);
 
   const loadCategoriesForCompetitionTypes = async (competitionTypes) => {
     try {
@@ -234,15 +235,22 @@ const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
     });
   };
 
-  const loadExperiencesForAthleteType = async (athleteTypeId) => {
-    if (experiences[athleteTypeId]) return;
-    
+  // Carica (in parallelo) le esperienze dei tipi atleta non ancora caricati
+  const loadExperiencesForAthleteTypes = async (athleteTypeIds) => {
+    const missingIds = athleteTypeIds.filter(id => !experiences[id]);
+    if (missingIds.length === 0) return;
+
     try {
-      const athleteExperiences = await loadExperiencesByAthleteType(athleteTypeId);
-      setExperiences(prev => ({
-        ...prev,
-        [athleteTypeId]: athleteExperiences
-      }));
+      const results = await Promise.all(
+        missingIds.map(id => loadExperiencesByAthleteType(id))
+      );
+      setExperiences(prev => {
+        const updated = { ...prev };
+        missingIds.forEach((id, index) => {
+          updated[id] = results[index];
+        });
+        return updated;
+      });
     } catch (error) {
       console.error('Errore nel caricamento delle esperienze:', error);
     }
@@ -252,6 +260,9 @@ const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
     if (activeStep === 3) {
       handleFinish();
     } else {
+      if (activeStep === 2) {
+        loadExperiencesForAthleteTypes(selectedAthleteTypes);
+      }
       setActiveStep((prev) => prev + 1);
     }
   };
@@ -507,7 +518,6 @@ const CategoriesTab = ({ value, onChange, onSubmit, isEditMode = false }) => {
                             <FormGroup row>
                               {(() => {
                                 if (!experiences[athleteTypeId]) {
-                                  loadExperiencesForAthleteType(athleteTypeId);
                                   return (
                                     <Typography variant="body2" color="textSecondary" fontStyle="italic">
                                       Caricamento esperienze...

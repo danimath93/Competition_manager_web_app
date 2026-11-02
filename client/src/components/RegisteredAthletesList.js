@@ -38,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { createRegistration, deleteRegistration, deleteAthleteRegistrations } from '../api/registrations';
 import CategorySelector from './CategorySelector';
+import { MembershipType } from '../constants/enums/CompetitionEnums';
 
 const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegistered, onRegistrationChange }) => {
   const [expanded, setExpanded] = useState(false);
@@ -47,6 +48,10 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Costo tesseramento configurato nella competizione (null se non previsto)
+  const membershipConfig = competition?.costiIscrizione?.tesseramento;
+  const membershipCost = membershipConfig?.enabled ? (parseFloat(membershipConfig.amount) || 0) : null;
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
@@ -188,9 +193,9 @@ const RegisteredAthleteCard = ({ athlete, competition, registrations, isClubRegi
                 <Typography variant="body2" color="text.secondary">
                   Tesseramento: {athlete.tesseramento || 'N/A'}
                 </Typography>
-                {(!athlete.tesseramento) && (
-                  <Tooltip 
-                    title="In mancanza di tesseramento dell'atleta viene applicato un costo di 5 € per integrare l'assicurazione FIWUK" 
+                {membershipCost !== null && (!athlete.tesseramento || athlete.tesseramento === MembershipType.REQUEST) && (
+                  <Tooltip
+                    title={`In mancanza di tesseramento dell'atleta viene applicato un costo di ${membershipCost.toFixed(2)} € per il tesseramento`}
                     arrow
                   >
                     <Warning 

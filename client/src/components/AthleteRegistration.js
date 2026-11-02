@@ -46,7 +46,6 @@ const AthleteRegistration = ({
   const [activeStep, setActiveStep] = useState(0);
 
   // Stato fase 1 - Dati atleta
-  const [cardNumber, setCardNumber] = useState(athlete?.numeroTessera || "");
   const [endDateCertificate, setEndDateCertificate] = useState(
     athlete?.scadenzaCertificato || "",
   );
@@ -94,15 +93,6 @@ const AthleteRegistration = ({
     { label: "Dati atleta", number: 1 },
     { label: "Selezione categorie", number: 2 },
   ];
-
-  // Gestione modifica numero tessera
-  const handleCardNumberChange = (e) => {
-    const value = e.target.value;
-    // Accetta solo numeri e massimo 8 caratteri
-    if (value === "" || (/^\d+$/.test(value) && value.length <= 8)) {
-      setCardNumber(value);
-    }
-  };
 
   // Gestione modifica scadenza certificato
   const handleEndCertificateChange = (e) => {
@@ -274,6 +264,17 @@ const AthleteRegistration = ({
     };
   }, [athleteConfig]);
 
+  // Esperienze disponibili per un tipo competizione (Quyen e Quyen Vu Khi condividono la stessa scelta)
+  const getExperiencesForType = (tipoCompetizioneId) => {
+    if (
+      tipoCompetizioneId === CompetitionTipology.MANI_NUDE ||
+      tipoCompetizioneId === CompetitionTipology.ARMI
+    ) {
+      return availableExperiencesByType[1] || availableExperiencesByType[2] || [];
+    }
+    return availableExperiencesByType[tipoCompetizioneId] || [];
+  };
+
   // Valida la fase corrente
   const validateCurrentPhase = () => {
     const newErrors = [];
@@ -281,9 +282,6 @@ const AthleteRegistration = ({
     switch (activeStep) {
       case 0:
         // Fase 1: dati atleta
-        if (!cardNumber) {
-          newErrors.push("Inserisci il numero di tessera dell'atleta");
-        }
         if (!athleteType) {
           newErrors.push("Seleziona la tipologia di atleta");
         }
@@ -334,7 +332,11 @@ const AthleteRegistration = ({
           const details = categoryDetails[categoryId];
           if (details?.tipoCompetizioneId) {
             const tipoCompId = details.tipoCompetizioneId;
-            if (!selectedExperiences[tipoCompId]) {
+            // L'esperienza è obbligatoria solo se configurata per il tipo competizione
+            if (
+              getExperiencesForType(tipoCompId).length > 0 &&
+              !selectedExperiences[tipoCompId]
+            ) {
               newErrors.push(
                 "Seleziona il livello di esperienza per tutte le categorie selezionate.",
               );
@@ -370,7 +372,6 @@ const AthleteRegistration = ({
 
           const updateData = {
             ...athlete,
-            numeroTessera: cardNumber,
             tipoAtleta: athleteType ? athleteType : null,
             tipoAtletaId: athleteType && athleteType.id ? athleteType.id : null,
             scadenzaCertificato: endDateCertificate,
@@ -492,8 +493,11 @@ const AthleteRegistration = ({
         };
       });
 
-      // Invia tutte le iscrizioni in parallelo
-      await Promise.all(registrations.map((reg) => createRegistration(reg)));
+      // Invia le iscrizioni in sequenza: ogni creazione ricalcola la quota dell'atleta
+      // e in parallelo l'ultimo calcolo salvato potrebbe non includere tutte le categorie
+      for (const reg of registrations) {
+        await createRegistration(reg);
+      }
 
       // Mostra il modale di successo
       setShowSuccessModal(true);
@@ -529,21 +533,8 @@ const AthleteRegistration = ({
       </p>
 
       <div className="data-section">
-        <h4 className="section-title">Info: Viet Vo Dao Italia</h4>
+        <h4 className="section-title">Info: Atleta</h4>
         <div className="data-row">
-          <div className="data-field">
-            <TextField
-              name="numeroTessera"
-              label="Numero Tessera"
-              type="text"
-              inputProps={{ maxLength: 8 }}
-              value={cardNumber}
-              onChange={handleCardNumberChange}
-              fullWidth
-              required
-              size="small"
-            />
-          </div>
           <div className="data-field">
             <Autocomplete
               id="livelloAtleta"
@@ -593,7 +584,7 @@ const AthleteRegistration = ({
             }}
           >
             <Typography sx={{ whiteSpace: "nowrap" }}>
-              <strong>File:</strong> {certificatoId || "Nessun file caricato"}
+              <strong>File<span style={{ color: "red" }}>*</span>:</strong> {certificatoId || "Nessun file caricato"}
             </Typography>
             <div
               style={{
@@ -692,6 +683,7 @@ const AthleteRegistration = ({
       1: [], // Quyen
       2: [], // Quyen Vu Khi
       3: [], // Combattimento
+      4: [], // Attività complementari
     };
 
     availableCategories.forEach((category) => {
@@ -889,6 +881,7 @@ const AthleteRegistration = ({
                                   <TextField
                                     {...params}
                                     label="Dettagli"
+                                    required={isSelected}
                                     variant="outlined"
                                     size="small"
                                   />
@@ -1008,6 +1001,7 @@ const AthleteRegistration = ({
                                 <TextField
                                   {...params}
                                   label="Dettagli"
+                                  required={isSelected}
                                   variant="outlined"
                                   size="small"
                                 />
@@ -1057,6 +1051,7 @@ const AthleteRegistration = ({
                       <TextField
                         size="small"
                         label="Peso (kg)"
+                        required={selectedRequiresWeight}
                         type="number"
                         value={weight}
                         onChange={handleWeightChange}
@@ -1113,6 +1108,78 @@ const AthleteRegistration = ({
                           <div style={{ fontWeight: "500" }}>
                             {details?.nome || "Categoria"}
                           </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Sezione Attività complementari */}
+            {categoriesByType[4].length > 0 && (
+              <div className="data-section">
+                <h4 className="section-title">Attività complementari</h4>
+
+                {availableExperiencesByType[4]?.length > 0 && (
+                  <div style={{ marginBottom: "16px" }}>
+                    <Autocomplete
+                      size="small"
+                      value={selectedExperiences[4] || null}
+                      onChange={(event, newValue) =>
+                        handleExperienceChange(4, newValue)
+                      }
+                      options={availableExperiencesByType[4]}
+                      getOptionLabel={(option) => option.nome || ""}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Livello Esperienza"
+                          variant="outlined"
+                          required
+                          size="small"
+                        />
+                      )}
+                      style={{ maxWidth: "400px" }}
+                    />
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  {categoriesByType[4].map((category, index) => {
+                    const categoryId = category.configTipoCategoria;
+                    const details = categoryDetails[categoryId];
+                    const isSelected = selectedCategories.includes(categoryId);
+
+                    return (
+                      <div
+                        key={`complementari-${categoryId}-${index}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          padding: "8px",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleCategoryToggle(categoryId)}
+                          style={{
+                            cursor: "pointer",
+                            width: "20px",
+                            height: "20px",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ fontWeight: "500" }}>
+                          {details?.nome || "Categoria"}
                         </div>
                       </div>
                     );

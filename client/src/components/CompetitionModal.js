@@ -242,11 +242,6 @@ const CompetitionModal = ({ open, onClose, onSubmit, isEditMode, competition }) 
               <Typography variant="body2">
                 Configurazione costi impostata ✓
               </Typography>
-              {formData.costiIscrizione.specials && Object.keys(formData.costiIscrizione.specials).length > 0 && (
-                <Typography variant="caption" color="text.secondary">
-                  • {Object.keys(formData.costiIscrizione.specials).length} costi speciali
-                </Typography>
-              )}
               {formData.costiIscrizione.categories && formData.costiIscrizione.categories.length > 0 && (
                 <Typography variant="caption" color="text.secondary" display="block">
                   • {formData.costiIscrizione.categories.length} configurazioni per tipo atleta

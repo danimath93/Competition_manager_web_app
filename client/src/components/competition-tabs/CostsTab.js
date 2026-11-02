@@ -17,31 +17,44 @@ import {
   Card,
   CardContent,
   Typography,
-  Chip
+  Chip,
+  Checkbox,
+  MenuItem
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import { loadAthleteTypes } from '../../api/config';
+import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
 import { TextInput } from '../common';
 import Button from '../common/Button';
 import '../styles/Layout.css';
 import '../styles/Register.css';
 
-const CostsTab = ({ value, onChange, onSubmit }) => {
+const EMPTY_SPECIAL_CATEGORY = { idConfigTipoCategoria: '', singleCost: '', withOthersCost: '' };
+
+const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
   const [athleteTypes, setAthleteTypes] = useState([]);
-  const [specialCosts, setSpecialCosts] = useState({});
-  const [athleteCostConfigs, setAthleteCostConfigs] = useState([]);
-  const [iban, setIban] = useState('');
-  const [intestatario, setIntestatario] = useState('');
-  const [causale, setCausale] = useState('');
-  
+  const [categoryTypes, setCategoryTypes] = useState([]);
+  // Stato locale inizializzato una sola volta dal prop value (il tab viene rimontato a ogni apertura)
+  const [membershipEnabled, setMembershipEnabled] = useState(!!value?.costiIscrizione?.tesseramento?.enabled);
+  const [membershipCost, setMembershipCost] = useState(value?.costiIscrizione?.tesseramento?.amount ?? '');
+  const [specialCategories, setSpecialCategories] = useState(() => value?.costiIscrizione?.specialCategories || []);
+  const [athleteCostConfigs, setAthleteCostConfigs] = useState(() => value?.costiIscrizione?.categories || []);
+  const [iban, setIban] = useState(value?.iban || '');
+  const [intestatario, setIntestatario] = useState(value?.intestatario || '');
+  const [causale, setCausale] = useState(value?.causale || '');
+
   // Stati per modali
-  const [specialCostModalOpen, setSpecialCostModalOpen] = useState(false);
+  const [specialCategoryModalOpen, setSpecialCategoryModalOpen] = useState(false);
   const [athleteConfigModalOpen, setAthleteConfigModalOpen] = useState(false);
-  
-  // Stato per nuovo costo speciale (nel modale)
-  const [newSpecialName, setNewSpecialName] = useState('');
-  const [newSpecialCost, setNewSpecialCost] = useState('');
-  
+
+  // Stato per nuova categoria speciale (nel modale)
+  const [newSpecialCategory, setNewSpecialCategory] = useState(EMPTY_SPECIAL_CATEGORY);
+
+  // Categorie selezionabili come speciali: solo quelle configurate per la competizione
+  const competitionCategoryIds = new Set(
+    categorieAtleti.flatMap(ca => (ca.categorie || []).map(cat => cat.configTipoCategoria))
+  );
+  const competitionCategoryTypes = categoryTypes.filter(ct => competitionCategoryIds.has(ct.id));
+
   // Stato per nuova configurazione atleta (nel modale)
   const [newAthleteConfig, setNewAthleteConfig] = useState({
     idConfigTipoAtleta: null,
@@ -49,47 +62,51 @@ const CostsTab = ({ value, onChange, onSubmit }) => {
     config: { amount: 0 }
   });
 
-  // Carica tipi atleta
+  // Carica tipi atleta e tipi categoria
   useEffect(() => {
     const loadData = async () => {
       try {
-        const types = await loadAthleteTypes();
+        const [types, categories] = await Promise.all([
+          loadAthleteTypes(),
+          loadAllCategoryTypes()
+        ]);
         setAthleteTypes(types);
+        setCategoryTypes(categories);
       } catch (error) {
-        console.error('Errore nel caricamento tipi atleta:', error);
+        console.error('Errore nel caricamento dei dati di configurazione:', error);
       }
     };
     loadData();
   }, []);
 
-  // Inizializza i valori dal prop value
-  useEffect(() => {
-    if (value) {
-      setSpecialCosts(value.costiIscrizione?.specials || {});
-      setAthleteCostConfigs(value.costiIscrizione?.categories || []);
-      setIban(value.iban || '');
-      setIntestatario(value.intestatario || '');
-      setCausale(value.causale || '');
-    }
-  }, [value]);
-
-  // Handler per costi speciali
-  const handleAddSpecialCost = () => {
-    if (newSpecialName && newSpecialCost && parseFloat(newSpecialCost) >= 0) {
-      setSpecialCosts({
-        ...specialCosts,
-        [newSpecialName]: parseFloat(newSpecialCost)
-      });
-      setNewSpecialName('');
-      setNewSpecialCost('');
-      setSpecialCostModalOpen(false);
-    }
+  // Handler per categorie speciali
+  const handleCloseSpecialCategoryModal = () => {
+    setNewSpecialCategory(EMPTY_SPECIAL_CATEGORY);
+    setSpecialCategoryModalOpen(false);
   };
 
-  const handleRemoveSpecialCost = (key) => {
-    const updated = { ...specialCosts };
-    delete updated[key];
-    setSpecialCosts(updated);
+  const handleAddSpecialCategory = () => {
+    const { idConfigTipoCategoria, singleCost, withOthersCost } = newSpecialCategory;
+    if (!idConfigTipoCategoria || singleCost === '' || parseFloat(singleCost) < 0) return;
+
+    setSpecialCategories([
+      ...specialCategories,
+      {
+        idConfigTipoCategoria,
+        singleCost: parseFloat(singleCost),
+        withOthersCost: withOthersCost === '' ? null : parseFloat(withOthersCost)
+      }
+    ]);
+    handleCloseSpecialCategoryModal();
+  };
+
+  const handleRemoveSpecialCategory = (index) => {
+    setSpecialCategories(specialCategories.filter((_, i) => i !== index));
+  };
+
+  const getCategoryTypeName = (id) => {
+    const category = categoryTypes.find(ct => ct.id === id);
+    return category ? category.nome : `Categoria #${id}`;
   };
 
   // Handler per configurazioni atleta
@@ -210,12 +227,15 @@ const CostsTab = ({ value, onChange, onSubmit }) => {
   const handleSaveChanges = (e) => {
     e.preventDefault();
     const costiIscrizione = {
-      specials: specialCosts,
+      tesseramento: {
+        enabled: membershipEnabled,
+        amount: membershipEnabled ? parseFloat(membershipCost) : null
+      },
+      specialCategories,
       categories: athleteCostConfigs.filter(config => config.idConfigTipoAtleta !== null)
     };
-    onChange(costiIscrizione, iban, intestatario, causale);
     if (onSubmit) {
-      onSubmit(e);
+      onSubmit({ costiIscrizione, iban, intestatario, causale });
     }
   };
 
@@ -283,40 +303,80 @@ const CostsTab = ({ value, onChange, onSubmit }) => {
         
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
+            {/* Richiesta tesseramento */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={membershipEnabled}
+                    onChange={(e) => setMembershipEnabled(e.target.checked)}
+                  />
+                }
+                label={
+                  <span style={{ fontWeight: 500, color: '#333' }}>
+                    Richiesta tesseramento
+                    <Typography variant="body2" color="text.secondary" component="span" display="block">
+                      Costo applicato agli atleti per cui viene richiesto il tesseramento in fase di iscrizione
+                    </Typography>
+                  </span>
+                }
+              />
+              {membershipEnabled && (
+                <TextField
+                  label="Costo tesseramento (€)"
+                  type="number"
+                  value={membershipCost}
+                  onChange={(e) => setMembershipCost(e.target.value)}
+                  required
+                  size="small"
+                  fullWidth
+                  inputProps={{ min: 0, step: 0.01 }}
+                />
+              )}
+            </div>
+
+            {/* Categorie speciali */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <label style={{ fontWeight: 500, color: '#333' }}>Aggiungi dei costi specifici da applicare agli atleti in determinate condizioni</label>
+              <label style={{ fontWeight: 500, color: '#333' }}>
+                Costi dedicati per categorie speciali, al posto del calcolo per tipologia atleta
+              </label>
               <Button
                 size='s'
-                onClick={() => setSpecialCostModalOpen(true)}
+                onClick={() => setSpecialCategoryModalOpen(true)}
               >
                 Aggiungi
               </Button>
             </div>
 
-            {Object.keys(specialCosts).length > 0 ? (
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                {Object.entries(specialCosts).map(([key, value]) => (
-                  <div key={key} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    marginBottom: '0.5rem', 
-                    padding: '0.5rem', 
-                    backgroundColor: '#f5f5f5', 
-                    borderRadius: '4px' 
+            {specialCategories.length > 0 ? (
+              <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+                {specialCategories.map((sc, index) => (
+                  <div key={sc.idConfigTipoCategoria} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.5rem',
+                    padding: '0.5rem',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '4px'
                   }}>
                     <span>
-                      {key}: <strong>{value.toFixed(2)} €</strong>
+                      <strong>{getCategoryTypeName(sc.idConfigTipoCategoria)}</strong>
+                      {' — '}Singola: <strong>{sc.singleCost.toFixed(2)} €</strong>
+                      {' | '}Con altre categorie:{' '}
+                      {sc.withOthersCost !== null && sc.withOthersCost !== undefined
+                        ? <strong>{sc.withOthersCost.toFixed(2)} €</strong>
+                        : <em>calcolo standard</em>}
                     </span>
-                    <IconButton size="small" color="error" onClick={() => handleRemoveSpecialCost(key)}>
+                    <IconButton size="small" color="error" onClick={() => handleRemoveSpecialCategory(index)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </div>
                 ))}
               </Paper>
             ) : (
-              <Alert severity="info" sx={{ py: 1 }}>
-                Nessun costo speciale configurato
+              <Alert severity="info" sx={{ py: 1, mb: 3 }}>
+                Nessuna categoria speciale configurata
               </Alert>
             )}
           </div>
@@ -391,38 +451,71 @@ const CostsTab = ({ value, onChange, onSubmit }) => {
         </div>
       </form>
 
-      {/* Modale Aggiungi Costo Speciale */}
-      <Dialog open={specialCostModalOpen} onClose={() => setSpecialCostModalOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Aggiungi Costo Speciale</DialogTitle>
+      {/* Modale Aggiungi Categoria Speciale */}
+      <Dialog open={specialCategoryModalOpen} onClose={handleCloseSpecialCategoryModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Aggiungi Categoria Speciale</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Inserisci un costo fisso che verrà applicato a tutti gli atleti
+            La categoria viene esclusa dal calcolo per tipologia atleta e ha un costo dedicato.
+            Se non indichi il costo con altre categorie, quando l'atleta è iscritto anche ad altre
+            categorie viene conteggiata come una categoria normale.
           </Typography>
-          
-          <TextField
-            label="Nome Costo"
-            value={newSpecialName}
-            onChange={(e) => setNewSpecialName(e.target.value)}
-            fullWidth
-            placeholder="es. Assicurazione"
-            sx={{ mb: 2, mt: 1 }}
-          />
-          
-          <TextField
-            label="Importo (€)"
-            value={newSpecialCost}
-            onChange={(e) => setNewSpecialCost(e.target.value)}
-            type="number"
-            fullWidth
-            inputProps={{ min: 0, step: 0.01 }}
-          />
+
+          {competitionCategoryTypes.length === 0 ? (
+            <Alert severity="warning">
+              Nessuna categoria configurata per la competizione: configura prima il tab Categorie
+            </Alert>
+          ) : (
+            <>
+              <TextField
+                select
+                label="Categoria"
+                value={newSpecialCategory.idConfigTipoCategoria}
+                onChange={(e) => setNewSpecialCategory({ ...newSpecialCategory, idConfigTipoCategoria: e.target.value })}
+                fullWidth
+                required
+                sx={{ mb: 2, mt: 1 }}
+              >
+                {competitionCategoryTypes.map(ct => (
+                  <MenuItem
+                    key={ct.id}
+                    value={ct.id}
+                    disabled={specialCategories.some(sc => sc.idConfigTipoCategoria === ct.id)}
+                  >
+                    {ct.nome}{ct.tipoCompetizione?.nome ? ` (${ct.tipoCompetizione.nome})` : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                label="Costo come unica categoria (€)"
+                type="number"
+                value={newSpecialCategory.singleCost}
+                onChange={(e) => setNewSpecialCategory({ ...newSpecialCategory, singleCost: e.target.value })}
+                fullWidth
+                required
+                sx={{ mb: 2 }}
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+
+              <TextField
+                label="Costo insieme ad altre categorie (€)"
+                type="number"
+                value={newSpecialCategory.withOthersCost}
+                onChange={(e) => setNewSpecialCategory({ ...newSpecialCategory, withOthersCost: e.target.value })}
+                fullWidth
+                helperText="Facoltativo"
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSpecialCostModalOpen(false)}>Annulla</Button>
-          <Button 
-            onClick={handleAddSpecialCost} 
+          <Button onClick={handleCloseSpecialCategoryModal}>Annulla</Button>
+          <Button
+            onClick={handleAddSpecialCategory}
             variant="contained"
-            disabled={!newSpecialName || !newSpecialCost}
+            disabled={!newSpecialCategory.idConfigTipoCategoria || newSpecialCategory.singleCost === ''}
           >
             Aggiungi
           </Button>
