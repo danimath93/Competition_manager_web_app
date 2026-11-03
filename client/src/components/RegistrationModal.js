@@ -136,14 +136,6 @@ const RegistrationModal = ({
     }));
   };
 
-  // Esperienze disponibili per un tipo competizione (Quyen e Quyen Vu Khi condividono la stessa scelta)
-  const getExperiencesForType = (tipoCompetizioneId) => {
-    if (tipoCompetizioneId === CompetitionTipology.MANI_NUDE || tipoCompetizioneId === CompetitionTipology.ARMI) {
-      return availableExperiencesByType[1] || availableExperiencesByType[2] || [];
-    }
-    return availableExperiencesByType[tipoCompetizioneId] || [];
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -174,7 +166,7 @@ const RegistrationModal = ({
         if (details?.tipoCompetizioneId) {
           const tipoCompId = details.tipoCompetizioneId;
           // L'esperienza è obbligatoria solo se configurata per il tipo competizione
-          if (getExperiencesForType(tipoCompId).length > 0 && !selectedExperiences[tipoCompId]) {
+          if (availableExperiencesByType[tipoCompId]?.length > 0 && !selectedExperiences[tipoCompId]) {
             setError('Seleziona il livello di esperienza per tutte le categorie selezionate.');
             return;
           }
@@ -239,10 +231,9 @@ const RegistrationModal = ({
 
   // Raggruppa le categorie per tipo competizione
   const categoriesByType = {
-    1: [], // Quyen
-    2: [], // Quyen Vu Khi
-    3: [], // Combattimento
-    4: []  // Attività complementari
+    [CompetitionTipology.QUYEN]: [],
+    [CompetitionTipology.COMBATTIMENTO]: [],
+    [CompetitionTipology.COMPLEMENTARI]: []
   };
 
   availableCategories.forEach(category => {
@@ -255,10 +246,7 @@ const RegistrationModal = ({
     }
   });
 
-  // Ottiene le esperienze per i tipi Quyen (1 e 2)
-  const quyenExperiences = availableExperiencesByType[1] || availableExperiencesByType[2] || [];
-  const canMergeQuyenTypes = categoriesByType[1].length > 0 && categoriesByType[2].length > 0;
-
+  const quyenExperiences = availableExperiencesByType[CompetitionTipology.QUYEN] || [];
 
   const renderContent = () => {
     if (loading) {
@@ -275,46 +263,17 @@ const RegistrationModal = ({
 
     return (
       <>
-        {/* Autocomplete Esperienza condiviso per Quyen e Quyen Vu Khi */}
-        {canMergeQuyenTypes && quyenExperiences.length > 0 && (
-          <div className="drawer-section">
-            <h3 className="drawer-section-title">Livello Esperienza Quyen</h3>
-            <div className="drawer-section-content">
-              <Autocomplete
-                size="small"
-                value={selectedExperiences[1] || null}
-                onChange={(event, newValue) => {
-                  handleExperienceChange(1, newValue);
-                  handleExperienceChange(2, newValue);
-                }}
-                options={quyenExperiences}
-                getOptionLabel={(option) => option.nome || ''}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Livello Esperienza Quyen / Quyen Vu Khi"
-                    variant="outlined"
-                    required
-                    size="small"
-                  />
-                )}
-              />
-            </div>
-          </div>
-        )}
-
         {/* Sezione Categorie Quyen */}
-        {categoriesByType[1].length > 0 && (
+        {categoriesByType[CompetitionTipology.QUYEN].length > 0 && (
           <div className="drawer-section">
             <h3 className="drawer-section-title">Categorie Quyen</h3>
             <div className="drawer-section-content">
-              {/* Esperienza separata se non merged */}
-              {!canMergeQuyenTypes && quyenExperiences.length > 0 && (
+              {quyenExperiences.length > 0 && (
                 <div style={{ marginBottom: '16px' }}>
                   <Autocomplete
                     size="small"
-                    value={selectedExperiences[1] || null}
-                    onChange={(event, newValue) => handleExperienceChange(1, newValue)}
+                    value={selectedExperiences[CompetitionTipology.QUYEN] || null}
+                    onChange={(event, newValue) => handleExperienceChange(CompetitionTipology.QUYEN, newValue)}
                     options={quyenExperiences}
                     getOptionLabel={(option) => option.nome || ''}
                     renderInput={(params) => (
@@ -331,7 +290,7 @@ const RegistrationModal = ({
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[1].map(category => {
+                {categoriesByType[CompetitionTipology.QUYEN].map(category => {
                   const categoryId = category.configTipoCategoria;
                   const details = categoryDetails[categoryId];
                   const isSelected = selectedCategories.includes(categoryId);
@@ -397,106 +356,20 @@ const RegistrationModal = ({
           </div>
         )}
 
-        {/* Sezione Categorie Quyen Vu Khi */}
-        {categoriesByType[2].length > 0 && (
-          <div className="drawer-section">
-            <h3 className="drawer-section-title">Categorie Quyen Vu Khi</h3>
-            <div className="drawer-section-content">
-              {/* Esperienza separata se non merged */}
-              {!canMergeQuyenTypes && quyenExperiences.length > 0 && (
-                <div style={{ marginBottom: '16px' }}>
-                  <Autocomplete
-                    size="small"
-                    value={selectedExperiences[2] || null}
-                    onChange={(event, newValue) => handleExperienceChange(2, newValue)}
-                    options={quyenExperiences}
-                    getOptionLabel={(option) => option.nome || ''}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Livello Esperienza"
-                        variant="outlined"
-                        required
-                        size="small"
-                      />
-                    )}
-                  />
-                </div>
-              )}
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[2].map(category => {
-                  const categoryId = category.configTipoCategoria;
-                  const details = categoryDetails[categoryId];
-                  const isSelected = selectedCategories.includes(categoryId);
-                  const detailOptions = getCategoryDetailOptions(categoryId);
-
-                  return (
-                    <div
-                      key={categoryId}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
-                        padding: '12px',
-                        backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
-                        borderRadius: '8px',
-                        border: '1px solid #e0e0e0',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleCategoryToggle(categoryId)}
-                        style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                      />
-                      <div style={{ flex: 1, fontWeight: '500' }}>
-                        {details?.nome || 'Categoria'}
-                      </div>
-                      {detailOptions.length > 0 && (
-                        <div style={{ minWidth: '200px' }}>
-                          <Autocomplete
-                            size="small"
-                            value={categoryDetailSelections[categoryId] || null}
-                            onChange={(event, newValue) => handleCategoryDetailChange(categoryId, newValue)}
-                            options={detailOptions}
-                            getOptionLabel={(option) => option.nome || ''}
-                            isOptionEqualToValue={(option, value) => option.nome === value.nome}
-                            disabled={!isSelected}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                label="Dettagli"
-                                required={isSelected}
-                                variant="outlined"
-                                size="small"
-                              />
-                            )}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Sezione Categorie Combattimento */}
-        {categoriesByType[3].length > 0 && (
+        {categoriesByType[CompetitionTipology.COMBATTIMENTO].length > 0 && (
           <div className="drawer-section">
             <h3 className="drawer-section-title">Categorie Combattimento</h3>
             <div className="drawer-section-content">
               <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', alignItems: 'center' }}>
                 {/* Esperienza Combattimento */}
-                {availableExperiencesByType[3]?.length > 0 && (
+                {availableExperiencesByType[CompetitionTipology.COMBATTIMENTO]?.length > 0 && (
                   <div style={{ flex: 1, maxWidth: '300px' }}>
                     <Autocomplete
                       size="small"
-                      value={selectedExperiences[3] || null}
-                      onChange={(event, newValue) => handleExperienceChange(3, newValue)}
-                      options={availableExperiencesByType[3]}
+                      value={selectedExperiences[CompetitionTipology.COMBATTIMENTO] || null}
+                      onChange={(event, newValue) => handleExperienceChange(CompetitionTipology.COMBATTIMENTO, newValue)}
+                      options={availableExperiencesByType[CompetitionTipology.COMBATTIMENTO]}
                       getOptionLabel={(option) => option.nome || ''}
                       renderInput={(params) => (
                         <TextField
@@ -530,7 +403,7 @@ const RegistrationModal = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[3].map(category => {
+                {categoriesByType[CompetitionTipology.COMBATTIMENTO].map(category => {
                   const categoryId = category.configTipoCategoria;
                   const details = categoryDetails[categoryId];
                   const isSelected = selectedCategories.includes(categoryId);
@@ -574,17 +447,17 @@ const RegistrationModal = ({
         )}
 
         {/* Sezione Attività complementari */}
-        {categoriesByType[4].length > 0 && (
+        {categoriesByType[CompetitionTipology.COMPLEMENTARI].length > 0 && (
           <div className="drawer-section">
             <h3 className="drawer-section-title">Attività complementari</h3>
             <div className="drawer-section-content">
-              {availableExperiencesByType[4]?.length > 0 && (
+              {availableExperiencesByType[CompetitionTipology.COMPLEMENTARI]?.length > 0 && (
                 <div style={{ marginBottom: '16px', maxWidth: '300px' }}>
                   <Autocomplete
                     size="small"
-                    value={selectedExperiences[4] || null}
-                    onChange={(event, newValue) => handleExperienceChange(4, newValue)}
-                    options={availableExperiencesByType[4]}
+                    value={selectedExperiences[CompetitionTipology.COMPLEMENTARI] || null}
+                    onChange={(event, newValue) => handleExperienceChange(CompetitionTipology.COMPLEMENTARI, newValue)}
+                    options={availableExperiencesByType[CompetitionTipology.COMPLEMENTARI]}
                     getOptionLabel={(option) => option.nome || ''}
                     renderInput={(params) => (
                       <TextField
@@ -600,7 +473,7 @@ const RegistrationModal = ({
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[4].map(category => {
+                {categoriesByType[CompetitionTipology.COMPLEMENTARI].map(category => {
                   const categoryId = category.configTipoCategoria;
                   const details = categoryDetails[categoryId];
                   const isSelected = selectedCategories.includes(categoryId);

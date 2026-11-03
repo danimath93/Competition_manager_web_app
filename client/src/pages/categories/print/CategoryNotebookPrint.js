@@ -35,7 +35,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
   const [orderedAthletes, setOrderedAthletes] = React.useState([]);
   const [commission, setCommission] = React.useState({});
   const [startLetter, setStartLetter] = React.useState('N/A');
-  const [competitionTipology, setCompetitionTipology] = React.useState(CompetitionTipology.MANI_NUDE);
+  const [competitionTipology, setCompetitionTipology] = React.useState(CompetitionTipology.QUYEN);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -49,7 +49,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
         // Carica dettagli competizione
         const compDetails = await getCompetitionDetails(category.competizioneId);
         setCompetition(compDetails);
-        setCompetitionTipology(category.tipoCategoria?.tipoCompetizione?.id || CompetitionTipology.MANI_NUDE);
+        setCompetitionTipology(category.tipoCategoria?.tipoCompetizione?.id || CompetitionTipology.QUYEN);
 
         // Carica svolgimento categoria per ottenere atleti
         const svolgimento = await getSvolgimentoByCategoriaId(category.id);

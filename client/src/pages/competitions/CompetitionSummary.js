@@ -417,17 +417,19 @@ const CompetitionSummary = () => {
         valueGetter: (value, row) => {
         },
         renderCell: (params) => {
-          const quyenManiNude = params.row.summary?.categoryTypeTotals?.[CompetitionTipology.MANI_NUDE] || 0;
-          const quyenArmi = params.row.summary?.categoryTypeTotals?.[CompetitionTipology.ARMI] || 0;
-          const combattimento = params.row.summary?.categoryTypeTotals?.[CompetitionTipology.COMBATTIMENTO] || 0;
-          const altro = params.row.summary?.categoryTypeTotals?.[CompetitionTipology.COMPLEMENTARI] || 0;
-          let displayText = quyenManiNude > 0 ? `Mani nude: ${quyenManiNude}` : '';
-          displayText += quyenArmi > 0 ? `, Armi: ${quyenArmi}` : '';
-          displayText += combattimento > 0 ? `, Combattimento: ${combattimento}` : '';
-          displayText += altro > 0 ? `, Altro: ${altro}` : '';
+          const typeTotals = params.row.summary?.categoryTypeTotals || {};
+          const counts = [
+            ['Quyen', typeTotals[CompetitionTipology.QUYEN] || 0],
+            ['Combattimento', typeTotals[CompetitionTipology.COMBATTIMENTO] || 0],
+            ['Altro', typeTotals[CompetitionTipology.COMPLEMENTARI] || 0],
+          ];
+          const displayText = counts
+            .filter(([, count]) => count > 0)
+            .map(([label, count]) => `${label}: ${count}`)
+            .join(', ');
           return (
             <Tooltip title={displayText} arrow>
-              {quyenManiNude + quyenArmi + combattimento + altro}
+              {counts.reduce((sum, [, count]) => sum + count, 0)}
             </Tooltip>
           );
         },

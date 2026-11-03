@@ -264,17 +264,6 @@ const AthleteRegistration = ({
     };
   }, [athleteConfig]);
 
-  // Esperienze disponibili per un tipo competizione (Quyen e Quyen Vu Khi condividono la stessa scelta)
-  const getExperiencesForType = (tipoCompetizioneId) => {
-    if (
-      tipoCompetizioneId === CompetitionTipology.MANI_NUDE ||
-      tipoCompetizioneId === CompetitionTipology.ARMI
-    ) {
-      return availableExperiencesByType[1] || availableExperiencesByType[2] || [];
-    }
-    return availableExperiencesByType[tipoCompetizioneId] || [];
-  };
-
   // Valida la fase corrente
   const validateCurrentPhase = () => {
     const newErrors = [];
@@ -334,7 +323,7 @@ const AthleteRegistration = ({
             const tipoCompId = details.tipoCompetizioneId;
             // L'esperienza è obbligatoria solo se configurata per il tipo competizione
             if (
-              getExperiencesForType(tipoCompId).length > 0 &&
+              availableExperiencesByType[tipoCompId]?.length > 0 &&
               !selectedExperiences[tipoCompId]
             ) {
               newErrors.push(
@@ -680,10 +669,9 @@ const AthleteRegistration = ({
 
     // Raggruppa le categorie per tipo competizione
     const categoriesByType = {
-      1: [], // Quyen
-      2: [], // Quyen Vu Khi
-      3: [], // Combattimento
-      4: [], // Attività complementari
+      [CompetitionTipology.QUYEN]: [],
+      [CompetitionTipology.COMBATTIMENTO]: [],
+      [CompetitionTipology.COMPLEMENTARI]: [],
     };
 
     availableCategories.forEach((category) => {
@@ -706,23 +694,8 @@ const AthleteRegistration = ({
       }
     });
 
-    // Ottiene le esperienze per i tipi Quyen (1 e 2)
     const quyenExperiences =
-      availableExperiencesByType[1] || availableExperiencesByType[2] || [];
-    const canMergeQuyenTypes =
-      categoriesByType[1].length > 0 && categoriesByType[2].length > 0;
-
-    // Identifica quali tipi competizione hanno categorie
-    const competitionTypesPresent = [];
-    if (categoriesByType[1].length > 0 || categoriesByType[2].length > 0) {
-      competitionTypesPresent.push({
-        id: canMergeQuyenTypes ? "quyen_merged" : 1,
-        name: "Quyen / Quyen Vu Khi",
-      });
-    }
-    if (categoriesByType[3].length > 0) {
-      competitionTypesPresent.push({ id: 3, name: "Combattimento" });
-    }
+      availableExperiencesByType[CompetitionTipology.QUYEN] || [];
 
     return (
       <div className="phase-container">
@@ -746,45 +719,18 @@ const AthleteRegistration = ({
           </div>
         ) : (
           <>
-            {/* Autocomplete Esperienza condiviso per Quyen e Quyen Vu Khi */}
-            {canMergeQuyenTypes && quyenExperiences.length > 0 && (
-              <div className="data-section" style={{ marginBottom: "24px" }}>
-                <Autocomplete
-                  size="small"
-                  value={selectedExperiences[1] || null}
-                  onChange={(event, newValue) => {
-                    handleExperienceChange(1, newValue);
-                    handleExperienceChange(2, newValue);
-                  }}
-                  options={quyenExperiences}
-                  getOptionLabel={(option) => option.nome || ""}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Livello Esperienza Quyen / Quyen Vu Khi"
-                      variant="outlined"
-                      required
-                      size="small"
-                    />
-                  )}
-                  style={{ maxWidth: "400px" }}
-                />
-              </div>
-            )}
-
             {/* Sezione Categorie Quyen */}
-            {categoriesByType[1].length > 0 && (
+            {categoriesByType[CompetitionTipology.QUYEN].length > 0 && (
               <div className="data-section">
                 <h4 className="section-title">Categorie Quyen</h4>
 
-                {/* Esperienza separata se non merged */}
-                {!canMergeQuyenTypes && quyenExperiences.length > 0 && (
+                {quyenExperiences.length > 0 && (
                   <div style={{ marginBottom: "16px" }}>
                     <Autocomplete
                       size="small"
-                      value={selectedExperiences[1] || null}
+                      value={selectedExperiences[CompetitionTipology.QUYEN] || null}
                       onChange={(event, newValue) =>
-                        handleExperienceChange(1, newValue)
+                        handleExperienceChange(CompetitionTipology.QUYEN, newValue)
                       }
                       options={quyenExperiences}
                       getOptionLabel={(option) => option.nome || ""}
@@ -809,7 +755,7 @@ const AthleteRegistration = ({
                     gap: "8px",
                   }}
                 >
-                  {categoriesByType[1].map((category, index) => {
+                  {categoriesByType[CompetitionTipology.QUYEN].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
@@ -897,140 +843,21 @@ const AthleteRegistration = ({
               </div>
             )}
 
-            {/* Sezione Categorie Quyen Vu Khi */}
-            {categoriesByType[2].length > 0 && (
-              <div className="data-section">
-                <h4 className="section-title">Categorie Quyen Vu Khi</h4>
-
-                {/* Esperienza separata se non merged */}
-                {!canMergeQuyenTypes && quyenExperiences.length > 0 && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <Autocomplete
-                      size="small"
-                      value={selectedExperiences[2] || null}
-                      onChange={(event, newValue) =>
-                        handleExperienceChange(2, newValue)
-                      }
-                      options={quyenExperiences}
-                      getOptionLabel={(option) => option.nome || ""}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Livello Esperienza"
-                          variant="outlined"
-                          required
-                          size="small"
-                        />
-                      )}
-                      style={{ maxWidth: "400px" }}
-                    />
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  {categoriesByType[2].map((category, index) => {
-                    const categoryId = category.configTipoCategoria;
-                    const details = categoryDetails[categoryId];
-                    const isSelected = selectedCategories.includes(categoryId);
-                    const detailOptions = getCategoryDetailOptions(categoryId);
-
-                    return (
-                      <div
-                        key={`quyenvukhi-${categoryId}-${index}`}
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          alignItems: "center",
-                          gap: "12px",
-                          padding: "8px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                            minWidth: "200px",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleCategoryToggle(categoryId)}
-                            style={{
-                              cursor: "pointer",
-                              width: "20px",
-                              height: "20px",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <div style={{ fontWeight: "500" }}>
-                            {details?.nome || "Categoria"}
-                          </div>
-                        </div>
-                        {detailOptions && detailOptions.length > 0 && (
-                          <div
-                            style={{
-                              flex: "0 1 400px",
-                              minWidth: "250px",
-                              maxWidth: "100%",
-                              marginLeft: "auto",
-                            }}
-                          >
-                            <Autocomplete
-                              size="small"
-                              value={
-                                categoryDetailSelections[categoryId] || null
-                              }
-                              onChange={(event, newValue) =>
-                                handleCategoryDetailChange(categoryId, newValue)
-                              }
-                              options={detailOptions}
-                              getOptionLabel={(option) => option.nome || ""}
-                              isOptionEqualToValue={(option, value) =>
-                                option.id === value.id
-                              }
-                              disabled={!isSelected}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label="Dettagli"
-                                  required={isSelected}
-                                  variant="outlined"
-                                  size="small"
-                                />
-                              )}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Sezione Categorie Combattimento */}
-            {categoriesByType[3].length > 0 && (
+            {categoriesByType[CompetitionTipology.COMBATTIMENTO].length > 0 && (
               <div className="data-section">
                 <h4 className="section-title">Categorie Combattimento</h4>
                 <div className="combat-controls-container">
                   {/* Esperienza Combattimento */}
-                  {availableExperiencesByType[3]?.length > 0 && (
+                  {availableExperiencesByType[CompetitionTipology.COMBATTIMENTO]?.length > 0 && (
                     <div>
                       <Autocomplete
                         size="small"
-                        value={selectedExperiences[3] || null}
+                        value={selectedExperiences[CompetitionTipology.COMBATTIMENTO] || null}
                         onChange={(event, newValue) =>
-                          handleExperienceChange(3, newValue)
+                          handleExperienceChange(CompetitionTipology.COMBATTIMENTO, newValue)
                         }
-                        options={availableExperiencesByType[3]}
+                        options={availableExperiencesByType[CompetitionTipology.COMBATTIMENTO]}
                         getOptionLabel={(option) => option.nome || ""}
                         renderInput={(params) => (
                           <TextField
@@ -1070,7 +897,7 @@ const AthleteRegistration = ({
                     gap: "8px",
                   }}
                 >
-                  {categoriesByType[3].map((category, index) => {
+                  {categoriesByType[CompetitionTipology.COMBATTIMENTO].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);
@@ -1117,19 +944,19 @@ const AthleteRegistration = ({
             )}
 
             {/* Sezione Attività complementari */}
-            {categoriesByType[4].length > 0 && (
+            {categoriesByType[CompetitionTipology.COMPLEMENTARI].length > 0 && (
               <div className="data-section">
                 <h4 className="section-title">Attività complementari</h4>
 
-                {availableExperiencesByType[4]?.length > 0 && (
+                {availableExperiencesByType[CompetitionTipology.COMPLEMENTARI]?.length > 0 && (
                   <div style={{ marginBottom: "16px" }}>
                     <Autocomplete
                       size="small"
-                      value={selectedExperiences[4] || null}
+                      value={selectedExperiences[CompetitionTipology.COMPLEMENTARI] || null}
                       onChange={(event, newValue) =>
-                        handleExperienceChange(4, newValue)
+                        handleExperienceChange(CompetitionTipology.COMPLEMENTARI, newValue)
                       }
-                      options={availableExperiencesByType[4]}
+                      options={availableExperiencesByType[CompetitionTipology.COMPLEMENTARI]}
                       getOptionLabel={(option) => option.nome || ""}
                       renderInput={(params) => (
                         <TextField
@@ -1152,7 +979,7 @@ const AthleteRegistration = ({
                     gap: "8px",
                   }}
                 >
-                  {categoriesByType[4].map((category, index) => {
+                  {categoriesByType[CompetitionTipology.COMPLEMENTARI].map((category, index) => {
                     const categoryId = category.configTipoCategoria;
                     const details = categoryDetails[categoryId];
                     const isSelected = selectedCategories.includes(categoryId);

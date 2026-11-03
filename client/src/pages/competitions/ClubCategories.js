@@ -28,6 +28,7 @@ import PageHeader from '../../components/PageHeader';
 import SearchTextField from '../../components/SearchTextField';
 import { useAuth } from '../../context/AuthContext';
 import { getCompetitionDetails } from '../../api/competitions';
+import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
 import { getCategoriesByClub } from '../../api/categories';
 
 const ClubCategories = () => {
@@ -216,7 +217,7 @@ const ClubCategories = () => {
                           <TableCell sx={{ fontWeight: 'bold' }}>Nome</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Sesso</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Anno</TableCell>
-                          {category.tipoCategoria?.tipoCompetizione?.id === 3 && (
+                          {category.tipoCategoria?.tipoCompetizione?.id === CompetitionTipology.COMBATTIMENTO && (
                             <TableCell sx={{ fontWeight: 'bold' }}>Peso (kg)</TableCell>
                           )}
                         </TableRow>
@@ -256,7 +257,7 @@ const ClubCategories = () => {
                               </TableCell>
                               <TableCell>{atleta.sesso}</TableCell>
                               <TableCell>{new Date(atleta.dataNascita).getFullYear()}</TableCell>
-                              {category.tipoCategoria?.tipoCompetizione?.id === 3 && (
+                              {category.tipoCategoria?.tipoCompetizione?.id === CompetitionTipology.COMBATTIMENTO && (
                                 <TableCell>{atleta.peso || '-'}</TableCell>
                               )}
                             </TableRow>

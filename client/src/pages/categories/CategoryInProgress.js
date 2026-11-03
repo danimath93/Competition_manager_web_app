@@ -178,7 +178,7 @@ const CategoryInProgress = () => {
 
   // Handler per conferma definizione
   const handleConfirmDefinition = async (loadedLetter) => {
-    if ((tipoCompetizioneId === CompetitionTipology.MANI_NUDE.toString() || tipoCompetizioneId === CompetitionTipology.ARMI.toString()) && !loadedLetter) {
+    if (tipoCompetizioneId === CompetitionTipology.QUYEN.toString() && !loadedLetter) {
       alert('Devi prima estrarre o impostare una lettera');
       return;
     }
@@ -189,7 +189,7 @@ const CategoryInProgress = () => {
     
     const updates = { stato: CategoryStates.IN_ATTESA_DI_AVVIO };
     
-    // Se è quyen/armi, salva la lettera
+    // Se è quyen, salva la lettera
     if (loadedLetter) {
       updates.letteraEstratta = loadedLetter;
       setLetter(loadedLetter);
@@ -309,10 +309,8 @@ const CategoryInProgress = () => {
     );
   }
 
-  // Determina se è una competizione Quyen/Armi o Combattimento
-  const isQuyenCompetition = 
-    tipoCompetizioneId === CompetitionTipology.MANI_NUDE.toString() || 
-    tipoCompetizioneId === CompetitionTipology.ARMI.toString();
+  // Determina se è una competizione Quyen o Combattimento
+  const isQuyenCompetition = tipoCompetizioneId === CompetitionTipology.QUYEN.toString();
   const isFightingCompetition = tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString();
 
   // Determina quale componente mostrare in base a tipo e stato

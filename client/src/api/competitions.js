@@ -26,18 +26,6 @@ export const getCompetitionDetails = async (id) => {
     }
 };
 
-// Ottiene le categorie di una competizione specifica
-export const loadCompetitionCategories = async (competitionId) => {
-  try {
-    const response = await axios.get(`/competizioni/${competitionId}/tipocategorie`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante il caricamento delle categorie:', error);
-    throw error;
-  }
-};
-
-
 // Ottiene il riepilogo costi dettagliato per una competizione e club
 export const getClubCompetitionRegistrationSummary = async (competitionId, clubId) => {
   try {
@@ -45,17 +33,6 @@ export const getClubCompetitionRegistrationSummary = async (competitionId, clubI
     return response.data;
   } catch (error) {
     console.error('Errore nel caricamento del riepilogo costi:', error);
-    throw error;
-  }
-};
-
-// Ottiene le competizioni filtrate per tipologia
-export const loadCompetitionsByTipologia = async (tipologiaId) => {
-  try {
-    const response = await axios.get(`/competizioni/tipologia/${tipologiaId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante il caricamento delle competizioni per tipologia:', error);
     throw error;
   }
 };

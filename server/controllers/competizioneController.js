@@ -66,27 +66,6 @@ const getAllCompetizioni = async (req, res) => {
   }
 };
 
-// Ottieni le categorie di una competizione specifica
-const getTipoCategorieByCompetizione = async (req, res) => {
-  try {
-    const { competizioneId } = req.params;
-    const competition = await Competizione.findByPk(competizioneId);
-    if (!competition) {
-      logger.warn(`Tentativo recupero categorie per competizione inesistente - ID: ${competizioneId}`);
-      return res.status(404).json({ error: 'Competizione non trovata' });
-    }
-
-    // TODO: Da rimuovere in futuro: supporto legacy per tipologie di competizione salvate come array di interi
-
-  } catch (error) {
-    logger.error(`Errore nel recupero delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nel recupero delle categorie',
-      details: error.message 
-    });
-  }
-};
-
 // Ottieni una competizione per ID
 const getCompetizioneById = async (req, res) => {
   try {
@@ -275,62 +254,6 @@ const getCompetizioniByStato = async (req, res) => {
     logger.error(`Errore nel recupero delle competizioni per stato ${req.params.stato}: ${error.message}`, { stack: error.stack });
     res.status(500).json({ 
       error: 'Errore nel recupero delle competizioni',
-      details: error.message 
-    });
-  }
-};
-
-// Ottieni competizioni per tipologia
-const getCompetizioniByTipologia = async (req, res) => {
-  try {
-    const { tipologiaId } = req.params;
-    const tipologiaIdInt = parseInt(tipologiaId);
-    
-    if (isNaN(tipologiaIdInt)) {
-      return res.status(400).json({ error: 'ID tipologia non valido' });
-    }
-
-    // Verifica che la tipologia esista
-    const tipologiaEsiste = await ConfigTipoCompetizione.findByPk(tipologiaIdInt);
-    if (!tipologiaEsiste) {
-      return res.status(404).json({ error: 'Tipologia non trovata' });
-    }
-
-    const competizioni = await Competizione.findAll({
-      where: {
-        tipologia: {
-          [require('sequelize').Op.contains]: [tipologiaIdInt]
-        }
-      },
-      include: [
-        {
-          model: Categoria,
-          as: 'categorie'
-        },
-        {
-          model: Club,
-          as: 'organizzatore',
-          attributes: { exclude: ['logoId'] }
-        },
-        {
-          model: Documento,
-          as: 'circolareGaraDocumento',
-          attributes: { exclude: ['file'] }
-        },
-        {
-          model: Documento,
-          as: 'locandinaDocumento',
-          attributes: { exclude: ['file'] }
-        }
-      ],
-      order: [['dataInizio', 'DESC']]
-    });
-
-    res.json(competizioni);
-  } catch (error) {
-    logger.error(`Errore nel recupero delle competizioni per tipologia ${req.params.tipologiaId}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nel recupero delle competizioni per tipologia',
       details: error.message 
     });
   }
@@ -1050,13 +973,11 @@ const exportRegisteredAthletes = async (req, res) => {
 
 module.exports = {
   getAllCompetizioni,
-  getTipoCategorieByCompetizione,
   getCompetizioneById,
   createCompetizione,
   updateCompetizione,
   deleteCompetizione,
   getCompetizioniByStato,
-  getCompetizioniByTipologia,
   getCompetitionClubRegistrationSummary,
   printCategories,
   exportCategories,

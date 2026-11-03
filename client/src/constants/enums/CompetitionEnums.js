@@ -1,30 +1,15 @@
+// ID dei tipi competizione (config_tipo_competizioni). L'id 2 (Quyen con armi) è stato unificato in QUYEN.
 export const CompetitionTipology = Object.freeze({
-  MANI_NUDE: 1,
-  ARMI: 2,
+  QUYEN: 1,
   COMBATTIMENTO: 3,
   COMPLEMENTARI: 4
 });
 
-// Mapping per la compatibilità con i vecchi valori stringa (se necessario)
 export const CompetitionTipologyLabels = Object.freeze({
-  [CompetitionTipology.MANI_NUDE]: 'Mani nude',
-  [CompetitionTipology.ARMI]: 'Armi',
+  [CompetitionTipology.QUYEN]: 'Quyen',
   [CompetitionTipology.COMBATTIMENTO]: 'Combattimento',
   [CompetitionTipology.COMPLEMENTARI]: 'Attività complementari'
 });
-
-// Funzione helper per ottenere il label da un ID
-export const getCompetitionTipologyLabel = (id) => {
-  return CompetitionTipologyLabels[id] || 'Sconosciuto';
-};
-
-// Funzione helper per ottenere tutti i tipi come array
-export const getAllCompetitionTipologies = () => {
-  return Object.entries(CompetitionTipologyLabels).map(([id, label]) => ({
-    id: parseInt(id),
-    label
-  }));
-};
 
 export const CompetitionLevel = Object.freeze({
   LOCAL: 'Locale',

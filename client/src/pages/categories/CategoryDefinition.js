@@ -593,7 +593,7 @@ const CategoryDefinition = () => {
     const atleti = isGeneratedCard ? categoria.atleti : categoria.iscrizioni || [];
     const isSelected = isGeneratedCard ? selectedGenCategories.includes(categoria.key) : selectedSavedCategories.includes(categoria.id);
     const tipoCompetizioneId = isGeneratedCard ? categoria.tipoCompetizioneId : categoria?.tipoCategoria?.tipoCompetizione?.id;
-    const isQuyenCategory = tipoCompetizioneId === CompetitionTipology.MANI_NUDE || tipoCompetizioneId === CompetitionTipology.ARMI;
+    const isQuyenCategory = tipoCompetizioneId === CompetitionTipology.QUYEN;
     const isFightCategory = tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO;
 
     const getBirthYear = (dataNascita) => {
