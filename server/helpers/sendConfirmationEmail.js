@@ -11,8 +11,15 @@ function validateOAuth2Config() {
   }
 }
 
+// Client OAuth2 riutilizzato tra gli invii, così il token rinnovato resta in memoria
+let cachedOAuth2Client = null;
+
 // Crea il client OAuth2
 async function createOAuth2Client() {
+  if (cachedOAuth2Client) {
+    return cachedOAuth2Client;
+  }
+
   validateOAuth2Config();
 
   const oauth2Client = new google.auth.OAuth2(
@@ -20,6 +27,19 @@ async function createOAuth2Client() {
     process.env.GMAIL_CLIENT_SECRET,
     'https://developers.google.com/oauthplayground'
   );
+
+  // Se è presente un access token (es. generato da OAuth Playground) lo usa per il primo invio:
+  // alla scadenza la libreria lo rinnova automaticamente con il refresh token
+  if (process.env.GMAIL_ACCESS_TOKEN) {
+    oauth2Client.setCredentials({
+      access_token: process.env.GMAIL_ACCESS_TOKEN,
+      refresh_token: process.env.GMAIL_REFRESH_TOKEN
+    });
+    oauth2Client.on('tokens', () => logger.info('Access token refreshed successfully'));
+    logger.info('Uso dell\'access token fornito in GMAIL_ACCESS_TOKEN');
+    cachedOAuth2Client = oauth2Client;
+    return oauth2Client;
+  }
 
   oauth2Client.setCredentials({
     refresh_token: process.env.GMAIL_REFRESH_TOKEN
@@ -35,6 +55,7 @@ async function createOAuth2Client() {
     throw new Error(`OAuth2 refresh failed: ${error.message}. Il refresh token potrebbe essere scaduto. Genera un nuovo refresh token.`);
   }
 
+  cachedOAuth2Client = oauth2Client;
   return oauth2Client;
 }
 
