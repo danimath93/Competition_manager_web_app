@@ -1,14 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextField } from '@mui/material';
 import { CompetitionStatus, CompetitionLevel } from '../../constants/enums/CompetitionEnums';
+import { loadCompetitionTypes } from '../../api/config';
 import { TextInput } from '../common';
 import Button from '../common/Button';
 import '../styles/Layout.css';
 import '../styles/Register.css';
 
 const GeneralInfoTab = ({ formData, onChange, onSubmit }) => {
+  const [competitionTypes, setCompetitionTypes] = useState([]);
+
+  useEffect(() => {
+    loadCompetitionTypes()
+      .then(setCompetitionTypes)
+      .catch(error => console.error('Errore nel caricamento dei tipi competizione:', error));
+  }, []);
+
   const handleChange = (e) => {
     onChange(e.target.name, e.target.value);
+  };
+
+  // Limite per tipo competizione: campo vuoto = nessun limite
+  const handleTypeLimitChange = (typeId, value) => {
+    onChange('maxCategorieTipoCompetizione', {
+      ...(formData.maxCategorieTipoCompetizione || {}),
+      [typeId]: value,
+    });
   };
 
   return (
@@ -147,6 +164,18 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit }) => {
           onChange={handleChange}
           fullWidth
         />
+
+        {competitionTypes.map(type => (
+          <TextInput
+            key={type.id}
+            name={`maxCategorieTipo_${type.id}`}
+            label={`Numero Massimo Categorie ${type.nome}`}
+            type="number"
+            placeholder="Nessun limite"
+            value={formData.maxCategorieTipoCompetizione?.[type.id] ?? ''}
+            onChange={(e) => handleTypeLimitChange(type.id, e.target.value)}
+          />
+        ))}
 
         <TextInput
           name="maxPartecipanti"

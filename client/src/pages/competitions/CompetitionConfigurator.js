@@ -29,6 +29,7 @@ const CompetitionConfigurator = () => {
     stato: CompetitionStatus.PLANNED,
     dataScadenzaIscrizioni: '',
     maxCategorieAtleta: 5,
+    maxCategorieTipoCompetizione: {},
     maxPartecipanti: null,
     luogo: '',
     indirizzo: '',
@@ -77,6 +78,7 @@ const CompetitionConfigurator = () => {
             stato: competition.stato || CompetitionStatus.PLANNED,
             descrizione: competition.descrizione || '',
             maxCategorieAtleta: competition.maxCategorieAtleta || 5,
+            maxCategorieTipoCompetizione: competition.maxCategorieTipoCompetizione || {},
             maxPartecipanti: competition.maxPartecipanti || null,
             costiIscrizione: competition.costiIscrizione || null,
             iban: competition.iban || '',
@@ -106,6 +108,15 @@ const CompetitionConfigurator = () => {
     }));
   };
 
+  // Converte i limiti per tipo competizione in interi, scartando i campi vuoti (nessun limite)
+  const normalizeTypeLimits = (limits) => {
+    return Object.fromEntries(
+      Object.entries(limits || {})
+        .map(([typeId, max]) => [typeId, parseInt(max, 10)])
+        .filter(([, max]) => Number.isInteger(max) && max > 0)
+    );
+  };
+
   // I dati da salvare vengono passati esplicitamente quando lo stato non è ancora
   // stato aggiornato (es. creazione: il salvataggio parte nello stesso evento del setFormData)
   const handleSubmit = async (dataToSave = formData) => {
@@ -117,6 +128,7 @@ const CompetitionConfigurator = () => {
     const payload = {
       ...dataToSave,
       dataScadenzaIscrizioni: dataToSave.dataScadenzaIscrizioni || null,
+      maxCategorieTipoCompetizione: normalizeTypeLimits(dataToSave.maxCategorieTipoCompetizione),
     };
 
     try {

@@ -1,5 +1,6 @@
 const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza, Documento, DettaglioIscrizioneAtleta } = require('../models');
 const { calculateAthleteCost } = require('../helpers/costCalculator');
+const { checkCategoryLimits } = require('../helpers/categoryLimits');
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
@@ -154,6 +155,25 @@ const createIscrizione = async (req, res) => {
       return res.status(400).json({
         error: 'atletaId, tesseramento, tipoCategoriaId e competizioneId sono obbligatori'
       });
+    }
+
+    const competizione = await Competizione.findByPk(competizioneId);
+    if (!competizione) {
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Verifica i limiti di categorie considerando le iscrizioni già presenti per l'atleta
+    const existingRegistrations = await IscrizioneAtleta.findAll({
+      where: { atletaId, competizioneId },
+      attributes: ['tipoCategoriaId']
+    });
+    const limitError = await checkCategoryLimits(competizione, [
+      ...existingRegistrations.map(i => i.tipoCategoriaId),
+      tipoCategoriaId
+    ]);
+    if (limitError) {
+      logger.warn(`Limite categorie superato - Atleta: ${atletaId}, Competizione: ${competizioneId}: ${limitError}`);
+      return res.status(400).json({ error: limitError });
     }
 
     // Usa findOrCreate per evitare race condition quando si creano più iscrizioni simultaneamente
@@ -324,7 +344,19 @@ const editIscrizioniAtleta = async (req, res) => {
     if (!categories || categories.length === 0) {
       return res.status(400).json({ error: 'Deve essere selezionata almeno una categoria' });
     }
-    
+
+    const competizione = await Competizione.findByPk(competitionId);
+    if (!competizione) {
+      return res.status(404).json({ error: 'Competizione non trovata' });
+    }
+
+    // Verifica i limiti di categorie sull'insieme finale selezionato, prima di qualsiasi modifica
+    const limitError = await checkCategoryLimits(competizione, categories);
+    if (limitError) {
+      logger.warn(`Limite categorie superato in modifica - Atleta: ${athleteId}, Competizione: ${competitionId}: ${limitError}`);
+      return res.status(400).json({ error: limitError });
+    }
+
     const configTipoCategorie = await ConfigTipoCategoria.findAll({
       where: { id: categories }
     });

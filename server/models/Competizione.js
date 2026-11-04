@@ -127,6 +127,26 @@ const Competizione = sequelize.define('Competizione', {
     },
     field: 'max_categorie_atleta'
   },
+  maxCategorieTipoCompetizione: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: {},
+    validate: {
+      isValidLimits(value) {
+        if (value === null || value === undefined) return;
+        if (typeof value !== 'object' || Array.isArray(value)) {
+          throw new Error('maxCategorieTipoCompetizione deve essere un oggetto { idTipoCompetizione: max }');
+        }
+        Object.values(value).forEach(max => {
+          if (!Number.isInteger(max) || max < 1) {
+            throw new Error('Il numero massimo di categorie per tipologia deve essere un intero maggiore di 0');
+          }
+        });
+      }
+    },
+    field: 'max_categorie_tipo_competizione',
+    comment: 'Numero massimo di categorie per atleta per tipo competizione: { idTipoCompetizione: max }. Tipo assente = nessun limite'
+  },
   circolareGaraId: {
     type: DataTypes.INTEGER,
     allowNull: true,

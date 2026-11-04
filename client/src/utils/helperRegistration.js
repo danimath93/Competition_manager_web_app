@@ -1,4 +1,5 @@
 import { getCategoryType, getExperience, getNomiQuyenByCategoryType, getManyById } from '../services/configCacheService';
+import { CompetitionTipologyLabels } from '../constants/enums/CompetitionEnums';
 
 // Funzione helper per calcolare l'età dell'atleta
 const calculateAge = (birthDate) => {
@@ -72,6 +73,34 @@ const checkCategoryConstraints = (category, tipoCompetizioneId, athlete, selecte
   return true; // Tutti i vincoli soddisfatti
 };
 
+// Verifica i limiti di categorie della competizione (totale e per tipo competizione).
+// Restituisce la lista dei messaggi di errore (vuota se i limiti sono rispettati)
+const getCategoryLimitErrors = (competition, selectedCategoryIds, categoryDetails) => {
+  const errors = [];
+
+  if (competition?.maxCategorieAtleta && selectedCategoryIds.length > competition.maxCategorieAtleta) {
+    errors.push(`Puoi selezionare al massimo ${competition.maxCategorieAtleta} categorie per questa competizione.`);
+  }
+
+  const limitsByType = competition?.maxCategorieTipoCompetizione || {};
+  const countByType = {};
+  selectedCategoryIds.forEach(categoryId => {
+    const typeId = categoryDetails[categoryId]?.tipoCompetizioneId;
+    if (typeId) {
+      countByType[typeId] = (countByType[typeId] || 0) + 1;
+    }
+  });
+
+  Object.entries(countByType).forEach(([typeId, count]) => {
+    const max = limitsByType[typeId];
+    if (max && count > max) {
+      errors.push(`Puoi selezionare al massimo ${max} categorie di tipo ${CompetitionTipologyLabels[typeId] || typeId}.`);
+    }
+  });
+
+  return errors;
+};
+
 // Restituisce la configurazione della competizione per uno specifico tipo atleta
 const getAthleteTypeConfig = (competition, tipoAtletaId) => {
   return competition?.categorieAtleti?.find(ca => ca.idTipoAtleta === tipoAtletaId) || null;
@@ -112,4 +141,4 @@ const loadRegistrationConfig = async (athleteConfig) => {
   return { categoryDetails, experiencesByType, detailOptionsByCategory };
 };
 
-export { calculateAge, checkCategoryConstraints, getAthleteTypeConfig, loadRegistrationConfig };
+export { calculateAge, checkCategoryConstraints, getCategoryLimitErrors, getAthleteTypeConfig, loadRegistrationConfig };

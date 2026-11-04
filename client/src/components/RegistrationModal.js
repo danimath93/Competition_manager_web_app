@@ -12,7 +12,7 @@ import { editAthleteRegistrations } from '../api/registrations';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
-import { checkCategoryConstraints, getAthleteTypeConfig, loadRegistrationConfig } from '../utils/helperRegistration';
+import { checkCategoryConstraints, getCategoryLimitErrors, getAthleteTypeConfig, loadRegistrationConfig } from '../utils/helperRegistration';
 import './common/DrawerModal.css';
 
 const getRegistrationCategoryId = (reg) => reg.tipoCategoria?.id || reg.tipoCategoriaId;
@@ -140,8 +140,9 @@ const RegistrationModal = ({
     e.preventDefault();
     try {
       // Effettua la validazione
-      if (competition?.maxCategorieAtleta && selectedCategories.length > competition.maxCategorieAtleta) {
-        setError(`Puoi selezionare al massimo ${competition.maxCategorieAtleta} categorie per questa competizione.`);
+      const limitErrors = getCategoryLimitErrors(competition, selectedCategories, categoryDetails);
+      if (limitErrors.length > 0) {
+        setError(limitErrors.join(' '));
         return;
       }
 

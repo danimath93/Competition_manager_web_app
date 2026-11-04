@@ -20,6 +20,7 @@ import { MembershipType } from "../constants/enums/CompetitionEnums";
 import { CompetitionTipology } from "../constants/enums/CompetitionEnums";
 import {
   checkCategoryConstraints,
+  getCategoryLimitErrors,
   getAthleteTypeConfig,
   loadRegistrationConfig,
 } from "../utils/helperRegistration";
@@ -287,14 +288,13 @@ const AthleteRegistration = ({
 
       case 1:
         // Fase 2: categorie ed esperienze
-        if (
-          competition?.maxCategorieAtleta &&
-          selectedCategories.length > competition.maxCategorieAtleta
-        ) {
-          newErrors.push(
-            `Puoi selezionare al massimo ${competition.maxCategorieAtleta} categorie per questa competizione.`,
-          );
-        }
+        newErrors.push(
+          ...getCategoryLimitErrors(
+            competition,
+            selectedCategories,
+            categoryDetails,
+          ),
+        );
 
         if (selectedCategories.length === 0) {
           newErrors.push("Seleziona almeno una categoria per l'iscrizione.");
