@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useMediaQuery } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { TextInput, PasswordInput } from '../components/common';
+import { TextInput, PasswordInput, EmblaCarousel } from '../components/common';
+import { getLoginImages, LOGIN_IMAGE_VARIANTS } from '../services/loginImagesService';
 import '../components/styles/Login.css';
 import '../components/styles/Layout.css';
 
@@ -12,10 +14,28 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [carouselImages, setCarouselImages] = useState([]);
+
   const { login } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const isSmallScreen = useMediaQuery('(max-width: 768px)');
+
+  // Carica le immagini del carosello in base alla dimensione dello schermo
+  useEffect(() => {
+    let isMounted = true;
+    const variant = isSmallScreen ? LOGIN_IMAGE_VARIANTS.MOBILE : LOGIN_IMAGE_VARIANTS.DESKTOP;
+
+    getLoginImages(variant)
+      .then((images) => {
+        if (isMounted) setCarouselImages(images);
+      })
+      .catch((err) => console.error('Errore nel caricamento delle immagini di login:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isSmallScreen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,10 +135,10 @@ const Login = () => {
           </div>
 
           <div className="login-right">
-            <img
-              src="/assets/Locandina_GN2026.png"
-              alt="Sports background"
-              className="login-image"
+            <EmblaCarousel
+              key={isSmallScreen ? LOGIN_IMAGE_VARIANTS.MOBILE : LOGIN_IMAGE_VARIANTS.DESKTOP}
+              slides={carouselImages}
+              autoplayDelay={5000}
             />
           </div>
         </div>

@@ -21,12 +21,14 @@ import { uploadDocumento, downloadDocumento, deleteDocumento, getDocumentoInfo }
 const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competition, userClubId, userPermissions }) => {
 
   const [files, setFiles] = useState({
+    locandina: null,
     circolareGara: null,
     fileExtra1: null,
     fileExtra2: null,
   });
 
   const [existingFiles, setExistingFiles] = useState({
+    locandina: null,
     circolare: null,
     extra1: null,
     extra2: null,
@@ -59,7 +61,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
   // Reset dei file quando si chiude il modale
   useEffect(() => {
     if (!open) {
-      setFiles({ circolareGara: null, fileExtra1: null, fileExtra2: null });
+      setFiles({ locandina: null, circolareGara: null, fileExtra1: null, fileExtra2: null });
       setUploadStatus({ loading: false, message: '', error: false });
     }
   }, [open]);
@@ -70,10 +72,20 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       if (!competition || !open) return;
 
       const fileNames = {
+        locandina: null,
         circolare: null,
         extra1: null,
         extra2: null,
       };
+
+      try {
+        if (competition.locandinaId) {
+          const result = await getDocumentoInfo(competition.locandinaId);
+          fileNames.locandina = result.nomeFile;
+        }
+      } catch (error) {
+        console.error('Error loading locandina:', error);
+      }
 
       try {
         if (competition.circolareGaraId) {
@@ -142,6 +154,11 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
     setUploadStatus({ loading: true, message: '', error: false });
 
     try {
+      // Upload locandina
+      if (files.locandina) {
+        await uploadDocumento(files.locandina, 'locandina_competizione', competition.id, 'competizione');
+      }
+
       // Upload circolare gara
       if (files.circolareGara) {
         await uploadDocumento(files.circolareGara, 'circolare_gara', competition.id, 'competizione');
@@ -162,7 +179,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         message: 'File caricati con successo',
         error: false
       });
-      setFiles({ circolareGara: null, fileExtra1: null, fileExtra2: null });
+      setFiles({ locandina: null, circolareGara: null, fileExtra1: null, fileExtra2: null });
 
       // Reset dei file input
       document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
@@ -368,6 +385,14 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         <Typography variant="h6" gutterBottom>
           {competition?.nome}
         </Typography>
+
+        {/* Locandina */}
+        {renderFileSection(
+          'Locandina',
+          'locandina',
+          'locandina',
+          '.png,.jpg,.jpeg,.webp'
+        )}
 
         {/* Circolare di Gara */}
         {renderFileSection(

@@ -4,3 +4,4 @@ export { default as Button } from './Button';
 export { default as Tabs } from './Tabs';
 export { default as ConfirmActionModal } from './ConfirmActionModal';
 export { default as HorizontalStepper } from './HorizontalStepper';
+export { default as EmblaCarousel } from './EmblaCarousel';
