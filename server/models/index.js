@@ -1,328 +1,357 @@
-const sequelize = require('../config/database');
+const sequelize = require("../config/database");
 
 // Importa tutti i modelli
-const Club = require('./Club');
-const Atleta = require('./Atleta');
-const Giudice = require('./Giudice');
-const Competizione = require('./Competizione');
-const Categoria = require('./Categoria');
-const IscrizioneAtleta = require('./IscrizioneAtleta');
-const IscrizioneClub = require('./IscrizioneClub');
-const UtentiLogin = require('./UtentiLogin');
-const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
-const ConfigTipoCategoria = require('./ConfigTipoCategoria');
-const ConfigGruppoEta = require('./ConfigGruppoEta');
-const ConfigTipoAtleta = require('./ConfigTipoAtleta');
-const ConfigEsperienza = require('./ConfigEsperienza');
-const SvolgimentoCategoria = require('./SvolgimentoCategoria');
-const CertificatoMedico = require('./CertificatoMedico');
-const DettaglioIscrizioneAtleta = require('./DettaglioIscrizioneAtleta');
-const Documento = require('./Documento');
-const ConfigTipoCosti = require('./ConfigTipoCosti');
-const ConfigNomiQuyen = require('./ConfigNomiQuyen');
+const Club = require("./Club");
+const Atleta = require("./Atleta");
+const Giudice = require("./Giudice");
+const AgeGroupConfiguration = require("./AgeGroupConfiguration");
+const Competizione = require("./Competizione");
+const Categoria = require("./Categoria");
+const IscrizioneAtleta = require("./IscrizioneAtleta");
+const IscrizioneClub = require("./IscrizioneClub");
+const UtentiLogin = require("./UtentiLogin");
+const ConfigTipoCompetizione = require("./ConfigTipoCompetizione");
+const ConfigTipoCategoria = require("./ConfigTipoCategoria");
+const ConfigGruppoEta = require("./ConfigGruppoEta");
+const ConfigTipoAtleta = require("./ConfigTipoAtleta");
+const ConfigEsperienza = require("./ConfigEsperienza");
+const SvolgimentoCategoria = require("./SvolgimentoCategoria");
+const CertificatoMedico = require("./CertificatoMedico");
+const DettaglioIscrizioneAtleta = require("./DettaglioIscrizioneAtleta");
+const Documento = require("./Documento");
+const ConfigTipoCosti = require("./ConfigTipoCosti");
+const ConfigNomiQuyen = require("./ConfigNomiQuyen");
 
 // Definisci le associazioni
 
 // Club -> Atleti (One-to-Many)
 Club.hasMany(Atleta, {
-  foreignKey: 'clubId',
-  as: 'atleti',
-  onDelete: 'RESTRICT'
+  foreignKey: "clubId",
+  as: "atleti",
+  onDelete: "RESTRICT",
 });
 Atleta.belongsTo(Club, {
-  foreignKey: 'clubId',
-  as: 'club'
+  foreignKey: "clubId",
+  as: "club",
 });
 
 // Club -> Giudici (One-to-Many)
 Club.hasMany(Giudice, {
-  foreignKey: 'clubId',
-  as: 'giudici',
-  onDelete: 'RESTRICT'
+  foreignKey: "clubId",
+  as: "giudici",
+  onDelete: "RESTRICT",
 });
 Giudice.belongsTo(Club, {
-  foreignKey: 'clubId',
-  as: 'club'
+  foreignKey: "clubId",
+  as: "club",
 });
 
 // Club -> Competizioni organizzate (One-to-Many)
 Club.hasMany(Competizione, {
-  foreignKey: 'organizzatoreClubId',
-  as: 'competizioniOrganizzate',
-  onDelete: 'SET NULL'
+  foreignKey: "organizzatoreClubId",
+  as: "competizioniOrganizzate",
+  onDelete: "SET NULL",
 });
 Competizione.belongsTo(Club, {
-  foreignKey: 'organizzatoreClubId',
-  as: 'organizzatore'
+  foreignKey: "organizzatoreClubId",
+  as: "organizzatore",
 });
 
 // Competizione -> Categorie (One-to-Many)
 Competizione.hasMany(Categoria, {
-  foreignKey: 'competizioneId',
-  as: 'categorie',
-  onDelete: 'CASCADE'
+  foreignKey: "competizioneId",
+  as: "categorie",
+  onDelete: "CASCADE",
 });
 Categoria.belongsTo(Competizione, {
-  foreignKey: 'competizioneId',
-  as: 'competizione'
+  foreignKey: "competizioneId",
+  as: "competizione",
 });
 
 // Atleta -> Categorie (Many-to-Many attraverso IscrizioneAtleta)
 Atleta.belongsToMany(Categoria, {
   through: IscrizioneAtleta,
-  foreignKey: 'atletaId',
-  otherKey: 'categoriaId',
-  as: 'categorie'
+  foreignKey: "atletaId",
+  otherKey: "categoriaId",
+  as: "categorie",
 });
 Categoria.belongsToMany(Atleta, {
   through: IscrizioneAtleta,
-  foreignKey: 'categoriaId',
-  otherKey: 'atletaId',
-  as: 'atleti'
+  foreignKey: "categoriaId",
+  otherKey: "atletaId",
+  as: "atleti",
 });
 
 // User Table -> Categoria (One-to-Many)
 UtentiLogin.hasMany(Categoria, {
-  foreignKey: 'tableUserId',
-  as: 'categorie',
-  onDelete: 'SET NULL'
+  foreignKey: "tableUserId",
+  as: "categorie",
+  onDelete: "SET NULL",
 });
 Categoria.belongsTo(UtentiLogin, {
-  foreignKey: 'tableUserId',
-  as: 'tableUser'
+  foreignKey: "tableUserId",
+  as: "tableUser",
 });
 
 // Associazioni dirette per IscrizioneAtleta
 IscrizioneAtleta.belongsTo(Atleta, {
-  foreignKey: 'atletaId',
-  as: 'atleta'
+  foreignKey: "atletaId",
+  as: "atleta",
 });
 IscrizioneAtleta.belongsTo(Categoria, {
-  foreignKey: 'categoriaId',
-  as: 'categoria'
+  foreignKey: "categoriaId",
+  as: "categoria",
 });
 
 // Aggiunta associazione per Competizione
 IscrizioneAtleta.belongsTo(Competizione, {
-  foreignKey: 'competizioneId',
-  as: 'competizione',
-  onDelete: 'CASCADE'
+  foreignKey: "competizioneId",
+  as: "competizione",
+  onDelete: "CASCADE",
 });
 Competizione.hasMany(IscrizioneAtleta, {
-  foreignKey: 'competizioneId',
-  as: 'iscrizioni'
+  foreignKey: "competizioneId",
+  as: "iscrizioni",
 });
 IscrizioneAtleta.belongsTo(ConfigTipoCategoria, {
-  foreignKey: 'tipoCategoriaId',
-  as: 'tipoCategoria'
+  foreignKey: "tipoCategoriaId",
+  as: "tipoCategoria",
 });
 ConfigTipoCategoria.hasMany(IscrizioneAtleta, {
-  foreignKey: 'tipoCategoriaId',
-  as: 'iscrizioni'
+  foreignKey: "tipoCategoriaId",
+  as: "iscrizioni",
 });
 
 // IscrizioneAtleta -> ConfigEsperienza
 IscrizioneAtleta.belongsTo(ConfigEsperienza, {
-  foreignKey: 'idConfigEsperienza',
-  as: 'esperienza'
+  foreignKey: "idConfigEsperienza",
+  as: "esperienza",
 });
 ConfigEsperienza.hasMany(IscrizioneAtleta, {
-  foreignKey: 'idConfigEsperienza',
-  as: 'iscrizioni'
+  foreignKey: "idConfigEsperienza",
+  as: "iscrizioni",
 });
 
 Atleta.hasMany(IscrizioneAtleta, {
-  foreignKey: 'atletaId',
-  as: 'iscrizioni'
+  foreignKey: "atletaId",
+  as: "iscrizioni",
 });
 Categoria.hasMany(IscrizioneAtleta, {
-  foreignKey: 'categoriaId',
-  as: 'iscrizioni',
-  onDelete: 'SET NULL'
+  foreignKey: "categoriaId",
+  as: "iscrizioni",
+  onDelete: "SET NULL",
 });
 
 // ConfigTipoCompetizione -> ConfigTipoCategoria (One-to-Many)
 ConfigTipoCompetizione.hasMany(ConfigTipoCategoria, {
-  foreignKey: 'tipoCompetizioneId',
-  as: 'tipiCategoria',
-  onDelete: 'CASCADE'
+  foreignKey: "tipoCompetizioneId",
+  as: "tipiCategoria",
+  onDelete: "CASCADE",
 });
 ConfigTipoCategoria.belongsTo(ConfigTipoCompetizione, {
-  foreignKey: 'tipoCompetizioneId',
-  as: 'tipoCompetizione'
+  foreignKey: "tipoCompetizioneId",
+  as: "tipoCompetizione",
 });
 
 // ConfigTipoCategoria -> Categoria (One-to-Many)
 ConfigTipoCategoria.hasMany(Categoria, {
-  foreignKey: 'tipoCategoriaId',
-  as: 'categorie',
-  onDelete: 'RESTRICT'
+  foreignKey: "tipoCategoriaId",
+  as: "categorie",
+  onDelete: "RESTRICT",
 });
 Categoria.belongsTo(ConfigTipoCategoria, {
-  foreignKey: 'tipoCategoriaId',
-  as: 'tipoCategoria'
+  foreignKey: "tipoCategoriaId",
+  as: "tipoCategoria",
 });
 
 // ConfigTipoCategoria -> ConfigNomiQuyen (One-to-Many)
 ConfigTipoCategoria.hasMany(ConfigNomiQuyen, {
-  foreignKey: 'tipoCategoriaId',
-  as: 'nomiQuyen',
-  onDelete: 'CASCADE'
+  foreignKey: "tipoCategoriaId",
+  as: "nomiQuyen",
+  onDelete: "CASCADE",
 });
 ConfigNomiQuyen.belongsTo(ConfigTipoCategoria, {
-  foreignKey: 'tipoCategoriaId',
-  as: 'tipoCategoria'
+  foreignKey: "tipoCategoriaId",
+  as: "tipoCategoria",
 });
 
 // ConfigTipoAtleta -> Atleta (One-to-Many)
 ConfigTipoAtleta.hasMany(Atleta, {
-  foreignKey: 'tipoAtletaId',
-  as: 'atleti',
-  onDelete: 'RESTRICT'
+  foreignKey: "tipoAtletaId",
+  as: "atleti",
+  onDelete: "RESTRICT",
 });
 Atleta.belongsTo(ConfigTipoAtleta, {
-  foreignKey: 'tipoAtletaId',
-  as: 'tipoAtleta'
+  foreignKey: "tipoAtletaId",
+  as: "tipoAtleta",
 });
 
 // Atleta -> CertificatoMedico (One-to-One)
 Atleta.hasOne(CertificatoMedico, {
-  foreignKey: 'certificatoId',
-  as: 'certificato',
-  onDelete: 'CASCADE'
+  foreignKey: "certificatoId",
+  as: "certificato",
+  onDelete: "CASCADE",
 });
 CertificatoMedico.belongsTo(Atleta, {
-  foreignKey: 'certificatoId',
-  as: 'atleta'
+  foreignKey: "certificatoId",
+  as: "atleta",
 });
 
 // ConfigTipoAtleta -> ConfigEsperienza (One-to-Many)
 ConfigTipoAtleta.hasMany(ConfigEsperienza, {
-  foreignKey: 'idConfigTipoAtleta',
-  as: 'esperienze',
-  onDelete: 'CASCADE'
+  foreignKey: "idConfigTipoAtleta",
+  as: "esperienze",
+  onDelete: "CASCADE",
 });
 ConfigEsperienza.belongsTo(ConfigTipoAtleta, {
-  foreignKey: 'idConfigTipoAtleta',
-  as: 'tipoAtleta'
+  foreignKey: "idConfigTipoAtleta",
+  as: "tipoAtleta",
 });
 
 // Club -> Competizioni (Many-to-Many attraverso IscrizioneClub)
 Club.belongsToMany(Competizione, {
   through: IscrizioneClub,
-  foreignKey: 'clubId',
-  otherKey: 'competizioneId',
-  as: 'competizioniIscritte'
+  foreignKey: "clubId",
+  otherKey: "competizioneId",
+  as: "competizioniIscritte",
 });
 Competizione.belongsToMany(Club, {
   through: IscrizioneClub,
-  foreignKey: 'competizioneId',
-  otherKey: 'clubId',
-  as: 'clubsIscritti'
+  foreignKey: "competizioneId",
+  otherKey: "clubId",
+  as: "clubsIscritti",
 });
 
 // Associazioni dirette per IscrizioneClub
 IscrizioneClub.belongsTo(Club, {
-  foreignKey: 'clubId',
-  as: 'club'
+  foreignKey: "clubId",
+  as: "club",
 });
 IscrizioneClub.belongsTo(Competizione, {
-  foreignKey: 'competizioneId',
-  as: 'competizione'
+  foreignKey: "competizioneId",
+  as: "competizione",
 });
 
 Club.hasMany(IscrizioneClub, {
-  foreignKey: 'clubId',
-  as: 'iscrizioniCompetizioni'
+  foreignKey: "clubId",
+  as: "iscrizioniCompetizioni",
 });
 Competizione.hasMany(IscrizioneClub, {
-  foreignKey: 'competizioneId',
-  as: 'iscrizioniClub'
+  foreignKey: "competizioneId",
+  as: "iscrizioniClub",
 });
 
 // Associazioni per DettaglioIscrizioneAtleta
-DettaglioIscrizioneAtleta.belongsTo(Atleta, { foreignKey: 'atletaId', as: 'atleta' });
-Atleta.hasMany(DettaglioIscrizioneAtleta, { foreignKey: 'atletaId', as: 'dettagliIscrizione' });
+DettaglioIscrizioneAtleta.belongsTo(Atleta, {
+  foreignKey: "atletaId",
+  as: "atleta",
+});
+Atleta.hasMany(DettaglioIscrizioneAtleta, {
+  foreignKey: "atletaId",
+  as: "dettagliIscrizione",
+});
 
 // Club -> Documento (One-to-One per logo)
 Club.belongsTo(Documento, {
-  foreignKey: 'logoId',
-  as: 'logoDocumento',
-  constraints: false
+  foreignKey: "logoId",
+  as: "logoDocumento",
+  constraints: false,
 });
 Documento.hasOne(Club, {
-  foreignKey: 'logoId',
-  as: 'clubLogo',
-  constraints: false
+  foreignKey: "logoId",
+  as: "clubLogo",
+  constraints: false,
 });
 
 // Competizione -> Documenti (One-to-One per ciascun tipo di file)
 Competizione.belongsTo(Documento, {
-  foreignKey: 'circolareGaraId',
-  as: 'circolareGaraDocumento',
-  constraints: false
+  foreignKey: "circolareGaraId",
+  as: "circolareGaraDocumento",
+  constraints: false,
 });
 Documento.hasOne(Competizione, {
-  foreignKey: 'circolareGaraId',
-  as: 'competizioneCircolare',
-  constraints: false
+  foreignKey: "circolareGaraId",
+  as: "competizioneCircolare",
+  constraints: false,
 });
 
 Competizione.belongsTo(Documento, {
-  foreignKey: 'locandinaId',
-  as: 'locandinaDocumento',
-  constraints: false
+  foreignKey: "locandinaId",
+  as: "locandinaDocumento",
+  constraints: false,
 });
 Documento.hasOne(Competizione, {
-  foreignKey: 'locandinaId',
-  as: 'competizioneLocandina',
-  constraints: false
+  foreignKey: "locandinaId",
+  as: "competizioneLocandina",
+  constraints: false,
 });
 
 Competizione.belongsTo(Documento, {
-  foreignKey: 'fileExtra1Id',
-  as: 'fileExtra1Documento',
-  constraints: false
+  foreignKey: "fileExtra1Id",
+  as: "fileExtra1Documento",
+  constraints: false,
 });
 Documento.hasOne(Competizione, {
-  foreignKey: 'fileExtra1Id',
-  as: 'competizioneFileExtra1',
-  constraints: false
+  foreignKey: "fileExtra1Id",
+  as: "competizioneFileExtra1",
+  constraints: false,
 });
 
 Competizione.belongsTo(Documento, {
-  foreignKey: 'fileExtra2Id',
-  as: 'fileExtra2Documento',
-  constraints: false
+  foreignKey: "fileExtra2Id",
+  as: "fileExtra2Documento",
+  constraints: false,
 });
 Documento.hasOne(Competizione, {
-  foreignKey: 'fileExtra2Id',
-  as: 'competizioneFileExtra2',
-  constraints: false
+  foreignKey: "fileExtra2Id",
+  as: "competizioneFileExtra2",
+  constraints: false,
 });
 
 // IscrizioneClub -> Documento (One-to-One per conferma presidente)
 IscrizioneClub.belongsTo(Documento, {
-  foreignKey: 'confermaPresidenteId',
-  as: 'confermaPresidenteDocumento',
-  constraints: false
+  foreignKey: "confermaPresidenteId",
+  as: "confermaPresidenteDocumento",
+  constraints: false,
 });
 Documento.hasOne(IscrizioneClub, {
-  foreignKey: 'confermaPresidenteId',
-  as: 'iscrizioneClub',
-  constraints: false
+  foreignKey: "confermaPresidenteId",
+  as: "iscrizioneClub",
+  constraints: false,
 });
 
 // IscrizioneClub -> Documento (One-to-One per bonifico)
 IscrizioneClub.belongsTo(Documento, {
-  foreignKey: 'bonificoId',
-  as: 'bonificoDocumento',
-  constraints: false
+  foreignKey: "bonificoId",
+  as: "bonificoDocumento",
+  constraints: false,
 });
 Documento.hasOne(IscrizioneClub, {
-  foreignKey: 'bonificoId',
-  as: 'iscrizioneClubBonifico',
-  constraints: false
+  foreignKey: "bonificoId",
+  as: "iscrizioneClubBonifico",
+  constraints: false,
+});
+
+// Club -> AgeGroupConfiguration (One-to-Many)
+Club.hasMany(AgeGroupConfiguration, {
+  foreignKey: "clubId",
+  as: "ageGroupConfigurations",
+  onDelete: "CASCADE",
+});
+AgeGroupConfiguration.belongsTo(Club, {
+  foreignKey: "clubId",
+  as: "club",
+});
+
+// AgeGroupConfiguration -> Competizione (One-to-Many): configurazione di origine della copia salvata in competizione
+AgeGroupConfiguration.hasMany(Competizione, {
+  foreignKey: "ageGroupConfigurationId",
+  as: "competizioni",
+  onDelete: "SET NULL",
+});
+Competizione.belongsTo(AgeGroupConfiguration, {
+  foreignKey: "ageGroupConfigurationId",
+  as: "ageGroupConfiguration",
 });
 
 // Esporta tutti i modelli e la connessione
@@ -346,5 +375,6 @@ module.exports = {
   DettaglioIscrizioneAtleta,
   Documento,
   ConfigTipoCosti,
-  ConfigNomiQuyen
+  ConfigNomiQuyen,
+  AgeGroupConfiguration,
 };

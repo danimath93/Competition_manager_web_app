@@ -1,3 +1,6 @@
+// Carica .env prima dei modelli (config/database legge le variabili al require)
+require('dotenv').config({ quiet: true });
+
 const { 
   Club, 
   Atleta, 
@@ -6,8 +9,52 @@ const {
   Categoria, 
   IscrizioneAtleta,
   UtentiLogin,
+  AgeGroupConfiguration,
   sequelize 
 } = require('./models');
+
+// Fasce d'età standard usate dalle configurazioni di default
+const DEFAULT_AGE_GROUPS = [
+  { key: 'pulcini', label: 'Pulcini', order: 1, minAge: 4, maxAge: 6 },
+  { key: 'bambini', label: 'Bambini', order: 2, minAge: 7, maxAge: 8 },
+  { key: 'esordienti', label: 'Esordienti', order: 3, minAge: 9, maxAge: 11 },
+  { key: 'cadetti', label: 'Cadetti', order: 4, minAge: 12, maxAge: 14 },
+  { key: 'junior', label: 'Junior', order: 5, minAge: 15, maxAge: 17 },
+  { key: 'seniores', label: 'Seniores', order: 6, minAge: 18, maxAge: 39 },
+  { key: 'masters-a', label: 'MastersA', order: 7, minAge: 40, maxAge: 49 },
+  { key: 'masters-b', label: 'MastersB', order: 8, minAge: 50, maxAge: null }
+];
+
+const DEFAULT_AGE_GROUP_CONFIGURATIONS = [
+  {
+    name: 'Standard - età sportiva (anno solare)',
+    description: 'Età compiuta entro il 31/12 dell\'anno della gara',
+    config: { version: 1, mode: 'seasonAge', seasonStart: '01-01', groups: DEFAULT_AGE_GROUPS }
+  },
+  {
+    name: 'Standard - età sportiva (stagione da settembre)',
+    description: 'Età compiuta entro il 31/08 della stagione sportiva della gara',
+    config: { version: 1, mode: 'seasonAge', seasonStart: '09-01', groups: DEFAULT_AGE_GROUPS }
+  },
+  {
+    name: 'Standard - età a inizio gara',
+    description: 'Età esatta alla data di inizio gara',
+    config: { version: 1, mode: 'age', groups: DEFAULT_AGE_GROUPS }
+  }
+];
+
+// Crea le configurazioni di default mancanti (rieseguibile: salta quelle già presenti per nome)
+const seedAgeGroupConfigurations = async () => {
+  let created = 0;
+  for (const { name, description, config } of DEFAULT_AGE_GROUP_CONFIGURATIONS) {
+    const [, isNew] = await AgeGroupConfiguration.findOrCreate({
+      where: { clubId: null, name },
+      defaults: { description, config }
+    });
+    if (isNew) created++;
+  }
+  console.log(`✅ Configurazioni fasce età di default: ${created} create, ${DEFAULT_AGE_GROUP_CONFIGURATIONS.length - created} già presenti`);
+};
 
 const seedData = async () => {
   try {
@@ -48,6 +95,8 @@ const seedData = async () => {
       { nome: 'MastersA', etaMinima: 40, etaMassima: 49, inizioValidita: '1975-01-01', fineValidita: '1984-12-31', descrizione: 'Adulti dai 40 ai 49 anni' },
       { nome: 'MastersB', etaMinima: 50, etaMassima: 99, inizioValidita: '1900-01-01', fineValidita: '1974-12-31', descrizione: 'Adulti dai 50 anni in su' }
     ]);
+
+    await seedAgeGroupConfigurations();
 
     const configTipiAtleta = await sequelize.models.ConfigTipoAtleta.bulkCreate([
       { id: 1, nome: 'CB Bambini', etaMinima: 5, etaMassima: 12, descrizione: 'Atleti bambini' },
@@ -306,19 +355,32 @@ const seedConfigurations = async () => {
     { nome: 'MastersB', etaMinima: 50, etaMassima: 99, inizioValidita: '1900-01-01', fineValidita: '1974-12-31', descrizione: 'Adulti dai 50 anni in su' }
   ]);
 
+  await seedAgeGroupConfigurations();
+
   console.log('✅ Configurazioni create');
 }
 
 
 
-module.exports = { seedData, seedConfigurations };
+module.exports = { seedData, seedConfigurations, seedAgeGroupConfigurations };
 
 // Esegui il seed se questo file viene chiamato direttamente
+// Uso: node seedDatabase.js [configurations|ageGroups]  (default: configurations)
 if (require.main === module) {
-  // seedData().then(() => {
-  //   process.exit(0);
-  // });
-  seedConfigurations().then(() => {
-    process.exit(0);
-  });
+  const seeds = {
+    configurations: seedConfigurations,
+    ageGroups: seedAgeGroupConfigurations
+  };
+  const seedName = process.argv[2] || 'configurations';
+  const seed = seeds[seedName];
+  if (!seed) {
+    console.error(`Seed sconosciuto '${seedName}'. Valori ammessi: ${Object.keys(seeds).join(', ')}`);
+    process.exit(1);
+  }
+  seed()
+    .then(() => process.exit(0))
+    .catch(error => {
+      console.error('❌ Errore durante il seed:', error);
+      process.exit(1);
+    });
 }

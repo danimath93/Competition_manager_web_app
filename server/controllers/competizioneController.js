@@ -1,5 +1,5 @@
 const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento, ConfigGruppoEta } = require('../models');
-const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria } = require('../models');
+const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria, AgeGroupConfiguration } = require('../models');
 
 const logger = require('../helpers/logger/logger');
 const PDFDocument = require('pdfkit');
@@ -83,6 +83,12 @@ const getCompetizioneById = async (req, res) => {
           attributes: { exclude: ['logoId'] }
         },
         {
+          model: AgeGroupConfiguration,
+          as: 'ageGroupConfiguration',
+          attributes: ['id', 'name', 'clubId', 'deletedAt'],
+          paranoid: false
+        },
+        {
           model: Documento,
           as: 'circolareGaraDocumento',
           attributes: { exclude: ['file'] }
@@ -120,13 +126,69 @@ const getCompetizioneById = async (req, res) => {
   }
 };
 
+// Errore con codice HTTP, per interrompere il salvataggio con una risposta specifica
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+/**
+ * Prepara i campi fasce età della competizione:
+ * - ageGroupConfig non è mai accettato dal client, viene copiato dalla configurazione scelta
+ * - finché non sono state generate categorie la copia viene sempre aggiornata dalla configurazione
+ * - dopo la generazione delle categorie la configurazione non è più modificabile
+ */
+const applyAgeGroupConfiguration = async (body, competizioneId = null) => {
+  const data = { ...body };
+  delete data.ageGroupConfig;
+
+  if (!Object.prototype.hasOwnProperty.call(data, 'ageGroupConfigurationId')) {
+    return data;
+  }
+
+  const configurationId = data.ageGroupConfigurationId ? parseInt(data.ageGroupConfigurationId) : null;
+
+  if (competizioneId) {
+    const categoriesCount = await Categoria.count({ where: { competizioneId } });
+    if (categoriesCount > 0) {
+      const existing = await Competizione.findByPk(competizioneId, { attributes: ['id', 'ageGroupConfigurationId'] });
+      if (existing && existing.ageGroupConfigurationId === configurationId) {
+        // Configurazione invariata: la copia salvata resta quella usata per le categorie
+        delete data.ageGroupConfigurationId;
+        return data;
+      }
+      throw new HttpError(409, 'Configurazione fasce età non modificabile: le categorie della competizione sono già state generate');
+    }
+  }
+
+  if (!configurationId) {
+    data.ageGroupConfigurationId = null;
+    data.ageGroupConfig = null;
+    return data;
+  }
+
+  const configuration = await AgeGroupConfiguration.findByPk(configurationId);
+  if (!configuration) {
+    throw new HttpError(400, 'Configurazione fasce età non trovata');
+  }
+  data.ageGroupConfigurationId = configuration.id;
+  data.ageGroupConfig = configuration.config;
+  return data;
+};
+
 // Crea una nuova competizione
 const createCompetizione = async (req, res) => {
   try {
-    const competizione =  await Competizione.create(req.body);
+    const data = await applyAgeGroupConfiguration(req.body);
+    const competizione =  await Competizione.create(data);
     logger.info(`Competizione creata - ID: ${competizione.id}, Nome: ${competizione.nome}`);
     res.status(201).json(competizione);
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.message });
+    }
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nella creazione competizione: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({ 
@@ -146,7 +208,8 @@ const createCompetizione = async (req, res) => {
 const updateCompetizione = async (req, res) => {
   try {
     const { id } = req.params;
-    const [updatedRowsCount] = await Competizione.update(req.body, {
+    const data = await applyAgeGroupConfiguration(req.body, id);
+    const [updatedRowsCount] = await Competizione.update(data, {
       where: { id }
     });
     
@@ -159,6 +222,9 @@ const updateCompetizione = async (req, res) => {
     logger.info(`Competizione aggiornata - ID: ${id}`);
     res.json(updatedCompetizione);
   } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.status).json({ error: error.message });
+    }
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nell'aggiornamento competizione ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
       return res.status(400).json({ 

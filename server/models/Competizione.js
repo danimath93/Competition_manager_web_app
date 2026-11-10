@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { validateAgeGroupConfig } = require('../helpers/ageGroups');
 
 const Competizione = sequelize.define('Competizione', {
   id: {
@@ -186,6 +187,31 @@ const Competizione = sequelize.define('Competizione', {
     },
     field: 'file_extra_2_id',
     comment: 'Riferimento a documento extra 2'
+  },
+  ageGroupConfigurationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'age_group_configurations',
+      key: 'id'
+    },
+    field: 'age_group_configuration_id',
+    comment: 'Configurazione fasce età di origine (solo riferimento storico, fa fede ageGroupConfig)'
+  },
+  ageGroupConfig: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    validate: {
+      isValidConfig(value) {
+        if (value === null || value === undefined) return;
+        const { valid, errors } = validateAgeGroupConfig(value);
+        if (!valid) {
+          throw new Error(errors.join('; '));
+        }
+      }
+    },
+    field: 'age_group_config',
+    comment: 'Copia della configurazione fasce età usata dalla competizione - vedi helpers/ageGroups.js'
   }
 }, {
   tableName: 'competizioni',

@@ -42,6 +42,12 @@ const Categoria = sequelize.define('Categoria', {
     allowNull: true,
     field: 'gruppi_eta_id'
   },
+  ageGroupKeys: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: true,
+    field: 'age_group_keys',
+    comment: 'Chiavi delle fasce età (groups[].key) della configurazione salvata in competizione'
+  },
   pesoMassimo: {
     type: DataTypes.DECIMAL(5, 2),
     allowNull: true,
