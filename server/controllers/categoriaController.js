@@ -621,7 +621,6 @@ exports.splitCategoria = async (req, res) => {
       competizioneId: categoriaOriginale.competizioneId,
       tipoCategoriaId: categoriaOriginale.tipoCategoriaId,
       genere: categoriaOriginale.genere,
-      gruppiEtaId: categoriaOriginale.gruppiEtaId,
       ageGroupKeys: categoriaOriginale.ageGroupKeys,
       pesoMassimo: categoriaOriginale.pesoMassimo,
       numeroTurni: categoriaOriginale.numeroTurni,

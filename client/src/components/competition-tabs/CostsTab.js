@@ -203,10 +203,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
     }
   };
 
-  const getGroupingName = (config) => {
-    if (config.grouping) return GROUPING_LABELS[config.grouping] || config.grouping;
-    return `Tipo atleta ${config.idConfigTipoAtleta} (configurazione precedente)`;
-  };
+  const getGroupingName = (config) => GROUPING_LABELS[config.grouping] || config.grouping;
 
   const getConfigTypeLabel = (type) => {
     switch (type) {
@@ -237,7 +234,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
         amount: membershipEnabled ? parseFloat(membershipCost) : null
       },
       specialCategories,
-      categories: athleteCostConfigs.filter(config => config.grouping || config.idConfigTipoAtleta)
+      categories: athleteCostConfigs.filter(config => config.grouping)
     };
   }
 

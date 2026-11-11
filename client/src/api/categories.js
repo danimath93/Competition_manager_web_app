@@ -136,24 +136,13 @@ export const splitCategoria = async (categoriaId, atleti1, atleti2, nomeCategori
   }
 };
 
-// Ottieni i gruppi età disponibili
-export const getGruppiEta = async () => {
-  try {
-    const response = await axios.get('/config/gruppi-eta');
-    return response.data;
-  } catch (error) {
-    console.error('Errore nel recupero dei gruppi età:', error);
-    throw error;
-  }
-};
-
 // Stampa categorie in PDF
 export const printCategories = async (competizioneId) => {
   try {
     const response = await axios.get(`/competizioni/${competizioneId}/print-categories`, {
       responseType: 'blob'
     });
-    
+
     // Crea un URL blob e trigger il download
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');

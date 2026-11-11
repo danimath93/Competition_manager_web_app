@@ -1,6 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+// DEPRECATO: sostituito da AgeGroupConfiguration (configurazioni fasce per club) e dalla copia salvata in competizione.
+// Mantenuto solo per la conversione dei dati (scripts/migrateCompetitionConfig.js), da rimuovere successivamente.
 const ConfigGruppoEta = sequelize.define('ConfigGruppoEta', {
   id: {
     type: DataTypes.INTEGER,

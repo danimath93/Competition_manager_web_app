@@ -192,16 +192,9 @@ const getExperienceIds = (categoryConfig, competitionTypeId, grouping) => {
 
 /**
  * ID dei tipi categoria previsti dalla competizione
- * (competizioni non ancora convertite: dalla configurazione per tipo atleta categorieAtleti)
  */
-const getCompetitionCategoryTypeIds = (competizione) => {
-  if (competizione?.categoryConfig) {
-    return competizione.categoryConfig.categories.map(c => c.categoryTypeId);
-  }
-  const ids = (competizione?.categorieAtleti || [])
-    .flatMap(ca => (ca.categorie || []).map(cat => cat.configTipoCategoria));
-  return [...new Set(ids)];
-};
+const getCompetitionCategoryTypeIds = (competizione) =>
+  (competizione?.categoryConfig?.categories || []).map(c => c.categoryTypeId);
 
 module.exports = {
   CATEGORY_CONFIG_VERSION,

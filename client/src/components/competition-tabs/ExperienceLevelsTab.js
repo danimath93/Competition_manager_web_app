@@ -67,12 +67,6 @@ const ExperienceLevelsTab = ({ value, onChange, ageGroupConfig }) => {
     );
   };
 
-  // Etichetta del livello: con nomi duplicati (dati precedenti alla conversione) indica il vecchio tipo atleta
-  const getExperienceLabel = (experience, available) => {
-    const duplicated = available.filter(e => e.nome === experience.nome).length > 1;
-    return duplicated && experience.tipoAtleta ? `${experience.nome} (${experience.tipoAtleta.nome})` : experience.nome;
-  };
-
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}><CircularProgress /></div>;
   }
@@ -120,7 +114,7 @@ const ExperienceLevelsTab = ({ value, onChange, ageGroupConfig }) => {
                           }
                           label={
                             <span>
-                              {getExperienceLabel(experience, available)}
+                              {experience.nome}
                               {experience.belt && experience.belt !== 'all' && (
                                 <Chip size="small" variant="outlined" label={EXPERIENCE_BELT_LABELS[experience.belt]} sx={{ ml: 0.5, height: 20 }} />
                               )}

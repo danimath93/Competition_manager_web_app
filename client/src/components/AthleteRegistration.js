@@ -69,7 +69,7 @@ const AthleteRegistration = ({
   const athleteConfig = useMemo(
     () => getAthleteRegistrationConfig(competition, athlete, isBlackBelt),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [competition, athlete?.dataNascita, athlete?.tipoAtletaId, isBlackBelt],
+    [competition, athlete?.dataNascita, isBlackBelt],
   );
   const availableCategories = useMemo(
     () => athleteConfig?.categorie || [],

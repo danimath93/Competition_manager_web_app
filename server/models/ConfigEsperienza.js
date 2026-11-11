@@ -16,7 +16,8 @@ const ConfigEsperienza = sequelize.define('ConfigEsperienza', {
   },
   idConfigTipoAtleta: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
+    comment: 'DEPRECATO: sostituito da belt. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati',
     field: 'id_config_tipo_atleta',
     references: {
       model: 'config_tipo_atleta',

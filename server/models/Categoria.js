@@ -7,7 +7,7 @@ const Categoria = sequelize.define('Categoria', {
     primaryKey: true,
     autoIncrement: true
   },
-  nome: { 
+  nome: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
@@ -40,7 +40,8 @@ const Categoria = sequelize.define('Categoria', {
   gruppiEtaId: {
     type: DataTypes.ARRAY(DataTypes.INTEGER),
     allowNull: true,
-    field: 'gruppi_eta_id'
+    field: 'gruppi_eta_id',
+    comment: 'DEPRECATO: sostituito da ageGroupKeys. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati'
   },
   ageGroupKeys: {
     type: DataTypes.ARRAY(DataTypes.STRING),
@@ -54,7 +55,7 @@ const Categoria = sequelize.define('Categoria', {
     validate: {
       min: 20.0,
       max: 200.0
-    }, 
+    },
     field: 'peso_massimo'
   },
   numeroTurni: {
@@ -63,7 +64,7 @@ const Categoria = sequelize.define('Categoria', {
     defaultValue: 1,
     validate: {
       min: 1
-    }, 
+    },
     field: 'numero_turni'
   },
   maxPartecipanti: {

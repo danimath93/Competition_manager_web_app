@@ -50,7 +50,7 @@ const Atleta = sequelize.define('Atleta', {
       model: 'config_tipo_atleta',
       key: 'id'
     },
-    comment: 'livello generale dell\'atleta'
+    comment: 'DEPRECATO: sostituito da isBlackBelt. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati'
   },
   isBlackBelt: {
     type: DataTypes.BOOLEAN,

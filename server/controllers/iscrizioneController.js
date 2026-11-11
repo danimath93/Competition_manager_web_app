@@ -141,13 +141,14 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
 /**
  * Verifica che categorie e livelli di esperienza siano ammessi per l'atleta dalla configurazione
  * della competizione (fascia d'età alla data di inizio gara e grado CN).
- * Competizioni non ancora convertite (senza categoryConfig): nessuna verifica.
  * @param {Array} entries - [{ tipoCategoriaId, getExperienceId: (categoryType) => idEsperienza|null }]
  * @returns {Promise<string|null>} messaggio di errore oppure null
  */
 const checkRegistrationEligibility = async (competizione, atleta, isBlackBelt, categoryIds, getExperienceId) => {
   const categoryConfig = competizione.categoryConfig;
-  if (!categoryConfig) return null;
+  if (!categoryConfig) {
+    return 'Categorie della competizione non configurate';
+  }
 
   const ageGroup = resolveAgeGroup(atleta.dataNascita, competizione.ageGroupConfig, competizione.dataInizio);
   if (!ageGroup) {
@@ -1308,7 +1309,6 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
     const athleteData = {
       atletaId,
       grouping: ageGroup?.grouping || null,
-      tipoAtletaId: iscrizioni[0].atleta?.tipoAtletaId,
       tesseramento: dettagliIscrizione.tesseramento,
       iscrizioni
     };

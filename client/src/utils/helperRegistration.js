@@ -110,27 +110,21 @@ const getCategoryLimitErrors = (competition, selectedCategoryIds, categoryDetail
  * Con ageGroup null l'atleta non rientra in nessuna fascia d'età della competizione.
  */
 const getAthleteRegistrationConfig = (competition, athlete, isBlackBelt) => {
-  if (!competition || !athlete) return null;
+  if (!competition?.categoryConfig || !athlete) return null;
 
-  if (competition.categoryConfig) {
-    const ageGroup = resolveAgeGroup(athlete.dataNascita, competition.ageGroupConfig, competition.dataInizio);
-    if (!ageGroup) {
-      return { ageGroup: null, isBlackBelt, categorie: [], esperienzaCategorie: [] };
-    }
-    return {
-      ageGroup,
-      isBlackBelt,
-      categorie: getEligibleCategories(competition.categoryConfig, ageGroup, isBlackBelt)
-        .map(category => ({ configTipoCategoria: category.categoryTypeId })),
-      esperienzaCategorie: (competition.categoryConfig.experienceLevels || [])
-        .filter(level => level.grouping === ageGroup.grouping)
-        .map(level => ({ configTipoCompetizione: level.competitionTypeId, idEsperienza: level.experienceIds })),
-    };
+  const ageGroup = resolveAgeGroup(athlete.dataNascita, competition.ageGroupConfig, competition.dataInizio);
+  if (!ageGroup) {
+    return { ageGroup: null, isBlackBelt, categorie: [], esperienzaCategorie: [] };
   }
-
-  // Competizioni non ancora convertite: configurazione per tipo atleta
-  const legacyConfig = competition.categorieAtleti?.find(ca => ca.idTipoAtleta === athlete.tipoAtletaId);
-  return legacyConfig ? { ...legacyConfig, ageGroup: undefined } : null;
+  return {
+    ageGroup,
+    isBlackBelt,
+    categorie: getEligibleCategories(competition.categoryConfig, ageGroup, isBlackBelt)
+      .map(category => ({ configTipoCategoria: category.categoryTypeId })),
+    esperienzaCategorie: (competition.categoryConfig.experienceLevels || [])
+      .filter(level => level.grouping === ageGroup.grouping)
+      .map(level => ({ configTipoCompetizione: level.competitionTypeId, idEsperienza: level.experienceIds })),
+  };
 };
 
 /**
@@ -152,13 +146,12 @@ const loadRegistrationConfig = async (athleteConfig) => {
   ]);
 
   const experiencesByType = {};
-  // Livelli filtrati per cintura dell'atleta (se indicata nella configurazione)
-  const filterByBelt = athleteConfig?.isBlackBelt !== undefined;
+  // Livelli filtrati per cintura dell'atleta
   experienceConfigs.forEach(expConfig => {
     experiencesByType[expConfig.configTipoCompetizione] = (expConfig.idEsperienza || [])
       .map(expId => experiencesById[expId])
       .filter(Boolean)
-      .filter(exp => !filterByBelt || isExperienceBeltAllowed(exp.belt, athleteConfig.isBlackBelt));
+      .filter(exp => isExperienceBeltAllowed(exp.belt, athleteConfig.isBlackBelt));
   });
 
   const detailOptionsByCategory = {};

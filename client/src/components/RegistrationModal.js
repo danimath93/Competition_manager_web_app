@@ -35,7 +35,7 @@ const RegistrationModal = ({
   const athleteConfig = useMemo(
     () => getAthleteRegistrationConfig(competition, athlete, registrationBlackBelt),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [competition, athlete?.dataNascita, athlete?.tipoAtletaId, registrationBlackBelt]
+    [competition, athlete?.dataNascita, registrationBlackBelt]
   );
   const availableCategories = useMemo(() => athleteConfig?.categorie || [], [athleteConfig]);
 
@@ -192,7 +192,7 @@ const RegistrationModal = ({
         experiences: selectedExperiences,
         weight: weight || null,
       };
-      
+
       // Chiama on submit per refreshare i dati
       await editAthleteRegistrations(athlete.id, competition.id, data);
 
@@ -567,8 +567,8 @@ const RegistrationModal = ({
             <Button onClick={onClose} variant="outlined">
               Annulla
             </Button>
-            <Button 
-              onClick={handleSubmit} 
+            <Button
+              onClick={handleSubmit}
               variant="contained"
               disabled={loading || selectedCategories.length === 0}
             >
@@ -594,9 +594,9 @@ const RegistrationModal = ({
           message={`Sei sicuro di voler eliminare l'iscrizione di ${athlete?.nome} ${athlete?.cognome}? Verranno eliminate tutte le categorie associate.`}
           primaryButton={{
             text: 'Elimina',
-            onClick: async () => { 
-              await handleDelete(); 
-              setIsDeleteConfirmModalOpen(false); 
+            onClick: async () => {
+              await handleDelete();
+              setIsDeleteConfirmModalOpen(false);
             },
           }}
           secondaryButton={{

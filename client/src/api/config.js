@@ -55,28 +55,6 @@ export const loadCategoryTypeById = async (id) => {
   }
 };
 
-// Funzione per ottenere tutti i tipi atleta
-export const loadAthleteTypes = async () => {
-  try {
-    const response = await axios.get('/config/tipi-atleta');
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante il caricamento dei tipi atleta:', error);
-    throw error;
-  }
-};
-
-// Funzione per ottenere un tipo atleta specifico
-export const loadAthleteTypeById = async (id) => {
-  try {
-    const response = await axios.get(`/config/tipi-atleta/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante il caricamento del tipo atleta:', error);
-    throw error;
-  }
-};
-
 // Funzione per ottenere tutte le esperienze
 export const loadExperiences = async () => {
   try {
@@ -99,17 +77,6 @@ export const loadExperienceById = async (id) => {
   }
 };
 
-// Funzione per ottenere le esperienze per tipo atleta
-export const loadExperiencesByAthleteType = async (tipoAtletaId) => {
-  try {
-    const response = await axios.get(`/config/tipi-atleta/${tipoAtletaId}/esperienze`);
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante il caricamento delle esperienze per tipo atleta:', error);
-    throw error;
-  }
-};
-
 // Funzione per ottenere i nomi quyen (dettagli categoria) per tipo categoria
 export const loadNomiQuyenByCategoryType = async (tipoCategoriaId) => {
   try {
@@ -121,13 +88,3 @@ export const loadNomiQuyenByCategoryType = async (tipoCategoriaId) => {
   }
 };
 
-// Funzione per ottenere tutti i gruppi età
-export const loadAgeGroups = async () => {
-  try {
-    const response = await axios.get('/config/gruppi-eta');
-    return response.data;
-  } catch (error) {
-    console.error('Errore durante il caricamento dei gruppi età:', error);
-    throw error;
-  }
-};

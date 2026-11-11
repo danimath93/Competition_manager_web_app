@@ -8,7 +8,6 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllClubs } from '../api/clubs';
-import { loadAthleteTypes } from '../api/config';
 import AuthComponent from './AuthComponent';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
@@ -26,7 +25,7 @@ const JudgeModal = ({
   const [judgeExperiences, setJudgeExperiences] = React.useState([]);
   const [isDeleteJudgeConfirmModalOpen, setIsDeleteJudgeConfirmModalOpen] = React.useState(false);
   const [error, setError] = React.useState(null);
-  
+
   React.useEffect(() => {
     if (isEditMode && judge) {
       setFormData(judge);
@@ -40,7 +39,7 @@ const JudgeModal = ({
       });
     }
   }, [open, isEditMode, judge]);
- 
+
   React.useEffect(() => {
     const fetchJudgeExperiences = async () => {
       try {
@@ -103,8 +102,8 @@ const JudgeModal = ({
             <Button onClick={onClose} variant="outlined">
               Annulla
             </Button>
-            <Button 
-              onClick={handleSubmit} 
+            <Button
+              onClick={handleSubmit}
               variant="contained"
             >
               {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}

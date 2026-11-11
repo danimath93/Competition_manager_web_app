@@ -22,7 +22,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
   const categoryColumns = useMemo(
     () => getCompetitionCategoryTypeIds(competition).map(id => ({ id })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [competition?.categoryConfig, competition?.categorieAtleti]
+    [competition?.categoryConfig]
   );
 
   // Carica i dettagli delle categorie (tramite cache di configurazione)

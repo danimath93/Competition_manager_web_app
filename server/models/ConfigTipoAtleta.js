@@ -1,6 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
+// DEPRECATO: sostituito dal flag CN sull'atleta (isBlackBelt) e dal raggruppamento delle fasce d'età.
+// Mantenuto solo per la conversione dei dati (scripts/migrateCompetitionConfig.js), da rimuovere successivamente.
 const ConfigTipoAtleta = sequelize.define('ConfigTipoAtleta', {
   id: {
     type: DataTypes.INTEGER,

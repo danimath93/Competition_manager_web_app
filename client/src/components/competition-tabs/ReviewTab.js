@@ -167,7 +167,7 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
         {(costs.categories || []).map((config, index) => (
           <Field
             key={index}
-            label={config.grouping ? GROUPING_LABELS[config.grouping] : `Tipo atleta ${config.idConfigTipoAtleta} (configurazione precedente)`}
+            label={GROUPING_LABELS[config.grouping] || config.grouping}
             value={`${COST_TYPE_LABELS[config.type] || config.type} - ${formatCost(config)}`}
           />
         ))}

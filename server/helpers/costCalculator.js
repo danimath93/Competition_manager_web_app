@@ -1,6 +1,6 @@
 /**
  * Helper per calcolare i costi di iscrizione agli atleti
- * 
+ *
  * Struttura costiIscrizione:
  * {
  *   tesseramento: {
@@ -18,16 +18,15 @@
  *   categories: [
  *     {
  *       grouping: "children" | "adults",   // raggruppamento della fascia età dell'atleta
- *                                         // (configurazioni precedenti: idConfigTipoAtleta)
  *       type: "fixed" | "minimum" | "additional",
  *       config: {
  *         // Per "fixed":
  *         amount: 25
- *         
+ *
  *         // Per "minimum":
  *         minCategories: [1, 2, 5],
  *         costs: [20, 30, 50]
- *         
+ *
  *         // Per "additional":
  *         first: 20,
  *         extra: 10
@@ -108,9 +107,9 @@ const calculateFixedCost = (config, numCategories) => {
  */
 const calculateMinimumCost = (config, numCategories) => {
   if (!config || !config.minCategories || !config.costs || numCategories === 0) return 0;
-  
+
   const { minCategories, costs } = config;
-  
+
   // Trova lo scaglione appropriato
   let costIndex = 0;
   for (let i = 0; i < minCategories.length; i++) {
@@ -120,7 +119,7 @@ const calculateMinimumCost = (config, numCategories) => {
       break;
     }
   }
-  
+
   return parseFloat(costs[costIndex]) || 0;
 };
 
@@ -133,21 +132,21 @@ const calculateMinimumCost = (config, numCategories) => {
  */
 const calculateAdditionalCost = (config, numCategories) => {
   if (!config || !config.first || numCategories === 0) return 0;
-  
+
   const firstCost = parseFloat(config.first) || 0;
   const extraCost = parseFloat(config.extra) || 0;
-  
+
   if (numCategories === 1) {
     return firstCost;
   }
-  
+
   return firstCost + (extraCost * (numCategories - 1));
 };
 
 /**
  * Calcola il costo totale per un atleta
  * @param {Object} costiIscrizione - Configurazione costi della competizione
- * @param {Object} athleteData - Dati atleta ({ grouping, tesseramento }); tipoAtletaId solo per configurazioni precedenti
+ * @param {Object} athleteData - Dati atleta ({ grouping, tesseramento })
  * @param {Array} categories - ID tipo categoria a cui l'atleta è iscritto
  * @returns {Number} - Costo totale per l'atleta
  */
@@ -167,12 +166,10 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
   totalCost += specialCategoriesCost;
   const numCategories = standardCategories.length;
 
-  // Trova la configurazione per il raggruppamento dell'atleta (o per tipo atleta nelle configurazioni precedenti)
+  // Trova la configurazione per il raggruppamento dell'atleta (bambini/adulti)
   if (numCategories > 0 && Array.isArray(costiIscrizione.categories)) {
-    const categoryConfig = costiIscrizione.categories.find(cat =>
-      cat.grouping
-        ? cat.grouping === athleteData.grouping
-        : cat.idConfigTipoAtleta === athleteData.tipoAtletaId
+    const categoryConfig = costiIscrizione.categories.find(
+      cat => cat.grouping === athleteData.grouping
     );
 
     if (categoryConfig && categoryConfig.config) {
@@ -191,7 +188,7 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
       }
     }
   }
-  
+
   return parseFloat(totalCost.toFixed(2));
 };
 

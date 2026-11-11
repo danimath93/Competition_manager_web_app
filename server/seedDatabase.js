@@ -1,16 +1,16 @@
 // Carica .env prima dei modelli (config/database legge le variabili al require)
 require('dotenv').config({ quiet: true });
 
-const { 
-  Club, 
-  Atleta, 
-  Giudice, 
-  Competizione, 
-  Categoria, 
+const {
+  Club,
+  Atleta,
+  Giudice,
+  Competizione,
+  Categoria,
   IscrizioneAtleta,
   UtentiLogin,
   AgeGroupConfiguration,
-  sequelize 
+  sequelize
 } = require('./models');
 
 // Fasce d'età standard usate dalle configurazioni di default
@@ -85,38 +85,16 @@ const seedData = async () => {
       { nome: 'Festa di Natale', descrizione: 'Categoria per attività ludiche per bambini', tipoCompetizioneId: 4, idConfigTipiAtleti: [1], obbligoPeso: false }
     ]);
 
-    const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([
-      { nome: 'Pulcini', etaMinima: 4, etaMassima: 6, inizioValidita: '2018-01-01', fineValidita: '2022-12-31', descrizione: 'Bambini dai 4 ai 6 anni' },
-      { nome: 'Bambini', etaMinima: 7, etaMassima: 8, inizioValidita: '2016-01-01', fineValidita: '2017-12-31', descrizione: 'Bambini dai 7 ai 8 anni' },
-      { nome: 'Esordienti', etaMinima: 9, etaMassima: 11, inizioValidita: '2013-01-01', fineValidita: '2015-12-31', descrizione: 'Bambini dagli 9 agli 11 anni' },
-      { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, inizioValidita: '2010-01-01', fineValidita: '2012-12-31', descrizione: 'Ragazzi dai 12 ai 14 anni' },
-      { nome: 'Junior', etaMinima: 15, etaMassima: 17, inizioValidita: '2007-01-01', fineValidita: '2009-12-31', descrizione: 'Ragazzi dai 15 ai 17 anni' },
-      { nome: 'Seniores', etaMinima: 18, etaMassima: 39, inizioValidita: '1985-01-01', fineValidita: '2006-12-31', descrizione: 'Adulti dai 18 ai 39 anni' },
-      { nome: 'MastersA', etaMinima: 40, etaMassima: 49, inizioValidita: '1975-01-01', fineValidita: '1984-12-31', descrizione: 'Adulti dai 40 ai 49 anni' },
-      { nome: 'MastersB', etaMinima: 50, etaMassima: 99, inizioValidita: '1900-01-01', fineValidita: '1974-12-31', descrizione: 'Adulti dai 50 anni in su' }
-    ]);
-
     await seedAgeGroupConfigurations();
 
-    const configTipiAtleta = await sequelize.models.ConfigTipoAtleta.bulkCreate([
-      { id: 1, nome: 'CB Bambini', etaMinima: 5, etaMassima: 12, descrizione: 'Atleti bambini' },
-      { id: 2, nome: 'CB Adulti', etaMinima: 13, etaMassima: 99, descrizione: 'Atleti adulti cinture bianche' },
-      { id: 3, nome: 'CN', etaMinima: 16, etaMassima: 99, descrizione: 'Atleti adulti cinture nere' }
-    ]);
-
     const configEsperienze = await sequelize.models.ConfigEsperienza.bulkCreate([
-      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', idConfigTipoAtleta: 1, tipiCompetizione: [3], attivo: true },
-      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', idConfigTipoAtleta: 1, tipiCompetizione: [3], attivo: true },
-      { nome: 'I livello', descrizione: 'Atleta iscritto a settembre dell\'anno corrente', idConfigTipoAtleta: 1, tipiCompetizione: [1], attivo: true },
-      { nome: 'II livello', descrizione: 'Atleta iscritto da 1 oppure 2 anni', idConfigTipoAtleta: 1, tipiCompetizione: [1], attivo: true },
-      { nome: 'III livello', descrizione: 'Atleta iscritto da 3 o più anni', idConfigTipoAtleta: 1, tipiCompetizione: [1], attivo: true },
-      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', idConfigTipoAtleta: 2, tipiCompetizione: [3], attivo: true },
-      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', idConfigTipoAtleta: 2, tipiCompetizione: [3], attivo: true },
-      { nome: 'I livello', descrizione: 'Atleta iscritto a settembre dell\'anno corrente', idConfigTipoAtleta: 2, tipiCompetizione: [1], attivo: true },
-      { nome: 'II livello', descrizione: 'Atleta iscritto da 1 oppure 2 anni', idConfigTipoAtleta: 2, tipiCompetizione: [1], attivo: true },
-      { nome: 'III livello', descrizione: 'Atleta iscritto da 3 o più anni', idConfigTipoAtleta: 2, tipiCompetizione: [1], attivo: true },
-      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', idConfigTipoAtleta: 3, tipiCompetizione: [3], attivo: true },
-      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', idConfigTipoAtleta: 3, tipiCompetizione: [3], attivo: true },
+      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', tipiCompetizione: [3], belt: 'all', attivo: true },
+      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', tipiCompetizione: [3], belt: 'all', attivo: true },
+      { nome: 'I livello', descrizione: 'Atleta iscritto a settembre dell\'anno corrente', tipiCompetizione: [1], belt: 'whiteBelt', attivo: true },
+      { nome: 'II livello', descrizione: 'Atleta iscritto da 1 oppure 2 anni', tipiCompetizione: [1], belt: 'whiteBelt', attivo: true },
+      { nome: 'III livello', descrizione: 'Atleta iscritto da 3 o più anni', tipiCompetizione: [1], belt: 'whiteBelt', attivo: true },
+      { nome: 'I Dang', descrizione: 'Cintura nera I Dang', tipiCompetizione: [1], belt: 'blackBelt', attivo: true },
+      { nome: 'II Dang', descrizione: 'Cintura nera II Dang', tipiCompetizione: [1], belt: 'blackBelt', attivo: true },
     ]);
 
     console.log('✅ Configurazioni create');
@@ -165,7 +143,7 @@ const seedData = async () => {
         sesso: 'M',
         codiceFiscale: 'FRRNDR95C15F205Y',
         peso: 68.5,
-        tipoAtletaId: 3,
+        isBlackBelt: true,
         telefono: '333-1111111',
         email: 'andrea.ferrari@email.com',
         clubId: 1
@@ -177,7 +155,7 @@ const seedData = async () => {
         sesso: 'F',
         codiceFiscale: 'MRTSIA98L62F205Z',
         peso: 55.0,
-        tipoAtletaId: 3,
+        isBlackBelt: true,
         telefono: '333-2222222',
         email: 'sofia.martini@email.com',
         clubId: 1
@@ -189,7 +167,7 @@ const seedData = async () => {
         sesso: 'M',
         codiceFiscale: 'RMNMRC92S08L219W',
         peso: 75.2,
-        tipoAtletaId: 3,
+        isBlackBelt: true,
         telefono: '333-3333333',
         email: 'marco.romano@email.com',
         clubId: 2
@@ -201,7 +179,7 @@ const seedData = async () => {
         sesso: 'F',
         codiceFiscale: 'CNTGLI96E52H501X',
         peso: 60.0,
-        tipoAtletaId: 3,
+        isBlackBelt: true,
         telefono: '333-4444444',
         email: 'giulia.conti@email.com',
         clubId: 3
@@ -344,17 +322,6 @@ const seedData = async () => {
 };
 
 const seedConfigurations = async () => {
-  const configGruppiEta = await sequelize.models.ConfigGruppoEta.bulkCreate([
-    { nome: 'Pulcini', etaMinima: 4, etaMassima: 6, inizioValidita: '2018-01-01', fineValidita: '2022-12-31', descrizione: 'Bambini dai 4 ai 6 anni' },
-    { nome: 'Bambini', etaMinima: 7, etaMassima: 8, inizioValidita: '2016-01-01', fineValidita: '2017-12-31', descrizione: 'Bambini dai 7 ai 8 anni' },
-    { nome: 'Esordienti', etaMinima: 9, etaMassima: 11, inizioValidita: '2013-01-01', fineValidita: '2015-12-31', descrizione: 'Bambini dagli 9 agli 11 anni' },
-    { nome: 'Cadetti', etaMinima: 12, etaMassima: 14, inizioValidita: '2010-01-01', fineValidita: '2012-12-31', descrizione: 'Ragazzi dai 12 ai 14 anni' },
-    { nome: 'Junior', etaMinima: 15, etaMassima: 17, inizioValidita: '2007-01-01', fineValidita: '2009-12-31', descrizione: 'Ragazzi dai 15 ai 17 anni' },
-    { nome: 'Seniores', etaMinima: 18, etaMassima: 39, inizioValidita: '1985-01-01', fineValidita: '2006-12-31', descrizione: 'Adulti dai 18 ai 39 anni' },
-    { nome: 'MastersA', etaMinima: 40, etaMassima: 49, inizioValidita: '1975-01-01', fineValidita: '1984-12-31', descrizione: 'Adulti dai 40 ai 49 anni' },
-    { nome: 'MastersB', etaMinima: 50, etaMassima: 99, inizioValidita: '1900-01-01', fineValidita: '1974-12-31', descrizione: 'Adulti dai 50 anni in su' }
-  ]);
-
   await seedAgeGroupConfigurations();
 
   console.log('✅ Configurazioni create');

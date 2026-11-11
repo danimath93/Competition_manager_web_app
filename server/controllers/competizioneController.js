@@ -1,4 +1,4 @@
-const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoCompetizione, Documento, ConfigGruppoEta } = require('../models');
+const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoCompetizione, Documento } = require('../models');
 const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria, AgeGroupConfiguration, ConfigEsperienza } = require('../models');
 const { resolveAgeGroup } = require('../helpers/ageGroups');
 const { loadRegistrationBlackBelts, getAthleteCompetitionProfile, getAgeGroupLabels } = require('../helpers/athleteCompetitionProfile');
@@ -845,10 +845,6 @@ const exportCategories = async (req, res) => {
       order: [['nome', 'ASC']]
     });
 
-    // Categorie precedenti alla conversione: fasce della vecchia tabella config_gruppi_eta
-    const gruppiEta = await ConfigGruppoEta.findAll({
-      attributes: ['id', 'nome']
-    });
 
     // Crea il workbook Excel
     const workbook = new ExcelJS.Workbook();
@@ -868,13 +864,7 @@ const exportCategories = async (req, res) => {
 
     // Aggiungi i dati delle categorie
     categorie.forEach(categoria => {
-      let gruppoEtaList = [];
-      if (categoria.ageGroupKeys && categoria.ageGroupKeys.length > 0) {
-        gruppoEtaList = getAgeGroupLabels(categoria.ageGroupKeys, competizione);
-      } else if (categoria.gruppiEtaId && categoria.gruppiEtaId.length > 0) {
-        // Per ognni id del gruppo età associato alla categoria, trova il nome corrispondente
-        gruppoEtaList = gruppiEta.filter(ge => categoria.gruppiEtaId.includes(ge.id)).map(ge => ge.nome);
-      }
+      const gruppoEtaList = getAgeGroupLabels(categoria.ageGroupKeys, competizione);
       let countOro = categoria.maxPartecipanti && categoria.maxPartecipanti > 0 ? 1 : 0;
       let countArgento = categoria.maxPartecipanti && categoria.maxPartecipanti > 1 ? 1 : 0;
       let countBronzo = categoria.maxPartecipanti && categoria.maxPartecipanti > 2 ? 1 : 0;
