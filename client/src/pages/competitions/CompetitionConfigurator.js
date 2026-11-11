@@ -11,6 +11,7 @@ import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 import GeneralInfoTab from '../../components/competition-tabs/GeneralInfoTab';
 import CategoriesTab from '../../components/competition-tabs/CategoriesTab';
 import CostsTab from '../../components/competition-tabs/CostsTab';
+import AgeGroupsTab from '../../components/competition-tabs/AgeGroupsTab';
 import Tabs from '../../components/common/Tabs';
 
 const CompetitionConfigurator = () => {
@@ -38,6 +39,14 @@ const CompetitionConfigurator = () => {
     iban: '',
     intestatario: '',
     causale: '',
+    ageGroupConfigurationId: null,
+  });
+  // Dati fasce età in sola lettura (non inviati al salvataggio)
+  const [ageGroupInfo, setAgeGroupInfo] = useState({
+    savedConfiguration: null,
+    savedConfig: null,
+    organizerClubId: null,
+    locked: false,
   });
   const [editConfirmModalOpen, setEditConfirmModalOpen] = useState(false);
   const [error, setError] = useState('');
@@ -47,6 +56,7 @@ const CompetitionConfigurator = () => {
   const generationTabs = [
     { label: 'Informazioni Generali', value: 'general', disabled: false },
     { label: 'Categorie', value: 'categories', disabled: false },
+    { label: "Fasce d'età", value: 'ageGroups', disabled: false },
     { label: 'Costi', value: 'costs', disabled: false },
   ];
 
@@ -84,6 +94,13 @@ const CompetitionConfigurator = () => {
             iban: competition.iban || '',
             intestatario: competition.intestatario || '',
             causale: competition.causale || '',
+            ageGroupConfigurationId: competition.ageGroupConfigurationId || null,
+          });
+          setAgeGroupInfo({
+            savedConfiguration: competition.ageGroupConfiguration || null,
+            savedConfig: competition.ageGroupConfig || null,
+            organizerClubId: competition.organizzatoreClubId || null,
+            locked: (competition.categorie || []).length > 0,
           });
         } catch (err) {
           setError('Errore nel caricamento della competizione');
@@ -122,6 +139,12 @@ const CompetitionConfigurator = () => {
   const handleSubmit = async (dataToSave = formData) => {
     setError('');
     setEditConfirmModalOpen(false);
+
+    if (!dataToSave.id && !dataToSave.ageGroupConfigurationId) {
+      setError('Seleziona la configurazione delle fasce d\'età');
+      setCurrentTab('ageGroups');
+      return;
+    }
     setLoading(true);
 
     // I campi data non compilati restano '' nel form (input controllati): al backend vanno inviati come null
@@ -139,7 +162,7 @@ const CompetitionConfigurator = () => {
       }
       navigate('/competitions');
     } catch (err) {
-      setError(err.message || 'Errore durante il salvataggio');
+      setError(err.response?.data?.error || err.message || 'Errore durante il salvataggio');
       setLoading(false);
     }
   };
@@ -154,6 +177,14 @@ const CompetitionConfigurator = () => {
   };
 
   const handleCategoriesSubmit = (e) => {
+    if (isEditMode) {
+      setEditConfirmModalOpen(true);
+    } else {
+      setCurrentTab('ageGroups');
+    }
+  };
+
+  const handleAgeGroupsSubmit = () => {
     if (isEditMode) {
       setEditConfirmModalOpen(true);
     } else {
@@ -222,6 +253,19 @@ const CompetitionConfigurator = () => {
             onChange={handleCategoriesChange}
             onSubmit={handleCategoriesSubmit}
             isEditMode={isEditMode}
+          />
+        )}
+        {/* Tab Panel - Fasce d'età */}
+        { currentTab === "ageGroups" && (
+          <AgeGroupsTab
+            value={formData.ageGroupConfigurationId}
+            onChange={(configurationId) => handleFieldChange('ageGroupConfigurationId', configurationId)}
+            onSubmit={handleAgeGroupsSubmit}
+            savedConfiguration={ageGroupInfo.savedConfiguration}
+            savedConfig={ageGroupInfo.savedConfig}
+            organizerClubId={ageGroupInfo.organizerClubId}
+            locked={ageGroupInfo.locked}
+            competitionStartDate={formData.dataInizio}
           />
         )}
         {/* Tab Panel - Costi */}

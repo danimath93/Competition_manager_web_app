@@ -26,6 +26,7 @@ import CategoryInProgress from './pages/categories/CategoryInProgress';
 import CompetitionConfigurator from './pages/competitions/CompetitionConfigurator';
 import TrattamentoDatiPersonali from './pages/TrattamentoDatiPersonali';
 import Settings from './pages/settings/Settings';
+import AgeGroupConfigurations from './pages/ageGroups/AgeGroupConfigurations';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
 
@@ -186,6 +187,13 @@ const AppContent = () => {
         <Route path="/categories/results" element={
           <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
             <CategoryResults />
+          </AuthGate>
+        } />
+
+        {/* Configurazioni fasce d'età - superAdmin, admin, club */}
+        <Route path="/age-groups" element={
+          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
+            <AgeGroupConfigurations />
           </AuthGate>
         } />
 

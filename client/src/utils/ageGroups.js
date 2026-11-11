@@ -7,9 +7,11 @@
  *   mode: 'age' | 'seasonAge',
  *   seasonStart: 'MM-DD',          // obbligatorio solo con mode = 'seasonAge' (es. '01-01', '09-01')
  *   groups: [
- *     { key: 'pulcini', label: 'Pulcini', order: 1, minAge: 4, maxAge: 6 }   // maxAge null = senza limite
+ *     { key: 'pulcini', label: 'Pulcini', grouping: 'children', order: 1, minAge: 4, maxAge: 6 }   // maxAge null = senza limite
  *   ]
  * }
+ *
+ * Raggruppamento (grouping): 'children' (bambini) | 'adults' (adulti)
  *
  * Modalità:
  * - age:       età esatta alla data di riferimento (inizio gara)
@@ -22,10 +24,11 @@
 
 const CONFIG_VERSION = 1;
 const AGE_GROUP_MODES = ['age', 'seasonAge'];
+const AGE_GROUPINGS = ['children', 'adults'];
 const TIMEZONE = 'Europe/Rome';
 
 const CONFIG_KEYS = ['version', 'mode', 'seasonStart', 'groups'];
-const GROUP_KEYS = ['key', 'label', 'order', 'minAge', 'maxAge'];
+const GROUP_KEYS = ['key', 'label', 'grouping', 'order', 'minAge', 'maxAge'];
 const KEY_REGEX = /^[a-z0-9_-]+$/;
 const SEASON_START_REGEX = /^(\d{2})-(\d{2})$/;
 const MIN_AGE = 0;
@@ -251,6 +254,10 @@ const validateAgeGroupConfig = (config) => {
       labels.add(group.label.trim().toLowerCase());
     }
 
+    if (!AGE_GROUPINGS.includes(group.grouping)) {
+      errors.push(`${position}: raggruppamento obbligatorio (bambini o adulti)`);
+    }
+
     if (!Number.isInteger(group.order)) {
       errors.push(`${position}: ordine deve essere un numero intero`);
     }
@@ -296,6 +303,7 @@ const validateAgeGroupConfig = (config) => {
       .map(group => ({
         key: group.key,
         label: group.label.trim(),
+        grouping: group.grouping,
         order: group.order,
         minAge: group.minAge,
         maxAge: group.maxAge === undefined ? null : group.maxAge
@@ -308,6 +316,7 @@ const validateAgeGroupConfig = (config) => {
 export {
   CONFIG_VERSION,
   AGE_GROUP_MODES,
+  AGE_GROUPINGS,
   toYmd,
   computeAge,
   getSeasonBounds,

@@ -15,14 +15,14 @@ const {
 
 // Fasce d'età standard usate dalle configurazioni di default
 const DEFAULT_AGE_GROUPS = [
-  { key: 'pulcini', label: 'Pulcini', order: 1, minAge: 4, maxAge: 6 },
-  { key: 'bambini', label: 'Bambini', order: 2, minAge: 7, maxAge: 8 },
-  { key: 'esordienti', label: 'Esordienti', order: 3, minAge: 9, maxAge: 11 },
-  { key: 'cadetti', label: 'Cadetti', order: 4, minAge: 12, maxAge: 14 },
-  { key: 'junior', label: 'Junior', order: 5, minAge: 15, maxAge: 17 },
-  { key: 'seniores', label: 'Seniores', order: 6, minAge: 18, maxAge: 39 },
-  { key: 'masters-a', label: 'MastersA', order: 7, minAge: 40, maxAge: 49 },
-  { key: 'masters-b', label: 'MastersB', order: 8, minAge: 50, maxAge: null }
+  { key: 'pulcini', label: 'Pulcini', grouping: 'children', order: 1, minAge: 4, maxAge: 6 },
+  { key: 'bambini', label: 'Bambini', grouping: 'children', order: 2, minAge: 7, maxAge: 8 },
+  { key: 'esordienti', label: 'Esordienti', grouping: 'children', order: 3, minAge: 9, maxAge: 11 },
+  { key: 'cadetti', label: 'Cadetti', grouping: 'adults', order: 4, minAge: 12, maxAge: 14 },
+  { key: 'junior', label: 'Junior', grouping: 'adults', order: 5, minAge: 15, maxAge: 17 },
+  { key: 'seniores', label: 'Seniores', grouping: 'adults', order: 6, minAge: 18, maxAge: 39 },
+  { key: 'masters-a', label: 'MastersA', grouping: 'adults', order: 7, minAge: 40, maxAge: 49 },
+  { key: 'masters-b', label: 'MastersB', grouping: 'adults', order: 8, minAge: 50, maxAge: null }
 ];
 
 const DEFAULT_AGE_GROUP_CONFIGURATIONS = [
@@ -43,17 +43,21 @@ const DEFAULT_AGE_GROUP_CONFIGURATIONS = [
   }
 ];
 
-// Crea le configurazioni di default mancanti (rieseguibile: salta quelle già presenti per nome)
+// Crea le configurazioni di default mancanti e riallinea quelle esistenti (rieseguibile, ricerca per nome)
 const seedAgeGroupConfigurations = async () => {
   let created = 0;
   for (const { name, description, config } of DEFAULT_AGE_GROUP_CONFIGURATIONS) {
-    const [, isNew] = await AgeGroupConfiguration.findOrCreate({
+    const [configuration, isNew] = await AgeGroupConfiguration.findOrCreate({
       where: { clubId: null, name },
       defaults: { description, config }
     });
-    if (isNew) created++;
+    if (isNew) {
+      created++;
+    } else {
+      await configuration.update({ description, config });
+    }
   }
-  console.log(`✅ Configurazioni fasce età di default: ${created} create, ${DEFAULT_AGE_GROUP_CONFIGURATIONS.length - created} già presenti`);
+  console.log(`✅ Configurazioni fasce età di default: ${created} create, ${DEFAULT_AGE_GROUP_CONFIGURATIONS.length - created} aggiornate`);
 };
 
 const seedData = async () => {
