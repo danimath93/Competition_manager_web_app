@@ -2,6 +2,7 @@ const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione,
 const { calculateAthleteCost } = require('../helpers/costCalculator');
 const { checkCategoryLimits } = require('../helpers/categoryLimits');
 const { resolveAgeGroup } = require('../helpers/ageGroups');
+const { getEligibleCategories, getExperienceIds, isExperienceBeltAllowed } = require('../helpers/competitionCategoryConfig');
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
@@ -66,7 +67,8 @@ const getIscrizioniByCompetizione = async (req, res) => {
         ...iscrizione,
         quota: dettaglio ? parseFloat(dettaglio.quota) || 0 : 0,
         verificato: dettaglio ? dettaglio.verificato : false,
-        tesseramento: dettaglio ? dettaglio.tesseramento : null
+        tesseramento: dettaglio ? dettaglio.tesseramento : null,
+        isBlackBelt: dettaglio ? dettaglio.isBlackBelt : null
       };
     });
 
@@ -146,6 +148,48 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
   }
 };
 
+/**
+ * Verifica che categorie e livelli di esperienza siano ammessi per l'atleta dalla configurazione
+ * della competizione (fascia d'età alla data di inizio gara e grado CN).
+ * Competizioni non ancora convertite (senza categoryConfig): nessuna verifica.
+ * @param {Array} entries - [{ tipoCategoriaId, getExperienceId: (categoryType) => idEsperienza|null }]
+ * @returns {Promise<string|null>} messaggio di errore oppure null
+ */
+const checkRegistrationEligibility = async (competizione, atleta, isBlackBelt, categoryIds, getExperienceId) => {
+  const categoryConfig = competizione.categoryConfig;
+  if (!categoryConfig) return null;
+
+  const ageGroup = resolveAgeGroup(atleta.dataNascita, competizione.ageGroupConfig, competizione.dataInizio);
+  if (!ageGroup) {
+    return 'L\'atleta non rientra in nessuna fascia d\'età prevista dalla competizione';
+  }
+
+  const eligibleIds = getEligibleCategories(categoryConfig, ageGroup, isBlackBelt).map(c => c.categoryTypeId);
+  const categoryTypes = await ConfigTipoCategoria.findAll({
+    where: { id: categoryIds },
+    attributes: ['id', 'nome', 'tipoCompetizioneId']
+  });
+
+  for (const categoryId of categoryIds) {
+    const categoryType = categoryTypes.find(ct => ct.id === categoryId);
+    const categoryName = categoryType?.nome || `categoria ${categoryId}`;
+    if (!categoryType || !eligibleIds.includes(categoryId)) {
+      return `La categoria ${categoryName} non è prevista per l'atleta (fascia ${ageGroup.label}${isBlackBelt ? ', CN' : ''})`;
+    }
+
+    const experienceId = getExperienceId(categoryType);
+    if (experienceId) {
+      const allowedIds = getExperienceIds(categoryConfig, categoryType.tipoCompetizioneId, ageGroup.grouping);
+      const experience = await ConfigEsperienza.findByPk(experienceId, { attributes: ['id', 'nome', 'belt'] });
+      if (!experience || !allowedIds.includes(experienceId) || !isExperienceBeltAllowed(experience.belt, isBlackBelt)) {
+        return `Il livello di esperienza ${experience?.nome || experienceId} non è previsto per l'atleta nella categoria ${categoryName}`;
+      }
+    }
+  }
+
+  return null;
+};
+
 // Crea una nuova iscrizione
 const createIscrizione = async (req, res) => {
   try {
@@ -177,9 +221,22 @@ const createIscrizione = async (req, res) => {
       return res.status(400).json({ error: limitError });
     }
 
-    const atleta = await Atleta.findByPk(atletaId, { attributes: ['id', 'isBlackBelt'] });
+    const atleta = await Atleta.findByPk(atletaId, { attributes: ['id', 'dataNascita', 'isBlackBelt'] });
     if (!atleta) {
       return res.status(404).json({ error: 'Atleta non trovato' });
+    }
+
+    // Categoria e livello devono essere ammessi per fascia d'età e grado CN dell'atleta
+    const eligibilityError = await checkRegistrationEligibility(
+      competizione,
+      atleta,
+      atleta.isBlackBelt,
+      [tipoCategoriaId],
+      () => req.body.idConfigEsperienza || null
+    );
+    if (eligibilityError) {
+      logger.warn(`Iscrizione non ammessa - Atleta: ${atletaId}, Competizione: ${competizioneId}: ${eligibilityError}`);
+      return res.status(400).json({ error: eligibilityError });
     }
 
     // Usa findOrCreate per evitare race condition quando si creano più iscrizioni simultaneamente
@@ -367,6 +424,28 @@ const editIscrizioniAtleta = async (req, res) => {
     if (limitError) {
       logger.warn(`Limite categorie superato in modifica - Atleta: ${athleteId}, Competizione: ${competitionId}: ${limitError}`);
       return res.status(400).json({ error: limitError });
+    }
+
+    // Categorie e livelli devono essere ammessi per fascia d'età e grado CN registrato nell'iscrizione
+    const atleta = await Atleta.findByPk(athleteId, { attributes: ['id', 'dataNascita', 'isBlackBelt'] });
+    if (!atleta) {
+      return res.status(404).json({ error: 'Atleta non trovato' });
+    }
+    const dettaglioEsistente = await DettaglioIscrizioneAtleta.findOne({
+      where: { atletaId: athleteId, competizioneId: competitionId },
+      attributes: ['id', 'isBlackBelt']
+    });
+    const isBlackBelt = dettaglioEsistente?.isBlackBelt ?? atleta.isBlackBelt;
+    const eligibilityError = await checkRegistrationEligibility(
+      competizione,
+      atleta,
+      isBlackBelt,
+      categories,
+      (categoryType) => experiences?.[categoryType.tipoCompetizioneId]?.id || null
+    );
+    if (eligibilityError) {
+      logger.warn(`Modifica iscrizione non ammessa - Atleta: ${athleteId}, Competizione: ${competitionId}: ${eligibilityError}`);
+      return res.status(400).json({ error: eligibilityError });
     }
 
     const configTipoCategorie = await ConfigTipoCategoria.findAll({

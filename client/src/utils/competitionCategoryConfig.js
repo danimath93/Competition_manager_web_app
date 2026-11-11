@@ -73,3 +73,25 @@ export const getUsedGroupingsByCompetitionType = (categoryConfig, ageGroupConfig
   });
   return result;
 };
+
+// Verifica se la cintura dell'atleta è ammessa dalla categoria
+export const isBeltAllowed = (belt, isBlackBelt) => {
+  if (belt === 'blackBeltOnly') return !!isBlackBelt;
+  if (belt === 'whiteBeltOnly') return !isBlackBelt;
+  return true;
+};
+
+// Verifica se il livello di esperienza è compatibile con la cintura dell'atleta (ConfigEsperienza.belt)
+export const isExperienceBeltAllowed = (experienceBelt, isBlackBelt) => {
+  if (experienceBelt === 'blackBelt') return !!isBlackBelt;
+  if (experienceBelt === 'whiteBelt') return !isBlackBelt;
+  return true;
+};
+
+// Categorie della configurazione a cui l'atleta può iscriversi (fascia d'età e cintura)
+export const getEligibleCategories = (categoryConfig, ageGroup, isBlackBelt) => {
+  if (!categoryConfig || !Array.isArray(categoryConfig.categories) || !ageGroup) return [];
+  return categoryConfig.categories.filter(category =>
+    category.ageGroupKeys.includes(ageGroup.key) && isBeltAllowed(category.belt, isBlackBelt)
+  );
+};

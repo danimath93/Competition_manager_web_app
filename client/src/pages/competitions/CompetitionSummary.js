@@ -1026,6 +1026,7 @@ const CompetitionSummary = () => {
           athlete={selectedAthleteForEdit}
           registrations={selectedRegistrationsForEdit}
           competition={competition}
+          isBlackBelt={selectedRegistrationsForEdit?.[0]?.isBlackBelt}
         />
       )}
 

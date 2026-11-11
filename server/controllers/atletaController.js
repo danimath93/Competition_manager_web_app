@@ -61,16 +61,6 @@ const getAtletiByClub = async (req, res) => {
 // Crea un nuovo atleta
 const createAtleta = async (req, res) => {
   try {
-    const dataNascita = req.body?.dataNascita;
-    const tipoAtleta = req.body?.tipoAtleta;
-
-    if (!checkAgeEligibility(dataNascita, tipoAtleta)) {
-      logger.warn(`Tentativo di aggiunta atleta con dati di età non validi. Club: ${req.body?.club?.denominazione}`);
-      return res.status(400).json({
-        error: `L\'età dell\'atleta non è compatibile con il tipo di atleta selezionato. ${tipoAtleta?.nome}: (${tipoAtleta?.etaMinima} - ${tipoAtleta?.etaMassima}) anni`
-      });
-    }
-
     const newAtleta = await Atleta.create(req.body);
     logger.info(`Atleta creato - ID: ${newAtleta.id}, Nome: ${newAtleta.nome} ${newAtleta.cognome}`);
     res.status(201).json(newAtleta);
@@ -102,15 +92,6 @@ const createAtleta = async (req, res) => {
 const updateAtleta = async (req, res) => {
   try {
     const { id } = req.params;
-    const dataNascita = req.body?.dataNascita;
-    const tipoAtleta = req.body?.tipoAtleta;
-
-    if (!checkAgeEligibility(dataNascita, tipoAtleta)) {
-      logger.warn(`Tentativo di aggiornamento atleta con dati di età non validi - ID: ${id}`);
-      return res.status(400).json({
-        error: `L\'età dell\'atleta non è compatibile con il tipo di atleta selezionato. ${tipoAtleta?.nome}: (${tipoAtleta?.etaMinima} - ${tipoAtleta?.etaMassima}) anni`
-      });
-    }
 
     // Il certificato va aggiornato tramite endpoint dedicato, cancello eventuale campo nel body
     if (req.body.hasOwnProperty('certificatoId')) {
@@ -168,30 +149,6 @@ const deleteAtleta = async (req, res) => {
     });
   }
 };
-
-//------ Funzioni di supporto ------//
-
-function checkAgeEligibility(dataNascita, tipoAtleta) {
-  if (!dataNascita || !tipoAtleta) {
-    throw new Error('Dati mancanti per la verifica dell\'età');
-  }
-
-  if (tipoAtleta.etaMinima === null || tipoAtleta.etaMassima === null) {
-    throw new Error('Dati range età mancanti per la verifica dell\'età');
-  }
-
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const birthDate = new Date(dataNascita);
-  const birthYear = birthDate.getFullYear();
-
-  const age = currentYear - birthYear;
-  if (age < tipoAtleta.etaMinima || age > tipoAtleta.etaMassima) {
-    return false;
-  }
-
-  return true; 
-}
 
 module.exports = {
   getAllAtleti,

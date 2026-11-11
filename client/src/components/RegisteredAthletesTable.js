@@ -337,6 +337,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
           athlete={selectedAthleteForEdit}
           registrations={selectedRegistrationsForEdit}
           competition={competition}
+          isBlackBelt={selectedRegistrationsForEdit?.[0]?.dettagliIscrizione?.isBlackBelt}
         />
       )}
 

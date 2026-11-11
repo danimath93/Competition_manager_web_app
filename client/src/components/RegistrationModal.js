@@ -12,11 +12,14 @@ import { editAthleteRegistrations } from '../api/registrations';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
-import { checkCategoryConstraints, getCategoryLimitErrors, getAthleteTypeConfig, loadRegistrationConfig } from '../utils/helperRegistration';
+import { checkCategoryConstraints, getCategoryLimitErrors, getAthleteRegistrationConfig, loadRegistrationConfig } from '../utils/helperRegistration';
 import './common/DrawerModal.css';
 
 const getRegistrationCategoryId = (reg) => reg.tipoCategoria?.id || reg.tipoCategoriaId;
 
+/**
+ * @param {boolean|null} props.isBlackBelt - grado CN salvato nell'iscrizione (se assente si usa quello dell'atleta)
+ */
 const RegistrationModal = ({
   open,
   onClose,
@@ -25,11 +28,14 @@ const RegistrationModal = ({
   athlete,
   registrations,
   competition,
+  isBlackBelt,
 }) => {
-  // Configurazione della competizione per il tipo atleta
+  // Configurazione di iscrizione: fascia d'età dell'atleta e grado CN al momento dell'iscrizione
+  const registrationBlackBelt = isBlackBelt ?? !!athlete?.isBlackBelt;
   const athleteConfig = useMemo(
-    () => getAthleteTypeConfig(competition, athlete?.tipoAtletaId),
-    [competition, athlete?.tipoAtletaId]
+    () => getAthleteRegistrationConfig(competition, athlete, registrationBlackBelt),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [competition, athlete?.dataNascita, athlete?.tipoAtletaId, registrationBlackBelt]
   );
   const availableCategories = useMemo(() => athleteConfig?.categorie || [], [athleteConfig]);
 
@@ -257,7 +263,9 @@ const RegistrationModal = ({
     if (availableCategories.length === 0) {
       return (
         <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-          Nessuna categoria disponibile per questo atleta.
+          {athleteConfig?.ageGroup === null
+            ? 'L\'atleta non rientra in nessuna fascia d\'età prevista dalla competizione.'
+            : 'Nessuna categoria disponibile per questo atleta.'}
         </div>
       );
     }

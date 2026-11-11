@@ -5,7 +5,6 @@ import MuiButton from "@mui/material/Button";
 import HorizontalStepper from "./common/HorizontalStepper";
 import ConfirmActionModal from "./common/ConfirmActionModal";
 import Button from "./common/Button";
-import { loadAthleteTypes, loadAthleteTypeById } from "../api/config";
 import { createRegistration } from "../api/registrations";
 import { uploadCertificato, downloadCertificato } from "../api/certificati";
 import { updateAthlete } from "../api/athletes";
@@ -21,7 +20,7 @@ import { CompetitionTipology } from "../constants/enums/CompetitionEnums";
 import {
   checkCategoryConstraints,
   getCategoryLimitErrors,
-  getAthleteTypeConfig,
+  getAthleteRegistrationConfig,
   loadRegistrationConfig,
 } from "../utils/helperRegistration";
 
@@ -53,13 +52,11 @@ const AthleteRegistration = ({
   const [certificatoId, setCertificatoId] = useState(
     athlete?.certificatoId ? "Certificato presente" : null,
   );
-  const [athleteType, setAthleteType] = useState(null);
   // Grado CN: va confermato ad ogni iscrizione, il valore viene salvato sull'atleta
   const [isBlackBelt, setIsBlackBelt] = useState(!!athlete?.isBlackBelt);
   useEffect(() => {
     setIsBlackBelt(!!athlete?.isBlackBelt);
   }, [athlete?.id, athlete?.isBlackBelt]);
-  const [athleteTypes, setAthleteTypes] = useState([]);
   const [tesseramento, setTesseramento] = useState(null);
   const tesseramentoTypes = [
     { id: MembershipType.FIWUK, nome: "FIWUK" },
@@ -68,11 +65,11 @@ const AthleteRegistration = ({
   ];
 
   // Stato fase 2 - Categorie
-  // La configurazione segue il tipo atleta selezionato nella fase 1 (default: quello dell'atleta)
-  const athleteTypeId = athleteType?.id ?? athlete?.tipoAtletaId;
+  // Categorie e livelli dipendono dalla fascia d'età dell'atleta e dal grado CN confermato nella fase 1
   const athleteConfig = useMemo(
-    () => getAthleteTypeConfig(competition, athleteTypeId),
-    [competition, athleteTypeId],
+    () => getAthleteRegistrationConfig(competition, athlete, isBlackBelt),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [competition, athlete?.dataNascita, athlete?.tipoAtletaId, isBlackBelt],
   );
   const availableCategories = useMemo(
     () => athleteConfig?.categorie || [],
@@ -106,9 +103,9 @@ const AthleteRegistration = ({
     setEndDateCertificate(value);
   };
 
-  // Gestione modifica tipo atleta
-  const handleAthleteTypeChange = (event, newValue) => {
-    setAthleteType(newValue);
+  // Gestione modifica grado CN: cambiano categorie e livelli disponibili
+  const handleBlackBeltChange = (event) => {
+    setIsBlackBelt(event.target.checked);
     setSelectedCategories([]);
     setCategoryDetailSelections({});
     setSelectedExperiences({});
@@ -189,39 +186,6 @@ const AthleteRegistration = ({
     input.click();
   };
 
-  // Carica i tipi atleta e imposta quello corrente dell'atleta
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchAthleteTypes = async () => {
-      try {
-        const types = await loadAthleteTypes();
-        if (!isMounted) return;
-        setAthleteTypes(types);
-
-        if (athlete?.tipoAtletaId) {
-          const currentType =
-            types.find((type) => type.id === athlete.tipoAtletaId) ||
-            (await loadAthleteTypeById(athlete.tipoAtletaId));
-          if (isMounted) setAthleteType(currentType);
-        }
-      } catch (err) {
-        console.error("Errore nel caricamento dei tipi di atleta:", err);
-        if (isMounted)
-          setErrors([
-            "Errore nel caricamento dei dati dell'atleta",
-            err.response?.data?.message || err.message,
-          ]);
-      }
-    };
-
-    fetchAthleteTypes();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [athlete?.tipoAtletaId]);
-
   // Carica i dati di configurazione (categorie, esperienze, dettagli categoria) per il tipo atleta
   useEffect(() => {
     let isMounted = true;
@@ -277,8 +241,8 @@ const AthleteRegistration = ({
     switch (activeStep) {
       case 0:
         // Fase 1: dati atleta
-        if (!athleteType) {
-          newErrors.push("Seleziona la tipologia di atleta");
+        if (athleteConfig && athleteConfig.ageGroup === null) {
+          newErrors.push("L'atleta non rientra in nessuna fascia d'età prevista dalla competizione");
         }
         if (!tesseramento) {
           newErrors.push("Seleziona il tesseramento dell'atleta");
@@ -366,8 +330,6 @@ const AthleteRegistration = ({
 
           const updateData = {
             ...athlete,
-            tipoAtleta: athleteType ? athleteType : null,
-            tipoAtletaId: athleteType && athleteType.id ? athleteType.id : null,
             isBlackBelt,
             scadenzaCertificato: endDateCertificate,
           };
@@ -531,31 +493,11 @@ const AthleteRegistration = ({
         <h4 className="section-title">Info: Atleta</h4>
         <div className="data-row">
           <div className="data-field">
-            <Autocomplete
-              id="livelloAtleta"
-              value={athleteType || null}
-              getOptionLabel={(option) => option.nome || ""}
-              onChange={handleAthleteTypeChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Tipologia Atleta"
-                  variant="outlined"
-                  required
-                  size="small"
-                />
-              )}
-              options={athleteTypes}
-            />
-          </div>
-        </div>
-        <div className="data-row">
-          <div className="data-field">
             <FormControlLabel
               control={
                 <Checkbox
                   checked={isBlackBelt}
-                  onChange={(e) => setIsBlackBelt(e.target.checked)}
+                  onChange={handleBlackBeltChange}
                   size="small"
                 />
               }
@@ -563,6 +505,22 @@ const AthleteRegistration = ({
             />
           </div>
         </div>
+        {athleteConfig?.ageGroup !== undefined && (
+          <div className="data-row">
+            <div className="data-field">
+              {athleteConfig.ageGroup ? (
+                <Typography variant="body2">
+                  Fascia d'età: <strong>{athleteConfig.ageGroup.label}</strong>
+                  {" "}({athleteConfig.ageGroup.grouping === "children" ? "Bambini" : "Adulti"})
+                </Typography>
+              ) : (
+                <Typography variant="body2" color="error">
+                  L'atleta non rientra in nessuna fascia d'età prevista dalla competizione
+                </Typography>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="data-section">
@@ -733,8 +691,9 @@ const AthleteRegistration = ({
               ⚠️ Nessuna categoria disponibile
             </div>
             <div className="summary-info-item">
-              Non ci sono categorie disponibili per questo atleta in questa
-              competizione.
+              {athleteConfig?.ageGroup === null
+                ? "L'atleta non rientra in nessuna fascia d'età prevista dalla competizione."
+                : "Non ci sono categorie disponibili per questo atleta in questa competizione."}
             </div>
           </div>
         ) : (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -6,17 +6,20 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  ListSubheader,
+  TextField,
 } from '@mui/material';
 import { FaUsers } from 'react-icons/fa';
 import { Add } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { loadAllAthletes, createAthlete, updateAthlete, deleteAthlete, loadAthletesByClub } from '../../api/athletes';
 import { loadAllClubs } from '../../api/clubs';
-import { loadAthleteTypes, loadAgeGroups } from '../../api/config';
+import { loadAgeGroupConfigurations } from '../../api/ageGroupConfigurations';
+import { resolveAgeGroup } from '../../utils/ageGroups';
+import { todayYmd } from '../../components/AgeGroupConfigurationModal';
 import AthletesTable from '../../components/AthletesTable';
 import AthleteModal from '../../components/AthleteModal';
 import CertificatoModal from '../../components/CertificatoModal';
-import AuthComponent from '../../components/AuthComponent';
 import PageHeader from '../../components/PageHeader';
 import { Button } from '../../components/common';
 import ConfirmActionModal from '../../components/common/ConfirmActionModal';
@@ -28,15 +31,17 @@ const Athletes = () => {
   const [athletes, setAthletes] = useState([]);
   const [filteredAthletes, setFilteredAthletes] = useState([]);
   const [clubs, setClubs] = useState([]);
-  const [athleteTypes, setAthleteTypes] = useState([]);
-  const [ageGroups, setAgeGroups] = useState([]);
+  const [ageGroupConfigurations, setAgeGroupConfigurations] = useState([]);
   const [filters, setFilters] = useState({
     name: '',
-    type: '',
+    belt: '',
     club: '',
     gender: '',
-    ageGroup: ''
+    ageGroupConfigurationId: '',
+    ageGroupKey: '',
+    referenceDate: todayYmd()
   });
+  const isAdmin = user && (user.permissions === 'admin' || user.permissions === 'superAdmin');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteAthleteConfirmModalOpen, setIsDeleteAthleteConfirmModalOpen] = useState(false);
   const [isCertificatoModalOpen, setIsCertificatoModalOpen] = useState(false);
@@ -52,23 +57,30 @@ const Athletes = () => {
       }
 
       try {
-        const athleteTypesData = await loadAthleteTypes();
-        setAthleteTypes(athleteTypesData);
-
         if (user && (user.permissions === 'admin' || user.permissions === 'superAdmin')) {
           const clubsData = await loadAllClubs();
           setClubs(clubsData);
-
-          const ageGroupsData = await loadAgeGroups();
-          setAgeGroups(ageGroupsData);
         }
       } catch (error) {
-        console.error('Errore nel caricamento dei tipi di atleta o dei club:', error);
+        console.error('Errore nel caricamento dei club:', error);
       }
     };
 
     fetchData();
   }, [user]);
+
+  // Configurazioni fasce d'età disponibili (di default e del club; per l'admin quelle del club filtrato)
+  useEffect(() => {
+    if (!user) return;
+    loadAgeGroupConfigurations(isAdmin ? (filters.club || null) : null)
+      .then(setAgeGroupConfigurations)
+      .catch(error => console.error('Errore nel caricamento delle configurazioni fasce età:', error));
+  }, [user, isAdmin, filters.club]);
+
+  const selectedAgeGroupConfig = useMemo(
+    () => ageGroupConfigurations.find(c => c.id === filters.ageGroupConfigurationId)?.config || null,
+    [ageGroupConfigurations, filters.ageGroupConfigurationId]
+  );
 
   useEffect(() => {
     let result = athletes;
@@ -82,10 +94,8 @@ const Athletes = () => {
       );
     }
 
-    if (filters.type) {
-      result = result.filter((athlete) =>
-        athlete.tipoAtletaId === parseInt(filters.type)
-      );
+    if (filters.belt) {
+      result = result.filter((athlete) => (filters.belt === 'CN') === !!athlete.isBlackBelt);
     }
 
     if (filters.club) {
@@ -96,37 +106,22 @@ const Athletes = () => {
       result = result.filter((athlete) => athlete.sesso === filters.gender);
     }
 
-    if (filters.ageGroup) {
-      const selectedAgeGroup = ageGroups.find(ag => ag.id === parseInt(filters.ageGroup));
-      if (selectedAgeGroup) {
-        result = result.filter((athlete) => {
-          const birthDate = new Date(athlete.dataNascita);
-          const today = new Date();
-
-          // Se sono presenti inizioValidita e fineValidita, filtra per anno di nascita
-          if (selectedAgeGroup.inizioValidita && selectedAgeGroup.fineValidita) {
-            const startValidity = new Date(selectedAgeGroup.inizioValidita);
-            const endValidity = new Date(selectedAgeGroup.fineValidita);
-            return birthDate >= startValidity && birthDate <= endValidity;
-          }
-          // Altrimenti filtra per età compiuta
-          else {
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-              age--;
-            }
-            return age >= selectedAgeGroup.etaMinima && age <= selectedAgeGroup.etaMassima;
-          }
-        });
-      }
+    // Fascia d'età calcolata con la configurazione scelta alla data di riferimento
+    if (selectedAgeGroupConfig && filters.ageGroupKey) {
+      result = result.filter((athlete) =>
+        resolveAgeGroup(athlete.dataNascita, selectedAgeGroupConfig, filters.referenceDate)?.key === filters.ageGroupKey
+      );
     }
 
     setFilteredAthletes(result);
-  }, [filters, athletes, ageGroups, user]);
+  }, [filters, athletes, selectedAgeGroupConfig, user]);
 
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleAgeGroupConfigurationChange = (e) => {
+    setFilters({ ...filters, ageGroupConfigurationId: e.target.value, ageGroupKey: '' });
   };
 
   const handleFilterNameChange = (e) => {
@@ -232,11 +227,11 @@ const Athletes = () => {
               </Button>
             </Box>
 
-            <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-              <Box sx={{ mt: 2 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 250 }}>
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                {isAdmin && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <FormControl fullWidth variant="outlined">
                       <InputLabel>Filtra per Club</InputLabel>
                       <Select
                         name="club"
@@ -255,29 +250,76 @@ const Athletes = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth variant="outlined" sx={{ minWidth: 250 }}>
-                      <InputLabel>Filtra per Gruppo Età</InputLabel>
-                      <Select
-                        name="ageGroup"
-                        label="Filtra per Gruppo Età"
-                        value={filters.ageGroup}
-                        onChange={handleFilterChange}
-                      >
-                        <MenuItem value="">
-                          <em>Tutti</em>
-                        </MenuItem>
-                        {ageGroups.map((group) => (
-                          <MenuItem key={group.id} value={group.id}>
-                            {group.nome}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
+                )}
+                <Grid item xs={12} sm={6} md={2}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>Cintura</InputLabel>
+                    <Select
+                      name="belt"
+                      label="Cintura"
+                      value={filters.belt}
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value=""><em>Tutte</em></MenuItem>
+                      <MenuItem value="CN">CN</MenuItem>
+                      <MenuItem value="CB">CB</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
-              </Box>
-            </AuthComponent>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>Configurazione fasce d'età</InputLabel>
+                    <Select
+                      name="ageGroupConfigurationId"
+                      label="Configurazione fasce d'età"
+                      value={filters.ageGroupConfigurationId}
+                      onChange={handleAgeGroupConfigurationChange}
+                    >
+                      <MenuItem value=""><em>Nessuna</em></MenuItem>
+                      {ageGroupConfigurations.some(c => c.clubId !== null) && <ListSubheader>Configurazioni del club</ListSubheader>}
+                      {ageGroupConfigurations.filter(c => c.clubId !== null).map((configuration) => (
+                        <MenuItem key={configuration.id} value={configuration.id}>{configuration.name}</MenuItem>
+                      ))}
+                      <ListSubheader>Configurazioni di default</ListSubheader>
+                      {ageGroupConfigurations.filter(c => c.clubId === null).map((configuration) => (
+                        <MenuItem key={configuration.id} value={configuration.id}>{configuration.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                {selectedAgeGroupConfig && (
+                  <>
+                    <Grid item xs={12} sm={6} md={2}>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel>Fascia d'età</InputLabel>
+                        <Select
+                          name="ageGroupKey"
+                          label="Fascia d'età"
+                          value={filters.ageGroupKey}
+                          onChange={handleFilterChange}
+                        >
+                          <MenuItem value=""><em>Tutte</em></MenuItem>
+                          {selectedAgeGroupConfig.groups.map((group) => (
+                            <MenuItem key={group.key} value={group.key}>{group.label}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                      <TextField
+                        type="date"
+                        name="referenceDate"
+                        label="Data di riferimento"
+                        value={filters.referenceDate}
+                        onChange={(e) => setFilters({ ...filters, referenceDate: e.target.value || todayYmd() })}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+                  </>
+                )}
+              </Grid>
+            </Box>
 
           </div>
         </div>

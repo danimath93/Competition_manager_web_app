@@ -10,7 +10,8 @@ import {
  * per la stessa chiave condividono la stessa promise per evitare chiamate duplicate.
  */
 
-const CACHE_PREFIX = 'configCache:v1:';
+// v2: le esperienze includono il campo belt
+const CACHE_PREFIX = 'configCache:v2:';
 const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000; // 12 ore
 
 // Richieste in corso, condivise tra componenti

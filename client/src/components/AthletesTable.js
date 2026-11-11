@@ -45,12 +45,12 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
         },
       },
       {
-        field: 'tipoAtleta',
-        headerName: 'Tipo Atleta',
+        field: 'isBlackBelt',
+        headerName: 'Cintura',
         flex: 1,
         filterable: true,
         sortable: true,
-        valueGetter: (value, row) => row.tipoAtleta?.nome || 'N/A',
+        valueGetter: (value, row) => (row.isBlackBelt ? 'CN' : 'CB'),
       },
       {
         field: 'sesso',
@@ -74,7 +74,7 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
           const hasCertificato = !!params.row.certificatoId;
           const scadenzaCertificato = params.row.scadenzaCertificato;
           const stato = getStatoCertificato(scadenzaCertificato, hasCertificato);
-          
+
           const iconStyle = {
             fontSize: 28,
             color: stato.colore === 'gray' ? '#9e9e9e' :

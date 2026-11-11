@@ -39,6 +39,15 @@ const isBeltAllowed = (belt, isBlackBelt) => {
 };
 
 /**
+ * Verifica se il livello di esperienza è compatibile con la cintura dell'atleta (ConfigEsperienza.belt)
+ */
+const isExperienceBeltAllowed = (experienceBelt, isBlackBelt) => {
+  if (experienceBelt === 'blackBelt') return !!isBlackBelt;
+  if (experienceBelt === 'whiteBelt') return !isBlackBelt;
+  return true;
+};
+
+/**
  * Valida e normalizza la configurazione categorie rispetto alla configurazione fasce età della competizione
  * @param {Object} categoryConfig - configurazione categorie
  * @param {Object} ageGroupConfig - configurazione fasce età salvata in competizione
@@ -185,6 +194,7 @@ module.exports = {
   CATEGORY_CONFIG_VERSION,
   CATEGORY_BELTS,
   isBeltAllowed,
+  isExperienceBeltAllowed,
   validateCategoryConfig,
   getEligibleCategories,
   getExperienceIds
