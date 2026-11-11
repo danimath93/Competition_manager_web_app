@@ -52,10 +52,9 @@ import {
   deleteCategoriesByCompetition,
   generateCategories,
   saveCategories,
-  updateCategoria,
-  getGruppiEta
+  updateCategoria
 } from '../../api/categories';
-import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
+import { loadAllCategoryTypes } from '../../api/config';
 import CategorySplit from './CategorySplit';
 import CategorySummaryModal from '../../components/CategorySummaryModal';
 import PageHeader from '../../components/PageHeader';
@@ -68,7 +67,7 @@ const CategoryDefinition = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  
+
   const competizioneId = searchParams.get('competizioneId');
   const [competition, setCompetition] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -81,44 +80,40 @@ const CategoryDefinition = () => {
   const [expandedCards, setExpandedCards] = useState({});
 
   // Config data for filters
-  const [allTipiAtleta, setAllTipiAtleta] = useState([]);
   const [allCategorie, setAllCategorie] = useState([]);
-  const [allGruppiEta, setAllGruppiEta] = useState([]);
 
   // Pagination and filters
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState({
-    tipoAtletaId: '',
+    belt: '',
     tipoCategoriaId: '',
     nomeCategoria: '',
     genere: '',
-    gruppoEtaId: ''
+    ageGroupKey: ''
   });
 
   // Dialog states
   const [editDialog, setEditDialog] = useState({ open: false, categoria: null, originalNome: null });
   const [mergeDialog, setMergeDialog] = useState({ open: false, mergedName: '' });
   const [splitDialog, setSplitDialog] = useState({ open: false, categoria: null });
-  
+
   // Confirm modals
   const [cancelCategoriesModal, setCancelCategoriesModal] = useState(false);
   const [deleteCategoryModal, setDeleteCategoryModal] = useState({ open: false, categoriaId: null });
   const [saveSelectedModal, setSaveSelectedModal] = useState(false);
   const [deleteSelectedModal, setDeleteSelectedModal] = useState(false);
   const [deleteSelectedSavedModal, setDeleteSelectedSavedModal] = useState(false);
-  
+
   // Selection states
   const [selectedGenCategories, setSelectedGenCategories] = useState([]);
   const [selectedSavedCategories, setSelectedSavedCategories] = useState([]);
-  
+
   // Opzioni di generazione personalizzata
   const [showGenerationOptions, setShowGenerationOptions] = useState(false);
   const [generationOptions, setGenerationOptions] = useState({
     unisciAttivitaComplementari: false,
-    unisciLivelloEsperienza: false,
-    utilizzaDateValiditaGruppiEta: false,
-    utilizzaEtaAtletiInizioGara: false
+    unisciLivelloEsperienza: false
   });
 
   // Modals for summary and print
@@ -130,20 +125,20 @@ const CategoryDefinition = () => {
         setLoading(true);
         const data = await getCompetitionDetails(competizioneId);
         setCompetition(data);
-        
+
         // Controllo permessi
         const userPermissions = user?.permissions || '';
         const userClubId = user?.clubId;
-        
+
         const isAdmin = userPermissions === 'admin' || userPermissions === 'superAdmin';
         const isOrganizer = userPermissions === 'club' && userClubId === data.organizzatoreClubId;
-        
+
         setHasPermission(isAdmin || isOrganizer);
-        
+
         if (isAdmin || isOrganizer) {
           await loadCategories();
         }
-        
+
         setError(null);
       } catch (error) {
         console.error('Errore nel caricamento della competizione:', error);
@@ -155,19 +150,13 @@ const CategoryDefinition = () => {
 
     const loadConfigData = async () => {
       try {
-        const [tipiAtleta, categorie, gruppiEta] = await Promise.all([
-          loadAthleteTypes(),
-          loadAllCategoryTypes(),
-          getGruppiEta()
-        ]);
-        setAllTipiAtleta(tipiAtleta || []);
+        const categorie = await loadAllCategoryTypes();
         setAllCategorie(categorie || []);
-        setAllGruppiEta(gruppiEta || []);
       } catch (error) {
         console.error('Errore nel caricamento dei config:', error);
       }
     };
-    
+
     if (!competizioneId) {
       setError('ID competizione mancante');
       setLoading(false);
@@ -201,7 +190,7 @@ const CategoryDefinition = () => {
       setGeneratedCategories(response.categorie || []);
       setIsGenerated(true);
       setSuccess(`Generate ${response.totaleCategorie || response.categorie?.length || 0} categorie con ${response.totaleAtleti || 0} atleti totali`);
-      
+
       // Chiudi il pannello opzioni dopo la generazione
       setShowGenerationOptions(false);
     } catch (error) {
@@ -241,7 +230,7 @@ const CategoryDefinition = () => {
       // Rimuovi la categoria dalla lista delle generate
       const updated = generatedCategories.filter(c => c.nome !== categoria.nome);
       setGeneratedCategories(updated);
-      
+
       // Se non ci sono più categorie generate, disattiva la modalità generata
       if (updated.length === 0) {
         setIsGenerated(false);
@@ -289,8 +278,8 @@ const CategoryDefinition = () => {
   };
 
   const handleEditCategoria = (categoria, isGeneratedCard) => {
-    setEditDialog({ 
-      open: true, 
+    setEditDialog({
+      open: true,
       categoria: { ...categoria },
       originalNome: categoria.nome,
       isGenerated: isGeneratedCard
@@ -299,9 +288,9 @@ const CategoryDefinition = () => {
 
   const handleSaveEdit = async () => {
     const { categoria, originalNome, isGenerated: isGeneratedCard } = editDialog;
-    
+
     if (isGeneratedCard) {
-      const updated = generatedCategories.map(cat => 
+      const updated = generatedCategories.map(cat =>
         cat.nome === originalNome ? categoria : cat
       );
       setGeneratedCategories(updated);
@@ -312,7 +301,7 @@ const CategoryDefinition = () => {
       );
 
       try {
-        await updateCategoria(categoria.id, categoria); 
+        await updateCategoria(categoria.id, categoria);
         setCategories(updated);
       } catch (error) {
         setError('Errore nella modifica della categoria: ' + (error?.message || 'Errore sconosciuto'));
@@ -372,7 +361,7 @@ const CategoryDefinition = () => {
 
     try {
       const categoriesToSave = generatedCategories.filter(c => selectedGenCategories.includes(c.key));
-      
+
       // Prepara le categorie per il salvataggio
       const categoriesData = categoriesToSave.map(categoria => ({
         ...categoria,
@@ -390,7 +379,7 @@ const CategoryDefinition = () => {
       const updated = generatedCategories.filter(c => !selectedGenCategories.includes(c.key));
       setGeneratedCategories(updated);
       setSelectedGenCategories([]);
-      
+
       // Se non ci sono più categorie generate, disattiva la modalità generata
       if (updated.length === 0) {
         setIsGenerated(false);
@@ -422,7 +411,7 @@ const CategoryDefinition = () => {
     setSelectedGenCategories([]);
     setSuccess(`${count} categoria/e eliminata/e con successo`);
     setDeleteSelectedModal(false);
-    
+
     // Se non ci sono più categorie, disattiva la modalità generata
     if (updated.length === 0) {
       setIsGenerated(false);
@@ -447,7 +436,7 @@ const CategoryDefinition = () => {
     try {
       // Elimina tutte le categorie selezionate
       await Promise.all(selectedSavedCategories.map(id => deleteCategoria(id)));
-      
+
       setSelectedSavedCategories([]);
       setSuccess(`${count} categoria/e eliminata/e con successo`);
       await loadCategories();
@@ -460,7 +449,7 @@ const CategoryDefinition = () => {
 
   const handleMerge = async () => {
     const { mergedName } = mergeDialog;
-    
+
     if (!mergedName || !mergedName.trim()) {
       setError('Inserisci un nome per la categoria unita');
       return;
@@ -468,32 +457,35 @@ const CategoryDefinition = () => {
 
     if (isGenerated && selectedGenCategories.length >= 2) {
       const categoriesToMerge = generatedCategories.filter(c => selectedGenCategories.includes(c.key));
-      
+
       // Unisci tutti gli atleti delle categorie selezionate
       const allAtleti = categoriesToMerge.reduce((acc, cat) => [...acc, ...cat.atleti], []);
 
       // Se le categorie hanno genere diverso, imposta il genere della categoria unita a 'U' (Unisex)
       const hasMixedGender = new Set(categoriesToMerge.map(c => c.genere)).size > 1;
 
-      // Se le categorie hanno gruppi età diversi, unisci anche quelli (rimuovendo eventuali duplicati)
-      const allGruppiEta = [...new Set(categoriesToMerge.flatMap(c => c.gruppiEtaId || []))];
-      
+      // Se le categorie hanno fasce d'età diverse, unisci anche quelle (rimuovendo eventuali duplicati)
+      const allAgeGroupKeys = [...new Set(categoriesToMerge.flatMap(c => c.ageGroupKeys || []))];
+      // Categorie unite con cinture diverse: la categoria risultante è mista
+      const hasMixedBelt = new Set(categoriesToMerge.map(c => c.belt)).size > 1;
+
       // Usa i dati della prima categoria selezionata come base
       const baseCategoria = categoriesToMerge[0];
-      
+
       const merged = {
         ...baseCategoria,
         nome: mergedName.trim(),
         atleti: allAtleti,
         genere: hasMixedGender ? 'U' : baseCategoria.genere,
-        gruppiEtaId: allGruppiEta
+        ageGroupKeys: allAgeGroupKeys,
+        belt: hasMixedBelt ? null : baseCategoria.belt
       };
 
       // Rimuovi tutte le categorie unite tranne la prima (che verrà sostituita)
       const updated = generatedCategories
         .filter(c => !selectedGenCategories.includes(c.key) || c.key === selectedGenCategories[0])
         .map(c => c.key === selectedGenCategories[0] ? merged : c);
-      
+
       setGeneratedCategories(updated);
       setMergeDialog({ open: false, mergedName: '' });
       setSelectedGenCategories([]);
@@ -510,7 +502,7 @@ const CategoryDefinition = () => {
 
   const handleSplit = ({ categoria1, categoria2 }) => {
     if (isGenerated) {
-      const updated = generatedCategories.map(c => 
+      const updated = generatedCategories.map(c =>
         c.key === splitDialog.categoria.key ? categoria1 : c
       );
       updated.push(categoria2);
@@ -551,10 +543,10 @@ const CategoryDefinition = () => {
   const getFilteredCategories = (categoriesList) => {
     return categoriesList.filter(categoria => {
       if (filters.nomeCategoria && !categoria.nome.toLowerCase().includes(filters.nomeCategoria.toLowerCase())) return false;
-      if (filters.tipoAtletaId && !categoria?.tipiAtletaId?.includes(filters.tipoAtletaId)) return false;
+      if (filters.belt && categoria.belt !== filters.belt) return false;
       if (filters.tipoCategoriaId && categoria.tipoCategoriaId !== filters.tipoCategoriaId) return false;
       if (filters.genere && categoria.genere !== filters.genere) return false;
-      if (filters.gruppoEtaId && !categoria?.gruppiEtaId?.includes(filters.gruppoEtaId)) return false;
+      if (filters.ageGroupKey && !categoria?.ageGroupKeys?.includes(filters.ageGroupKey)) return false;
 
       return true;
     });
@@ -575,16 +567,14 @@ const CategoryDefinition = () => {
   // Ottieni valori unici per i filtri dalle categorie
   const getUniqueFilterValues = (categoriesList) => {
     // Ottieni i valori presenti nelle categorie
-    // tipiAtletaId e' un array contenente gli id dei tipi atleta usati nella categoria
-    const presentTipiAtleta = [...new Set(categoriesList.flatMap(c => c.tipiAtletaId).filter(Boolean))];
+    const cinture = [...new Set(categoriesList.map(c => c.belt).filter(Boolean))];
     const presentCategorie = [...new Set(categoriesList.map(c => c.tipoCategoriaId).filter(Boolean))];
     const generi = [...new Set(categoriesList.map(c => c.genere).filter(Boolean))];
-    
+
     // Filtra i config per mostrare solo quelli effettivamente presenti
-    const tipiAtleta = allTipiAtleta.filter(tipo => presentTipiAtleta.includes(tipo.id));
     const categorie = allCategorie.filter(cat => presentCategorie.includes(cat.id));
-    
-    return { tipiAtleta, categorie, generi };
+
+    return { cinture, categorie, generi };
   };
 
   const renderCategoriaCard = (categoria, index, isGeneratedCard) => {
@@ -601,14 +591,14 @@ const CategoryDefinition = () => {
       const date = new Date(dataNascita);
       return isNaN(date.getFullYear()) ? null : date.getFullYear();
     };
-    
+
     return (
-      <Card 
-        key={index} 
-        sx={{ 
-          width: 500, 
-          height: '100%', 
-          display: 'flex', 
+      <Card
+        key={index}
+        sx={{
+          width: 500,
+          height: '100%',
+          display: 'flex',
           flexDirection: 'column',
           border: isSelected ? '2px solid' : 'none',
           borderColor: isSelected ? 'primary.main' : 'transparent'
@@ -624,10 +614,10 @@ const CategoryDefinition = () => {
                 sx={{ p: 0 }}
               />
               <Tooltip title={categoria.nome} arrow placement="top">
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    fontWeight: 600, 
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
                     fontSize: '0.95rem',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -641,10 +631,10 @@ const CategoryDefinition = () => {
             </Box>
 
             {/* Container scrollabile orizzontalmente per chips e bottoni */}
-            <Box sx={{ 
-              display: 'flex', 
+            <Box sx={{
+              display: 'flex',
               alignItems: 'center',
-              gap: 0.5, 
+              gap: 0.5,
               mb: 1,
               overflowX: 'auto',
               '&::-webkit-scrollbar': {
@@ -657,37 +647,37 @@ const CategoryDefinition = () => {
             }}>
               {/* Chips */}
               <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
-                <Chip 
-                  label={`Genere: ${categoria.genere}`} 
+                <Chip
+                  label={`Genere: ${categoria.genere}`}
                   size="small"
                   sx={{ height: 20, fontSize: '0.7rem' }}
                 />
                 {categoria.grado && (
-                  <Chip 
-                    label={`Grado: ${categoria.grado}`} 
+                  <Chip
+                    label={`Grado: ${categoria.grado}`}
                     size="small"
                     sx={{ height: 20, fontSize: '0.7rem' }}
                   />
                 )}
                 {categoria.gradoEta && (
-                  <Chip 
-                    label={`Grado Età: ${categoria.gradoEta}`} 
-                    size="small" 
+                  <Chip
+                    label={`Grado Età: ${categoria.gradoEta}`}
+                    size="small"
                     color="secondary"
                     sx={{ height: 20, fontSize: '0.7rem' }}
                   />
                 )}
                 {categoria.livello && (
-                  <Chip 
-                    label={`Livello: ${categoria.livello}`} 
-                    size="small" 
+                  <Chip
+                    label={`Livello: ${categoria.livello}`}
+                    size="small"
                     color="secondary"
                     sx={{ height: 20, fontSize: '0.7rem' }}
                   />
                 )}
-                <Chip 
-                  label={`${atleti.length} atleti`} 
-                  size="small" 
+                <Chip
+                  label={`${atleti.length} atleti`}
+                  size="small"
                   color="primary"
                   sx={{ height: 20, fontSize: '0.7rem' }}
                 />
@@ -697,8 +687,8 @@ const CategoryDefinition = () => {
               <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto', flexShrink: 0 }}>
                 {isGeneratedCard ? (
                   <>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       onClick={() => handleSaveSingleCategory(categoria)}
                       color="primary"
                       title="Salva categoria"
@@ -711,8 +701,8 @@ const CategoryDefinition = () => {
                     <IconButton size="small" onClick={() => handleOpenSplit(categoria)} title="Dividi">
                       <CallSplit fontSize="small" />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       onClick={() => {
                         const updated = generatedCategories.filter(c => c.nome !== categoria.nome);
                         setGeneratedCategories(updated);
@@ -733,8 +723,8 @@ const CategoryDefinition = () => {
                     </IconButton>
                   </>
                 )}
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   onClick={() => handleToggleExpand(cardKey)}
                 >
                   {isExpanded ? <ExpandLess /> : <ExpandMore />}
@@ -828,8 +818,8 @@ const CategoryDefinition = () => {
     return (
       <div className="page-container">
         <Alert severity="warning">Competizione non trovata</Alert>
-        <MuiButton 
-          startIcon={<ArrowBack />} 
+        <MuiButton
+          startIcon={<ArrowBack />}
           onClick={handleGoBack}
           sx={{ mt: 2 }}
         >
@@ -844,15 +834,15 @@ const CategoryDefinition = () => {
     return (
       <div className="page-container">
         <Box sx={{ mb: 3 }}>
-          <MuiButton 
-            startIcon={<ArrowBack />} 
+          <MuiButton
+            startIcon={<ArrowBack />}
             onClick={handleGoBack}
             sx={{ mb: 2 }}
           >
             Torna a tutte le categorie
           </MuiButton>
         </Box>
-        
+
         <Alert severity="error">
           <Typography variant="h6" gutterBottom>
             Permesso Negato
@@ -893,14 +883,14 @@ const CategoryDefinition = () => {
       >
         Torna alle Competizioni
       </MuiButton>
-    
+
       {/* Messaggi di errore e successo */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error.message || error}
         </Alert>
       )}
-      
+
       {success && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
           {success}
@@ -909,10 +899,10 @@ const CategoryDefinition = () => {
 
       {/* Bottone Genera Categorie */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
-          justifyContent: 'space-between', 
+          justifyContent: 'space-between',
           alignItems: { xs: 'flex-start', md: 'center' },
         }}>
           <Box>
@@ -951,7 +941,7 @@ const CategoryDefinition = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Configura le opzioni per personalizzare la generazione delle categorie
           </Typography>
-          
+
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <FormControlLabel
               control={
@@ -987,40 +977,6 @@ const CategoryDefinition = () => {
                 </Box>
               }
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={generationOptions.utilizzaDateValiditaGruppiEta}
-                  onChange={() => handleToggleGenerationOption('utilizzaDateValiditaGruppiEta')}
-                  color="primary"
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body1">Utilizza date di validità dei gruppi di età</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Considera le date di validità dei gruppi di età per la generazione delle categorie
-                  </Typography>
-                </Box>
-              }
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={generationOptions.utilizzaEtaAtletiInizioGara}
-                  onChange={() => handleToggleGenerationOption('utilizzaEtaAtletiInizioGara')}
-                  color="primary"
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body1">Utilizza età atleti all'inizio gara</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Considera l'età degli atleti all'inizio della gara per la generazione delle categorie
-                  </Typography>
-                </Box>
-              }
-            />
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
@@ -1036,10 +992,10 @@ const CategoryDefinition = () => {
         {/* Categorie Generate (Prima del salvataggio) */}
         {isGenerated && generatedCategories.length > 0 && (
           <>
-            <Box sx={{ 
-              display: 'flex', 
+            <Box sx={{
+              display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
-              justifyContent: 'space-between', 
+              justifyContent: 'space-between',
               alignItems: { xs: 'flex-start', md: 'center' },
               mb: 2, mt: 4
             }}>
@@ -1048,8 +1004,8 @@ const CategoryDefinition = () => {
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
                 {selectedGenCategories.length > 0 && (
-                  <Chip 
-                    label={`${selectedGenCategories.length} selezionate`} 
+                  <Chip
+                    label={`${selectedGenCategories.length} selezionate`}
                     color="primary"
                     onDelete={() => setSelectedGenCategories([])}
                   />
@@ -1100,15 +1056,15 @@ const CategoryDefinition = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel>Tipo Atleta</InputLabel>
+                    <InputLabel>Cintura</InputLabel>
                     <Select
-                      value={filters.tipoAtletaId}
-                      onChange={(e) => handleFilterChange('tipoAtletaId', e.target.value)}
-                      label="Tipo Atleta"
+                      value={filters.belt}
+                      onChange={(e) => handleFilterChange('belt', e.target.value)}
+                      label="Cintura"
                     >
-                      <MenuItem value="">Tutti</MenuItem>
-                      {getUniqueFilterValues(generatedCategories).tipiAtleta.map((tipo) => (
-                        <MenuItem key={tipo.id} value={tipo.id}>{tipo.nome}</MenuItem>
+                      <MenuItem value="">Tutte</MenuItem>
+                      {getUniqueFilterValues(generatedCategories).cinture.map((belt) => (
+                        <MenuItem key={belt} value={belt}>{belt}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -1145,16 +1101,16 @@ const CategoryDefinition = () => {
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                    <InputLabel>Gruppo Età</InputLabel>
+                    <InputLabel>Fascia d'età</InputLabel>
                     <Select
-                      value={filters.gruppoEtaId}
-                      onChange={(e) => handleFilterChange('gruppoEtaId', e.target.value)}
-                      label="Gruppo Età"
+                      value={filters.ageGroupKey}
+                      onChange={(e) => handleFilterChange('ageGroupKey', e.target.value)}
+                      label="Fascia d'età"
                     >
-                      <MenuItem value="">Tutti</MenuItem>
-                      {allGruppiEta.map((gruppo) => (
-                        <MenuItem key={gruppo.id} value={gruppo.id}>
-                          {gruppo.nome} ({gruppo.etaMinima}-{gruppo.etaMassima} anni)
+                      <MenuItem value="">Tutte</MenuItem>
+                      {(competition?.ageGroupConfig?.groups || []).map((group) => (
+                        <MenuItem key={group.key} value={group.key}>
+                          {group.label} ({group.maxAge === null ? `${group.minAge}+` : `${group.minAge}-${group.maxAge}`} anni)
                         </MenuItem>
                       ))}
                     </Select>
@@ -1212,10 +1168,10 @@ const CategoryDefinition = () => {
       {/* Categorie Salvate */}
       {categories.length > 0 ? (
         <Paper sx={{ p: 3 }}>
-          <Box sx={{ 
+          <Box sx={{
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
-            justifyContent: 'space-between', 
+            justifyContent: 'space-between',
             alignItems: { xs: 'flex-start', md: 'center' },
             mb: 2
           }}>
@@ -1224,8 +1180,8 @@ const CategoryDefinition = () => {
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
               {selectedSavedCategories.length > 0 && (
-                <Chip 
-                  label={`${selectedSavedCategories.length} selezionate`} 
+                <Chip
+                  label={`${selectedSavedCategories.length} selezionate`}
                   color="primary"
                   onDelete={() => setSelectedSavedCategories([])}
                 />
@@ -1264,9 +1220,9 @@ const CategoryDefinition = () => {
                   margin="none"
                   value={filters.nomeCategoria}
                   onChange={(e) => handleFilterChange('nomeCategoria', e.target.value)}
-                  sx={{ 
-                    '& .MuiInputBase-root': { 
-                      height: '40px' 
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '40px'
                     }
                   }}
                 />
@@ -1303,16 +1259,16 @@ const CategoryDefinition = () => {
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Gruppo Età</InputLabel>
+                  <InputLabel>Fascia d'età</InputLabel>
                   <Select
-                    value={filters.gruppoEtaId}
-                    onChange={(e) => handleFilterChange('gruppoEtaId', e.target.value)}
-                    label="Gruppo Età"
+                    value={filters.ageGroupKey}
+                    onChange={(e) => handleFilterChange('ageGroupKey', e.target.value)}
+                    label="Fascia d'età"
                   >
-                    <MenuItem value="">Tutti</MenuItem>
-                    {allGruppiEta.map((gruppo) => (
-                      <MenuItem key={gruppo.id} value={gruppo.id}>
-                        {gruppo.nome} ({gruppo.etaMinima}-{gruppo.etaMassima} anni)
+                    <MenuItem value="">Tutte</MenuItem>
+                    {(competition?.ageGroupConfig?.groups || []).map((group) => (
+                      <MenuItem key={group.key} value={group.key}>
+                        {group.label} ({group.maxAge === null ? `${group.minAge}+` : `${group.minAge}-${group.maxAge}`} anni)
                       </MenuItem>
                     ))}
                   </Select>
@@ -1381,9 +1337,9 @@ const CategoryDefinition = () => {
             fullWidth
             label="Nome Categoria"
             value={editDialog.categoria?.nome || ''}
-            onChange={(e) => setEditDialog({ 
-              ...editDialog, 
-              categoria: { ...editDialog.categoria, nome: e.target.value } 
+            onChange={(e) => setEditDialog({
+              ...editDialog,
+              categoria: { ...editDialog.categoria, nome: e.target.value }
             })}
             sx={{ mt: 2 }}
           />
@@ -1405,13 +1361,13 @@ const CategoryDefinition = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
             Stai per unire {selectedGenCategories.length} categorie:
           </Typography>
-          
+
           <List dense>
             {selectedGenCategories.map((key, idx) => {
               const cat = generatedCategories.find(c => c.key === key);
               return (
                 <ListItem key={idx}>
-                  <ListItemText 
+                  <ListItemText
                     primary={cat?.nome}
                     secondary={`${cat?.atleti?.length || 0} atleti`}
                   />

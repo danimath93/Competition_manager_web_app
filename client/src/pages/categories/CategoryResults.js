@@ -149,7 +149,7 @@ const CategoryResults = () => {
     { field: 'atleta', headerName: 'Atleta', flex: 1, minWidth: 140 },
     { field: 'clubDisplay', headerName: 'Club', flex: 1, minWidth: 120 },
     { field: 'sesso', headerName: 'Sesso', flex: 0.5, minWidth: 80 },
-    { field: 'tipoAtleta', headerName: 'Tipo Atleta', flex: 1, minWidth: 120 },
+    { field: 'tipoAtleta', headerName: 'Profilo', flex: 1, minWidth: 120 },
     { field: 'fasciaEtaDisplay', headerName: 'Fascia Età', flex: 1, minWidth: 120 },
     { field: 'note', headerName: 'Note', flex: 1, minWidth: 200 },
     { field: 'punti', headerName: 'Punteggio', flex: 0.7, minWidth: 90, type: 'number', sortable: true },
@@ -186,7 +186,7 @@ const CategoryResults = () => {
   const drawerBestByAgeData = useMemo(() => {
     if (!selectedTipo || !bestByFascia || !bestByFascia[selectedTipo]) return null;
     const fasce = bestByFascia[selectedTipo];
-    const showSummary = selectedTipo !== 'CB Bambini';
+    const showSummary = !selectedTipo?.startsWith('Bambini');
     let bestOverall = [];
     if (showSummary) {
       let allAtleti = [];
@@ -273,7 +273,7 @@ const CategoryResults = () => {
       >
         Torna alle Competizioni
       </MuiButton>
-    
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}

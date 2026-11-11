@@ -1,40 +1,41 @@
-const { Categoria, IscrizioneAtleta, Atleta, Competizione, SvolgimentoCategoria, Club, UtentiLogin } = require('../models');
-const { ConfigGruppoEta, ConfigTipoCategoria, ConfigTipoAtleta, ConfigEsperienza, ConfigTipoCompetizione } = require('../models');
+const { Categoria, IscrizioneAtleta, Atleta, Competizione, SvolgimentoCategoria, Club, UtentiLogin, DettaglioIscrizioneAtleta } = require('../models');
+const { ConfigTipoCategoria, ConfigEsperienza, ConfigTipoCompetizione } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../helpers/logger/logger');
+const { resolveAgeGroup } = require('../helpers/ageGroups');
 
-const FIGHTING_COMPETITION_TYPE_ID = 3; // ID del tipo di competizione per combattimento  
 const COMPLEMENTARY_ACTIVITIES_TYPE_ID = 4; // ID del tipo di competizione per attività complementari
-
-const BLACK_BELT_ATHETE_TYPE_ID = 3; // ID del tipo atleta per cintura nera
 
 
 // Genera categorie automaticamente basandosi sugli atleti iscritti
+// Suddivisione: tipo categoria, cintura (CN/CB sempre separate), genere, fascia d'età, livello di esperienza.
+// La fascia d'età è calcolata con la configurazione salvata in competizione alla data di inizio gara,
+// il grado CN è quello registrato al momento dell'iscrizione.
 exports.generateCategories = async (req, res) => {
   try {
     const { competizioneId } = req.params;
-    const { unisciAttivitaComplementari, unisciLivelloEsperienza, utilizzaDateValiditaGruppiEta, utilizzaEtaAtletiInizioGara } = req.body;
+    const { unisciAttivitaComplementari, unisciLivelloEsperienza } = req.body;
 
     // Verifica che la competizione esista
     const competition = await Competizione.findByPk(competizioneId);
     if (!competition) {
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
+    if (!competition.ageGroupConfig) {
+      return res.status(400).json({ error: 'Configurazione fasce d\'età non impostata per la competizione' });
+    }
 
     // Recupera gli atleti iscritti alla competizione, con categorie non ancora assegnate
     const registrations = await IscrizioneAtleta.findAll({
-      where: { 
+      where: {
         competizioneId,
         categoriaId: null
       },
       include: [{
           model: Atleta,
           as: 'atleta',
-          attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId'],
+          attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'isBlackBelt'],
           include: [{
-            model: ConfigTipoAtleta,
-            as: 'tipoAtleta'
-          }, {
             model: Club,
             as: 'club',
             attributes: ['id', 'denominazione', 'abbreviazione']
@@ -55,63 +56,31 @@ exports.generateCategories = async (req, res) => {
       return res.status(400).json({ error: 'Nessun atleta iscritto trovato per questa tipologia' });
     }
 
+    // Grado CN registrato al momento dell'iscrizione (in assenza si usa quello attuale dell'atleta)
+    const registrationDetails = await DettaglioIscrizioneAtleta.findAll({
+      where: { competizioneId },
+      attributes: ['atletaId', 'isBlackBelt']
+    });
+    const blackBeltByAthlete = new Map(registrationDetails.map(d => [d.atletaId, d.isBlackBelt]));
+
     // Crea la struttura delle categorie come mappa key-value ordinata per key
     const createdCategories = new Map();
 
-    // Crea le categorie con eventuali preferenze di generazione
-    const today = new Date();
-    const tipoAtletaMap = {};
-    const tipiAtleta = await ConfigTipoAtleta.findAll();
-    const gruppiEta = await ConfigGruppoEta.findAll();
-    
-    // Mappa i tipi atleta per ID
-    tipiAtleta.forEach(tipo => {
-      tipoAtletaMap[tipo.id] = tipo;
-    });
-
     registrations.forEach(registration => {
       const athlete = registration.atleta;
-      const birthDate = new Date(athlete.dataNascita);
-      const tipoAtleta = athlete.tipoAtleta;
       const tipoCompetizioneId = registration?.tipoCategoria?.tipoCompetizioneId;
       const categoryName = registration.tipoCategoria.nome || registration.tipoCategoria.toString();
       const categoryDetailName = registration.dettagli?.nome || null;
-
-      // Calcola l'età dell'atleta (considerando eventuale preferenza per età all'inizio gara)
-      let age = today.getFullYear() - birthDate.getFullYear();
-      if (utilizzaEtaAtletiInizioGara) {
-        // Considero il giorno preciso per il calcolo dell'età se la preferenza è attiva
-        if (competition.dataInizio) {
-          const inizioGaraDate = new Date(competition.dataInizio);
-          age = inizioGaraDate.getFullYear() - birthDate.getFullYear();
-          if (inizioGaraDate.getMonth() < birthDate.getMonth() ||
-            (inizioGaraDate.getMonth() === birthDate.getMonth() && inizioGaraDate.getDate() < birthDate.getDate())
-          ) {
-            age--;
-          }
-        }
-      }
+      const isBlackBelt = blackBeltByAthlete.get(athlete.id) ?? athlete.isBlackBelt;
+      const belt = isBlackBelt ? 'CN' : 'CB';
+      const ageGroup = resolveAgeGroup(athlete.dataNascita, competition.ageGroupConfig, competition.dataInizio);
 
       // Solo per le attività complementari (id=4), posso attivare il merge globale
       const mergeComplementaryActivities = unisciAttivitaComplementari && tipoCompetizioneId && tipoCompetizioneId == COMPLEMENTARY_ACTIVITIES_TYPE_ID? true : false;
 
-      // Determina la chiave della categoria
-      let categoryKey = registration.tipoCategoriaId.toString();
-      let displayName = '';
-
-      // Aggiungi il tipo atleta alla chiave
-      if (tipoAtleta && tipoAtleta.id == BLACK_BELT_ATHETE_TYPE_ID)
-      {
-        if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
-          categoryKey += `_CN`;
-          displayName = `${tipoAtleta.nome} - `;
-        }
-      }
-      else {
-        if (tipoCompetizioneId != FIGHTING_COMPETITION_TYPE_ID) {
-          categoryKey += `_CB`;
-        }
-      }
+      // Chiave della categoria: le cinture nere sono sempre separate dalle cinture bianche
+      let categoryKey = `${registration.tipoCategoriaId}_${belt}`;
+      let displayName = isBlackBelt ? 'CN - ' : '';
 
       // Aggiungi il genere alla chiave
       let gender = athlete.sesso || 'U';
@@ -121,38 +90,15 @@ exports.generateCategories = async (req, res) => {
       }
 
       // Aggiungo il nome della categoria
-      if (displayName !== '')
-        displayName = `${displayName} - ${categoryName}`; 
+      if (displayName !== '' && !displayName.endsWith(' - '))
+        displayName = `${displayName} - ${categoryName}`;
       else
-        displayName = categoryName;
+        displayName = `${displayName}${categoryName}`;
 
-      // Aggiungi il gruppo di età alla chiave
-      let groupAge = null;
-      let athleteGroupAge = null;
-      if (!utilizzaDateValiditaGruppiEta) {
-        gruppiEta.forEach(gruppo => {
-          if (age >= gruppo.etaMinima && age <= gruppo.etaMassima) {
-            groupAge = gruppo.id;
-            athleteGroupAge = gruppo;
-          }
-        });
-      } 
-      else {
-        gruppiEta.forEach(gruppo => {
-          const inizioValidita = gruppo.inizioValidita ? new Date(gruppo.inizioValidita) : null;
-          const fineValidita = gruppo.fineValidita ? new Date(gruppo.fineValidita) : null;
-          if (birthDate &&
-              (inizioValidita === null || birthDate >= inizioValidita) &&
-              (fineValidita === null || birthDate <= fineValidita)) {
-            groupAge = gruppo.id;
-            athleteGroupAge = gruppo;
-          }
-        });
-      }
-
+      // Aggiungi la fascia d'età alla chiave
       if (!mergeComplementaryActivities) {
-        categoryKey += `_age_${groupAge || 'open'}`;
-        displayName = athleteGroupAge ? `${displayName} - ${athleteGroupAge.nome}` : `${displayName} - Open`;
+        categoryKey += `_age_${ageGroup ? ageGroup.key : 'open'}`;
+        displayName = `${displayName} - ${ageGroup ? ageGroup.label : 'Open'}`;
       }
 
       // Aggiungi lvl esperienza se presente
@@ -164,31 +110,28 @@ exports.generateCategories = async (req, res) => {
           displayName = `${displayName} - ${registration.esperienza.nome}`;
         }
       }
-      
+
       // Inizializza la categoria se non esiste
       if (!createdCategories.has(categoryKey)) {
         createdCategories.set(categoryKey, {
           nome: displayName,
           atleti: [],
           genere: gender,
-          tipiAtletaId: tipoAtleta ? [tipoAtleta.id] : [],
+          belt,
           livelliEsperienzaId: lvlEsperienza ? [lvlEsperienza] : [],
-          gruppiEtaId: groupAge? [groupAge] : [],
+          ageGroupKeys: ageGroup ? [ageGroup.key] : [],
           tipoCategoriaId: registration.tipoCategoriaId,
           tipoCompetizioneId: tipoCompetizioneId,
           key: categoryKey
         });
       } else {
-        // Aggiunge i cmapi array se non già presenti
+        // Aggiunge i campi array se non già presenti
         const existingCategory = createdCategories.get(categoryKey);
-        if (tipoAtleta && !existingCategory.tipiAtletaId.includes(tipoAtleta.id)) {
-          existingCategory.tipiAtletaId.push(tipoAtleta.id);
-        }
         if (lvlEsperienza && !existingCategory.livelliEsperienzaId.includes(lvlEsperienza)) {
           existingCategory.livelliEsperienzaId.push(lvlEsperienza);
         }
-        if (groupAge && !existingCategory.gruppiEtaId.includes(groupAge)) {
-          existingCategory.gruppiEtaId.push(groupAge);
+        if (ageGroup && !existingCategory.ageGroupKeys.includes(ageGroup.key)) {
+          existingCategory.ageGroupKeys.push(ageGroup.key);
         }
       }
 
@@ -200,7 +143,8 @@ exports.generateCategories = async (req, res) => {
         peso: registration.peso,
         esperienza: registration.esperienza ? registration.esperienza.nome : null,
         dettagli: categoryDetailName,
-        tipoAtleta: tipoAtleta ? tipoAtleta.nome : null,
+        cintura: belt,
+        fasciaEta: ageGroup ? ageGroup.label : null,
         iscrizioneId: registration.id,
         club: athlete.club ? {
           id: athlete.club.id,
@@ -224,7 +168,7 @@ exports.generateCategories = async (req, res) => {
 
   } catch (error) {
     logger.error(`Errore nella generazione delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante la generazione delle categorie',
       details: error.message
     });
@@ -234,7 +178,7 @@ exports.generateCategories = async (req, res) => {
 // Salva le categorie sul database
 exports.saveCategories = async (req, res) => {
   const transaction = await Categoria.sequelize.transaction();
-  
+
   try {
     const { competizioneId } = req.params;
     const { categorie } = req.body;
@@ -259,7 +203,7 @@ exports.saveCategories = async (req, res) => {
         genere: categoria.genere || 'U',
         // etaMinima: categoria.etaMinima || 0,
         // etaMassima: categoria.etaMassima || 99,
-        gruppiEtaId: categoria.gruppiEtaId || [],
+        ageGroupKeys: categoria.ageGroupKeys || [],
         pesoMassimo: categoria.pesoMassimo || null,
         numeroTurni: categoria.numeroTurni || 1,
         maxPartecipanti: categoria.atleti.length,
@@ -270,15 +214,15 @@ exports.saveCategories = async (req, res) => {
       // Aggiorna le iscrizioni degli atleti con il categoriaId
       if (categoria.atleti && categoria.atleti.length > 0) {
         const atletiIds = categoria.atleti.map(a => a.iscrizioneId);
-        
+
         await IscrizioneAtleta.update(
           { categoriaId: nuovaCategoria.id },
-          { 
-            where: { 
+          {
+            where: {
               id: { [Op.in]: atletiIds },
               competizioneId: competizioneId
             },
-            transaction 
+            transaction
           }
         );
       }
@@ -297,9 +241,9 @@ exports.saveCategories = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     logger.error(`Errore nel salvataggio delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante il salvataggio delle categorie',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -350,12 +294,8 @@ exports.getCategoriesByCompetizione = async (req, res) => {
           include: [{
             model: Atleta,
             as: 'atleta',
-            attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'tipoAtletaId'],
+            attributes: ['id', 'nome', 'cognome', 'sesso', 'dataNascita', 'isBlackBelt'],
             include: [{
-              model: ConfigTipoAtleta,
-              attributes: ['id', 'nome'],
-              as: 'tipoAtleta'
-            }, {
               model: Club,
               as: 'club',
               attributes: ['id', 'denominazione', 'abbreviazione']
@@ -378,9 +318,9 @@ exports.getCategoriesByCompetizione = async (req, res) => {
     res.json(categorie);
   } catch (error) {
     logger.error(`Errore nel recupero delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante il recupero delle categorie',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -398,7 +338,7 @@ exports.getCategoriesByTableUser = async (req, res) => {
 
     const userId = user.id;
     const categorie = await Categoria.findAll({
-      where: { 
+      where: {
         competizioneId,
         tableUserId: userId
       },
@@ -435,9 +375,9 @@ exports.getCategoriesByTableUser = async (req, res) => {
     res.json(categorie);
   } catch (error) {
     logger.error(`Errore nel recupero delle categorie per utente tavolo - competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante il recupero delle categorie',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -464,9 +404,9 @@ exports.updateCategoria = async (req, res) => {
 
   } catch (error) {
     logger.error(`Errore nell'aggiornamento della categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante l\'aggiornamento della categoria',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -474,7 +414,7 @@ exports.updateCategoria = async (req, res) => {
 // Elimina una categoria
 exports.deleteCategoria = async (req, res) => {
   const transaction = await Categoria.sequelize.transaction();
-  
+
   try {
     const { id } = req.params;
 
@@ -488,9 +428,9 @@ exports.deleteCategoria = async (req, res) => {
     // Rimuovi il categoriaId dalle iscrizioni
     await IscrizioneAtleta.update(
       { categoriaId: null },
-      { 
+      {
         where: { categoriaId: id },
-        transaction 
+        transaction
       }
     );
 
@@ -505,9 +445,9 @@ exports.deleteCategoria = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     logger.error(`Errore nell'eliminazione della categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante l\'eliminazione della categoria',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -526,7 +466,7 @@ exports.deleteCategoriesByCompetizione = async (req, res) => {
     // Rimuovi il categoriaId dalle iscrizioni
     await IscrizioneAtleta.update(
       { categoriaId: null },
-      { 
+      {
         where: { categoriaId: { [Op.in]: categorie.map(c => c.id) } },
         transaction
       }
@@ -549,7 +489,7 @@ exports.deleteCategoriesByCompetizione = async (req, res) => {
 // Sposta atleti tra categorie
 exports.moveAtleti = async (req, res) => {
   const transaction = await IscrizioneAtleta.sequelize.transaction();
-  
+
   try {
     const { atletiIds, targetCategoriaId } = req.body;
 
@@ -564,11 +504,11 @@ exports.moveAtleti = async (req, res) => {
     // Sposta gli atleti
     await IscrizioneAtleta.update(
       { categoriaId: targetCategoriaId },
-      { 
-        where: { 
+      {
+        where: {
           id: { [Op.in]: atletiIds }
         },
-        transaction 
+        transaction
       }
     );
 
@@ -580,9 +520,9 @@ exports.moveAtleti = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     logger.error(`Errore nello spostamento degli atleti: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante lo spostamento degli atleti',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -590,7 +530,7 @@ exports.moveAtleti = async (req, res) => {
 // Unisci due categorie
 exports.mergeCategorie = async (req, res) => {
   const transaction = await Categoria.sequelize.transaction();
-  
+
   try {
     const { categoria1Id, categoria2Id, nuovoNome } = req.body;
 
@@ -617,9 +557,9 @@ exports.mergeCategorie = async (req, res) => {
     // Sposta tutti gli atleti dalla categoria2 alla categoria1
     await IscrizioneAtleta.update(
       { categoriaId: categoria1Id },
-      { 
+      {
         where: { categoriaId: categoria2Id },
-        transaction 
+        transaction
       }
     );
 
@@ -628,7 +568,7 @@ exports.mergeCategorie = async (req, res) => {
       where: { categoriaId: categoria1Id },
       transaction
     });
-    
+
     categoria1.maxPartecipanti = countAtleti;
     await categoria1.save({ transaction });
 
@@ -638,7 +578,7 @@ exports.mergeCategorie = async (req, res) => {
     await transaction.commit();
 
     logger.info(`Categorie unite - Categoria1: ${categoria1Id}, Categoria2: ${categoria2Id}, Atleti totali: ${countAtleti}`);
-    res.json({ 
+    res.json({
       message: 'Categorie unite con successo',
       categoria: categoria1
     });
@@ -646,9 +586,9 @@ exports.mergeCategorie = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     logger.error(`Errore nell'unione delle categorie: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante l\'unione delle categorie',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -656,7 +596,7 @@ exports.mergeCategorie = async (req, res) => {
 // Dividi una categoria in due
 exports.splitCategoria = async (req, res) => {
   const transaction = await Categoria.sequelize.transaction();
-  
+
   try {
     const { categoriaId, atleti1, atleti2, nomeCategoria1, nomeCategoria2 } = req.body;
 
@@ -681,8 +621,8 @@ exports.splitCategoria = async (req, res) => {
       competizioneId: categoriaOriginale.competizioneId,
       tipoCategoriaId: categoriaOriginale.tipoCategoriaId,
       genere: categoriaOriginale.genere,
-      gruppoEtaId: categoriaOriginale.gruppoEtaId,
-      grado: categoriaOriginale.grado,
+      gruppiEtaId: categoriaOriginale.gruppiEtaId,
+      ageGroupKeys: categoriaOriginale.ageGroupKeys,
       pesoMassimo: categoriaOriginale.pesoMassimo,
       numeroTurni: categoriaOriginale.numeroTurni,
       maxPartecipanti: atleti2.length,
@@ -694,11 +634,11 @@ exports.splitCategoria = async (req, res) => {
     if (atleti2 && atleti2.length > 0) {
       await IscrizioneAtleta.update(
         { categoriaId: nuovaCategoria.id },
-        { 
-          where: { 
+        {
+          where: {
             id: { [Op.in]: atleti2 }
           },
-          transaction 
+          transaction
         }
       );
     }
@@ -706,7 +646,7 @@ exports.splitCategoria = async (req, res) => {
     await transaction.commit();
 
     logger.info(`Categoria divisa - Originale: ${categoriaId}, Nuova: ${nuovaCategoria.id}, Atleti: ${atleti1.length}/${atleti2.length}`);
-    res.json({ 
+    res.json({
       message: 'Categoria divisa con successo',
       categoria1: categoriaOriginale,
       categoria2: nuovaCategoria
@@ -715,9 +655,9 @@ exports.splitCategoria = async (req, res) => {
   } catch (error) {
     await transaction.rollback();
     logger.error(`Errore nella divisione della categoria: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante la divisione della categoria',
-      details: error.message 
+      details: error.message
     });
   }
 };
@@ -798,7 +738,7 @@ exports.getCategoriesByClub = async (req, res) => {
       competizioneId: categoria.competizioneId,
       tipoCategoriaId: categoria.tipoCategoriaId,
       genere: categoria.genere,
-      gruppiEtaId: categoria.gruppiEtaId,
+      ageGroupKeys: categoria.ageGroupKeys,
       pesoMassimo: categoria.pesoMassimo,
       numeroTurni: categoria.numeroTurni,
       maxPartecipanti: categoria.maxPartecipanti,

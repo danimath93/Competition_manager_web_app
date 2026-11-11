@@ -5,6 +5,7 @@ import { Paper, Tooltip, Chip } from '@mui/material';
 import { PersonRemove, Edit } from '@mui/icons-material';
 import { getCategoryType, getManyById } from '../services/configCacheService';
 import RegistrationModal from './RegistrationModal';
+import { getCompetitionCategoryTypeIds } from '../utils/competitionCategoryConfig';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import muiTheme from '../styles/muiTheme';
 
@@ -17,34 +18,12 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
   const [registrationsToDelete, setRegistrationsToDelete] = useState([]);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
 
-  // Estrae le categorie uniche da categorieAtleti
-  const categoryColumns = useMemo(() => {
-    if (!competition?.categorieAtleti) return [];
-    
-    const categories = [];
-    const categorySet = new Set();
-
-    try {
-      // Parsa categorieAtleti che è un array di JSON stringhe
-      competition.categorieAtleti.forEach(categorieTipoAtleta => {
-        if (categorieTipoAtleta.categorie && Array.isArray(categorieTipoAtleta.categorie)) {
-          categorieTipoAtleta.categorie.forEach(cat => {
-            if (!categorySet.has(cat.configTipoCategoria)) {
-              categorySet.add(cat.configTipoCategoria);
-              categories.push({
-                id: cat.configTipoCategoria,
-                idEsperienza: cat.idEsperienza || []
-              });
-            }
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Errore nel parsing di categorieAtleti:', error);
-    }
-
-    return categories;
-  }, [competition?.categorieAtleti]);
+  // Categorie previste dalla competizione (colonne della tabella)
+  const categoryColumns = useMemo(
+    () => getCompetitionCategoryTypeIds(competition).map(id => ({ id })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [competition?.categoryConfig, competition?.categorieAtleti]
+  );
 
   // Carica i dettagli delle categorie (tramite cache di configurazione)
   React.useEffect(() => {
@@ -73,12 +52,12 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
         };
       }
       groups[athlete.id].registrations.push(registration);
-      
+
       // Calcola il costo totale per questo atleta
       if (registration.dettagliIscrizione != null) {
         groups[athlete.id].totalCost = parseFloat(registration.dettagliIscrizione.quota) || 0;
       }
-      
+
       return groups;
     }, {});
   }, [registrations]);
@@ -111,7 +90,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
     // Aggiungi colonne per ogni categoria disponibile
     categoryColumns.forEach(category => {
       const categoryDetails = categoryDetailsCache[category.id];
-      
+
       cols.push({
         field: `category_${category.id}`,
         headerName: categoryDetails?.nome || `Categoria ${category.id}`,
@@ -124,7 +103,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
           const registration = params.row.registrations.find(
             reg => reg.tipoCategoria?.id === category.id
           );
-          
+
           if (registration && registration.dettagli?.nome) {
             return (
               <Tooltip title={`${registration?.dettagli?.nome}`} arrow>
@@ -260,7 +239,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
     if (onRegistrationChange) {
       await onRegistrationChange();
     }
-    
+
     handleCloseRegistrationModal();
   };
 
@@ -276,7 +255,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
     if (onDeleteAthlete) {
       await onDeleteAthlete(athleteToDelete, registrationsToDelete);
     }
-        
+
     setIsDeleteConfirmModalOpen(false);
     setAthleteToDelete(null);
     setRegistrationsToDelete([]);
@@ -287,12 +266,12 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
     if (onDeleteAthlete) {
       await onDeleteAthlete(selectedAthleteForEdit, selectedRegistrationsForEdit);
     }
-    
+
     // Aggiorna la tabella
     if (onRegistrationChange) {
       await onRegistrationChange();
     }
-    
+
     handleCloseRegistrationModal();
   };
 

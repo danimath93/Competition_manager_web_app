@@ -1,8 +1,8 @@
-const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza, Documento, DettaglioIscrizioneAtleta } = require('../models');
+const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigEsperienza, Documento, DettaglioIscrizioneAtleta } = require('../models');
 const { calculateAthleteCost } = require('../helpers/costCalculator');
 const { checkCategoryLimits } = require('../helpers/categoryLimits');
 const { resolveAgeGroup } = require('../helpers/ageGroups');
-const { getEligibleCategories, getExperienceIds, isExperienceBeltAllowed } = require('../helpers/competitionCategoryConfig');
+const { getEligibleCategories, getExperienceIds, isExperienceBeltAllowed, getCompetitionCategoryTypeIds } = require('../helpers/competitionCategoryConfig');
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
@@ -21,10 +21,6 @@ const getIscrizioniByCompetizione = async (req, res) => {
               model: Club,
               as: 'club',
               attributes: { exclude: ['logo'] }
-            },
-            {
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
             }
           ]
         },
@@ -95,13 +91,7 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
         {
           model: Atleta,
           as: 'atleta',
-          where: { clubId },
-          include: [
-            {
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
-            }
-          ]
+          where: { clubId }
         },
         {
           model: ConfigTipoCategoria,
@@ -951,7 +941,7 @@ const getClubRegistrationCosts = async (req, res) => {
 const downloadClubCompetitionSummary = async (req, res) => {
   let doc;
   let streamStarted = false;
-  
+
   try {
     const { clubId, competizioneId } = req.params;
 
@@ -1013,7 +1003,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
         }
       ]
     });
-    
+
     const totalAthletes = dettagliIscrizioni.length;
     const totalCategories = iscrizioni.length;
     const totalCost = dettagliIscrizioni.reduce((sum, di) => sum + (parseFloat(di.quota) || 0), 0);
@@ -1021,19 +1011,13 @@ const downloadClubCompetitionSummary = async (req, res) => {
     // Estrai categorie uniche
     const categorySet = new Set();
     const categoryDetailsMap = {};
-    
-    if (competizione.categorieAtleti) {
-      for (const categorieTipoAtleta of competizione.categorieAtleti) {
-        if (categorieTipoAtleta.categorie && Array.isArray(categorieTipoAtleta.categorie)) {
-          for (const cat of categorieTipoAtleta.categorie) {
-            if (!categorySet.has(cat.configTipoCategoria)) {
-              categorySet.add(cat.configTipoCategoria);
-              const catDetails = await ConfigTipoCategoria.findByPk(cat.configTipoCategoria);
-              if (catDetails) {
-                categoryDetailsMap[cat.configTipoCategoria] = catDetails;
-              }
-            }
-          }
+
+    for (const categoryTypeId of getCompetitionCategoryTypeIds(competizione)) {
+      if (!categorySet.has(categoryTypeId)) {
+        categorySet.add(categoryTypeId);
+        const catDetails = await ConfigTipoCategoria.findByPk(categoryTypeId);
+        if (catDetails) {
+          categoryDetailsMap[categoryTypeId] = catDetails;
         }
       }
     }
@@ -1055,7 +1039,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
 
     // Prepara dati per la tabella PRIMA di iniziare lo stream
     const tableData = [];
-    
+
     Object.values(iscrizioniPerAtleta).forEach(({ atleta, iscrizioni }) => {
       const row = [`${atleta.cognome} ${atleta.nome}`];
 
@@ -1066,24 +1050,24 @@ const downloadClubCompetitionSummary = async (req, res) => {
 
         if (registration) {
           let cellValue = 'V';
-          
+
           // Verifica se ci sono dettagli, considero solo il nome in riepilogo
           if (registration.dettagli && registration.dettagli.nome) {
             if (registration.dettagli.nome) {
               cellValue = registration.dettagli.nome;
             }
           }
-          
+
           // Se c'è il peso, mostralo
           if (registration.peso) {
             cellValue = `${registration.peso} kg`;
           }
-          
+
           // Aggiungi esperienza se disponibile
           if (registration.idConfigEsperienza) {
             cellValue += ` (${experienceMap[registration.idConfigEsperienza]?.nome || 'Exp sconosciuta'})`;
           }
-          
+
           row.push(cellValue);
         } else {
           row.push('-');
@@ -1095,7 +1079,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
 
     // SOLO ADESSO crea il PDF e avvia lo stream
     const PDFDocument = require('pdfkit');
-    doc = new PDFDocument({ 
+    doc = new PDFDocument({
       margin: 30,
       size: 'A4',
       layout: 'landscape'
@@ -1127,11 +1111,11 @@ const downloadClubCompetitionSummary = async (req, res) => {
     // Titolo
     doc.fontSize(18).font('Helvetica-Bold').text('Riepilogo Iscrizione Competizione', { align: 'center' });
     doc.moveDown(0.3);
-    
+
     // Nome competizione
     doc.fontSize(12).font('Helvetica').text(`${competizione.nome}${competizione.luogo ? ` - ${competizione.luogo}` : ''}`, { align: 'center' });
     doc.moveDown(0.3);
-    
+
     // Data competizione
     if (competizione.dataInizio) {
       doc.text(`Data: ${new Date(competizione.dataInizio).toLocaleDateString('it-IT')}`, { align: 'center' });
@@ -1170,15 +1154,15 @@ const downloadClubCompetitionSummary = async (req, res) => {
     summaryTableData[0].forEach((cell, colIndex) => {
       const x = summaryStartX + (colIndex * summaryColWidth);
       doc.rect(x, summaryStartY, summaryColWidth, summaryRowHeight).stroke();
-      
+
       if (colIndex === 0) {
         doc.font('Helvetica-Bold');
       } else {
         doc.font('Helvetica');
       }
-      
-      doc.text(cell, x + 2, summaryStartY + 5, { 
-        width: summaryColWidth - 4, 
+
+      doc.text(cell, x + 2, summaryStartY + 5, {
+        width: summaryColWidth - 4,
         align: colIndex === 0 ? 'left' : 'center'
       });
     });
@@ -1229,7 +1213,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
       if (startY + rowHeight > pageHeight - 40) {
         doc.addPage({ layout: 'landscape' });
         startY = marginX;
-        
+
         // Ridisegna header sulla nuova pagina
         doc.fontSize(8).font('Helvetica-Bold');
         doc.fillColor('#b91c1c');
@@ -1249,15 +1233,15 @@ const downloadClubCompetitionSummary = async (req, res) => {
         const colWidth = colIndex === 0 ? athleteColWidth : categoryColWidth;
         const x = colIndex === 0 ? startX : startX + athleteColWidth + (colIndex - 1) * categoryColWidth;
         doc.rect(x, startY, colWidth, rowHeight).stroke();
-        
+
         if (colIndex === 0) {
           doc.font('Helvetica-Bold');
         } else {
           doc.font('Helvetica');
         }
-        
-        doc.text(cell || '-', x + 2, startY + 4, { 
-          width: colWidth - 4, 
+
+        doc.text(cell || '-', x + 2, startY + 4, {
+          width: colWidth - 4,
           align: colIndex === 0 ? 'left' : 'center',
           ellipsis: true
         });
@@ -1269,7 +1253,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
 
   } catch (error) {
     logger.error(`Errore nel download del riepilogo iscrizione club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
-    
+
     // Se lo stream è già stato avviato, non possiamo più inviare JSON
     if (streamStarted && doc) {
       doc.end();
@@ -1309,13 +1293,7 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
       include: [
         {
           model: Atleta,
-          as: 'atleta',
-          include: [
-            {
-              model: ConfigTipoAtleta,
-              as: 'tipoAtleta'
-            }
-          ]
+          as: 'atleta'
         }
       ]
     });

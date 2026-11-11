@@ -387,8 +387,8 @@ async function printClubResults(req, res) {
     listaAtleti = await assignAgeGroupAndTipo(listaAtleti, competizioneFull);
     const bestByFascia = bestAthletesByTipoFascia(listaAtleti);
 
-    // --- Migliori assoluti CN e CB Adulti ---
-    const tipiAssoluti = ['CN', 'CB Adulti'];
+    // --- Migliori assoluti adulti CN e CB ---
+    const tipiAssoluti = ['Adulti CN', 'Adulti CB'];
     tipiAssoluti.forEach(tipo => {
       if (bestByFascia[tipo]) {
         // Unisci tutti gli atleti di tutte le fasce e sessi

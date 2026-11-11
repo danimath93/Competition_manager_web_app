@@ -1,5 +1,7 @@
 // server/helpers/resultsHelpers.js
-const { Atleta, Club, ConfigGruppoEta, ConfigTipoAtleta } = require("../models");
+const { Atleta, Club } = require("../models");
+const { computeConfigAge } = require("../helpers/ageGroups");
+const { loadRegistrationBlackBelts, getAthleteCompetitionProfile } = require("../helpers/athleteCompetitionProfile");
 
 /**
  * Ritorna tutte le medaglie aggregate per atleta
@@ -63,7 +65,7 @@ async function buildGlobalAthleteList(svolgimenti) {
       club: a.club?.denominazione,
       sesso: a.sesso,
       dataNascita: a.dataNascita,
-      tipoAtletaId: a.tipoAtletaId,
+      isBlackBelt: a.isBlackBelt,
       medaglie: medalMap[a.id]
   }));
 }
@@ -159,96 +161,33 @@ function findBestAthletesByGender(athletes) {
   };
 }
 
-async function assignAgeGroupAndTipo(athletes, competizioneInizio) {
-
-  const gruppi = await ConfigGruppoEta.findAll();
-  const tipi = await ConfigTipoAtleta.findAll();
-
-  const tipoMap = {};
-  tipi.forEach(t => tipoMap[t.id] = t.nome);
-
-  // Calcola età in anni
-  function getAge(dateNascita, dataInizio) {
-    if (!dateNascita || !dataInizio) return undefined;
-    const birthDate = new Date(dateNascita);
-    const refDate = new Date(dataInizio);
-    //let age = refDate.getYear() - birthDate.getYear();
-    let age = refDate.getFullYear() - birthDate.getFullYear();
-    const m = refDate.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && refDate.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  }
+/**
+ * Assegna ad ogni atleta il profilo nella competizione:
+ * - tipoAtleta: raggruppamento e cintura (es. "Adulti CN"), con il grado CN registrato all'iscrizione
+ * - fasciaEta: fascia calcolata con la configurazione salvata in competizione alla data di inizio gara
+ * Senza competizione (risultati globali) è disponibile solo la cintura attuale dell'atleta.
+ */
+async function assignAgeGroupAndTipo(athletes, competizione) {
+  const registrationBlackBelts = competizione ? await loadRegistrationBlackBelts(competizione.id) : new Map();
+  const ageGroupConfig = competizione?.ageGroupConfig || null;
 
   return athletes.map(a => {
-    let fascia = null;
+    const profile = getAthleteCompetitionProfile(a, competizione, registrationBlackBelts.get(a.atletaId));
     let fasciaEtaNote = undefined;
-    let eta = undefined;
-    let nascitaDate = undefined;
-    
-    if (a.dataNascita) {
-      eta = getAge(a.dataNascita, competizioneInizio?.dataInizio);
-      nascitaDate = new Date(a.dataNascita);
-      // Primo tentativo: inizioValidità/fineValidità, Secondo tentativo: etaMinima/etaMassima
-      for (const g of gruppi) {
-        if (g.inizioValidita!=null){
-          const start = g.inizioValidita ? new Date(g.inizioValidita) : null;
-          const end = g.fineValidita ? new Date(g.fineValidita) : null;
-          if ((!start || nascitaDate >= start) && (!end || nascitaDate <= end)) {
-            fascia = g.nome;
-            fasciaEtaNote = `Assegnato tramite data validità gruppo (nascita: ${a.dataNascita}, gruppo: ${g.nome})`;
-            break;
-          }
-        } else if (g.etaMinima <= eta && eta <= g.etaMassima) {
-            fascia = g.nome;
-            fasciaEtaNote = `Assegnato tramite fascia d'età (nascita: ${a.dataNascita}, gruppo: ${g.nome}, età: ${eta})`;
-            break;
-          }
-      }  
-      if (!fascia) {
-        fasciaEtaNote = `Età atleta: ${eta}, data di nascita ${a.dataNascita} fuori da tutti i gruppi [${gruppi.map(g=>g.nome+':'+g.etaMinima+'-'+g.etaMassima).join(', ')}] e nessuna data validità compatibile`;
-      }
-    } else {
+
+    if (!a.dataNascita) {
       fasciaEtaNote = 'Data di nascita mancante';
-    }/*
-    if (a.dataNascita) {
-      eta = getAge(a.dataNascita, competizioneInizio?.dataInizio);
-      nascitaDate = new Date(a.dataNascita);
-      // Primo tentativo: etaMinima/etaMassima
-      
-      for (const g of gruppi) {
-        if (g.etaMinima <= eta && eta <= g.etaMassima) {
-          fascia = g.nome;
-          fasciaEtaNote = `Assegnato tramite fascia d'età (nascita: ${a.dataNascita}, gruppo: ${g.nome}, età: ${eta})`;
-          break;
-        }
-      }
-      // Secondo tentativo: inizioValidita/fineValidita
-      if (!fascia) {
-        for (const g of gruppi) {
-          if (g.inizioValidita!=null){
-            const start = g.inizioValidita ? new Date(g.inizioValidita) : null;
-            const end = g.fineValidita ? new Date(g.fineValidita) : null;
-            if ((!start || nascitaDate >= start) && (!end || nascitaDate <= end)) {
-              fascia = g.nome;
-              fasciaEtaNote = `Assegnato tramite data validità gruppo (nascita: ${a.dataNascita}, gruppo: ${g.nome})`;
-              break;
-            }
-          }
-        }
-      }
-      if (!fascia) {
-        fasciaEtaNote = `Età atleta: ${eta}, data di nascita ${a.dataNascita} fuori da tutti i gruppi [${gruppi.map(g=>g.nome+':'+g.etaMinima+'-'+g.etaMassima).join(', ')}] e nessuna data validità compatibile`;
-      }
-    } else {
-      fasciaEtaNote = 'Data di nascita mancante';
-    }*/
+    } else if (!ageGroupConfig) {
+      fasciaEtaNote = 'Configurazione fasce d\'età non presente per la competizione';
+    } else if (!profile.ageGroup) {
+      const eta = computeConfigAge(a.dataNascita, ageGroupConfig, competizione.dataInizio);
+      fasciaEtaNote = `Età atleta: ${eta}, data di nascita ${a.dataNascita} fuori da tutte le fasce della competizione`;
+    }
 
     return {
       ...a,
-      tipoAtleta: tipoMap[a.tipoAtletaId] || "Sconosciuto",
-      fasciaEta: fascia || "Non Definita",
+      tipoAtleta: profile.ageGroup ? profile.profileLabel : profile.belt,
+      fasciaEta: profile.ageGroup ? profile.ageGroup.label : "Non Definita",
       fasciaEtaNote
     };
   });

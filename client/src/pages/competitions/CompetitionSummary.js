@@ -27,6 +27,8 @@ import SearchTextField from '../../components/SearchTextField';
 import ClubModal from '../../components/ClubModal';
 import RegistrationModal from '../../components/RegistrationModal';
 import muiTheme from '../../styles/muiTheme';
+import { getCompetitionCategoryTypeIds } from '../../utils/competitionCategoryConfig';
+import { resolveAgeGroup } from '../../utils/ageGroups';
 
 
 
@@ -107,9 +109,9 @@ const CompetitionSummary = () => {
     try {
       await toggleVerificaIscrizioneClub(competitionId, clubId);
       // Aggiorna lo stato locale
-      setClubRegistrations(prev => 
-        prev.map(reg => 
-          reg.clubId === clubId 
+      setClubRegistrations(prev =>
+        prev.map(reg =>
+          reg.clubId === clubId
             ? { ...reg, verificato: !currentValue }
             : reg
         )
@@ -124,9 +126,9 @@ const CompetitionSummary = () => {
     try {
       await toggleVerificaIscrizioneAtleta(competitionId, athleteId);
       // Aggiorna lo stato locale
-      setAthleteRegistrations(prev => 
-        prev.map(reg => 
-          reg.atleta.id === athleteId 
+      setAthleteRegistrations(prev =>
+        prev.map(reg =>
+          reg.atleta.id === athleteId
             ? { ...reg, verificato: !currentValue }
             : reg
         )
@@ -156,7 +158,7 @@ const CompetitionSummary = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const fileName = competition?.nome 
+      const fileName = competition?.nome
         ? `atleti-iscritti-${competition.nome.replace(/\s+/g, '_')}.xlsx`
         : `atleti-iscritti-competizione-${competitionId}.xlsx`;
       link.download = fileName;
@@ -198,7 +200,7 @@ const CompetitionSummary = () => {
         } catch (err) {
           console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
           return { ...clubReg, summary: null };
-        } 
+        }
       }));
       setClubRegistrations(clubRegsWithSummary);
 
@@ -237,7 +239,7 @@ const CompetitionSummary = () => {
           } catch (err) {
             console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
             return { ...clubReg, summary: null };
-          } 
+          }
         }));
         setClubRegistrations(clubRegsWithSummary);
 
@@ -275,40 +277,26 @@ const CompetitionSummary = () => {
     }, {});
   }, [athleteRegistrations]);
 
-  // Estrae le categorie uniche da categorieAtleti
-  const categoryColumns = useMemo(() => {
-    if (!competition?.categorieAtleti) return [];
-    
-    const categories = [];
-    const categorySet = new Set();
+  // Cintura registrata all'iscrizione e fascia d'età calcolata con la configurazione della competizione
+  const getAthleteProfileLabel = (group) => {
+    const registrationBlackBelt = group.registrations?.[0]?.isBlackBelt;
+    const isBlackBelt = registrationBlackBelt ?? !!group.athlete?.isBlackBelt;
+    const ageGroup = resolveAgeGroup(group.athlete?.dataNascita, competition?.ageGroupConfig, competition?.dataInizio);
+    return `${isBlackBelt ? 'CN' : 'CB'} - ${ageGroup ? ageGroup.label : 'N/D'}`;
+  };
 
-    try {
-      // Parsa categorieAtleti che è un array di JSON stringhe
-      competition.categorieAtleti.forEach(categorieTipoAtleta => {
-        if (categorieTipoAtleta.categorie && Array.isArray(categorieTipoAtleta.categorie)) {
-          categorieTipoAtleta.categorie.forEach(cat => {
-            if (!categorySet.has(cat.configTipoCategoria)) {
-              categorySet.add(cat.configTipoCategoria);
-              categories.push({
-                id: cat.configTipoCategoria,
-                idEsperienza: cat.idEsperienza || []
-              });
-            }
-          });
-        }
-      });
-    } catch (error) {
-      console.error('Errore nel parsing di categorieAtleti:', error);
-    }
-
-    return categories;
-  }, [competition?.categorieAtleti]);  
+  // Categorie previste dalla competizione (colonne della tabella)
+  const categoryColumns = useMemo(
+    () => getCompetitionCategoryTypeIds(competition).map(id => ({ id })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [competition?.categoryConfig, competition?.categorieAtleti]
+  );
 
   // Carica i dettagli delle categorie
   useEffect(() => {
     const loadCategoryDetails = async () => {
       const newCache = { ...categoryDetailsCache };
-      
+
       for (const category of categoryColumns) {
         if (!newCache[category.id]) {
           try {
@@ -320,7 +308,7 @@ const CompetitionSummary = () => {
           }
         }
       }
-      
+
       if (Object.keys(newCache).length > Object.keys(categoryDetailsCache).length) {
         setCategoryDetailsCache(newCache);
       }
@@ -330,7 +318,7 @@ const CompetitionSummary = () => {
       loadCategoryDetails();
     }
   }, [categoryColumns, categoryDetailsCache]);
-  
+
   // Definizione delle colonne tabella amministrativa
   const administrativeTableColumns = useMemo(() => {
     const handleDownloadDocument = async (clubId, documentType, fileName) => {
@@ -390,19 +378,14 @@ const CompetitionSummary = () => {
         filterable: true,
         sortable: true,
         type: 'number',
-        valueGetter: (value, row) => {
-          const cbBambini = row.summary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
-          const cbAdulti = row.summary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
-          const cn = row.summary?.athleteTypeTotals?.['CN']?.total || 0;
-          return cbBambini + cbAdulti + cn;
-        },
+        valueGetter: (value, row) => Object.values(row.summary?.athleteTypeTotals || {})
+          .reduce((sum, totals) => sum + (totals?.total || 0), 0),
         renderCell: (params) => {
-          const cbBambini = params.row.summary?.athleteTypeTotals?.['CB Bambini']?.total || 0;
-          const cbAdulti = params.row.summary?.athleteTypeTotals?.['CB Adulti']?.total || 0;
-          const cn = params.row.summary?.athleteTypeTotals?.['CN']?.total || 0;
+          const totals = Object.entries(params.row.summary?.athleteTypeTotals || {});
+          const total = totals.reduce((sum, [, t]) => sum + (t?.total || 0), 0);
           return (
-            <Tooltip title={`CB Bambini: ${cbBambini}, CB Adulti: ${cbAdulti}, CN: ${cn}`} arrow>
-              {cbBambini + cbAdulti + cn}
+            <Tooltip title={totals.map(([profile, t]) => `${profile}: ${t?.total || 0}`).join(', ')} arrow>
+              {total}
             </Tooltip>
           );
         },
@@ -600,12 +583,12 @@ const CompetitionSummary = () => {
         },
       },
       {
-        field: 'tipoAtleta',
-        headerName: 'Tipo Atleta',
+        field: 'profilo',
+        headerName: 'Cintura / Fascia',
         flex: 1,
         filterable: true,
         sortable: true,
-        valueGetter: (value, row) => row.athlete.tipoAtleta?.nome || 'N/A',
+        valueGetter: (value, row) => getAthleteProfileLabel(row),
       },
       {
         field: 'sesso',
@@ -630,7 +613,7 @@ const CompetitionSummary = () => {
           const hasCertificato = !!params.row.athlete.certificatoId;
           const scadenzaCertificato = params.row.athlete.scadenzaCertificato;
           const stato = getStatoCertificato(scadenzaCertificato, hasCertificato);
-          
+
           const iconStyle = {
             fontSize: 28,
             color: stato.colore === 'gray' ? '#9e9e9e' :
@@ -685,7 +668,7 @@ const CompetitionSummary = () => {
     // Aggiungi colonne per ogni categoria disponibile
     categoryColumns.forEach(category => {
       const categoryDetails = categoryDetailsCache[category.id];
-      
+
       baseColumns.push({
         field: `category_${category.id}`,
         headerName: categoryDetails?.nome || `Categoria ${category.id}`,
@@ -700,7 +683,7 @@ const CompetitionSummary = () => {
           const registration = row.registrations.find(
             reg => reg.tipoCategoria?.id === category.id
           );
-          
+
           if (!registration) {
             return null; // Non iscritto: restituisce null (permette filtro "is empty")
           } else if (registration.peso) {
@@ -714,7 +697,7 @@ const CompetitionSummary = () => {
           const registration = params.row.registrations.find(
             reg => reg.tipoCategoria?.id === category.id
           );
-          
+
           if (registration && registration.dettagli?.nome) {
             return (
               <Tooltip title={`${registration?.dettagli?.nome}`} arrow>
@@ -774,19 +757,20 @@ const CompetitionSummary = () => {
     });
 
     return baseColumns;
-  }, [categoryColumns, categoryDetailsCache]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryColumns, categoryDetailsCache, competition?.ageGroupConfig, competition?.dataInizio]);
 
   // Caricamento dati per le griglie
   const administrativeTableRows = useMemo(() => {
     let filteredRegistrations = clubRegistrations;
-    
+
     // Filtra per club se è selezionato un club specifico
     if (clubFilter) {
       filteredRegistrations = clubRegistrations.filter(
-        clubReg => clubReg.club?.denominazione === clubFilter  
+        clubReg => clubReg.club?.denominazione === clubFilter
       );
     }
-    
+
     return filteredRegistrations.map((clubReg, index) => ({
       ...clubReg,
     }));
@@ -826,7 +810,7 @@ const CompetitionSummary = () => {
 
 
     return { totalClubs, confirmedClubs, totalAthletes, totalCategories, totalQuota, documentsPresidente, documentsBonifico, tooltipCategories };
-  }, [administrativeTableRows]); 
+  }, [administrativeTableRows]);
 
   const technicalTableRows = useMemo(() => {
     const filteredGroups = Object.values(athleteGroups).filter(group => {
@@ -836,7 +820,7 @@ const CompetitionSummary = () => {
         const name = group.athlete.nome?.toLowerCase() || '';
         const surname = group.athlete.cognome?.toLowerCase() || '';
         const clubName = group.athlete.club?.denominazione?.toLowerCase() || '';
-        const athleteType = group.athlete.tipoAtleta?.nome?.toLowerCase() || '';
+        const athleteType = getAthleteProfileLabel(group).toLowerCase();
         return (name.includes(searchText) ||
                 surname.includes(searchText) ||
                 clubName.includes(searchText) ||
@@ -853,7 +837,8 @@ const CompetitionSummary = () => {
       tesseramento: group.tesseramento,
       totalCost: group.totalCost,
     }));
-  }, [athleteGroups, technicalSearchFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [athleteGroups, technicalSearchFilter, competition?.ageGroupConfig, competition?.dataInizio]);
 
   if (loading) {
     return (
@@ -878,7 +863,7 @@ const CompetitionSummary = () => {
       >
         Torna alle Competizioni
       </MuiButton>
-    
+
       {/* Messaggi di errore e successo */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -892,13 +877,13 @@ const CompetitionSummary = () => {
         { activeTab === "administrative" && (
           <>
             {/* Riepilogo totali */}
-            <Box sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-              gap: 1, 
-              mb: 3, 
-              p: 1.5, 
-              bgcolor: '#f5f5f5', 
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: 1,
+              mb: 3,
+              p: 1.5,
+              bgcolor: '#f5f5f5',
               borderRadius: 1,
               border: '1px solid #e0e0e0'
             }}>

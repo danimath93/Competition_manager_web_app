@@ -190,6 +190,19 @@ const getExperienceIds = (categoryConfig, competitionTypeId, grouping) => {
   return level ? level.experienceIds : [];
 };
 
+/**
+ * ID dei tipi categoria previsti dalla competizione
+ * (competizioni non ancora convertite: dalla configurazione per tipo atleta categorieAtleti)
+ */
+const getCompetitionCategoryTypeIds = (competizione) => {
+  if (competizione?.categoryConfig) {
+    return competizione.categoryConfig.categories.map(c => c.categoryTypeId);
+  }
+  const ids = (competizione?.categorieAtleti || [])
+    .flatMap(ca => (ca.categorie || []).map(cat => cat.configTipoCategoria));
+  return [...new Set(ids)];
+};
+
 module.exports = {
   CATEGORY_CONFIG_VERSION,
   CATEGORY_BELTS,
@@ -197,5 +210,6 @@ module.exports = {
   isExperienceBeltAllowed,
   validateCategoryConfig,
   getEligibleCategories,
-  getExperienceIds
+  getExperienceIds,
+  getCompetitionCategoryTypeIds
 };

@@ -95,3 +95,14 @@ export const getEligibleCategories = (categoryConfig, ageGroup, isBlackBelt) => 
     category.ageGroupKeys.includes(ageGroup.key) && isBeltAllowed(category.belt, isBlackBelt)
   );
 };
+
+// ID dei tipi categoria previsti dalla competizione
+// (competizioni non ancora convertite: dalla configurazione per tipo atleta categorieAtleti)
+export const getCompetitionCategoryTypeIds = (competition) => {
+  if (competition?.categoryConfig) {
+    return competition.categoryConfig.categories.map(c => c.categoryTypeId);
+  }
+  const ids = (competition?.categorieAtleti || [])
+    .flatMap(ca => (ca.categorie || []).map(cat => cat.configTipoCategoria));
+  return [...new Set(ids)];
+};
