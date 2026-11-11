@@ -8,24 +8,40 @@ import { createCompetition, updateCompetition, getCompetitionDetails } from '../
 import { CompetitionStatus, CompetitionLevel } from '../../constants/enums/CompetitionEnums';
 import PageHeader from '../../components/PageHeader';
 import ConfirmActionModal from '../../components/common/ConfirmActionModal';
+import HorizontalStepper from '../../components/common/HorizontalStepper';
+import Button from '../../components/common/Button';
 import GeneralInfoTab from '../../components/competition-tabs/GeneralInfoTab';
-import CategoriesTab from '../../components/competition-tabs/CategoriesTab';
-import CostsTab from '../../components/competition-tabs/CostsTab';
 import AgeGroupsTab from '../../components/competition-tabs/AgeGroupsTab';
-import Tabs from '../../components/common/Tabs';
+import CategoryMatrixTab from '../../components/competition-tabs/CategoryMatrixTab';
+import ExperienceLevelsTab from '../../components/competition-tabs/ExperienceLevelsTab';
+import CostsTab from '../../components/competition-tabs/CostsTab';
+import ReviewTab from '../../components/competition-tabs/ReviewTab';
+import { emptyCategoryConfig, pruneCategoryConfig } from '../../utils/competitionCategoryConfig';
+
+// Form dello step corrente: il pulsante "Avanti" lo invia per sfruttare la validazione dei campi obbligatori
+const STEP_FORM_ID = 'competition-step-form';
+
+const STEPS = [
+  { key: 'general', label: 'Informazioni Generali', usesForm: true },
+  { key: 'ageGroups', label: "Fasce d'età" },
+  { key: 'categories', label: 'Categorie' },
+  { key: 'experiences', label: 'Livelli di esperienza' },
+  { key: 'costs', label: 'Costi e pagamento', usesForm: true },
+  { key: 'review', label: 'Riepilogo' },
+];
 
 const CompetitionConfigurator = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = !!id;
 
-  const [currentTab, setCurrentTab] = useState("general");
+  const [activeStep, setActiveStep] = useState(0);
+  // In creazione si può tornare solo agli step già visitati; in modifica tutti gli step sono navigabili
+  const [maxVisitedStep, setMaxVisitedStep] = useState(0);
   const [formData, setFormData] = useState({
     nome: '',
     dataInizio: '',
     dataFine: '',
-    tipiCompetizione: [],
-    categorieAtleti: [],
     livello: CompetitionLevel.REGIONAL,
     stato: CompetitionStatus.PLANNED,
     dataScadenzaIscrizioni: '',
@@ -40,7 +56,10 @@ const CompetitionConfigurator = () => {
     intestatario: '',
     causale: '',
     ageGroupConfigurationId: null,
+    categoryConfig: emptyCategoryConfig(),
   });
+  // Configurazione fasce età effettiva (copia salvata o configurazione selezionata): definisce le colonne delle categorie
+  const [ageGroupConfig, setAgeGroupConfig] = useState(null);
   // Dati fasce età in sola lettura (non inviati al salvataggio)
   const [ageGroupInfo, setAgeGroupInfo] = useState({
     savedConfiguration: null,
@@ -49,24 +68,8 @@ const CompetitionConfigurator = () => {
     locked: false,
   });
   const [editConfirmModalOpen, setEditConfirmModalOpen] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // Configurazione dei tabs
-  const generationTabs = [
-    { label: 'Informazioni Generali', value: 'general', disabled: false },
-    { label: 'Categorie', value: 'categories', disabled: false },
-    { label: "Fasce d'età", value: 'ageGroups', disabled: false },
-    { label: 'Costi', value: 'costs', disabled: false },
-  ];
-
-  const handleGoBack = () => {
-    navigate('/competitions');
-  };
-
-  const handleTabChange = (tabValue) => {
-    setCurrentTab(tabValue);
-  };
 
   useEffect(() => {
     const loadCompetition = async () => {
@@ -79,8 +82,6 @@ const CompetitionConfigurator = () => {
             nome: competition.nome || '',
             dataInizio: competition.dataInizio ? competition.dataInizio.split('T')[0] : '',
             dataFine: competition.dataFine ? competition.dataFine.split('T')[0] : '',
-            tipiCompetizione: competition.tipiCompetizione || [],
-            categorieAtleti: competition.categorieAtleti || [],
             livello: competition.livello || CompetitionLevel.REGIONAL,
             dataScadenzaIscrizioni: competition.dataScadenzaIscrizioni ? competition.dataScadenzaIscrizioni.split('T')[0] : '',
             luogo: competition.luogo || '',
@@ -95,15 +96,18 @@ const CompetitionConfigurator = () => {
             intestatario: competition.intestatario || '',
             causale: competition.causale || '',
             ageGroupConfigurationId: competition.ageGroupConfigurationId || null,
+            categoryConfig: competition.categoryConfig || emptyCategoryConfig(),
           });
+          setAgeGroupConfig(competition.ageGroupConfig || null);
           setAgeGroupInfo({
             savedConfiguration: competition.ageGroupConfiguration || null,
             savedConfig: competition.ageGroupConfig || null,
             organizerClubId: competition.organizzatoreClubId || null,
             locked: (competition.categorie || []).length > 0,
           });
+          setMaxVisitedStep(STEPS.length - 1);
         } catch (err) {
-          setError('Errore nel caricamento della competizione');
+          setError({ message: 'Errore nel caricamento della competizione' });
           console.error(err);
         } finally {
           setLoading(false);
@@ -117,12 +121,54 @@ const CompetitionConfigurator = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleCategoriesChange = (categoriesData) => {
-    setFormData(prev => ({
-      ...prev,
-      categorieAtleti: categoriesData.categorieAtleti,
-      tipiCompetizione: categoriesData.tipiCompetizione || [],
-    }));
+  // Cambio configurazione fasce: le fasce non più presenti vengono tolte dalle categorie
+  const handleAgeGroupConfigChange = (config) => {
+    if (!config) return;
+    setAgeGroupConfig(config);
+    setFormData(prev => ({ ...prev, categoryConfig: pruneCategoryConfig(prev.categoryConfig, config) }));
+  };
+
+  const handleCostsChange = (costsData) => {
+    setFormData(prev => ({ ...prev, ...costsData }));
+  };
+
+  // Validazione degli step senza form; restituisce il messaggio di errore o null
+  const validateStep = (stepKey) => {
+    switch (stepKey) {
+      case 'ageGroups':
+        return formData.ageGroupConfigurationId ? null : 'Seleziona la configurazione delle fasce d\'età';
+      case 'categories':
+        return (formData.categoryConfig?.categories || []).length > 0 ? null : 'Seleziona almeno una categoria';
+      default:
+        return null;
+    }
+  };
+
+  const goToStep = (index) => {
+    setError(null);
+    setActiveStep(index);
+    setMaxVisitedStep(prev => Math.max(prev, index));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNext = () => {
+    const stepError = validateStep(STEPS[activeStep].key);
+    if (stepError) {
+      setError({ message: stepError });
+      return;
+    }
+    goToStep(activeStep + 1);
+  };
+
+  const handleStepFormSubmit = (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    handleNext();
+  };
+
+  const handleStepClick = (index) => {
+    if (index <= maxVisitedStep) {
+      goToStep(index);
+    }
   };
 
   // Converte i limiti per tipo competizione in interi, scartando i campi vuoti (nessun limite)
@@ -134,24 +180,28 @@ const CompetitionConfigurator = () => {
     );
   };
 
-  // I dati da salvare vengono passati esplicitamente quando lo stato non è ancora
-  // stato aggiornato (es. creazione: il salvataggio parte nello stesso evento del setFormData)
-  const handleSubmit = async (dataToSave = formData) => {
-    setError('');
+  const handleSubmit = async () => {
+    setError(null);
     setEditConfirmModalOpen(false);
 
-    if (!dataToSave.id && !dataToSave.ageGroupConfigurationId) {
-      setError('Seleziona la configurazione delle fasce d\'età');
-      setCurrentTab('ageGroups');
-      return;
+    // Verifica gli step obbligatori prima del salvataggio
+    for (let i = 0; i < STEPS.length; i++) {
+      const stepError = validateStep(STEPS[i].key);
+      if (stepError) {
+        setActiveStep(i);
+        setError({ message: stepError });
+        return;
+      }
     }
+
     setLoading(true);
 
     // I campi data non compilati restano '' nel form (input controllati): al backend vanno inviati come null
+    // I tipi competizione vengono ricavati dal backend a partire dalle categorie
     const payload = {
-      ...dataToSave,
-      dataScadenzaIscrizioni: dataToSave.dataScadenzaIscrizioni || null,
-      maxCategorieTipoCompetizione: normalizeTypeLimits(dataToSave.maxCategorieTipoCompetizione),
+      ...formData,
+      dataScadenzaIscrizioni: formData.dataScadenzaIscrizioni || null,
+      maxCategorieTipoCompetizione: normalizeTypeLimits(formData.maxCategorieTipoCompetizione),
     };
 
     try {
@@ -162,43 +212,81 @@ const CompetitionConfigurator = () => {
       }
       navigate('/competitions');
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Errore durante il salvataggio');
+      setError({
+        message: err.response?.data?.error || err.message || 'Errore durante il salvataggio',
+        details: Array.isArray(err.response?.data?.details) ? err.response.data.details : [],
+      });
       setLoading(false);
     }
   };
 
-  const handleGeneralInfoSubmit = (e) => {
-    e.preventDefault();
+  const handleSave = () => {
     if (isEditMode) {
       setEditConfirmModalOpen(true);
     } else {
-      setCurrentTab('categories');
+      handleSubmit();
     }
   };
 
-  const handleCategoriesSubmit = (e) => {
-    if (isEditMode) {
-      setEditConfirmModalOpen(true);
-    } else {
-      setCurrentTab('ageGroups');
-    }
-  };
-
-  const handleAgeGroupsSubmit = () => {
-    if (isEditMode) {
-      setEditConfirmModalOpen(true);
-    } else {
-      setCurrentTab('costs');
-    }
-  };
-
-  const handleCostsSubmit = (costsData) => {
-    const updatedFormData = { ...formData, ...costsData };
-    setFormData(updatedFormData);
-    if (isEditMode) {
-      setEditConfirmModalOpen(true);
-    } else {
-      handleSubmit(updatedFormData);
+  const renderStepContent = () => {
+    switch (STEPS[activeStep].key) {
+      case 'general':
+        return (
+          <GeneralInfoTab
+            formData={formData}
+            onChange={handleFieldChange}
+            onSubmit={handleStepFormSubmit}
+            formId={STEP_FORM_ID}
+          />
+        );
+      case 'ageGroups':
+        return (
+          <AgeGroupsTab
+            value={formData.ageGroupConfigurationId}
+            onChange={(configurationId) => handleFieldChange('ageGroupConfigurationId', configurationId)}
+            onConfigChange={handleAgeGroupConfigChange}
+            savedConfiguration={ageGroupInfo.savedConfiguration}
+            savedConfig={ageGroupInfo.savedConfig}
+            organizerClubId={ageGroupInfo.organizerClubId}
+            locked={ageGroupInfo.locked}
+            competitionStartDate={formData.dataInizio}
+          />
+        );
+      case 'categories':
+        return (
+          <CategoryMatrixTab
+            value={formData.categoryConfig}
+            onChange={(categoryConfig) => handleFieldChange('categoryConfig', categoryConfig)}
+            ageGroupConfig={ageGroupConfig}
+          />
+        );
+      case 'experiences':
+        return (
+          <ExperienceLevelsTab
+            value={formData.categoryConfig}
+            onChange={(categoryConfig) => handleFieldChange('categoryConfig', categoryConfig)}
+            ageGroupConfig={ageGroupConfig}
+          />
+        );
+      case 'costs':
+        return (
+          <CostsTab
+            value={{
+              costiIscrizione: formData.costiIscrizione,
+              iban: formData.iban,
+              intestatario: formData.intestatario,
+              causale: formData.causale,
+            }}
+            categoryConfig={formData.categoryConfig}
+            onChange={handleCostsChange}
+            onSubmit={handleStepFormSubmit}
+            formId={STEP_FORM_ID}
+          />
+        );
+      case 'review':
+        return <ReviewTab formData={formData} ageGroupConfig={ageGroupConfig} />;
+      default:
+        return null;
     }
   };
 
@@ -212,6 +300,9 @@ const CompetitionConfigurator = () => {
     );
   }
 
+  const currentStep = STEPS[activeStep];
+  const isLastStep = activeStep === STEPS.length - 1;
+
   return (
     <div className="page-container">
       <PageHeader
@@ -221,75 +312,63 @@ const CompetitionConfigurator = () => {
       />
       <MuiButton
         startIcon={<ArrowBack />}
-        onClick={handleGoBack}
+        onClick={() => navigate('/competitions')}
       >
         Torna alle Competizioni
       </MuiButton>
-    
-      {/* Messaggi di errore e successo */}
+
+      <div style={{ margin: '1.5rem 0 2rem' }}>
+        <HorizontalStepper
+          steps={STEPS.map((step, index) => ({ label: step.label, number: index + 1 }))}
+          activeStep={activeStep}
+          onStepClick={handleStepClick}
+        />
+      </div>
+
+      {/* Messaggi di errore */}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {error}
+        <Alert severity="error" sx={{ mb: 2, maxWidth: '1024px', mx: 'auto' }} onClose={() => setError(null)}>
+          {error.message}
+          {error.details?.length > 0 && (
+            <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
+              {error.details.map((detail, index) => <li key={index}>{detail}</li>)}
+            </ul>
+          )}
         </Alert>
       )}
 
-      {/* Tabs */}
-      <Tabs tabs={generationTabs} activeTab={currentTab} onTabChange={handleTabChange}>
-        {/* Tab Panel - Info generali */}
-        { currentTab === "general" && (
-          <GeneralInfoTab
-            formData={formData}
-            onChange={handleFieldChange}
-            onSubmit={handleGeneralInfoSubmit}
-          />
-        )}
-        {/* Tab Panel - Categorie e gradi tecnici */}
-        { currentTab === "categories" && (
-          <CategoriesTab
-            value={{
-              categorieAtleti: formData.categorieAtleti,
-              tipiCompetizione: formData.tipiCompetizione,
-            }}
-            onChange={handleCategoriesChange}
-            onSubmit={handleCategoriesSubmit}
-            isEditMode={isEditMode}
-          />
-        )}
-        {/* Tab Panel - Fasce d'età */}
-        { currentTab === "ageGroups" && (
-          <AgeGroupsTab
-            value={formData.ageGroupConfigurationId}
-            onChange={(configurationId) => handleFieldChange('ageGroupConfigurationId', configurationId)}
-            onSubmit={handleAgeGroupsSubmit}
-            savedConfiguration={ageGroupInfo.savedConfiguration}
-            savedConfig={ageGroupInfo.savedConfig}
-            organizerClubId={ageGroupInfo.organizerClubId}
-            locked={ageGroupInfo.locked}
-            competitionStartDate={formData.dataInizio}
-          />
-        )}
-        {/* Tab Panel - Costi */}
-        { currentTab === "costs" && (
-          <CostsTab
-            value={{
-              costiIscrizione: formData.costiIscrizione,  
-              iban: formData.iban,
-              intestatario: formData.intestatario,
-              causale: formData.causale,
-            }}
-            categorieAtleti={formData.categorieAtleti}
-            onSubmit={handleCostsSubmit}
-          />
-        )}
-      </Tabs>
-      { editConfirmModalOpen && (
+      {renderStepContent()}
+
+      {/* Navigazione */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
+        <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem', display: 'flex', justifyContent: 'space-between' }}>
+          <Button variant="outline-primary" size="m" onClick={() => goToStep(activeStep - 1)} disabled={activeStep === 0}>
+            Indietro
+          </Button>
+          {isLastStep ? (
+            <Button variant="primary" size="m" onClick={handleSave}>
+              {isEditMode ? 'Salva modifiche' : 'Crea competizione'}
+            </Button>
+          ) : currentStep.usesForm ? (
+            <Button variant="primary" size="m" type="submit" form={STEP_FORM_ID}>
+              Avanti
+            </Button>
+          ) : (
+            <Button variant="primary" size="m" onClick={handleNext}>
+              Avanti
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {editConfirmModalOpen && (
         <ConfirmActionModal
           open={editConfirmModalOpen}
           title="Conferma Modifiche"
           message="Sei sicuro di voler salvare le modifiche apportate alla competizione?"
           primaryButton={{
             text: 'Salva Modifiche',
-            onClick: async () => { await handleSubmit(formData); },
+            onClick: handleSubmit,
           }}
           secondaryButton={{
             text: 'Annulla',
@@ -299,82 +378,6 @@ const CompetitionConfigurator = () => {
       )}
     </div>
   );
-
-  //   <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-  //     <AppBar position="static" color="default" elevation={0} sx={{ mb: 3, borderRadius: 1 }}>
-  //       <Toolbar>
-  //         <Button
-  //           startIcon={<ArrowBackIcon />}
-  //           onClick={() => navigate(-1)}
-  //           sx={{ mr: 2 }}
-  //           disabled={loading}
-  //         >
-  //           Indietro
-  //         </Button>
-  //         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-  //           {isEditMode ? 'Modifica Competizione' : 'Nuova Competizione'}
-  //         </Typography>
-  //         <Button
-  //           variant="contained"
-  //           startIcon={<SaveIcon />}
-  //           onClick={handleSubmit}
-  //           disabled={loading}
-  //         >
-  //           {isEditMode ? 'Salva Modifiche' : 'Crea Competizione'}
-  //         </Button>
-  //       </Toolbar>
-  //     </AppBar>
-
-  //     {error && (
-  //       <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
-  //         {error}
-  //       </Alert>
-  //     )}
-
-  //     <Paper sx={{ width: '100%' }}>
-  //       <Tabs
-  //         value={currentTab}
-  //         onChange={handleTabChange}
-  //         variant="fullWidth"
-  //         sx={{ borderBottom: 1, borderColor: 'divider' }}
-  //       >
-  //         <Tab icon={<InfoIcon />} label="Informazioni Generali" iconPosition="start" />
-  //         <Tab icon={<CategoryIcon />} label="Categorie" iconPosition="start" />
-  //         <Tab icon={<EuroIcon />} label="Costi" iconPosition="start" />
-  //       </Tabs>
-
-  //       <TabPanel value={currentTab} index={0}>
-  //         <GeneralInfoTab
-  //           formData={formData}
-  //           onChange={handleFieldChange}
-  //         />
-  //       </TabPanel>
-
-  //       <TabPanel value={currentTab} index={1}>
-  //         <CategoriesTab
-  //           value={{
-  //             categorieAtleti: formData.categorieAtleti,
-  //             tipiCompetizione: formData.tipiCompetizione,
-  //           }}
-  //           onChange={handleCategoriesChange}
-  //           isEditMode={isEditMode}
-  //         />
-  //       </TabPanel>
-
-  //       <TabPanel value={currentTab} index={2}>
-  //         <CostsTab
-  //           value={{
-  //             costiIscrizione: formData.costiIscrizione,
-  //             iban: formData.iban,
-  //             intestatario: formData.intestatario,
-  //             causale: formData.causale,
-  //           }}
-  //           onChange={handleCostsChange}
-  //         />
-  //       </TabPanel>
-  //     </Paper>
-  //   </Container>
-  // );
 };
 
 export default CompetitionConfigurator;

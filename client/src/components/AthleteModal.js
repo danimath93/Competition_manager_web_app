@@ -5,6 +5,8 @@ import {
   Autocomplete,
   Alert,
   Box,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllClubs } from '../api/clubs';
@@ -47,6 +49,7 @@ const AthleteModal = ({
         dataNascita: '',
         tipoAtleta: null,
         tipoAtletaId: null,
+        isBlackBelt: false,
         sesso: '',
         codiceFiscale: null,
         club: club,
@@ -266,6 +269,18 @@ const AthleteModal = ({
               options={athleteTypes}
             />
           </div>
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="isBlackBelt"
+                checked={!!formData.isBlackBelt}
+                onChange={(e) => setFormData({ ...formData, isBlackBelt: e.target.checked })}
+                size="small"
+              />
+            }
+            label="Cintura nera (CN)"
+          />
 
           <AuthComponent requiredRoles={['admin', 'superAdmin']}>
             <Autocomplete

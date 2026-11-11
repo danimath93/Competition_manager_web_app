@@ -22,16 +22,26 @@ import {
   MenuItem
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import { loadAthleteTypes, loadAllCategoryTypes } from '../../api/config';
+import { loadAllCategoryTypes } from '../../api/config';
+import { GROUPING_LABELS } from '../../utils/competitionCategoryConfig';
 import { TextInput } from '../common';
 import Button from '../common/Button';
 import '../styles/Layout.css';
 import '../styles/Register.css';
 
 const EMPTY_SPECIAL_CATEGORY = { idConfigTipoCategoria: '', singleCost: '', withOthersCost: '' };
+const GROUPINGS = ['children', 'adults'];
 
-const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
-  const [athleteTypes, setAthleteTypes] = useState([]);
+/**
+ * Step costi e dati di pagamento della competizione
+ *
+ * @param {Object} props.value - { costiIscrizione, iban, intestatario, causale }
+ * @param {Object} props.categoryConfig - configurazione categorie (per le categorie speciali selezionabili)
+ * @param {function} props.onChange - riceve { costiIscrizione, iban, intestatario, causale } ad ogni modifica
+ * @param {function} props.onSubmit - submit del form (validazione campi obbligatori)
+ * @param {string} props.formId - id del form, usato dal pulsante di navigazione del configuratore
+ */
+const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
   const [categoryTypes, setCategoryTypes] = useState([]);
   // Stato locale inizializzato una sola volta dal prop value (il tab viene rimontato a ogni apertura)
   const [membershipEnabled, setMembershipEnabled] = useState(!!value?.costiIscrizione?.tesseramento?.enabled);
@@ -50,34 +60,30 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
   const [newSpecialCategory, setNewSpecialCategory] = useState(EMPTY_SPECIAL_CATEGORY);
 
   // Categorie selezionabili come speciali: solo quelle configurate per la competizione
-  const competitionCategoryIds = new Set(
-    categorieAtleti.flatMap(ca => (ca.categorie || []).map(cat => cat.configTipoCategoria))
-  );
+  const competitionCategoryIds = new Set((categoryConfig?.categories || []).map(c => c.categoryTypeId));
   const competitionCategoryTypes = categoryTypes.filter(ct => competitionCategoryIds.has(ct.id));
 
   // Stato per nuova configurazione atleta (nel modale)
   const [newAthleteConfig, setNewAthleteConfig] = useState({
-    idConfigTipoAtleta: null,
+    grouping: null,
     type: 'fixed',
     config: { amount: 0 }
   });
 
-  // Carica tipi atleta e tipi categoria
+  // Carica tipi categoria
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [types, categories] = await Promise.all([
-          loadAthleteTypes(),
-          loadAllCategoryTypes()
-        ]);
-        setAthleteTypes(types);
-        setCategoryTypes(categories);
-      } catch (error) {
-        console.error('Errore nel caricamento dei dati di configurazione:', error);
-      }
-    };
-    loadData();
+    loadAllCategoryTypes()
+      .then(setCategoryTypes)
+      .catch(error => console.error('Errore nel caricamento dei tipi categoria:', error));
   }, []);
+
+  // Propaga i dati al configuratore ad ogni modifica
+  useEffect(() => {
+    if (onChange) {
+      onChange({ costiIscrizione: buildCostiIscrizione(), iban, intestatario, causale });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membershipEnabled, membershipCost, specialCategories, athleteCostConfigs, iban, intestatario, causale]);
 
   // Handler per categorie speciali
   const handleCloseSpecialCategoryModal = () => {
@@ -118,9 +124,9 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
 
   const handleNewAthleteConfigChange = (field, value) => {
     const updated = { ...newAthleteConfig };
-    
-    if (field === 'idConfigTipoAtleta') {
-      updated.idConfigTipoAtleta = parseInt(value);
+
+    if (field === 'grouping') {
+      updated.grouping = value;
     } else if (field === 'type') {
       updated.type = value;
       if (value === 'fixed') {
@@ -131,7 +137,7 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
         updated.config = { first: 0, extra: 0 };
       }
     }
-    
+
     setNewAthleteConfig(updated);
   };
 
@@ -144,13 +150,13 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
   const handleNewMinimumConfigChange = (scaglioneIndex, field, value) => {
     const updated = { ...newAthleteConfig };
     const config = updated.config;
-    
+
     if (field === 'minCategories') {
       config.minCategories[scaglioneIndex] = parseInt(value) || 1;
     } else if (field === 'costs') {
       config.costs[scaglioneIndex] = parseFloat(value) || 0;
     }
-    
+
     setNewAthleteConfig(updated);
   };
 
@@ -158,38 +164,38 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
     const updated = { ...newAthleteConfig };
     const config = updated.config;
     const lastMin = config.minCategories[config.minCategories.length - 1] || 1;
-    
+
     config.minCategories.push(lastMin + 1);
     config.costs.push(0);
-    
+
     setNewAthleteConfig(updated);
   };
 
   const handleRemoveScaglione = (scaglioneIndex) => {
     const updated = { ...newAthleteConfig };
     const config = updated.config;
-    
+
     config.minCategories.splice(scaglioneIndex, 1);
     config.costs.splice(scaglioneIndex, 1);
-    
+
     setNewAthleteConfig(updated);
   };
 
   const handleSaveAthleteConfig = () => {
-    // Verifica che non esista già una configurazione per questo tipo atleta
+    // Verifica che non esista già una configurazione per questo raggruppamento
     const existingConfig = athleteCostConfigs.find(
-      config => config.idConfigTipoAtleta === newAthleteConfig.idConfigTipoAtleta
+      config => config.grouping === newAthleteConfig.grouping
     );
-    
+
     if (existingConfig) {
-      alert('Esiste già una configurazione per questo tipo di atleta');
+      alert('Esiste già una configurazione per questo raggruppamento');
       return;
     }
-    
-    if (newAthleteConfig.idConfigTipoAtleta !== null) {
+
+    if (newAthleteConfig.grouping !== null) {
       setAthleteCostConfigs([...athleteCostConfigs, { ...newAthleteConfig }]);
       setNewAthleteConfig({
-        idConfigTipoAtleta: null,
+        grouping: null,
         type: 'fixed',
         config: { amount: 0 }
       });
@@ -197,9 +203,9 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
     }
   };
 
-  const getAthleteTypeName = (id) => {
-    const type = athleteTypes.find(t => t.id === id);
-    return type ? type.nome : 'Non selezionato';
+  const getGroupingName = (config) => {
+    if (config.grouping) return GROUPING_LABELS[config.grouping] || config.grouping;
+    return `Tipo atleta ${config.idConfigTipoAtleta} (configurazione precedente)`;
   };
 
   const getConfigTypeLabel = (type) => {
@@ -215,7 +221,7 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
     if (config.type === 'fixed') {
       return `${config.config.amount?.toFixed(2)} €`;
     } else if (config.type === 'minimum') {
-      return config.config.minCategories?.map((min, i) => 
+      return config.config.minCategories?.map((min, i) =>
         `${min}+ cat. → ${config.config.costs[i]?.toFixed(2)}€`
       ).join(' | ');
     } else if (config.type === 'additional') {
@@ -224,27 +230,30 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
     return '';
   };
 
-  const handleSaveChanges = (e) => {
-    e.preventDefault();
-    const costiIscrizione = {
+  function buildCostiIscrizione() {
+    return {
       tesseramento: {
         enabled: membershipEnabled,
         amount: membershipEnabled ? parseFloat(membershipCost) : null
       },
       specialCategories,
-      categories: athleteCostConfigs.filter(config => config.idConfigTipoAtleta !== null)
+      categories: athleteCostConfigs.filter(config => config.grouping || config.idConfigTipoAtleta)
     };
+  }
+
+  const handleSaveChanges = (e) => {
+    e.preventDefault();
     if (onSubmit) {
-      onSubmit({ costiIscrizione, iban, intestatario, causale });
+      onSubmit();
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSaveChanges} className="register-form">
+      <form id={formId} onSubmit={handleSaveChanges} className="register-form">
         {/* Sezione 1: Informazioni Bonifico */}
         <h6 className="text-primary text-center register-section-title">Informazioni Bonifico</h6>
-        
+
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -300,7 +309,7 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
 
         {/* Sezione 2: Costi Speciali */}
         <h6 className="text-primary text-center register-section-title">Costi speciali</h6>
-        
+
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
             {/* Richiesta tesseramento */}
@@ -338,7 +347,7 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
             {/* Categorie speciali */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <label style={{ fontWeight: 500, color: '#333' }}>
-                Costi dedicati per categorie speciali, al posto del calcolo per tipologia atleta
+                Costi dedicati per categorie speciali, al posto del calcolo standard
               </label>
               <Button
                 size='s'
@@ -382,13 +391,13 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
           </div>
         </div>
 
-        {/* Sezione 3: Configurazione Costi per Tipo Atleta */}
-        <h6 className="text-primary text-center register-section-title">Configurazione Costi per tipologia atleta</h6>
-        
+        {/* Sezione 3: Configurazione Costi per raggruppamento */}
+        <h6 className="text-primary text-center register-section-title">Configurazione costi per Bambini / Adulti</h6>
+
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: 500, color: '#333' }}>Inserisci i costi di iscrizione per ciascuna tipologia di atleta</label>
+            <label style={{ fontWeight: 500, color: '#333' }}>Inserisci i costi di iscrizione per bambini e adulti (in base alla fascia d'età dell'atleta)</label>
             <Button
               size='s'
               onClick={() => setAthleteConfigModalOpen(true)}
@@ -398,17 +407,17 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
           </div>
 
           {athleteCostConfigs.length > 0 ? (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-              gap: '1rem' 
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '1rem'
             }}>
               {athleteCostConfigs.map((config, index) => (
                 <Card key={index} variant="outlined" sx={{ position: 'relative' }}>
                   <CardContent sx={{ pb: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
                       <Typography variant="h6" component="div" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                        {getAthleteTypeName(config.idConfigTipoAtleta)}
+                        {getGroupingName(config)}
                       </Typography>
                       <IconButton
                         size="small"
@@ -419,15 +428,15 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </div>
-                    
-                    <Chip 
-                      label={getConfigTypeLabel(config.type)} 
-                      size="small" 
-                      color="primary" 
+
+                    <Chip
+                      label={getConfigTypeLabel(config.type)}
+                      size="small"
+                      color="primary"
                       variant="outlined"
                       sx={{ mb: 1 }}
                     />
-                    
+
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       {getConfigDescription(config)}
                     </Typography>
@@ -437,17 +446,10 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
             </div>
           ) : (
             <Alert severity="info">
-              Nessuna configurazione costi atleta
+              Nessuna configurazione costi per bambini / adulti
             </Alert>
           )}
           </div>
-        </div>
-
-        {/* Pulsante Conferma */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-          <Button type="submit" size="l" variant="primary">
-            Salva configurazioni
-          </Button>
         </div>
       </form>
 
@@ -456,14 +458,14 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
         <DialogTitle>Aggiungi Categoria Speciale</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            La categoria viene esclusa dal calcolo per tipologia atleta e ha un costo dedicato.
+            La categoria viene esclusa dal calcolo standard e ha un costo dedicato.
             Se non indichi il costo con altre categorie, quando l'atleta è iscritto anche ad altre
             categorie viene conteggiata come una categoria normale.
           </Typography>
 
           {competitionCategoryTypes.length === 0 ? (
             <Alert severity="warning">
-              Nessuna categoria configurata per la competizione: configura prima il tab Categorie
+              Nessuna categoria configurata per la competizione: configura prima lo step Categorie
             </Alert>
           ) : (
             <>
@@ -524,23 +526,23 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
 
       {/* Modale Aggiungi Configurazione Atleta */}
       <Dialog open={athleteConfigModalOpen} onClose={() => setAthleteConfigModalOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Aggiungi Configurazione Tipo Atleta</DialogTitle>
+        <DialogTitle>Aggiungi Configurazione Costi</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <FormLabel>Tipo Atleta</FormLabel>
+                <FormLabel>Raggruppamento</FormLabel>
                 <RadioGroup
-                  value={newAthleteConfig.idConfigTipoAtleta || ''}
-                  onChange={(e) => handleNewAthleteConfigChange('idConfigTipoAtleta', e.target.value)}
+                  value={newAthleteConfig.grouping || ''}
+                  onChange={(e) => handleNewAthleteConfigChange('grouping', e.target.value)}
                 >
-                  {athleteTypes.map((type) => (
+                  {GROUPINGS.map((grouping) => (
                     <FormControlLabel
-                      key={type.id}
-                      value={type.id}
+                      key={grouping}
+                      value={grouping}
                       control={<Radio />}
-                      label={type.nome}
-                      disabled={athleteCostConfigs.some(config => config.idConfigTipoAtleta === type.id)}
+                      label={GROUPING_LABELS[grouping]}
+                      disabled={athleteCostConfigs.some(config => config.grouping === grouping)}
                     />
                   ))}
                 </RadioGroup>
@@ -661,10 +663,10 @@ const CostsTab = ({ value, categorieAtleti = [], onSubmit }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAthleteConfigModalOpen(false)}>Annulla</Button>
-          <Button 
-            onClick={handleSaveAthleteConfig} 
+          <Button
+            onClick={handleSaveAthleteConfig}
             variant="contained"
-            disabled={newAthleteConfig.idConfigTipoAtleta === null}
+            disabled={newAthleteConfig.grouping === null}
           >
             Salva Configurazione
           </Button>

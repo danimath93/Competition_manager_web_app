@@ -15,29 +15,25 @@ const {
 
 // Fasce d'età standard usate dalle configurazioni di default
 const DEFAULT_AGE_GROUPS = [
-  { key: 'pulcini', label: 'Pulcini', grouping: 'children', order: 1, minAge: 4, maxAge: 6 },
-  { key: 'bambini', label: 'Bambini', grouping: 'children', order: 2, minAge: 7, maxAge: 8 },
-  { key: 'esordienti', label: 'Esordienti', grouping: 'children', order: 3, minAge: 9, maxAge: 11 },
-  { key: 'cadetti', label: 'Cadetti', grouping: 'adults', order: 4, minAge: 12, maxAge: 14 },
-  { key: 'junior', label: 'Junior', grouping: 'adults', order: 5, minAge: 15, maxAge: 17 },
-  { key: 'seniores', label: 'Seniores', grouping: 'adults', order: 6, minAge: 18, maxAge: 39 },
-  { key: 'masters-a', label: 'MastersA', grouping: 'adults', order: 7, minAge: 40, maxAge: 49 },
-  { key: 'masters-b', label: 'MastersB', grouping: 'adults', order: 8, minAge: 50, maxAge: null }
+  { key: 'pulcini', label: 'Pulcini', grouping: 'children', order: 1, minAge: 5, maxAge: 7 },
+  { key: 'bambini', label: 'Bambini', grouping: 'children', order: 2, minAge: 8, maxAge: 9 },
+  { key: 'esordienti', label: 'Esordienti', grouping: 'children', order: 3, minAge: 10, maxAge: 12 },
+  { key: 'cadetti', label: 'Cadetti', grouping: 'adults', order: 4, minAge: 13, maxAge: 15 },
+  { key: 'junior', label: 'Junior', grouping: 'adults', order: 5, minAge: 16, maxAge: 18 },
+  { key: 'seniores', label: 'Seniores', grouping: 'adults', order: 6, minAge: 19, maxAge: 40 },
+  { key: 'masters-a', label: 'MastersA', grouping: 'adults', order: 7, minAge: 41, maxAge: 50 },
+  { key: 'masters-b', label: 'MastersB', grouping: 'adults', order: 8, minAge: 51, maxAge: null }
 ];
 
+// Allineato a scripts/seed_age_group_configurations.sql
 const DEFAULT_AGE_GROUP_CONFIGURATIONS = [
   {
-    name: 'Standard - età sportiva (anno solare)',
+    name: 'Età sportiva',
     description: 'Età compiuta entro il 31/12 dell\'anno della gara',
     config: { version: 1, mode: 'seasonAge', seasonStart: '01-01', groups: DEFAULT_AGE_GROUPS }
   },
   {
-    name: 'Standard - età sportiva (stagione da settembre)',
-    description: 'Età compiuta entro il 31/08 della stagione sportiva della gara',
-    config: { version: 1, mode: 'seasonAge', seasonStart: '09-01', groups: DEFAULT_AGE_GROUPS }
-  },
-  {
-    name: 'Standard - età a inizio gara',
+    name: 'Età a inizio gara',
     description: 'Età esatta alla data di inizio gara',
     config: { version: 1, mode: 'age', groups: DEFAULT_AGE_GROUPS }
   }

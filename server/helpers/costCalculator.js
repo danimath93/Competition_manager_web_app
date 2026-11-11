@@ -17,7 +17,8 @@
  *   ],
  *   categories: [
  *     {
- *       idConfigTipoAtleta: 1,
+ *       grouping: "children" | "adults",   // raggruppamento della fascia età dell'atleta
+ *                                         // (configurazioni precedenti: idConfigTipoAtleta)
  *       type: "fixed" | "minimum" | "additional",
  *       config: {
  *         // Per "fixed":
@@ -146,7 +147,7 @@ const calculateAdditionalCost = (config, numCategories) => {
 /**
  * Calcola il costo totale per un atleta
  * @param {Object} costiIscrizione - Configurazione costi della competizione
- * @param {Object} athleteData - Dati atleta ({ tipoAtletaId, tesseramento })
+ * @param {Object} athleteData - Dati atleta ({ grouping, tesseramento }); tipoAtletaId solo per configurazioni precedenti
  * @param {Array} categories - ID tipo categoria a cui l'atleta è iscritto
  * @returns {Number} - Costo totale per l'atleta
  */
@@ -154,7 +155,6 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
   if (!costiIscrizione || categories.length === 0) return 0;
 
   let totalCost = 0;
-  const idConfigTipoAtleta = athleteData.tipoAtletaId;
 
   // Tesseramento richiesto in fase di iscrizione
   totalCost += calculateMembershipCost(athleteData, costiIscrizione.tesseramento);
@@ -167,10 +167,12 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
   totalCost += specialCategoriesCost;
   const numCategories = standardCategories.length;
 
-  // Trova la configurazione per il tipo atleta
+  // Trova la configurazione per il raggruppamento dell'atleta (o per tipo atleta nelle configurazioni precedenti)
   if (numCategories > 0 && Array.isArray(costiIscrizione.categories)) {
-    const categoryConfig = costiIscrizione.categories.find(
-      cat => cat.idConfigTipoAtleta === idConfigTipoAtleta
+    const categoryConfig = costiIscrizione.categories.find(cat =>
+      cat.grouping
+        ? cat.grouping === athleteData.grouping
+        : cat.idConfigTipoAtleta === athleteData.tipoAtletaId
     );
 
     if (categoryConfig && categoryConfig.config) {

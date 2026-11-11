@@ -57,13 +57,14 @@ const Competizione = sequelize.define('Competizione', {
     type: DataTypes.ARRAY(DataTypes.JSONB),
     allowNull: false,
     defaultValue: [],
-    validate: {
-      notEmpty: {
-        msg: 'Deve essere selezionata almeno una categoria valida'
-      },
-    },
     field: 'categorie_atleti',
-    comment: 'Struttura per gestire le categorie/esperienze ammesse alla competizione, per ogni tipologia di atleta'
+    comment: 'DEPRECATO: sostituito da categoryConfig. Categorie/esperienze ammesse per tipologia di atleta'
+  },
+  categoryConfig: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    field: 'category_config',
+    comment: 'Struttura JSON: { version: 1, categories: [{ categoryTypeId, ageGroupKeys, belt }], experienceLevels: [{ competitionTypeId, grouping, experienceIds }] } - vedi helpers/competitionCategoryConfig.js. Validata nel controller rispetto ad ageGroupConfig'
   },
   gestioneLivelloAtleti: {
     type: DataTypes.ARRAY(DataTypes.JSONB),

@@ -1,6 +1,7 @@
 const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigTipoAtleta, ConfigEsperienza, Documento, DettaglioIscrizioneAtleta } = require('../models');
 const { calculateAthleteCost } = require('../helpers/costCalculator');
 const { checkCategoryLimits } = require('../helpers/categoryLimits');
+const { resolveAgeGroup } = require('../helpers/ageGroups');
 const logger = require('../helpers/logger/logger');
 
 // Ottieni tutte le iscrizioni di una competizione specifica
@@ -176,6 +177,11 @@ const createIscrizione = async (req, res) => {
       return res.status(400).json({ error: limitError });
     }
 
+    const atleta = await Atleta.findByPk(atletaId, { attributes: ['id', 'isBlackBelt'] });
+    if (!atleta) {
+      return res.status(404).json({ error: 'Atleta non trovato' });
+    }
+
     // Usa findOrCreate per evitare race condition quando si creano più iscrizioni simultaneamente
     const [dettagliIscrizione, created] = await DettaglioIscrizioneAtleta.findOrCreate({
       where: {
@@ -184,9 +190,15 @@ const createIscrizione = async (req, res) => {
       },
       defaults: {
         tesseramento: tesseramento.nome,
-        quota: 0
+        quota: 0,
+        isBlackBelt: atleta.isBlackBelt
       }
     });
+
+    // Il grado CN è appena stato confermato nel primo step dell'iscrizione: la copia segue il valore dell'atleta
+    if (dettagliIscrizione.isBlackBelt !== atleta.isBlackBelt) {
+      await dettagliIscrizione.update({ isBlackBelt: atleta.isBlackBelt });
+    }
 
     // Verifica se l'iscrizione esiste già per questo atleta, categoria e competizione
     const existingIscrizione = await IscrizioneAtleta.findOne({
@@ -1233,8 +1245,12 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
       return;
     }
 
+    // Raggruppamento (bambini/adulti) dalla fascia età dell'atleta alla data di inizio gara
+    const ageGroup = resolveAgeGroup(iscrizioni[0].atleta?.dataNascita, competizione.ageGroupConfig, competizione.dataInizio);
+
     const athleteData = {
       atletaId,
+      grouping: ageGroup?.grouping || null,
       tipoAtletaId: iscrizioni[0].atleta?.tipoAtletaId,
       tesseramento: dettagliIscrizione.tesseramento,
       iscrizioni

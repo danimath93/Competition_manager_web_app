@@ -41,6 +41,12 @@ const DettaglioIscrizioneAtleta = sequelize.define('DettaglioIscrizioneAtleta', 
     type: DataTypes.BOOLEAN,
     allowNull: true,
     defaultValue: false
+  },
+  isBlackBelt: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    field: 'is_black_belt',
+    comment: 'Grado CN dell\'atleta al momento dell\'iscrizione: fa fede per categorie, costi e risultati della competizione'
   }
 }, {
   tableName: 'dettagli_iscrizione_atleti',

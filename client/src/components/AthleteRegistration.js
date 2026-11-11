@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./styles/AthleteRegistration.css";
-import { TextField, Autocomplete, Typography, Tooltip } from "@mui/material";
+import { TextField, Autocomplete, Typography, Tooltip, Checkbox, FormControlLabel } from "@mui/material";
 import MuiButton from "@mui/material/Button";
 import HorizontalStepper from "./common/HorizontalStepper";
 import ConfirmActionModal from "./common/ConfirmActionModal";
@@ -54,6 +54,11 @@ const AthleteRegistration = ({
     athlete?.certificatoId ? "Certificato presente" : null,
   );
   const [athleteType, setAthleteType] = useState(null);
+  // Grado CN: va confermato ad ogni iscrizione, il valore viene salvato sull'atleta
+  const [isBlackBelt, setIsBlackBelt] = useState(!!athlete?.isBlackBelt);
+  useEffect(() => {
+    setIsBlackBelt(!!athlete?.isBlackBelt);
+  }, [athlete?.id, athlete?.isBlackBelt]);
   const [athleteTypes, setAthleteTypes] = useState([]);
   const [tesseramento, setTesseramento] = useState(null);
   const tesseramentoTypes = [
@@ -363,6 +368,7 @@ const AthleteRegistration = ({
             ...athlete,
             tipoAtleta: athleteType ? athleteType : null,
             tipoAtletaId: athleteType && athleteType.id ? athleteType.id : null,
+            isBlackBelt,
             scadenzaCertificato: endDateCertificate,
           };
 
@@ -540,6 +546,20 @@ const AthleteRegistration = ({
                 />
               )}
               options={athleteTypes}
+            />
+          </div>
+        </div>
+        <div className="data-row">
+          <div className="data-field">
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isBlackBelt}
+                  onChange={(e) => setIsBlackBelt(e.target.checked)}
+                  size="small"
+                />
+              }
+              label="L'atleta è cintura nera (CN)"
             />
           </div>
         </div>

@@ -1,5 +1,7 @@
 const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoAtleta, ConfigTipoCompetizione, Documento, ConfigGruppoEta } = require('../models');
-const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria, AgeGroupConfiguration } = require('../models');
+const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria, AgeGroupConfiguration, ConfigEsperienza } = require('../models');
+const { resolveAgeGroup } = require('../helpers/ageGroups');
+const { validateCategoryConfig, getEligibleCategories } = require('../helpers/competitionCategoryConfig');
 
 const logger = require('../helpers/logger/logger');
 const PDFDocument = require('pdfkit');
@@ -128,11 +130,109 @@ const getCompetizioneById = async (req, res) => {
 
 // Errore con codice HTTP, per interrompere il salvataggio con una risposta specifica
 class HttpError extends Error {
-  constructor(status, message) {
+  constructor(status, message, details = []) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }
+
+const MAX_DETAILS = 20;
+
+/**
+ * Valida la configurazione categorie (Competizione.categoryConfig) e ricava i tipi competizione:
+ * - le fasce età devono appartenere alla configurazione fasce salvata in competizione
+ * - tipi categoria e livelli di esperienza devono esistere ed essere coerenti con il tipo competizione
+ * - con iscrizioni presenti, la modifica non può escludere atleti già iscritti
+ */
+const applyCategoryConfig = async (data, competizioneId = null) => {
+  if (!Object.prototype.hasOwnProperty.call(data, 'categoryConfig')) {
+    return data;
+  }
+
+  const existing = competizioneId
+    ? await Competizione.findByPk(competizioneId, { attributes: ['id', 'ageGroupConfig', 'dataInizio'] })
+    : null;
+  const ageGroupConfig = Object.prototype.hasOwnProperty.call(data, 'ageGroupConfig') ? data.ageGroupConfig : existing?.ageGroupConfig;
+
+  const validation = validateCategoryConfig(data.categoryConfig, ageGroupConfig);
+  if (!validation.valid) {
+    throw new HttpError(400, 'Configurazione categorie non valida', validation.errors);
+  }
+  const categoryConfig = validation.config;
+
+  // Tipi categoria: devono esistere, da essi si ricavano i tipi competizione
+  const categoryTypeIds = categoryConfig.categories.map(c => c.categoryTypeId);
+  const categoryTypes = await ConfigTipoCategoria.findAll({
+    where: { id: categoryTypeIds },
+    attributes: ['id', 'nome', 'tipoCompetizioneId']
+  });
+  const categoryTypeMap = new Map(categoryTypes.map(ct => [ct.id, ct]));
+  const missingTypes = categoryTypeIds.filter(id => !categoryTypeMap.has(id));
+  if (missingTypes.length > 0) {
+    throw new HttpError(400, 'Configurazione categorie non valida', [`Tipi categoria inesistenti: ${missingTypes.join(', ')}`]);
+  }
+  const competitionTypeIds = [...new Set(categoryTypes.map(ct => ct.tipoCompetizioneId))].sort((a, b) => a - b);
+
+  // Livelli di esperienza: solo per i tipi competizione presenti, coerenti con il tipo competizione
+  categoryConfig.experienceLevels = categoryConfig.experienceLevels.filter(l => competitionTypeIds.includes(l.competitionTypeId));
+  const experienceIds = [...new Set(categoryConfig.experienceLevels.flatMap(l => l.experienceIds))];
+  if (experienceIds.length > 0) {
+    const experiences = await ConfigEsperienza.findAll({ where: { id: experienceIds }, attributes: ['id', 'nome', 'tipiCompetizione'] });
+    const experienceMap = new Map(experiences.map(e => [e.id, e]));
+    const experienceErrors = [];
+    categoryConfig.experienceLevels.forEach(level => {
+      level.experienceIds.forEach(id => {
+        const experience = experienceMap.get(id);
+        if (!experience) {
+          experienceErrors.push(`Livello di esperienza ${id} inesistente`);
+        } else if (!(experience.tipiCompetizione || []).includes(level.competitionTypeId)) {
+          experienceErrors.push(`Il livello '${experience.nome}' non è previsto per il tipo competizione ${level.competitionTypeId}`);
+        }
+      });
+    });
+    if (experienceErrors.length > 0) {
+      throw new HttpError(400, 'Configurazione categorie non valida', experienceErrors.slice(0, MAX_DETAILS));
+    }
+  }
+
+  // Con iscrizioni presenti la nuova configurazione deve continuare ad ammettere gli atleti iscritti
+  if (competizioneId) {
+    const registrations = await IscrizioneAtleta.findAll({
+      where: { competizioneId },
+      attributes: ['id', 'atletaId', 'tipoCategoriaId'],
+      include: [{ model: Atleta, as: 'atleta', attributes: ['id', 'nome', 'cognome', 'dataNascita', 'isBlackBelt'] }]
+    });
+    if (registrations.length > 0) {
+      const details = await DettaglioIscrizioneAtleta.findAll({
+        where: { competizioneId },
+        attributes: ['atletaId', 'isBlackBelt']
+      });
+      const blackBeltByAthlete = new Map(details.map(d => [d.atletaId, d.isBlackBelt]));
+      const referenceDate = data.dataInizio || existing?.dataInizio;
+      const conflicts = [];
+      registrations.forEach(registration => {
+        const athlete = registration.atleta;
+        const categoryName = categoryTypeMap.get(registration.tipoCategoriaId)?.nome || `categoria ${registration.tipoCategoriaId}`;
+        const isBlackBelt = blackBeltByAthlete.get(registration.atletaId) ?? athlete?.isBlackBelt;
+        const ageGroup = resolveAgeGroup(athlete?.dataNascita, ageGroupConfig, referenceDate);
+        const eligible = getEligibleCategories(categoryConfig, ageGroup, isBlackBelt);
+        if (!eligible.some(c => c.categoryTypeId === registration.tipoCategoriaId)) {
+          conflicts.push(`${athlete?.cognome} ${athlete?.nome}: non più ammesso a ${categoryName}`);
+        }
+      });
+      if (conflicts.length > 0) {
+        throw new HttpError(409, 'La configurazione escluderebbe atleti già iscritti', conflicts.slice(0, MAX_DETAILS));
+      }
+    }
+  }
+
+  return {
+    ...data,
+    categoryConfig,
+    tipiCompetizione: competitionTypeIds
+  };
+};
 
 /**
  * Prepara i campi fasce età della competizione:
@@ -181,13 +281,13 @@ const applyAgeGroupConfiguration = async (body, competizioneId = null) => {
 // Crea una nuova competizione
 const createCompetizione = async (req, res) => {
   try {
-    const data = await applyAgeGroupConfiguration(req.body);
+    const data = await applyCategoryConfig(await applyAgeGroupConfiguration(req.body));
     const competizione =  await Competizione.create(data);
     logger.info(`Competizione creata - ID: ${competizione.id}, Nome: ${competizione.nome}`);
     res.status(201).json(competizione);
   } catch (error) {
     if (error instanceof HttpError) {
-      return res.status(error.status).json({ error: error.message });
+      return res.status(error.status).json({ error: error.message, details: error.details });
     }
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nella creazione competizione: ${error.errors.map(e => e.message).join(', ')}`);
@@ -208,7 +308,7 @@ const createCompetizione = async (req, res) => {
 const updateCompetizione = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = await applyAgeGroupConfiguration(req.body, id);
+    const data = await applyCategoryConfig(await applyAgeGroupConfiguration(req.body, id), id);
     const [updatedRowsCount] = await Competizione.update(data, {
       where: { id }
     });
@@ -223,7 +323,7 @@ const updateCompetizione = async (req, res) => {
     res.json(updatedCompetizione);
   } catch (error) {
     if (error instanceof HttpError) {
-      return res.status(error.status).json({ error: error.message });
+      return res.status(error.status).json({ error: error.message, details: error.details });
     }
     if (error.name === 'SequelizeValidationError') {
       logger.warn(`Validazione fallita nell'aggiornamento competizione ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);

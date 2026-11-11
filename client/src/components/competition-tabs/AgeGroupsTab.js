@@ -19,7 +19,6 @@ import { useAuth } from '../../context/AuthContext';
 import { loadAgeGroupConfigurations } from '../../api/ageGroupConfigurations';
 import { getBirthDateRange } from '../../utils/ageGroups';
 import { describeAgeGroupMode, formatYmd, getGroupingLabel, todayYmd } from '../AgeGroupConfigurationModal';
-import Button from '../common/Button';
 import '../styles/Layout.css';
 import '../styles/Register.css';
 
@@ -31,7 +30,7 @@ const OPEN_MANAGEMENT_PAGE = '__open_age_groups_page__';
  *
  * @param {number|null} props.value - ID configurazione selezionata
  * @param {function} props.onChange - Riceve il nuovo ID configurazione
- * @param {function} props.onSubmit - Conferma dello step
+ * @param {function} props.onConfigChange - Riceve il JSON della configurazione selezionata (aggiornato ad ogni ricaricamento)
  * @param {Object} props.savedConfiguration - Configurazione di origine salvata in competizione ({ id, name, deletedAt })
  * @param {Object} props.savedConfig - Copia della configurazione salvata in competizione
  * @param {number|null} props.organizerClubId - Club organizzatore della competizione
@@ -41,7 +40,7 @@ const OPEN_MANAGEMENT_PAGE = '__open_age_groups_page__';
 const AgeGroupsTab = ({
   value,
   onChange,
-  onSubmit,
+  onConfigChange,
   savedConfiguration,
   savedConfig,
   organizerClubId,
@@ -96,6 +95,14 @@ const AgeGroupsTab = ({
     previewConfig = selectedConfiguration.config;
   }
   const referenceDate = competitionStartDate || todayYmd();
+
+  // Notifica il configuratore della configurazione effettiva (usata per la tabella categorie)
+  useEffect(() => {
+    if (onConfigChange) {
+      onConfigChange(previewConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(previewConfig)]);
 
   const renderOption = (configuration) => (
     <MenuItem key={configuration.id} value={configuration.id}>
@@ -175,12 +182,6 @@ const AgeGroupsTab = ({
           </Table>
         </Paper>
       )}
-
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-        <Button size="l" variant="primary" onClick={onSubmit} disabled={!value}>
-          Conferma
-        </Button>
-      </div>
     </div>
   );
 };

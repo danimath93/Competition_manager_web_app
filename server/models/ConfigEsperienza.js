@@ -28,6 +28,15 @@ const ConfigEsperienza = sequelize.define('ConfigEsperienza', {
     allowNull: true,
     field: 'id_config_gruppo_esperienza',
   },
+  belt: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    defaultValue: 'all',
+    validate: {
+      isIn: [['all', 'whiteBelt', 'blackBelt']]
+    },
+    comment: 'Cintura a cui si applica il livello: all | whiteBelt (solo CB) | blackBelt (solo CN). Filtro in fase di iscrizione'
+  },
   descrizione: {
     type: DataTypes.TEXT,
     allowNull: true

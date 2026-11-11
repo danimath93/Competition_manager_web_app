@@ -3,11 +3,10 @@ import { TextField } from '@mui/material';
 import { CompetitionStatus, CompetitionLevel } from '../../constants/enums/CompetitionEnums';
 import { loadCompetitionTypes } from '../../api/config';
 import { TextInput } from '../common';
-import Button from '../common/Button';
 import '../styles/Layout.css';
 import '../styles/Register.css';
 
-const GeneralInfoTab = ({ formData, onChange, onSubmit }) => {
+const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
   const [competitionTypes, setCompetitionTypes] = useState([]);
 
   useEffect(() => {
@@ -29,7 +28,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit }) => {
   };
 
   return (
-    <form onSubmit={onSubmit} className="register-form" style={{ maxWidth: "1024px" }}>
+    <form id={formId} onSubmit={onSubmit} className="register-form" style={{ maxWidth: "1024px" }}>
       <h6 className="text-primary text-center register-section-title">Definizione competizione</h6>
       
       <div className="register-form-grid">
@@ -186,12 +185,6 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit }) => {
           fullWidth
         />
 
-      </div>
-      {/* Pulsante Conferma */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
-        <Button type="submit" size="l" variant="primary">
-          Salva competizione
-        </Button>
       </div>
     </form>
   );

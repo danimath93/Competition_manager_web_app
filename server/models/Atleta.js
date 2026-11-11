@@ -52,6 +52,13 @@ const Atleta = sequelize.define('Atleta', {
     },
     comment: 'livello generale dell\'atleta'
   },
+  isBlackBelt: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'is_black_belt',
+    comment: 'Grado di cintura nera (CN) attuale. Confermato ad ogni iscrizione e copiato nel dettaglio iscrizione'
+  },
   telefono: {
     type: DataTypes.STRING,
     allowNull: true
