@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   TextField,
   Button,
@@ -7,13 +7,13 @@ import {
   Box,
   Checkbox,
   FormControlLabel,
-} from '@mui/material';
-import { Delete as DeleteIcon } from '@mui/icons-material';
-import { loadAllClubs } from '../api/clubs';
-import AuthComponent from './AuthComponent';
-import DrawerModal from './common/DrawerModal';
-import ConfirmActionModal from './common/ConfirmActionModal';
-import './common/DrawerModal.css';
+} from "@mui/material";
+import { Delete as DeleteIcon } from "@mui/icons-material";
+import { loadAllClubs } from "../api/clubs";
+import AuthComponent from "./AuthComponent";
+import DrawerModal from "./common/DrawerModal";
+import ConfirmActionModal from "./common/ConfirmActionModal";
+import "./common/DrawerModal.css";
 
 const AthleteModal = ({
   open,
@@ -26,9 +26,12 @@ const AthleteModal = ({
 }) => {
   const [formData, setFormData] = React.useState({});
   const [clubs, setClubs] = React.useState([]);
-  const [clubName, setClubName] = React.useState(athlete?.club?.denominazione || '');
+  const [clubName, setClubName] = React.useState(
+    athlete?.club?.denominazione || "",
+  );
   const [clubNames, setClubNames] = React.useState([]);
-  const [isDeleteAthleteConfirmModalOpen, setIsDeleteAthleteConfirmModalOpen] = React.useState(false);
+  const [isDeleteAthleteConfirmModalOpen, setIsDeleteAthleteConfirmModalOpen] =
+    React.useState(false);
   const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
@@ -38,15 +41,15 @@ const AthleteModal = ({
       let club = null;
       if (userClubId) {
         club = clubs.find((c) => c.id === userClubId) || null;
-        setClubName(club?.denominazione || '');
+        setClubName(club?.denominazione || "");
       }
 
       setFormData({
-        nome: '',
-        cognome: '',
-        dataNascita: '',
+        nome: "",
+        cognome: "",
+        dataNascita: "",
         isBlackBelt: false,
-        sesso: '',
+        sesso: "",
         codiceFiscale: null,
         club: club,
         clubId: club ? club.id : null,
@@ -64,8 +67,8 @@ const AthleteModal = ({
         setClubs(clubsData);
         setClubNames(clubNames);
       } catch (error) {
-        console.error('Errore nel caricamento dei dati:', error);
-        setError('Errore nel caricamento dei dati');
+        console.error("Errore nel caricamento dei dati:", error);
+        setError("Errore nel caricamento dei dati");
       }
     };
 
@@ -76,25 +79,29 @@ const AthleteModal = ({
     const name = e.target.name;
     const value = e.target.value;
 
-    if (name === 'numeroTessera') {
+    if (name === "numeroTessera") {
       // Accetta solo numeri e massimo 8 caratteri
       if (/^\d{0,8}$/.test(value)) {
-        setFormData({ ...formData, [name]: value === '' ? null : value });
+        setFormData({ ...formData, [name]: value === "" ? null : value });
       }
     } else {
-      setFormData({ ...formData, [name]: value === '' ? null : value });
+      setFormData({ ...formData, [name]: value === "" ? null : value });
     }
   };
 
   const handleClubSelectChange = (value) => {
     setClubName(value);
     const selectedClub = clubs.find((club) => club.denominazione === value);
-    setFormData({ ...formData, clubId: selectedClub?.id || null, club: selectedClub || null });
-  }
+    setFormData({
+      ...formData,
+      clubId: selectedClub?.id || null,
+      club: selectedClub || null,
+    });
+  };
 
   const handleGenderChange = (value) => {
-    setFormData({ ...formData, sesso: value || '' });
-  }
+    setFormData({ ...formData, sesso: value || "" });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,7 +130,13 @@ const AthleteModal = ({
       title="Atleta"
       badge={formData.eta || athlete?.eta}
       footer={
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
           <Box>
             {isEditMode && onDelete && (
               <Button
@@ -136,15 +149,12 @@ const AthleteModal = ({
               </Button>
             )}
           </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 2 }}>
             <Button onClick={onClose} variant="outlined">
               Annulla
             </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-            >
-              {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
+            <Button onClick={handleSubmit} variant="contained">
+              {isEditMode ? "Salva Modifiche" : "Aggiungi"}
             </Button>
           </Box>
         </Box>
@@ -158,7 +168,7 @@ const AthleteModal = ({
             <TextField
               name="nome"
               label="Nome"
-              value={formData.nome || ''}
+              value={formData.nome || ""}
               onChange={handleChange}
               fullWidth
               required
@@ -167,7 +177,7 @@ const AthleteModal = ({
             <TextField
               name="cognome"
               label="Cognome"
-              value={formData.cognome || ''}
+              value={formData.cognome || ""}
               onChange={handleChange}
               fullWidth
               required
@@ -180,7 +190,7 @@ const AthleteModal = ({
               name="dataNascita"
               label="Data di Nascita"
               type="date"
-              value={formData.dataNascita || ''}
+              value={formData.dataNascita || ""}
               onChange={handleChange}
               fullWidth
               required
@@ -192,19 +202,14 @@ const AthleteModal = ({
 
             <Autocomplete
               id="gender-select"
-              value={formData.sesso || ''}
+              value={formData.sesso || ""}
               getOptionLabel={(sesso) => sesso}
               onChange={(event, value) => handleGenderChange(value)}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Sesso"
-                  size="small"
-                  required
-                />
+                <TextField {...params} label="Sesso" size="small" required />
               )}
-              options={['M', 'F']}
+              options={["M", "F"]}
             />
           </div>
           {/* <TextField
@@ -221,10 +226,10 @@ const AthleteModal = ({
 
       {/* Informazioni federazione */}
       <div className="drawer-section">
-        <h3 className="drawer-section-title">Info: Viet Vo Dao Italia</h3>
+        <h3 className="drawer-section-title">Info: Livello atleta</h3>
         <div className="drawer-section-content">
           <div className="drawer-fields-row-2">
-            <TextField
+            {/* <TextField
               name="numeroTessera"
               label="Numero Tessera"
               value={formData.numeroTessera || ''}
@@ -232,13 +237,15 @@ const AthleteModal = ({
               required
               fullWidth
               size="small"
-            />
+            /> */}
             <FormControlLabel
               control={
                 <Checkbox
                   name="isBlackBelt"
                   checked={!!formData.isBlackBelt}
-                  onChange={(e) => setFormData({ ...formData, isBlackBelt: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isBlackBelt: e.target.checked })
+                  }
                   size="small"
                 />
               }
@@ -246,7 +253,7 @@ const AthleteModal = ({
             />
           </div>
 
-          <AuthComponent requiredRoles={['admin', 'superAdmin']}>
+          <AuthComponent requiredRoles={["admin", "superAdmin"]}>
             <Autocomplete
               id="club-select"
               value={clubName}
@@ -255,18 +262,17 @@ const AthleteModal = ({
               onChange={(event, value) => handleClubSelectChange(value)}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Club"
-                  size="small"
-                  required
-                />
+                <TextField {...params} label="Club" size="small" required />
               )}
-              options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
+              options={
+                clubNames
+                  ? [...clubNames].sort((a, b) => a.localeCompare(b))
+                  : []
+              }
             />
           </AuthComponent>
 
-          <AuthComponent requiredRoles={['club']}>
+          <AuthComponent requiredRoles={["club"]}>
             <TextField
               id="club-select-readonly"
               label="Club"
@@ -280,20 +286,20 @@ const AthleteModal = ({
               disabled={false}
             />
           </AuthComponent>
-
-                  </div>
+        </div>
       </div>
 
       {/* Dati aggiuntivi nascosti inizialmente */}
       <div className="drawer-section">
-        <h3 className="drawer-section-title">Info: Tesseramento assicurativo</h3>
+        <h3 className="drawer-section-title">
+          Info: Tesseramento assicurativo
+        </h3>
         <div className="drawer-section-content">
-
           <TextField
             name="scadenzaCertificato"
             label="Scadenza Certificato Medico"
             type="date"
-            value={formData.scadenzaCertificato || ''}
+            value={formData.scadenzaCertificato || ""}
             onChange={handleChange}
             fullWidth
             required
@@ -318,16 +324,18 @@ const AthleteModal = ({
           title="Conferma Eliminazione"
           message="Sei sicuro di voler eliminare l'atleta selezionato?"
           primaryButton={{
-            text: 'Elimina',
-            onClick: async () => { await handleDelete(); setIsDeleteAthleteConfirmModalOpen(false); },
+            text: "Elimina",
+            onClick: async () => {
+              await handleDelete();
+              setIsDeleteAthleteConfirmModalOpen(false);
+            },
           }}
           secondaryButton={{
-            text: 'Annulla',
+            text: "Annulla",
             onClick: () => setIsDeleteAthleteConfirmModalOpen(false),
           }}
         />
       )}
-
     </DrawerModal>
   );
 };
