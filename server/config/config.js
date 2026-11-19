@@ -1,11 +1,11 @@
 module.exports = {
   development: {
-    logging: console.log
+    logging: console.log,
   },
   test: {
-    logging: false
+    logging: false,
   },
   production: {
-    logging: false
-  }
+    logging: false,
+  },
 };

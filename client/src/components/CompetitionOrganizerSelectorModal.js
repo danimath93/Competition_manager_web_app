@@ -1,27 +1,16 @@
-import React from "react";
-import { useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  Alert,
-  Autocomplete,
-  TextField,
-} from "@mui/material";
-import { loadAllClubs } from "../api/clubs";
+import React from 'react';
+import { useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, Alert, Autocomplete, TextField } from '@mui/material';
+import { loadAllClubs } from '../api/clubs';
 
 const CompetitionOrganizerSelectorModal = ({ open, onClose, onSubmit, organizerId }) => {
-
   const [clubs, setClubs] = React.useState([]);
   const [clubNames, setClubNames] = React.useState([]);
   const [clubName, setClubName] = React.useState('');
   const [selectedClubOrganizer, setSelectedClubOrganizer] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
-  
+
   useEffect(() => {
     const fetchClubs = async () => {
       try {
@@ -50,7 +39,7 @@ const CompetitionOrganizerSelectorModal = ({ open, onClose, onSubmit, organizerI
     setClubName(value);
     const selectedClub = clubs.find((club) => club.denominazione === value);
     setSelectedClubOrganizer(selectedClub ? selectedClub.id : null);
-  }
+  };
 
   const handleConfirmOrganizer = () => {
     handleSubmit(selectedClubOrganizer);
@@ -61,15 +50,8 @@ const CompetitionOrganizerSelectorModal = ({ open, onClose, onSubmit, organizerI
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleCloseDialog}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle>
-        Imposta un club organizzatore della competizione
-      </DialogTitle>
+    <Dialog open={open} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <DialogTitle>Imposta un club organizzatore della competizione</DialogTitle>
       <DialogContent>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -77,34 +59,22 @@ const CompetitionOrganizerSelectorModal = ({ open, onClose, onSubmit, organizerI
           </Alert>
         )}
         <FormControl fullWidth sx={{ mt: 2 }}>
-            <Autocomplete
-              id="club-select"
-              value={clubName}
-              sx={{ minWidth: 350 }}
-              groupBy={(club) => club.charAt(0).toUpperCase()}
-              getOptionLabel={(club) => club}
-              onChange={(event, value) => handleClubSelectChange(value)}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Club"
-                  fullWidth
-                />
-              )}
-              options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
-            />
+          <Autocomplete
+            id="club-select"
+            value={clubName}
+            sx={{ minWidth: 350 }}
+            groupBy={(club) => club.charAt(0).toUpperCase()}
+            getOptionLabel={(club) => club}
+            onChange={(event, value) => handleClubSelectChange(value)}
+            isOptionEqualToValue={(option, value) => option === value}
+            renderInput={(params) => <TextField {...params} label="Club" fullWidth />}
+            options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
+          />
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCloseDialog}>
-          Annulla
-        </Button>
-        <Button
-          onClick={handleConfirmOrganizer}
-          variant="contained"
-          disabled={loading || !selectedClubOrganizer}
-        >
+        <Button onClick={handleCloseDialog}>Annulla</Button>
+        <Button onClick={handleConfirmOrganizer} variant="contained" disabled={loading || !selectedClubOrganizer}>
           Conferma
         </Button>
       </DialogActions>

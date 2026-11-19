@@ -28,7 +28,7 @@ export const createAthlete = async (athleteData) => {
     const response = await axios.post('/atleti/', athleteData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante la creazione dell\'atleta:', error);
+    console.error("Errore durante la creazione dell'atleta:", error);
     throw error;
   }
 };
@@ -39,7 +39,7 @@ export const updateAthlete = async (athleteId, athleteData) => {
     const response = await axios.put(`/atleti/${athleteId}/`, athleteData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'aggiornamento dell\'atleta:', error);
+    console.error("Errore durante l'aggiornamento dell'atleta:", error);
     throw error;
   }
 };
@@ -49,8 +49,7 @@ export const deleteAthlete = async (athleteId) => {
   try {
     await axios.delete(`/atleti/${athleteId}/`);
   } catch (error) {
-    console.error('Errore durante l\'eliminazione dell\'atleta:', error);
+    console.error("Errore durante l'eliminazione dell'atleta:", error);
     throw error;
   }
 };
-

@@ -41,8 +41,8 @@ router.get('/', (req, res) => {
       competizioni: '/api/competizioni',
       atleti: '/api/atleti',
       giudic: '/api/giudici',
-      health: '/api/health'
-    }
+      health: '/api/health',
+    },
   });
 });
 

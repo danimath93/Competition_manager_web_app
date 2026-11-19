@@ -19,12 +19,7 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
-import { 
-  EmojiEvents as TrophyIcon,
-  Close as CloseIcon,
-  Print as PrintIcon,
-  GetApp as ExportIcon
-} from '@mui/icons-material';
+import { EmojiEvents as TrophyIcon, Close as CloseIcon, Print as PrintIcon, GetApp as ExportIcon } from '@mui/icons-material';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
 
 const { getCategoriesByCompetizione, printCategories, exportCategories } = await import('../api/categories');
@@ -41,8 +36,8 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       gold: 0,
       silver: 0,
       bronze: 0,
-      total: 0
-    }
+      total: 0,
+    },
   });
 
   useEffect(() => {
@@ -57,7 +52,7 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       setError(null);
 
       const categoriesData = await getCategoriesByCompetizione(competitionId);
-      
+
       // Calculate summary
       const totalCategories = categoriesData.length;
       let totalAthletes = 0;
@@ -65,7 +60,7 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       let silverMedals = 0;
       let bronzeMedals = 0;
 
-      categoriesData.forEach(category => {
+      categoriesData.forEach((category) => {
         const athleteCount = category.maxPartecipanti || 0;
         totalAthletes += athleteCount;
 
@@ -79,14 +74,16 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
             } else {
               bronzeMedals += 1;
             }
-          } else if (athleteCount === 3) { 
+          } else if (athleteCount === 3) {
             goldMedals += 1;
             silverMedals += 1;
             bronzeMedals += 1;
-          } else if (athleteCount === 2) { // No bronze medals
+          } else if (athleteCount === 2) {
+            // No bronze medals
             goldMedals += 1;
             silverMedals += 1;
-          } else if (athleteCount === 1) { // No silver or bronze medals
+          } else if (athleteCount === 1) {
+            // No silver or bronze medals
             goldMedals += 1;
           }
         }
@@ -100,10 +97,9 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
           gold: goldMedals,
           silver: silverMedals,
           bronze: bronzeMedals,
-          total: goldMedals + silverMedals + bronzeMedals
-        }
+          total: goldMedals + silverMedals + bronzeMedals,
+        },
       });
-
     } catch (err) {
       console.error('Errore nel caricamento del riepilogo categorie:', err);
       setError('Impossibile caricare il riepilogo delle categorie');
@@ -148,7 +144,7 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       setPrinting(true);
       await exportCategories(competitionId);
     } catch (err) {
-      console.error('Errore nell\'export:', err);
+      console.error("Errore nell'export:", err);
       setError('Impossibile esportare le categorie: ' + err.message);
     } finally {
       setPrinting(false);
@@ -156,12 +152,7 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -208,22 +199,11 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
                   Medaglie Necessarie
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <Chip 
-                    label={`🥇 ${summary.medals.gold}`} 
-                    sx={{ bgcolor: '#FFD700', fontWeight: 'bold' }}
-                  />
-                  <Chip 
-                    label={`🥈 ${summary.medals.silver}`} 
-                    sx={{ bgcolor: '#C0C0C0', fontWeight: 'bold' }}
-                  />
-                  <Chip 
-                    label={`🥉 ${summary.medals.bronze}`} 
-                    sx={{ bgcolor: '#CD7F32', color: 'white', fontWeight: 'bold' }}
-                  />
+                  <Chip label={`🥇 ${summary.medals.gold}`} sx={{ bgcolor: '#FFD700', fontWeight: 'bold' }} />
+                  <Chip label={`🥈 ${summary.medals.silver}`} sx={{ bgcolor: '#C0C0C0', fontWeight: 'bold' }} />
+                  <Chip label={`🥉 ${summary.medals.bronze}`} sx={{ bgcolor: '#CD7F32', color: 'white', fontWeight: 'bold' }} />
                   <Divider orientation="vertical" flexItem />
-                  <Typography variant="h6">
-                    Tot: {summary.medals.total}
-                  </Typography>
+                  <Typography variant="h6">Tot: {summary.medals.total}</Typography>
                 </Box>
               </Paper>
             </Box>
@@ -237,9 +217,13 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
                   <TableRow sx={{ bgcolor: 'grey.100' }}>
                     <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Nome Categoria</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>N° Iscritti</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                      N° Iscritti
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Tipo Competizione</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Medaglie (🥇/🥈/🥉)</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                      Medaglie (🥇/🥈/🥉)
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -255,15 +239,14 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
                     categories.map((category, index) => {
                       const athleteCount = category.maxPartecipanti || 0;
                       const medals = getMedalInfo(athleteCount, category.tipoCategoria?.tipoCompetizione?.id);
-                      
+
                       return (
-                        <TableRow 
+                        <TableRow
                           key={category.id}
-                          sx={{ 
+                          sx={{
                             '&:hover': { bgcolor: 'action.hover' },
-                            bgcolor: athleteCount === 0 ? 'error.50' : 'inherit'
-                          }}
-                        >
+                            bgcolor: athleteCount === 0 ? 'error.50' : 'inherit',
+                          }}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -271,16 +254,10 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
                             </Typography>
                           </TableCell>
                           <TableCell align="center">
-                            <Chip 
-                              label={athleteCount} 
-                              size="small"
-                              color={athleteCount === 0 ? 'error' : 'primary'}
-                            />
+                            <Chip label={athleteCount} size="small" color={athleteCount === 0 ? 'error' : 'primary'} />
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
-                              {category.tipoCategoria?.tipoCompetizione?.nome || 'N/D'}
-                            </Typography>
+                            <Typography variant="body2">{category.tipoCategoria?.tipoCompetizione?.nome || 'N/D'}</Typography>
                           </TableCell>
                           <TableCell align="center">
                             <Typography variant="body2">
@@ -299,20 +276,10 @@ const CategorySummaryModal = ({ open, onClose, competitionId }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button 
-          onClick={handleExport} 
-          variant="outlined"
-          startIcon={<ExportIcon />}
-          disabled={printing || loading}
-        >
+        <Button onClick={handleExport} variant="outlined" startIcon={<ExportIcon />} disabled={printing || loading}>
           {printing ? 'Esportazione in corso...' : 'Esporta'}
         </Button>
-        <Button 
-          onClick={handlePrint} 
-          variant="outlined"
-          startIcon={<PrintIcon />}
-          disabled={printing || loading}
-        >
+        <Button onClick={handlePrint} variant="outlined" startIcon={<PrintIcon />} disabled={printing || loading}>
           {printing ? 'Stampa in corso...' : 'Stampa'}
         </Button>
         <Button onClick={onClose} variant="contained">

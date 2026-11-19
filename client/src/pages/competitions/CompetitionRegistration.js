@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Alert,
-  Container,
-  CircularProgress,
-  Chip,
-} from '@mui/material';
+import { Box, Alert, Container, CircularProgress, Chip } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import { ArrowBack, Euro as EuroIcon } from '@mui/icons-material';
 import { FaTrophy } from 'react-icons/fa';
@@ -21,7 +15,7 @@ import {
   editClubRegistration,
   getClubRegistrationCosts,
   deleteAthleteRegistrations,
-  downloadClubRegistrationSummary
+  downloadClubRegistrationSummary,
 } from '../../api/registrations';
 import ClubAthletesList from '../../components/ClubAthletesList';
 import RegisteredAthletesTable from '../../components/RegisteredAthletesTable';
@@ -71,8 +65,8 @@ const CompetitionRegistration = () => {
           setClubRegistration(null);
         }
       } catch (err) {
-        console.error('Errore durante la modifica dell\'iscrizione:', err);
-        setError('Errore durante la modifica dell\'iscrizione');
+        console.error("Errore durante la modifica dell'iscrizione:", err);
+        setError("Errore durante la modifica dell'iscrizione");
       }
     };
   };
@@ -87,7 +81,7 @@ const CompetitionRegistration = () => {
       // Ricarica le iscrizioni
       await refreshRegistrations();
     } catch (err) {
-      setError('Errore durante la rimozione dell\'atleta: ' + (err.response?.data?.error || err.message));
+      setError("Errore durante la rimozione dell'atleta: " + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
@@ -120,10 +114,7 @@ const CompetitionRegistration = () => {
   // Funzione per aggiornare la lista degli atleti iscritti
   const refreshRegistrations = async () => {
     try {
-      const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(
-        competitionId,
-        user.clubId
-      );
+      const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(competitionId, user.clubId);
       setRegisteredAthletes(registrationsData);
 
       if (clubRegistration == null) {
@@ -172,7 +163,7 @@ const CompetitionRegistration = () => {
       setClubRegistration(clubRegData);
       setIsClubRegistered(clubRegData.stato === 'Confermata');
     } catch (err) {
-      console.error('Errore nel ricaricamento dell\'iscrizione del club:', err);
+      console.error("Errore nel ricaricamento dell'iscrizione del club:", err);
     }
   };
 
@@ -180,7 +171,7 @@ const CompetitionRegistration = () => {
     return registeredAthletes.length > 0 && !isClubRegistered;
   };
 
-    // Funzione per scaricare il PDF di riepilogo dal backend
+  // Funzione per scaricare il PDF di riepilogo dal backend
   const downloadRegistrationPDF = async () => {
     try {
       await downloadClubRegistrationSummary(user.clubId, competitionId);
@@ -190,7 +181,7 @@ const CompetitionRegistration = () => {
     }
   };
 
-    // Carica i dati iniziali
+  // Carica i dati iniziali
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -212,10 +203,7 @@ const CompetitionRegistration = () => {
         setClubAthletes(athletesData);
 
         // Carica gli atleti già iscritti alla competizione per questo club
-        const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(
-          competitionId,
-          user.clubId
-        );
+        const registrationsData = await loadAthleteRegistrationsByCompetitionAndClub(competitionId, user.clubId);
         setRegisteredAthletes(registrationsData);
 
         // Carica o crea l'iscrizione del club
@@ -242,7 +230,6 @@ const CompetitionRegistration = () => {
             setIsClubRegistered(false);
           }
         }
-
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
         setError('Errore nel caricamento dei dati della competizione');
@@ -278,11 +265,7 @@ const CompetitionRegistration = () => {
         <Alert severity="error" sx={{ mt: 2 }}>
           {error}
         </Alert>
-        <MuiButton
-          startIcon={<ArrowBack />}
-          onClick={handleGoBack}
-          sx={{ mt: 2 }}
-        >
+        <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack} sx={{ mt: 2 }}>
           Torna alle Competizioni
         </MuiButton>
       </Container>
@@ -296,16 +279,13 @@ const CompetitionRegistration = () => {
         title="Competizioni"
         subtitle={`Iscrizione alla competizione: ${competition ? competition.nome : ''}${competition && competition.luogo ? ` - ${competition.luogo}` : ''}`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna alle Competizioni
       </MuiButton>
 
       {/* Contenuto della pagina */}
-      <div className="page-content" style={{ display: 'flex', flexDirection: 'column'}}>
-        <div className={isClubRegistered ? "page-grid-full" : "page-grid-25-75"}>
+      <div className="page-content" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className={isClubRegistered ? 'page-grid-full' : 'page-grid-25-75'}>
           {!isClubRegistered && (
             <div className="page-card-with-external-title page-card-compact">
               <h2 className="page-card-external-title">Atleti del Club</h2>
@@ -344,40 +324,30 @@ const CompetitionRegistration = () => {
                 alignItems: { xs: 'stretch', md: 'center' },
                 gap: 2,
                 mt: 4,
-                flexShrink: 0
-              }}
-            >
+                flexShrink: 0,
+              }}>
               {/* Costi totali */}
               <Box display="flex" alignItems="center" gap={2}>
                 {costLoading ? (
                   <CircularProgress size={20} />
-                ) : totalCost !== null && (
-                    <Chip
-                      icon={<EuroIcon />}
-                      label={`Totale: ${totalCost.toFixed(2)} €`}
-                      color="info"
-                      size="large"
-                      sx={{ fontSize: '1rem', py: 2.5, px: 1 }}
-                    />
+                ) : (
+                  totalCost !== null && (
+                    <Chip icon={<EuroIcon />} label={`Totale: ${totalCost.toFixed(2)} €`} color="info" size="large" sx={{ fontSize: '1rem', py: 2.5, px: 1 }} />
+                  )
                 )}
                 {/* Alert conferma iscrizione */}
                 {isClubRegistered && (
-                  <Alert severity="success" sx={{ ml: "auto" }}>
+                  <Alert severity="success" sx={{ ml: 'auto' }}>
                     Iscrizione confermata il {clubRegistration?.dataConferma ? new Date(clubRegistration.dataConferma).toLocaleDateString() : ''}
                   </Alert>
                 )}
               </Box>
 
-
               {/* Bottoni azioni */}
               <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
                 {/* Bottone finalizza iscrizione - visibile solo se atleti iscritti */}
                 {!isClubRegistered && (
-                  <Button
-                    variant='success'
-                    onClick={handleOpenFinalizationDrawer}
-                    disabled={!canConfirmRegistration()}
-                  >
+                  <Button variant="success" onClick={handleOpenFinalizationDrawer} disabled={!canConfirmRegistration()}>
                     Finalizza Iscrizione
                   </Button>
                 )}
@@ -385,15 +355,8 @@ const CompetitionRegistration = () => {
                 {/* Iscrizione confermata */}
                 {isClubRegistered && (
                   <Box display="inline-flex" alignItems="center" gap={3}>
-                    <Button
-                      onClick={handleEditRegistration()}
-                    >
-                      Modifica Iscrizione
-                    </Button>
-                    <Button
-                      variant='info'
-                      onClick={handleDownloadClubRegistrationSummary}
-                    >
+                    <Button onClick={handleEditRegistration()}>Modifica Iscrizione</Button>
+                    <Button variant="info" onClick={handleDownloadClubRegistrationSummary}>
                       Riepilogo Iscrizione
                     </Button>
                   </Box>
@@ -410,26 +373,23 @@ const CompetitionRegistration = () => {
               totalCost={totalCost}
               onFinalizationSuccess={handleFinalizationSuccess}
             />
-            </div>
+          </div>
         </div>
       </div>
 
-      <Box sx={{ p: 1, flexShrink: 0 }}>
-        {error && (
-          <Alert severity="error">
-            {error}
-          </Alert>
-        )}
-      </Box>
+      <Box sx={{ p: 1, flexShrink: 0 }}>{error && <Alert severity="error">{error}</Alert>}</Box>
 
-      <ConfirmActionModal 
+      <ConfirmActionModal
         title="Iscrizione Confermata"
         message="L'iscrizione del club a questa competizione è stata confermata con successo, scaricare il riepilogo dell'iscrizione effettuata?"
         open={isDownloadSummaryModalOpen}
         onClose={() => setIsDownloadSummaryModalOpen(false)}
         primaryButton={{
           text: 'Scarica',
-          onClick: async () => { await handleDownloadClubRegistrationSummary(); setIsDownloadSummaryModalOpen(false); },
+          onClick: async () => {
+            await handleDownloadClubRegistrationSummary();
+            setIsDownloadSummaryModalOpen(false);
+          },
         }}
         secondaryButton={{
           text: 'Chiudi',

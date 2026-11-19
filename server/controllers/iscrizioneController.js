@@ -1,4 +1,16 @@
-const { IscrizioneAtleta, IscrizioneClub, Atleta, Categoria, Club, Competizione, ConfigTipoCategoria, ConfigTipoCompetizione, ConfigEsperienza, Documento, DettaglioIscrizioneAtleta } = require('../models');
+const {
+  IscrizioneAtleta,
+  IscrizioneClub,
+  Atleta,
+  Categoria,
+  Club,
+  Competizione,
+  ConfigTipoCategoria,
+  ConfigTipoCompetizione,
+  ConfigEsperienza,
+  Documento,
+  DettaglioIscrizioneAtleta,
+} = require('../models');
 const { calculateAthleteCost } = require('../helpers/costCalculator');
 const { checkCategoryLimits } = require('../helpers/categoryLimits');
 const { resolveAgeGroup } = require('../helpers/ageGroups');
@@ -20,9 +32,9 @@ const getIscrizioniByCompetizione = async (req, res) => {
             {
               model: Club,
               as: 'club',
-              attributes: { exclude: ['logo'] }
-            }
-          ]
+              attributes: { exclude: ['logo'] },
+            },
+          ],
         },
         {
           model: ConfigTipoCategoria,
@@ -32,39 +44,39 @@ const getIscrizioniByCompetizione = async (req, res) => {
             {
               model: ConfigTipoCompetizione,
               as: 'tipoCompetizione',
-              attributes: { include: ['id', 'nome', 'descrizione'] }
-            }
-          ]
+              attributes: { include: ['id', 'nome', 'descrizione'] },
+            },
+          ],
         },
         {
           model: ConfigEsperienza,
           as: 'esperienza',
-          required: false
-        }
+          required: false,
+        },
       ],
       order: [
         [{ model: Atleta, as: 'atleta' }, 'cognome', 'ASC'],
-        [{ model: Atleta, as: 'atleta' }, 'nome', 'ASC']
-      ]
+        [{ model: Atleta, as: 'atleta' }, 'nome', 'ASC'],
+      ],
     });
 
     // Aggiungiamo i dettagli delle iscrizioni, nuova tabella per gestire costi e tesseramenti
-    iscrizioniEspanse = iscrizioni.map(iscrizione => iscrizione.dataValues);
+    iscrizioniEspanse = iscrizioni.map((iscrizione) => iscrizione.dataValues);
     const dettagliIscrizioni = await DettaglioIscrizioneAtleta.findAll({
       where: {
-        atletaId: iscrizioniEspanse.map(i => i.atletaId),
-        competizioneId
-      }
+        atletaId: iscrizioniEspanse.map((i) => i.atletaId),
+        competizioneId,
+      },
     });
 
-    iscrizioniEspanse = iscrizioniEspanse.map(iscrizione => {
-      const dettaglio = dettagliIscrizioni.find(d => d.atletaId === iscrizione.atletaId);
+    iscrizioniEspanse = iscrizioniEspanse.map((iscrizione) => {
+      const dettaglio = dettagliIscrizioni.find((d) => d.atletaId === iscrizione.atletaId);
       return {
         ...iscrizione,
         quota: dettaglio ? parseFloat(dettaglio.quota) || 0 : 0,
         verificato: dettaglio ? dettaglio.verificato : false,
         tesseramento: dettaglio ? dettaglio.tesseramento : null,
-        isBlackBelt: dettaglio ? dettaglio.isBlackBelt : null
+        isBlackBelt: dettaglio ? dettaglio.isBlackBelt : null,
       };
     });
 
@@ -73,7 +85,7 @@ const getIscrizioniByCompetizione = async (req, res) => {
     logger.error(`Errore nel recupero delle iscrizioni per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -91,7 +103,7 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
         {
           model: Atleta,
           as: 'atleta',
-          where: { clubId }
+          where: { clubId },
         },
         {
           model: ConfigTipoCategoria,
@@ -99,41 +111,43 @@ const getIscrizioniByCompetitionAndClub = async (req, res) => {
           include: [
             {
               model: ConfigTipoCompetizione,
-              as: 'tipoCompetizione'
-            }
-          ]
+              as: 'tipoCompetizione',
+            },
+          ],
         },
         {
           model: ConfigEsperienza,
           as: 'esperienza',
-          required: false
-        }
-      ]
+          required: false,
+        },
+      ],
     });
 
     // Aggiungiamo i dettagli delle iscrizioni, nuova tabella per gestire costi e tesseramenti
-    iscrizioniEspanse = iscrizioni.map(iscrizione => iscrizione.dataValues);
+    iscrizioniEspanse = iscrizioni.map((iscrizione) => iscrizione.dataValues);
     const dettagliIscrizioni = await DettaglioIscrizioneAtleta.findAll({
       where: {
-        atletaId: iscrizioniEspanse.map(i => i.atletaId),
-        competizioneId
-      }
+        atletaId: iscrizioniEspanse.map((i) => i.atletaId),
+        competizioneId,
+      },
     });
 
-    iscrizioniEspanse = iscrizioniEspanse.map(iscrizione => {
-      const dettagli = dettagliIscrizioni.find(d => d.atletaId === iscrizione.atletaId);
+    iscrizioniEspanse = iscrizioniEspanse.map((iscrizione) => {
+      const dettagli = dettagliIscrizioni.find((d) => d.atletaId === iscrizione.atletaId);
       return {
         ...iscrizione,
-        dettagliIscrizione: dettagli || null
+        dettagliIscrizione: dettagli || null,
       };
     });
 
     res.status(200).json(iscrizioniEspanse);
   } catch (error) {
-    logger.error(`Errore nel recupero delle iscrizioni del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel recupero delle iscrizioni del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni del club',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -152,17 +166,17 @@ const checkRegistrationEligibility = async (competizione, atleta, isBlackBelt, c
 
   const ageGroup = resolveAgeGroup(atleta.dataNascita, competizione.ageGroupConfig, competizione.dataInizio);
   if (!ageGroup) {
-    return 'L\'atleta non rientra in nessuna fascia d\'età prevista dalla competizione';
+    return "L'atleta non rientra in nessuna fascia d'età prevista dalla competizione";
   }
 
-  const eligibleIds = getEligibleCategories(categoryConfig, ageGroup, isBlackBelt).map(c => c.categoryTypeId);
+  const eligibleIds = getEligibleCategories(categoryConfig, ageGroup, isBlackBelt).map((c) => c.categoryTypeId);
   const categoryTypes = await ConfigTipoCategoria.findAll({
     where: { id: categoryIds },
-    attributes: ['id', 'nome', 'tipoCompetizioneId']
+    attributes: ['id', 'nome', 'tipoCompetizioneId'],
   });
 
   for (const categoryId of categoryIds) {
-    const categoryType = categoryTypes.find(ct => ct.id === categoryId);
+    const categoryType = categoryTypes.find((ct) => ct.id === categoryId);
     const categoryName = categoryType?.nome || `categoria ${categoryId}`;
     if (!categoryType || !eligibleIds.includes(categoryId)) {
       return `La categoria ${categoryName} non è prevista per l'atleta (fascia ${ageGroup.label}${isBlackBelt ? ', CN' : ''})`;
@@ -189,7 +203,7 @@ const createIscrizione = async (req, res) => {
     if (!atletaId || !tesseramento || !tipoCategoriaId || !competizioneId) {
       logger.warn('Dati mancanti nella richiesta di creazione iscrizione');
       return res.status(400).json({
-        error: 'atletaId, tesseramento, tipoCategoriaId e competizioneId sono obbligatori'
+        error: 'atletaId, tesseramento, tipoCategoriaId e competizioneId sono obbligatori',
       });
     }
 
@@ -201,12 +215,9 @@ const createIscrizione = async (req, res) => {
     // Verifica i limiti di categorie considerando le iscrizioni già presenti per l'atleta
     const existingRegistrations = await IscrizioneAtleta.findAll({
       where: { atletaId, competizioneId },
-      attributes: ['tipoCategoriaId']
+      attributes: ['tipoCategoriaId'],
     });
-    const limitError = await checkCategoryLimits(competizione, [
-      ...existingRegistrations.map(i => i.tipoCategoriaId),
-      tipoCategoriaId
-    ]);
+    const limitError = await checkCategoryLimits(competizione, [...existingRegistrations.map((i) => i.tipoCategoriaId), tipoCategoriaId]);
     if (limitError) {
       logger.warn(`Limite categorie superato - Atleta: ${atletaId}, Competizione: ${competizioneId}: ${limitError}`);
       return res.status(400).json({ error: limitError });
@@ -234,13 +245,13 @@ const createIscrizione = async (req, res) => {
     const [dettagliIscrizione, created] = await DettaglioIscrizioneAtleta.findOrCreate({
       where: {
         atletaId,
-        competizioneId
+        competizioneId,
       },
       defaults: {
         tesseramento: tesseramento.nome,
         quota: 0,
-        isBlackBelt: atleta.isBlackBelt
-      }
+        isBlackBelt: atleta.isBlackBelt,
+      },
     });
 
     // Il grado CN è appena stato confermato nel primo step dell'iscrizione: la copia segue il valore dell'atleta
@@ -250,13 +261,13 @@ const createIscrizione = async (req, res) => {
 
     // Verifica se l'iscrizione esiste già per questo atleta, categoria e competizione
     const existingIscrizione = await IscrizioneAtleta.findOne({
-      where: { atletaId, tipoCategoriaId, competizioneId }
+      where: { atletaId, tipoCategoriaId, competizioneId },
     });
 
     if (existingIscrizione) {
       logger.warn(`Tentativo iscrizione duplicata - Atleta: ${atletaId}, Categoria: ${tipoCategoriaId}, Competizione: ${competizioneId}`);
       return res.status(409).json({
-        error: 'L\'atleta è già iscritto a questa categoria per questa competizione'
+        error: "L'atleta è già iscritto a questa categoria per questa competizione",
       });
     }
 
@@ -268,7 +279,7 @@ const createIscrizione = async (req, res) => {
       stato: req.body.stato || 'In attesa',
       dettagli: dettagliCategoria,
       idConfigEsperienza: req.body.idConfigEsperienza || null,
-      peso: req.body.peso ? parseFloat(req.body.peso) : null
+      peso: req.body.peso ? parseFloat(req.body.peso) : null,
     };
 
     const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
@@ -286,16 +297,18 @@ const createIscrizione = async (req, res) => {
     res.status(201).json(newIscrizione);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nella creazione iscrizione: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Validazione fallita nella creazione iscrizione: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
-    logger.error(`Errore nella creazione dell'iscrizione - Atleta: ${req.body.atletaId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella creazione dell'iscrizione - Atleta: ${req.body.atletaId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nella creazione dell\'iscrizione',
-      details: error.message
+      error: "Errore nella creazione dell'iscrizione",
+      details: error.message,
     });
   }
 };
@@ -310,9 +323,9 @@ const deleteIscrizione = async (req, res) => {
       include: [
         {
           model: Atleta,
-          as: 'atleta'
-        }
-      ]
+          as: 'atleta',
+        },
+      ],
     });
 
     if (!iscrizione) {
@@ -325,18 +338,18 @@ const deleteIscrizione = async (req, res) => {
     const competizioneId = iscrizione.competizioneId;
 
     const deletedRowsCount = await IscrizioneAtleta.destroy({
-      where: { id }
+      where: { id },
     });
 
     // Calcola e aggiorna la quota dell'iscrizione dell'atleta
     const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
-      where: { atletaId, competizioneId }
+      where: { atletaId, competizioneId },
     });
 
     if (dettagliIscrizione) {
       const athleteCost = await calculateSingleAthleteCosts(atletaId, competizioneId);
       await dettagliIscrizione.update({
-        quota: athleteCost
+        quota: athleteCost,
       });
     }
 
@@ -345,8 +358,8 @@ const deleteIscrizione = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nell'eliminazione dell'iscrizione ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'eliminazione dell\'iscrizione',
-      details: error.message
+      error: "Errore nell'eliminazione dell'iscrizione",
+      details: error.message,
     });
   }
 };
@@ -363,25 +376,28 @@ const deleteIscrizioniAtleta = async (req, res) => {
     await DettaglioIscrizioneAtleta.destroy({
       where: {
         atletaId,
-        competizioneId
-      }
+        competizioneId,
+      },
     });
 
     const deletedRowsCount = await IscrizioneAtleta.destroy({
       where: {
         atletaId,
-        competizioneId
-      }
+        competizioneId,
+      },
     });
 
     res.status(200).json({
-      message: `Eliminate ${deletedRowsCount} iscrizioni per l'atleta`
+      message: `Eliminate ${deletedRowsCount} iscrizioni per l'atleta`,
     });
   } catch (error) {
-    logger.error(`Errore nell'eliminazione delle iscrizioni dell'atleta ${req.params.atletaId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(
+      `Errore nell'eliminazione delle iscrizioni dell'atleta ${req.params.atletaId} per competizione ${req.params.competizioneId}: ${error.message}`,
+      { stack: error.stack }
+    );
     res.status(500).json({
-      error: 'Errore nell\'eliminazione delle iscrizioni dell\'atleta',
-      details: error.message
+      error: "Errore nell'eliminazione delle iscrizioni dell'atleta",
+      details: error.message,
     });
   }
 };
@@ -391,7 +407,7 @@ const editIscrizioniAtleta = async (req, res) => {
   try {
     const { athleteId, competitionId } = req.body;
     const iscrizioni = await IscrizioneAtleta.findAll({
-      where: { atletaId: athleteId, competizioneId: competitionId }
+      where: { atletaId: athleteId, competizioneId: competitionId },
     });
 
     const editData = req.body.editData;
@@ -424,7 +440,7 @@ const editIscrizioniAtleta = async (req, res) => {
     }
     const dettaglioEsistente = await DettaglioIscrizioneAtleta.findOne({
       where: { atletaId: athleteId, competizioneId: competitionId },
-      attributes: ['id', 'isBlackBelt']
+      attributes: ['id', 'isBlackBelt'],
     });
     const isBlackBelt = dettaglioEsistente?.isBlackBelt ?? atleta.isBlackBelt;
     const eligibilityError = await checkRegistrationEligibility(
@@ -440,13 +456,13 @@ const editIscrizioniAtleta = async (req, res) => {
     }
 
     const configTipoCategorie = await ConfigTipoCategoria.findAll({
-      where: { id: categories }
+      where: { id: categories },
     });
 
     // Modifica le categorie
     for (const idCategory of categories) {
-      const iscrizione = iscrizioni.find(i => i.tipoCategoriaId === idCategory);
-      const configCategoria = configTipoCategorie.find(c => c.id === idCategory);
+      const iscrizione = iscrizioni.find((i) => i.tipoCategoriaId === idCategory);
+      const configCategoria = configTipoCategorie.find((c) => c.id === idCategory);
       const dettagliCategoria = categoriesDetails && categoriesDetails[idCategory] ? categoriesDetails[idCategory] : null;
       let idExperience = null;
       let valuePeso = null;
@@ -473,14 +489,13 @@ const editIscrizioniAtleta = async (req, res) => {
           competizioneId: competitionId,
           dettagli: dettagliCategoria,
           peso: valuePeso,
-          idConfigEsperienza: idExperience
+          idConfigEsperienza: idExperience,
         });
-      }
-      else {
+      } else {
         await iscrizione.update({
           dettagli: dettagliCategoria,
           peso: valuePeso,
-          idConfigEsperienza: idExperience
+          idConfigEsperienza: idExperience,
         });
       }
     }
@@ -495,19 +510,21 @@ const editIscrizioniAtleta = async (req, res) => {
     // Ricalcola i costi per l'atleta
     const athleteCost = await calculateSingleAthleteCosts(athleteId, competitionId);
     const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
-      where: { atletaId: athleteId, competizioneId: competitionId }
+      where: { atletaId: athleteId, competizioneId: competitionId },
     });
     if (dettagliIscrizione) {
       await dettagliIscrizione.update({
-        quota: athleteCost
+        quota: athleteCost,
       });
     }
     res.status(200).json({ message: 'Iscrizioni modificate con successo' });
   } catch (error) {
-    logger.error(`Errore nella modifica delle iscrizioni dell'atleta ${req.body.athleteId} per competizione ${req.body.competitionId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella modifica delle iscrizioni dell'atleta ${req.body.athleteId} per competizione ${req.body.competitionId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nella modifica delle iscrizioni dell\'atleta',
-      details: error.message
+      error: "Errore nella modifica delle iscrizioni dell'atleta",
+      details: error.message,
     });
   }
 };
@@ -526,23 +543,23 @@ const createOrGetIscrizioneClub = async (req, res) => {
         {
           model: Club,
           as: 'club',
-          attributes: { exclude: ['logo'] }
+          attributes: { exclude: ['logo'] },
         },
         {
           model: Competizione,
-          as: 'competizione'
+          as: 'competizione',
         },
         {
           model: Documento,
           as: 'confermaPresidenteDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'bonificoDocumento',
-          attributes: { exclude: ['file'] }
-        }
-      ]
+          attributes: { exclude: ['file'] },
+        },
+      ],
     });
 
     // Se non esiste, creala
@@ -550,7 +567,7 @@ const createOrGetIscrizioneClub = async (req, res) => {
       iscrizioneClub = await IscrizioneClub.create({
         clubId,
         competizioneId,
-        stato: 'In attesa'
+        stato: 'In attesa',
       });
 
       // Recupera l'iscrizione con tutti i dettagli
@@ -559,22 +576,24 @@ const createOrGetIscrizioneClub = async (req, res) => {
           {
             model: Club,
             as: 'club',
-            attributes: { exclude: ['logo'] }
+            attributes: { exclude: ['logo'] },
           },
           {
             model: Competizione,
-            as: 'competizione'
-          }
-        ]
+            as: 'competizione',
+          },
+        ],
       });
     }
 
     res.status(200).json(iscrizioneClub);
   } catch (error) {
-    logger.error(`Errore nella gestione dell'iscrizione del club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella gestione dell'iscrizione del club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nella gestione dell\'iscrizione del club',
-      details: error.message
+      error: "Errore nella gestione dell'iscrizione del club",
+      details: error.message,
     });
   }
 };
@@ -590,23 +609,23 @@ const getIscrizioneClub = async (req, res) => {
         {
           model: Club,
           as: 'club',
-          attributes: { exclude: ['logo'] }
+          attributes: { exclude: ['logo'] },
         },
         {
           model: Competizione,
-          as: 'competizione'
+          as: 'competizione',
         },
         {
           model: Documento,
           as: 'confermaPresidenteDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'bonificoDocumento',
-          attributes: { exclude: ['file'] }
-        }
-      ]
+          attributes: { exclude: ['file'] },
+        },
+      ],
     });
 
     if (!iscrizioneClub) {
@@ -615,10 +634,12 @@ const getIscrizioneClub = async (req, res) => {
 
     res.status(200).json(iscrizioneClub);
   } catch (error) {
-    logger.error(`Errore nel recupero dell'iscrizione del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel recupero dell'iscrizione del club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nel recupero dell\'iscrizione del club',
-      details: error.message
+      error: "Errore nel recupero dell'iscrizione del club",
+      details: error.message,
     });
   }
 };
@@ -634,12 +655,10 @@ const getClubRegistrationsByCompetition = async (req, res) => {
         {
           model: Club,
           as: 'club',
-          attributes: { exclude: ['logo'] }
-        }
+          attributes: { exclude: ['logo'] },
+        },
       ],
-      order: [
-        [{ model: Club, as: 'club' }, 'denominazione', 'ASC']
-      ]
+      order: [[{ model: Club, as: 'club' }, 'denominazione', 'ASC']],
     });
 
     res.status(200).json(clubRegistrations);
@@ -647,7 +666,7 @@ const getClubRegistrationsByCompetition = async (req, res) => {
     logger.error(`Errore nel recupero delle iscrizioni dei club per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle iscrizioni dei club',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -660,7 +679,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
 
     // Verifica che l'iscrizione esista
     const iscrizioneClub = await IscrizioneClub.findOne({
-      where: { clubId, competizioneId }
+      where: { clubId, competizioneId },
     });
 
     if (!iscrizioneClub) {
@@ -670,13 +689,13 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
     // Verifica che il file confermaPresidente sia presente
     if (!files || !files.confermaPresidente) {
       return res.status(400).json({
-        error: 'Il documento di conferma del presidente è obbligatorio'
+        error: 'Il documento di conferma del presidente è obbligatorio',
       });
     }
 
     if (!files || !files.bonifico) {
       return res.status(400).json({
-        error: 'Il documento del bonifico è obbligatorio'
+        error: 'Il documento del bonifico è obbligatorio',
       });
     }
 
@@ -684,7 +703,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
     // Verifica che sia PDF
     if (confermaPresidente.mimetype !== 'application/pdf') {
       return res.status(400).json({
-        error: 'La conferma del presidente deve essere in formato PDF'
+        error: 'La conferma del presidente deve essere in formato PDF',
       });
     }
 
@@ -692,7 +711,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
     // Verifica che sia PDF
     if (bonifico.mimetype !== 'application/pdf') {
       return res.status(400).json({
-        error: 'Il bonifico deve essere in formato PDF'
+        error: 'Il bonifico deve essere in formato PDF',
       });
     }
 
@@ -723,7 +742,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       file: confermaPresidente.buffer,
       mimeType: confermaPresidente.mimetype,
       dimensione: confermaPresidente.size,
-      tipoDocumento: 'conferma_presidente'
+      tipoDocumento: 'conferma_presidente',
     });
 
     const documentoBonifico = await Documento.create({
@@ -731,7 +750,7 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
       file: bonifico.buffer,
       mimeType: bonifico.mimetype,
       dimensione: bonifico.size,
-      tipoDocumento: 'bonifico'
+      tipoDocumento: 'bonifico',
     });
 
     // Aggiorna il riferimento nell'iscrizione
@@ -746,14 +765,14 @@ const uploadDocumentiIscrizioneClub = async (req, res) => {
         confermaPresidenteId: documento.id,
         confermaPresidenteNome: documento.nomeFile,
         bonificoId: documentoBonifico.id,
-        bonificoNome: documentoBonifico.nomeFile
-      }
+        bonificoNome: documentoBonifico.nomeFile,
+      },
     });
   } catch (error) {
     logger.error(`Errore nel caricamento dei documenti per iscrizione club: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel caricamento dei documenti',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -765,7 +784,7 @@ const confermaIscrizioneClub = async (req, res) => {
 
     // Verifica che l'iscrizione esista
     const iscrizioneClub = await IscrizioneClub.findOne({
-      where: { clubId, competizioneId }
+      where: { clubId, competizioneId },
     });
 
     if (!iscrizioneClub) {
@@ -775,7 +794,7 @@ const confermaIscrizioneClub = async (req, res) => {
     // Verifica che il documento confermaPresidente sia stato caricato
     if (!iscrizioneClub.confermaPresidenteId) {
       return res.status(400).json({
-        error: 'È necessario caricare il documento di conferma del presidente prima di confermare l\'iscrizione'
+        error: "È necessario caricare il documento di conferma del presidente prima di confermare l'iscrizione",
       });
     }
 
@@ -791,23 +810,23 @@ const confermaIscrizioneClub = async (req, res) => {
         where: {
           competizioneId,
           atletaId: {
-            [require('sequelize').Op.in]: require('sequelize').literal(
-              `(SELECT id FROM atleti WHERE club_id = ${clubId})`
-            )
-          }
-        }
+            [require('sequelize').Op.in]: require('sequelize').literal(`(SELECT id FROM atleti WHERE club_id = ${clubId})`),
+          },
+        },
       }
     );
 
     res.status(200).json({
       message: 'Iscrizione confermata con successo',
-      iscrizioneClub
+      iscrizioneClub,
     });
   } catch (error) {
-    logger.error(`Errore nella conferma dell'iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella conferma dell'iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nella conferma dell\'iscrizione',
-      details: error.message
+      error: "Errore nella conferma dell'iscrizione",
+      details: error.message,
     });
   }
 };
@@ -819,7 +838,7 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
     let docId = null;
 
     const iscrizioneClub = await IscrizioneClub.findOne({
-      where: { clubId, competizioneId }
+      where: { clubId, competizioneId },
     });
 
     if (!iscrizioneClub) {
@@ -849,7 +868,7 @@ const downloadDocumentoIscrizioneClub = async (req, res) => {
     logger.error(`Errore nel download del documento ${req.params.tipoDocumento} per club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel download del documento',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -860,7 +879,7 @@ const modificaIscrizioneClub = async (req, res) => {
     const { clubId, competizioneId } = req.body;
     // Verifica che l'iscrizione esista
     const iscrizioneClub = await IscrizioneClub.findOne({
-      where: { clubId, competizioneId }
+      where: { clubId, competizioneId },
     });
 
     if (!iscrizioneClub) {
@@ -868,18 +887,20 @@ const modificaIscrizioneClub = async (req, res) => {
     }
 
     // Aggiorna lo stato dell'iscrizione
-    iscrizioneClub.stato = "In attesa";
+    iscrizioneClub.stato = 'In attesa';
     await iscrizioneClub.save();
 
     res.status(200).json({
       message: 'Iscrizione modificata con successo',
-      iscrizioneClub
+      iscrizioneClub,
     });
   } catch (error) {
-    logger.error(`Errore nella modifica dell'iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella modifica dell'iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nella modifica dell\'iscrizione',
-      details: error.message
+      error: "Errore nella modifica dell'iscrizione",
+      details: error.message,
     });
   }
 };
@@ -898,15 +919,15 @@ const getClubRegistrationCosts = async (req, res) => {
     // Carica tutti gli atleti del club iscritti a questa competizione
     const atleti = await Atleta.findAll({
       where: { clubId },
-      attributes: ['id']
+      attributes: ['id'],
     });
-    const atletaIds = atleti.map(a => a.id);
+    const atletaIds = atleti.map((a) => a.id);
 
     if (atletaIds.length === 0) {
       return res.status(200).json({
         totalCost: 0,
         athletesCosts: [],
-        costiIscrizione: competizione.costiIscrizione
+        costiIscrizione: competizione.costiIscrizione,
       });
     }
 
@@ -914,26 +935,28 @@ const getClubRegistrationCosts = async (req, res) => {
     const dettagliQuote = await DettaglioIscrizioneAtleta.findAll({
       where: {
         atletaId: atletaIds,
-        competizioneId
-      }
+        competizioneId,
+      },
     });
 
     const totalCost = dettagliQuote.reduce((sum, dq) => sum + (parseFloat(dq.quota) || 0), 0);
-    const athletesCosts = dettagliQuote.map(dq => ({
+    const athletesCosts = dettagliQuote.map((dq) => ({
       atletaId: dq.atletaId,
-      cost: parseFloat(dq.quota) || 0
+      cost: parseFloat(dq.quota) || 0,
     }));
 
     res.status(200).json({
       totalCost,
       athletesCosts,
-      costiIscrizione: competizione.costiIscrizione
+      costiIscrizione: competizione.costiIscrizione,
     });
   } catch (error) {
-    logger.error(`Errore nel calcolo dei costi per club ${req.params.clubId} in competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel calcolo dei costi per club ${req.params.clubId} in competizione ${req.params.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel calcolo dei costi',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -956,9 +979,9 @@ const downloadClubCompetitionSummary = async (req, res) => {
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logoId'] }
-        }
-      ]
+          attributes: { exclude: ['logoId'] },
+        },
+      ],
     });
 
     if (!competizione) {
@@ -978,17 +1001,17 @@ const downloadClubCompetitionSummary = async (req, res) => {
         {
           model: Atleta,
           as: 'atleta',
-          where: { clubId }
-        }
-      ]
+          where: { clubId },
+        },
+      ],
     });
 
     const iscrizioniPerAtleta = {};
-    iscrizioni.forEach(iscrizione => {
+    iscrizioni.forEach((iscrizione) => {
       if (!iscrizioniPerAtleta[iscrizione.atletaId]) {
         iscrizioniPerAtleta[iscrizione.atletaId] = {
           atleta: iscrizione.atleta,
-          iscrizioni: []
+          iscrizioni: [],
         };
       }
       iscrizioniPerAtleta[iscrizione.atletaId].iscrizioni.push(iscrizione);
@@ -1000,9 +1023,9 @@ const downloadClubCompetitionSummary = async (req, res) => {
         {
           model: Atleta,
           as: 'atleta',
-          where: { clubId }
-        }
-      ]
+          where: { clubId },
+        },
+      ],
     });
 
     const totalAthletes = dettagliIscrizioni.length;
@@ -1026,7 +1049,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
     // Crea mappa esperienze per id
     const experienceMap = {};
     const esperienze = await ConfigEsperienza.findAll();
-    esperienze.forEach(exp => {
+    esperienze.forEach((exp) => {
       experienceMap[exp.id] = exp;
     });
 
@@ -1044,10 +1067,8 @@ const downloadClubCompetitionSummary = async (req, res) => {
     Object.values(iscrizioniPerAtleta).forEach(({ atleta, iscrizioni }) => {
       const row = [`${atleta.cognome} ${atleta.nome}`];
 
-      categories.forEach(catId => {
-        const registration = iscrizioni.find(
-          reg => reg.tipoCategoriaId === catId
-        );
+      categories.forEach((catId) => {
+        const registration = iscrizioni.find((reg) => reg.tipoCategoriaId === catId);
 
         if (registration) {
           let cellValue = 'V';
@@ -1083,7 +1104,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
     doc = new PDFDocument({
       margin: 30,
       size: 'A4',
-      layout: 'landscape'
+      layout: 'landscape',
     });
 
     // Imposta headers per il download
@@ -1114,7 +1135,10 @@ const downloadClubCompetitionSummary = async (req, res) => {
     doc.moveDown(0.3);
 
     // Nome competizione
-    doc.fontSize(12).font('Helvetica').text(`${competizione.nome}${competizione.luogo ? ` - ${competizione.luogo}` : ''}`, { align: 'center' });
+    doc
+      .fontSize(12)
+      .font('Helvetica')
+      .text(`${competizione.nome}${competizione.luogo ? ` - ${competizione.luogo}` : ''}`, { align: 'center' });
     doc.moveDown(0.3);
 
     // Data competizione
@@ -1127,12 +1151,10 @@ const downloadClubCompetitionSummary = async (req, res) => {
     doc.fontSize(14).font('Helvetica-Bold').text('Riepilogo Generale');
     doc.moveDown(0.5);
 
-    const summaryTableData = [
-      [club.denominazione, totalAthletes.toString(), totalCategories.toString(), `€${totalCost.toFixed(2)}`]
-    ];
+    const summaryTableData = [[club.denominazione, totalAthletes.toString(), totalCategories.toString(), `€${totalCost.toFixed(2)}`]];
 
     const summaryHeaders = ['Club', 'Atleti Iscritti', 'Categorie Totali', 'Costo Totale'];
-    const summaryTableWidth = pageWidth - (marginX * 2);
+    const summaryTableWidth = pageWidth - marginX * 2;
     const summaryColWidth = summaryTableWidth / 4;
     const summaryStartX = marginX;
     let summaryStartY = doc.y;
@@ -1142,7 +1164,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
     doc.fontSize(8).font('Helvetica-Bold');
     doc.fillColor('#b91c1c');
     summaryHeaders.forEach((header, i) => {
-      const x = summaryStartX + (i * summaryColWidth);
+      const x = summaryStartX + i * summaryColWidth;
       doc.rect(x, summaryStartY, summaryColWidth, summaryRowHeight).stroke();
       doc.fillColor('white').rect(x, summaryStartY, summaryColWidth, summaryRowHeight).fill();
       doc.fillColor('#b91c1c');
@@ -1153,7 +1175,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
     // Riga dati tabella riepilogo
     doc.fontSize(9).font('Helvetica').fillColor('black');
     summaryTableData[0].forEach((cell, colIndex) => {
-      const x = summaryStartX + (colIndex * summaryColWidth);
+      const x = summaryStartX + colIndex * summaryColWidth;
       doc.rect(x, summaryStartY, summaryColWidth, summaryRowHeight).stroke();
 
       if (colIndex === 0) {
@@ -1164,7 +1186,7 @@ const downloadClubCompetitionSummary = async (req, res) => {
 
       doc.text(cell, x + 2, summaryStartY + 5, {
         width: summaryColWidth - 4,
-        align: colIndex === 0 ? 'left' : 'center'
+        align: colIndex === 0 ? 'left' : 'center',
       });
     });
     summaryStartY += summaryRowHeight;
@@ -1179,13 +1201,10 @@ const downloadClubCompetitionSummary = async (req, res) => {
     doc.moveDown(0.5);
 
     // Tabella Iscrizioni Atleti
-    const headers = [
-      'Atleta',
-      ...categories.map(catId => categoryDetailsMap[catId]?.nome || `Cat. ${catId}`)
-    ];
+    const headers = ['Atleta', ...categories.map((catId) => categoryDetailsMap[catId]?.nome || `Cat. ${catId}`)];
 
     // Calcola larghezze colonne
-    const tableWidth = pageWidth - (marginX * 2);
+    const tableWidth = pageWidth - marginX * 2;
     const athleteColWidth = 100;
     const remainingWidth = tableWidth - athleteColWidth;
     const categoryColWidth = remainingWidth / categories.length;
@@ -1200,12 +1219,15 @@ const downloadClubCompetitionSummary = async (req, res) => {
     headers.forEach((header, i) => {
       const colWidth = i === 0 ? athleteColWidth : categoryColWidth;
       const x = i === 0 ? startX : startX + athleteColWidth + (i - 1) * categoryColWidth;
-      doc.rect(x, startY, colWidth, rowHeight*2).stroke();
-      doc.fillColor('white').rect(x, startY, colWidth, rowHeight*2).fill();
+      doc.rect(x, startY, colWidth, rowHeight * 2).stroke();
+      doc
+        .fillColor('white')
+        .rect(x, startY, colWidth, rowHeight * 2)
+        .fill();
       doc.fillColor('#b91c1c');
       doc.text(header, x + 2, startY + 4, { width: colWidth - 4, align: 'center', ellipsis: true });
     });
-    startY += rowHeight*2;
+    startY += rowHeight * 2;
 
     // Righe
     doc.fontSize(7).font('Helvetica').fillColor('black');
@@ -1244,16 +1266,17 @@ const downloadClubCompetitionSummary = async (req, res) => {
         doc.text(cell || '-', x + 2, startY + 4, {
           width: colWidth - 4,
           align: colIndex === 0 ? 'left' : 'center',
-          ellipsis: true
+          ellipsis: true,
         });
       });
       startY += rowHeight;
     });
 
     doc.end();
-
   } catch (error) {
-    logger.error(`Errore nel download del riepilogo iscrizione club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel download del riepilogo iscrizione club ${req.params.clubId} per competizione ${req.params.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
 
     // Se lo stream è già stato avviato, non possiamo più inviare JSON
     if (streamStarted && doc) {
@@ -1261,11 +1284,11 @@ const downloadClubCompetitionSummary = async (req, res) => {
     } else {
       res.status(500).json({
         error: 'Errore nel download del riepilogo iscrizione',
-        details: error.message
+        details: error.message,
       });
     }
   }
-}
+};
 
 const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
   try {
@@ -1280,8 +1303,8 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
     const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
       where: {
         atletaId,
-        competizioneId
-      }
+        competizioneId,
+      },
     });
 
     if (!dettagliIscrizione) {
@@ -1294,9 +1317,9 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
       include: [
         {
           model: Atleta,
-          as: 'atleta'
-        }
-      ]
+          as: 'atleta',
+        },
+      ],
     });
 
     if (iscrizioni.length === 0) {
@@ -1310,15 +1333,11 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
       atletaId,
       grouping: ageGroup?.grouping || null,
       tesseramento: dettagliIscrizione.tesseramento,
-      iscrizioni
+      iscrizioni,
     };
 
-    const categories = iscrizioni.map(iscrizione => iscrizione.tipoCategoriaId);
-    const cost = calculateAthleteCost(
-      competizione.costiIscrizione,
-      athleteData,
-      categories
-    );
+    const categories = iscrizioni.map((iscrizione) => iscrizione.tipoCategoriaId);
+    const cost = calculateAthleteCost(competizione.costiIscrizione, athleteData, categories);
 
     return cost;
   } catch (error) {
@@ -1334,7 +1353,7 @@ const toggleVerificaIscrizioneClub = async (req, res) => {
       return res.status(400).json({ error: 'clubId e competizioneId sono obbligatori' });
     }
     const iscrizioneClub = await IscrizioneClub.findOne({
-      where: { clubId, competizioneId }
+      where: { clubId, competizioneId },
     });
     if (!iscrizioneClub) {
       return res.status(404).json({ error: 'Iscrizione del club non trovata' });
@@ -1343,13 +1362,15 @@ const toggleVerificaIscrizioneClub = async (req, res) => {
     await iscrizioneClub.save();
     res.status(200).json({
       message: 'Toggle verifica iscrizione club aggiornato',
-      verificaIscrizione: iscrizioneClub.verificato
+      verificaIscrizione: iscrizioneClub.verificato,
     });
   } catch (error) {
-    logger.error(`Errore nel toggle verifica iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel toggle verifica iscrizione club ${req.body.clubId} per competizione ${req.body.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel toggle verifica iscrizione club',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -1362,23 +1383,24 @@ const toggleVerificaIscrizioneAtleta = async (req, res) => {
       return res.status(400).json({ error: 'atletaId e competizioneId sono obbligatori' });
     }
     const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
-      where: { atletaId, competizioneId }
+      where: { atletaId, competizioneId },
     });
     if (!dettagliIscrizione) {
-      return res.status(404).json({ error: 'Iscrizione dell\'atleta non trovata' });
+      return res.status(404).json({ error: "Iscrizione dell'atleta non trovata" });
     }
     dettagliIscrizione.verificato = !dettagliIscrizione.verificato;
     await dettagliIscrizione.save();
     res.status(200).json({
       message: 'Toggle verifica iscrizione atleta aggiornato',
-      verificaIscrizione: dettagliIscrizione.verificato
+      verificaIscrizione: dettagliIscrizione.verificato,
     });
-  }
-  catch (error) {
-    logger.error(`Errore nel toggle verifica iscrizione atleta ${req.body.atletaId} per competizione ${req.body.competizioneId}: ${error.message}`, { stack: error.stack });
+  } catch (error) {
+    logger.error(`Errore nel toggle verifica iscrizione atleta ${req.body.atletaId} per competizione ${req.body.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel toggle verifica iscrizione atleta',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -1400,5 +1422,5 @@ module.exports = {
   getClubRegistrationCosts,
   downloadClubCompetitionSummary,
   toggleVerificaIscrizioneClub,
-  toggleVerificaIscrizioneAtleta
+  toggleVerificaIscrizioneAtleta,
 };

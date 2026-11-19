@@ -38,7 +38,7 @@ import {
   ToggleButton,
   Tooltip,
   FormControlLabel,
-  Switch
+  Switch,
 } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import { ArrowBack, Refresh, Edit, Delete, CallSplit, MergeType, Save, ExpandMore, ExpandLess, Settings, Summarize } from '@mui/icons-material';
@@ -52,7 +52,7 @@ import {
   deleteCategoriesByCompetition,
   generateCategories,
   saveCategories,
-  updateCategoria
+  updateCategoria,
 } from '../../api/categories';
 import { loadAllCategoryTypes } from '../../api/config';
 import CategorySplit from './CategorySplit';
@@ -90,7 +90,7 @@ const CategoryDefinition = () => {
     tipoCategoriaId: '',
     nomeCategoria: '',
     genere: '',
-    ageGroupKey: ''
+    ageGroupKey: '',
   });
 
   // Dialog states
@@ -113,7 +113,7 @@ const CategoryDefinition = () => {
   const [showGenerationOptions, setShowGenerationOptions] = useState(false);
   const [generationOptions, setGenerationOptions] = useState({
     unisciAttivitaComplementari: false,
-    unisciLivelloEsperienza: false
+    unisciLivelloEsperienza: false,
   });
 
   // Modals for summary and print
@@ -202,9 +202,9 @@ const CategoryDefinition = () => {
   };
 
   const handleToggleGenerationOption = (option) => {
-    setGenerationOptions(prev => ({
+    setGenerationOptions((prev) => ({
       ...prev,
-      [option]: !prev[option]
+      [option]: !prev[option],
     }));
   };
 
@@ -217,18 +217,18 @@ const CategoryDefinition = () => {
       // Prepara la categoria per il salvataggio rimuovendo info atleti non necessarie
       const categoriaToSave = {
         ...categoria,
-        atleti: categoria.atleti.map(atleta => ({
+        atleti: categoria.atleti.map((atleta) => ({
           id: atleta.id,
-          iscrizioneId: atleta.iscrizioneId
-        }))
+          iscrizioneId: atleta.iscrizioneId,
+        })),
       };
 
       await saveCategories(competizioneId, {
-        categorie: [categoriaToSave]
+        categorie: [categoriaToSave],
       });
 
       // Rimuovi la categoria dalla lista delle generate
-      const updated = generatedCategories.filter(c => c.nome !== categoria.nome);
+      const updated = generatedCategories.filter((c) => c.nome !== categoria.nome);
       setGeneratedCategories(updated);
 
       // Se non ci sono più categorie generate, disattiva la modalità generata
@@ -271,7 +271,7 @@ const CategoryDefinition = () => {
       setSuccess('Categoria eliminata con successo');
       await loadCategories();
     } catch (error) {
-      setError('Errore nell\'eliminazione della categoria: ' + (error?.message || 'Errore sconosciuto'));
+      setError("Errore nell'eliminazione della categoria: " + (error?.message || 'Errore sconosciuto'));
     } finally {
       setLoading(false);
     }
@@ -282,7 +282,7 @@ const CategoryDefinition = () => {
       open: true,
       categoria: { ...categoria },
       originalNome: categoria.nome,
-      isGenerated: isGeneratedCard
+      isGenerated: isGeneratedCard,
     });
   };
 
@@ -290,15 +290,11 @@ const CategoryDefinition = () => {
     const { categoria, originalNome, isGenerated: isGeneratedCard } = editDialog;
 
     if (isGeneratedCard) {
-      const updated = generatedCategories.map(cat =>
-        cat.nome === originalNome ? categoria : cat
-      );
+      const updated = generatedCategories.map((cat) => (cat.nome === originalNome ? categoria : cat));
       setGeneratedCategories(updated);
       setSuccess('Categoria modificata');
     } else {
-      const updated = categories.map(cat =>
-        cat.nome === originalNome ? categoria : cat
-      );
+      const updated = categories.map((cat) => (cat.nome === originalNome ? categoria : cat));
 
       try {
         await updateCategoria(categoria.id, categoria);
@@ -312,9 +308,9 @@ const CategoryDefinition = () => {
   };
 
   const handleToggleGeneratedSelection = (categoriaKey) => {
-    setSelectedGenCategories(prev => {
+    setSelectedGenCategories((prev) => {
       if (prev.includes(categoriaKey)) {
-        return prev.filter(key => key !== categoriaKey);
+        return prev.filter((key) => key !== categoriaKey);
       } else {
         return [...prev, categoriaKey];
       }
@@ -322,9 +318,9 @@ const CategoryDefinition = () => {
   };
 
   const handleToggleSavedSelection = (categoriaId) => {
-    setSelectedSavedCategories(prev => {
+    setSelectedSavedCategories((prev) => {
       if (prev.includes(categoriaId)) {
-        return prev.filter(id => id !== categoriaId);
+        return prev.filter((id) => id !== categoriaId);
       } else {
         return [...prev, categoriaId];
       }
@@ -338,7 +334,7 @@ const CategoryDefinition = () => {
     }
 
     // Cerco la prima categoria per key e prendo il nome da usare come base per il merge
-    const firstCategory = generatedCategories.find(c => c.key === selectedGenCategories[0]);
+    const firstCategory = generatedCategories.find((c) => c.key === selectedGenCategories[0]);
     const mergedName = (firstCategory ? firstCategory.nome : '') + '_Merged';
 
     setMergeDialog({ open: true, mergedName });
@@ -360,23 +356,23 @@ const CategoryDefinition = () => {
     setSaveSelectedModal(false);
 
     try {
-      const categoriesToSave = generatedCategories.filter(c => selectedGenCategories.includes(c.key));
+      const categoriesToSave = generatedCategories.filter((c) => selectedGenCategories.includes(c.key));
 
       // Prepara le categorie per il salvataggio
-      const categoriesData = categoriesToSave.map(categoria => ({
+      const categoriesData = categoriesToSave.map((categoria) => ({
         ...categoria,
-        atleti: categoria.atleti.map(atleta => ({
+        atleti: categoria.atleti.map((atleta) => ({
           id: atleta.id,
-          iscrizioneId: atleta.iscrizioneId
-        }))
+          iscrizioneId: atleta.iscrizioneId,
+        })),
       }));
 
       await saveCategories(competizioneId, {
-        categorie: categoriesData
+        categorie: categoriesData,
       });
 
       // Rimuovi le categorie salvate dalla lista delle generate
-      const updated = generatedCategories.filter(c => !selectedGenCategories.includes(c.key));
+      const updated = generatedCategories.filter((c) => !selectedGenCategories.includes(c.key));
       setGeneratedCategories(updated);
       setSelectedGenCategories([]);
 
@@ -406,7 +402,7 @@ const CategoryDefinition = () => {
 
   const confirmDeleteSelected = () => {
     const count = selectedGenCategories.length;
-    const updated = generatedCategories.filter(c => !selectedGenCategories.includes(c.key));
+    const updated = generatedCategories.filter((c) => !selectedGenCategories.includes(c.key));
     setGeneratedCategories(updated);
     setSelectedGenCategories([]);
     setSuccess(`${count} categoria/e eliminata/e con successo`);
@@ -435,13 +431,13 @@ const CategoryDefinition = () => {
 
     try {
       // Elimina tutte le categorie selezionate
-      await Promise.all(selectedSavedCategories.map(id => deleteCategoria(id)));
+      await Promise.all(selectedSavedCategories.map((id) => deleteCategoria(id)));
 
       setSelectedSavedCategories([]);
       setSuccess(`${count} categoria/e eliminata/e con successo`);
       await loadCategories();
     } catch (error) {
-      setError('Errore nell\'eliminazione delle categorie: ' + (error?.message || 'Errore sconosciuto'));
+      setError("Errore nell'eliminazione delle categorie: " + (error?.message || 'Errore sconosciuto'));
     } finally {
       setLoading(false);
     }
@@ -456,18 +452,18 @@ const CategoryDefinition = () => {
     }
 
     if (isGenerated && selectedGenCategories.length >= 2) {
-      const categoriesToMerge = generatedCategories.filter(c => selectedGenCategories.includes(c.key));
+      const categoriesToMerge = generatedCategories.filter((c) => selectedGenCategories.includes(c.key));
 
       // Unisci tutti gli atleti delle categorie selezionate
       const allAtleti = categoriesToMerge.reduce((acc, cat) => [...acc, ...cat.atleti], []);
 
       // Se le categorie hanno genere diverso, imposta il genere della categoria unita a 'U' (Unisex)
-      const hasMixedGender = new Set(categoriesToMerge.map(c => c.genere)).size > 1;
+      const hasMixedGender = new Set(categoriesToMerge.map((c) => c.genere)).size > 1;
 
       // Se le categorie hanno fasce d'età diverse, unisci anche quelle (rimuovendo eventuali duplicati)
-      const allAgeGroupKeys = [...new Set(categoriesToMerge.flatMap(c => c.ageGroupKeys || []))];
+      const allAgeGroupKeys = [...new Set(categoriesToMerge.flatMap((c) => c.ageGroupKeys || []))];
       // Categorie unite con cinture diverse: la categoria risultante è mista
-      const hasMixedBelt = new Set(categoriesToMerge.map(c => c.belt)).size > 1;
+      const hasMixedBelt = new Set(categoriesToMerge.map((c) => c.belt)).size > 1;
 
       // Usa i dati della prima categoria selezionata come base
       const baseCategoria = categoriesToMerge[0];
@@ -478,13 +474,13 @@ const CategoryDefinition = () => {
         atleti: allAtleti,
         genere: hasMixedGender ? 'U' : baseCategoria.genere,
         ageGroupKeys: allAgeGroupKeys,
-        belt: hasMixedBelt ? null : baseCategoria.belt
+        belt: hasMixedBelt ? null : baseCategoria.belt,
       };
 
       // Rimuovi tutte le categorie unite tranne la prima (che verrà sostituita)
       const updated = generatedCategories
-        .filter(c => !selectedGenCategories.includes(c.key) || c.key === selectedGenCategories[0])
-        .map(c => c.key === selectedGenCategories[0] ? merged : c);
+        .filter((c) => !selectedGenCategories.includes(c.key) || c.key === selectedGenCategories[0])
+        .map((c) => (c.key === selectedGenCategories[0] ? merged : c));
 
       setGeneratedCategories(updated);
       setMergeDialog({ open: false, mergedName: '' });
@@ -496,15 +492,13 @@ const CategoryDefinition = () => {
   const handleOpenSplit = (categoria) => {
     setSplitDialog({
       open: true,
-      categoria: categoria
+      categoria: categoria,
     });
   };
 
   const handleSplit = ({ categoria1, categoria2 }) => {
     if (isGenerated) {
-      const updated = generatedCategories.map(c =>
-        c.key === splitDialog.categoria.key ? categoria1 : c
-      );
+      const updated = generatedCategories.map((c) => (c.key === splitDialog.categoria.key ? categoria1 : c));
       updated.push(categoria2);
 
       setGeneratedCategories(updated);
@@ -514,16 +508,16 @@ const CategoryDefinition = () => {
   };
 
   const handleToggleExpand = (cardKey) => {
-    setExpandedCards(prev => ({
+    setExpandedCards((prev) => ({
       ...prev,
-      [cardKey]: !prev[cardKey]
+      [cardKey]: !prev[cardKey],
     }));
   };
 
   const handleFilterChange = (filterName, value) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [filterName]: value
+      [filterName]: value,
     }));
     setPage(1);
   };
@@ -541,7 +535,7 @@ const CategoryDefinition = () => {
 
   // Funzione per filtrare le categorie
   const getFilteredCategories = (categoriesList) => {
-    return categoriesList.filter(categoria => {
+    return categoriesList.filter((categoria) => {
       if (filters.nomeCategoria && !categoria.nome.toLowerCase().includes(filters.nomeCategoria.toLowerCase())) return false;
       if (filters.belt && categoria.belt !== filters.belt) return false;
       if (filters.tipoCategoriaId && categoria.tipoCategoriaId !== filters.tipoCategoriaId) return false;
@@ -560,19 +554,19 @@ const CategoryDefinition = () => {
     return {
       items: filtered.slice(startIndex, endIndex),
       total: filtered.length,
-      totalPages: Math.ceil(filtered.length / rowsPerPage)
+      totalPages: Math.ceil(filtered.length / rowsPerPage),
     };
   };
 
   // Ottieni valori unici per i filtri dalle categorie
   const getUniqueFilterValues = (categoriesList) => {
     // Ottieni i valori presenti nelle categorie
-    const cinture = [...new Set(categoriesList.map(c => c.belt).filter(Boolean))];
-    const presentCategorie = [...new Set(categoriesList.map(c => c.tipoCategoriaId).filter(Boolean))];
-    const generi = [...new Set(categoriesList.map(c => c.genere).filter(Boolean))];
+    const cinture = [...new Set(categoriesList.map((c) => c.belt).filter(Boolean))];
+    const presentCategorie = [...new Set(categoriesList.map((c) => c.tipoCategoriaId).filter(Boolean))];
+    const generi = [...new Set(categoriesList.map((c) => c.genere).filter(Boolean))];
 
     // Filtra i config per mostrare solo quelli effettivamente presenti
-    const categorie = allCategorie.filter(cat => presentCategorie.includes(cat.id));
+    const categorie = allCategorie.filter((cat) => presentCategorie.includes(cat.id));
 
     return { cinture, categorie, generi };
   };
@@ -601,210 +595,179 @@ const CategoryDefinition = () => {
           display: 'flex',
           flexDirection: 'column',
           border: isSelected ? '2px solid' : 'none',
-          borderColor: isSelected ? 'primary.main' : 'transparent'
-        }}
-      >
-          <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Titolo con checkbox sempre visibile */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Checkbox
-                checked={isSelected}
-                onChange={() => isGeneratedCard ? handleToggleGeneratedSelection(categoria.key) : handleToggleSavedSelection(categoria.id)}
-                size="small"
-                sx={{ p: 0 }}
-              />
-              <Tooltip title={categoria.nome} arrow placement="top">
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    flex: 1
-                  }}
-                >
-                  {categoria.nome}
-                </Typography>
-              </Tooltip>
-            </Box>
+          borderColor: isSelected ? 'primary.main' : 'transparent',
+        }}>
+        <CardContent sx={{ p: 1.5, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Titolo con checkbox sempre visibile */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Checkbox
+              checked={isSelected}
+              onChange={() => (isGeneratedCard ? handleToggleGeneratedSelection(categoria.key) : handleToggleSavedSelection(categoria.id))}
+              size="small"
+              sx={{ p: 0 }}
+            />
+            <Tooltip title={categoria.nome} arrow placement="top">
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  flex: 1,
+                }}>
+                {categoria.nome}
+              </Typography>
+            </Tooltip>
+          </Box>
 
-            {/* Container scrollabile orizzontalmente per chips e bottoni */}
-            <Box sx={{
+          {/* Container scrollabile orizzontalmente per chips e bottoni */}
+          <Box
+            sx={{
               display: 'flex',
               alignItems: 'center',
               gap: 0.5,
               mb: 1,
               overflowX: 'auto',
               '&::-webkit-scrollbar': {
-                height: '6px'
+                height: '6px',
               },
               '&::-webkit-scrollbar-thumb': {
                 backgroundColor: 'rgba(0,0,0,0.2)',
-                borderRadius: '3px'
-              }
+                borderRadius: '3px',
+              },
             }}>
-              {/* Chips */}
-              <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
-                <Chip
-                  label={`Genere: ${categoria.genere}`}
-                  size="small"
-                  sx={{ height: 20, fontSize: '0.7rem' }}
-                />
-                {categoria.grado && (
-                  <Chip
-                    label={`Grado: ${categoria.grado}`}
-                    size="small"
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                )}
-                {categoria.gradoEta && (
-                  <Chip
-                    label={`Grado Età: ${categoria.gradoEta}`}
-                    size="small"
-                    color="secondary"
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                )}
-                {categoria.livello && (
-                  <Chip
-                    label={`Livello: ${categoria.livello}`}
-                    size="small"
-                    color="secondary"
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                )}
-                <Chip
-                  label={`${atleti.length} atleti`}
-                  size="small"
-                  color="primary"
-                  sx={{ height: 20, fontSize: '0.7rem' }}
-                />
-              </Box>
-
-              {/* Bottoni azioni sulla stessa riga */}
-              <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto', flexShrink: 0 }}>
-                {isGeneratedCard ? (
-                  <>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleSaveSingleCategory(categoria)}
-                      color="primary"
-                      title="Salva categoria"
-                    >
-                      <Save fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleEditCategoria(categoria, true)} title="Modifica">
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleOpenSplit(categoria)} title="Dividi">
-                      <CallSplit fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        const updated = generatedCategories.filter(c => c.nome !== categoria.nome);
-                        setGeneratedCategories(updated);
-                        setSuccess('Categoria rimossa dall\'anteprima');
-                      }}
-                      title="Elimina"
-                    >
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </>
-                ) : (
-                  <>
-                    <IconButton size="small" onClick={() => handleEditCategoria(categoria, false)} title="Modifica">
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(categoria.id)} title="Elimina">
-                      <Delete fontSize="small" />
-                    </IconButton>
-                  </>
-                )}
-                <IconButton
-                  size="small"
-                  onClick={() => handleToggleExpand(cardKey)}
-                >
-                  {isExpanded ? <ExpandLess /> : <ExpandMore />}
-                </IconButton>
-              </Box>
+            {/* Chips */}
+            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
+              <Chip label={`Genere: ${categoria.genere}`} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
+              {categoria.grado && <Chip label={`Grado: ${categoria.grado}`} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />}
+              {categoria.gradoEta && <Chip label={`Grado Età: ${categoria.gradoEta}`} size="small" color="secondary" sx={{ height: 20, fontSize: '0.7rem' }} />}
+              {categoria.livello && <Chip label={`Livello: ${categoria.livello}`} size="small" color="secondary" sx={{ height: 20, fontSize: '0.7rem' }} />}
+              <Chip label={`${atleti.length} atleti`} size="small" color="primary" sx={{ height: 20, fontSize: '0.7rem' }} />
             </Box>
 
-            {/* Contenuto espandibile */}
-            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              <Divider sx={{ mb: 1.5 }} />
-              {atleti.length > 0 ? (
-                <TableContainer sx={{ maxHeight: 300, overflowY: 'auto' }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Atleta</strong></TableCell>
-                        { isFightCategory ? (
-                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Peso (kg)</strong></TableCell>
-                        ) : (
-                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Anno</strong></TableCell>
-                        )}
-                        { isQuyenCategory && (
-                          <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Dettagli</strong></TableCell>
-                        )}
-                        <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}><strong>Esperienza</strong></TableCell>
-                        <TableCell sx = {{ fontSize: '0.75rem', py: 0, width: '30%' }}><strong>Club</strong></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {atleti.map((item, idx) => {
-                        const atleta = isGeneratedCard ? item : item.atleta;
-                        const club = isGeneratedCard ? item.club : item.atleta?.club;
-                        const esperienza = isGeneratedCard ? item.esperienza : item.esperienza?.nome;
-                        const dettagli = isGeneratedCard ? item.dettagli : item.dettagli?.nome;
-                        return (
-                          <TableRow key={idx} hover>
-                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              <Tooltip title={`${atleta.cognome} ${atleta.nome}`} arrow placement="top">
-                                <span>
-                              {atleta.cognome} {atleta.nome ? `${atleta.nome.charAt(0)}.` : ''}
-                                </span>
-                              </Tooltip>
-                            </TableCell>
-                            { isFightCategory ? (
-                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                {item.peso || '-'}
-                              </TableCell>
-                             ) : (
-                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                {getBirthYear(atleta.dataNascita)}
-                              </TableCell>
-                              )
-                            }
-                            { isQuyenCategory && (
-                              <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                                {dettagli || '-'}
-                              </TableCell>
-                            )}
-                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {esperienza || '-'}
-                            </TableCell>
-                            <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
-                              {club?.abbreviazione || club?.denominazione || '-'}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+            {/* Bottoni azioni sulla stessa riga */}
+            <Box sx={{ display: 'flex', gap: 0.5, ml: 'auto', flexShrink: 0 }}>
+              {isGeneratedCard ? (
+                <>
+                  <IconButton size="small" onClick={() => handleSaveSingleCategory(categoria)} color="primary" title="Salva categoria">
+                    <Save fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleEditCategoria(categoria, true)} title="Modifica">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleOpenSplit(categoria)} title="Dividi">
+                    <CallSplit fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      const updated = generatedCategories.filter((c) => c.nome !== categoria.nome);
+                      setGeneratedCategories(updated);
+                      setSuccess("Categoria rimossa dall'anteprima");
+                    }}
+                    title="Elimina">
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </>
               ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                  Nessun atleta iscritto
-                </Typography>
+                <>
+                  <IconButton size="small" onClick={() => handleEditCategoria(categoria, false)} title="Modifica">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleDelete(categoria.id)} title="Elimina">
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </>
               )}
-            </Collapse>
-          </CardContent>
-        </Card>
+              <IconButton size="small" onClick={() => handleToggleExpand(cardKey)}>
+                {isExpanded ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            </Box>
+          </Box>
+
+          {/* Contenuto espandibile */}
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <Divider sx={{ mb: 1.5 }} />
+            {atleti.length > 0 ? (
+              <TableContainer sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '30%' }}>
+                        <strong>Atleta</strong>
+                      </TableCell>
+                      {isFightCategory ? (
+                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}>
+                          <strong>Peso (kg)</strong>
+                        </TableCell>
+                      ) : (
+                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}>
+                          <strong>Anno</strong>
+                        </TableCell>
+                      )}
+                      {isQuyenCategory && (
+                        <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}>
+                          <strong>Dettagli</strong>
+                        </TableCell>
+                      )}
+                      <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '20%' }}>
+                        <strong>Esperienza</strong>
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', py: 0, width: '30%' }}>
+                        <strong>Club</strong>
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {atleti.map((item, idx) => {
+                      const atleta = isGeneratedCard ? item : item.atleta;
+                      const club = isGeneratedCard ? item.club : item.atleta?.club;
+                      const esperienza = isGeneratedCard ? item.esperienza : item.esperienza?.nome;
+                      const dettagli = isGeneratedCard ? item.dettagli : item.dettagli?.nome;
+                      return (
+                        <TableRow key={idx} hover>
+                          <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                            <Tooltip title={`${atleta.cognome} ${atleta.nome}`} arrow placement="top">
+                              <span>
+                                {atleta.cognome} {atleta.nome ? `${atleta.nome.charAt(0)}.` : ''}
+                              </span>
+                            </Tooltip>
+                          </TableCell>
+                          {isFightCategory ? (
+                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {item.peso || '-'}
+                            </TableCell>
+                          ) : (
+                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {getBirthYear(atleta.dataNascita)}
+                            </TableCell>
+                          )}
+                          {isQuyenCategory && (
+                            <TableCell align="center" sx={{ fontSize: '0.75rem', py: 0.5 }}>
+                              {dettagli || '-'}
+                            </TableCell>
+                          )}
+                          <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>{esperienza || '-'}</TableCell>
+                          <TableCell sx={{ fontSize: '0.75rem', py: 0.5 }}>{club?.abbreviazione || club?.denominazione || '-'}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Nessun atleta iscritto
+              </Typography>
+            )}
+          </Collapse>
+        </CardContent>
+      </Card>
     );
-  };  if (loading) {
+  };
+  if (loading) {
     return (
       <div className="page-container">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -818,11 +781,7 @@ const CategoryDefinition = () => {
     return (
       <div className="page-container">
         <Alert severity="warning">Competizione non trovata</Alert>
-        <MuiButton
-          startIcon={<ArrowBack />}
-          onClick={handleGoBack}
-          sx={{ mt: 2 }}
-        >
+        <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack} sx={{ mt: 2 }}>
           Torna a tutte le categorie
         </MuiButton>
       </div>
@@ -834,11 +793,7 @@ const CategoryDefinition = () => {
     return (
       <div className="page-container">
         <Box sx={{ mb: 3 }}>
-          <MuiButton
-            startIcon={<ArrowBack />}
-            onClick={handleGoBack}
-            sx={{ mb: 2 }}
-          >
+          <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack} sx={{ mb: 2 }}>
             Torna a tutte le categorie
           </MuiButton>
         </Box>
@@ -848,8 +803,8 @@ const CategoryDefinition = () => {
             Permesso Negato
           </Typography>
           <Typography variant="body2">
-            Non hai i permessi necessari per accedere alla definizione delle categorie di questa competizione.
-            {' '}Solo gli amministratori o il club organizzatore possono accedere a questa sezione.
+            Non hai i permessi necessari per accedere alla definizione delle categorie di questa competizione. Solo gli amministratori o il club organizzatore
+            possono accedere a questa sezione.
           </Typography>
         </Alert>
 
@@ -877,10 +832,7 @@ const CategoryDefinition = () => {
         title="Definizione Categorie"
         subtitle={`${competition.nome} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna alle Competizioni
       </MuiButton>
 
@@ -899,12 +851,13 @@ const CategoryDefinition = () => {
 
       {/* Bottone Genera Categorie */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', md: 'center' },
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', md: 'center' },
+          }}>
           <Box>
             <Typography variant="h6" gutterBottom>
               Generazione Categorie
@@ -914,19 +867,10 @@ const CategoryDefinition = () => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2, mt: { xs: 2, md: 0 } }}>
-            <Button
-              variant="outlined"
-              icon={Settings}
-              onClick={() => setShowGenerationOptions(!showGenerationOptions)}
-              disabled={loading || isGenerated}
-            >
+            <Button variant="outlined" icon={Settings} onClick={() => setShowGenerationOptions(!showGenerationOptions)} disabled={loading || isGenerated}>
               Opzioni
             </Button>
-            <Button
-              icon={loading ? CircularProgress: Refresh}
-              onClick={handleGenerateCategories}
-              disabled={loading || isGenerated}
-            >
+            <Button icon={loading ? CircularProgress : Refresh} onClick={handleGenerateCategories} disabled={loading || isGenerated}>
               Genera Categorie
             </Button>
           </Box>
@@ -980,10 +924,7 @@ const CategoryDefinition = () => {
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-            <MuiButton
-              variant="outlined"
-              onClick={() => setShowGenerationOptions(false)}
-            >
+            <MuiButton variant="outlined" onClick={() => setShowGenerationOptions(false)}>
               Chiudi
             </MuiButton>
           </Box>
@@ -992,56 +933,35 @@ const CategoryDefinition = () => {
         {/* Categorie Generate (Prima del salvataggio) */}
         {isGenerated && generatedCategories.length > 0 && (
           <>
-            <Box sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', md: 'center' },
-              mb: 2, mt: 4
-            }}>
-              <Typography variant="h6">
-                Anteprima Categorie Generate ({generatedCategories.length})
-              </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'flex-start', md: 'center' },
+                mb: 2,
+                mt: 4,
+              }}>
+              <Typography variant="h6">Anteprima Categorie Generate ({generatedCategories.length})</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
                 {selectedGenCategories.length > 0 && (
-                  <Chip
-                    label={`${selectedGenCategories.length} selezionate`}
-                    color="primary"
-                    onDelete={() => setSelectedGenCategories([])}
-                  />
+                  <Chip label={`${selectedGenCategories.length} selezionate`} color="primary" onDelete={() => setSelectedGenCategories([])} />
                 )}
                 <MuiButton
                   variant="contained"
                   color="success"
                   startIcon={<Save />}
                   onClick={handleSaveSelected}
-                  disabled={selectedGenCategories.length === 0 || loading}
-                >
+                  disabled={selectedGenCategories.length === 0 || loading}>
                   Salva
                 </MuiButton>
-                <MuiButton
-                  variant="outlined"
-                  startIcon={<MergeType />}
-                  onClick={handleConfirmMerge}
-                  disabled={selectedGenCategories.length < 2}
-                >
+                <MuiButton variant="outlined" startIcon={<MergeType />} onClick={handleConfirmMerge} disabled={selectedGenCategories.length < 2}>
                   Unisci
                 </MuiButton>
-                <MuiButton
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Delete />}
-                  onClick={handleDeleteSelected}
-                  disabled={selectedGenCategories.length === 0}
-                >
+                <MuiButton variant="outlined" color="error" startIcon={<Delete />} onClick={handleDeleteSelected} disabled={selectedGenCategories.length === 0}>
                   Elimina
                 </MuiButton>
-                <MuiButton
-                  variant="outlined"
-                  color="error"
-                  onClick={handleCancelCategories}
-                  disabled={loading}
-                >
+                <MuiButton variant="outlined" color="error" onClick={handleCancelCategories} disabled={loading}>
                   Annulla
                 </MuiButton>
               </Box>
@@ -1057,14 +977,12 @@ const CategoryDefinition = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Cintura</InputLabel>
-                    <Select
-                      value={filters.belt}
-                      onChange={(e) => handleFilterChange('belt', e.target.value)}
-                      label="Cintura"
-                    >
+                    <Select value={filters.belt} onChange={(e) => handleFilterChange('belt', e.target.value)} label="Cintura">
                       <MenuItem value="">Tutte</MenuItem>
                       {getUniqueFilterValues(generatedCategories).cinture.map((belt) => (
-                        <MenuItem key={belt} value={belt}>{belt}</MenuItem>
+                        <MenuItem key={belt} value={belt}>
+                          {belt}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -1072,14 +990,12 @@ const CategoryDefinition = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Categoria</InputLabel>
-                    <Select
-                      value={filters.tipoCategoriaId}
-                      onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)}
-                      label="Categoria"
-                    >
+                    <Select value={filters.tipoCategoriaId} onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)} label="Categoria">
                       <MenuItem value="">Tutte</MenuItem>
                       {getUniqueFilterValues(generatedCategories).categorie.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.id}>{cat.nome}</MenuItem>
+                        <MenuItem key={cat.id} value={cat.id}>
+                          {cat.nome}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -1087,14 +1003,12 @@ const CategoryDefinition = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Genere</InputLabel>
-                    <Select
-                      value={filters.genere}
-                      onChange={(e) => handleFilterChange('genere', e.target.value)}
-                      label="Genere"
-                    >
+                    <Select value={filters.genere} onChange={(e) => handleFilterChange('genere', e.target.value)} label="Genere">
                       <MenuItem value="">Tutti</MenuItem>
                       {getUniqueFilterValues(generatedCategories).generi.map((gen, idx) => (
-                        <MenuItem key={idx} value={gen}>{gen}</MenuItem>
+                        <MenuItem key={idx} value={gen}>
+                          {gen}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -1102,11 +1016,7 @@ const CategoryDefinition = () => {
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Fascia d'età</InputLabel>
-                    <Select
-                      value={filters.ageGroupKey}
-                      onChange={(e) => handleFilterChange('ageGroupKey', e.target.value)}
-                      label="Fascia d'età"
-                    >
+                    <Select value={filters.ageGroupKey} onChange={(e) => handleFilterChange('ageGroupKey', e.target.value)} label="Fascia d'età">
                       <MenuItem value="">Tutte</MenuItem>
                       {(competition?.ageGroupConfig?.groups || []).map((group) => (
                         <MenuItem key={group.key} value={group.key}>
@@ -1123,24 +1033,15 @@ const CategoryDefinition = () => {
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
               {getPaginatedCategories(generatedCategories).items.map((categoria, index) => (
-                <Box key={`gen_${(page - 1) * rowsPerPage + index}`}>
-                  {renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}
-                </Box>
+                <Box key={`gen_${(page - 1) * rowsPerPage + index}`}>{renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}</Box>
               ))}
             </Box>
 
             {/* Controlli paginazione in fondo */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="body2">
-                  Mostra per pagina:
-                </Typography>
-                <ToggleButtonGroup
-                  value={rowsPerPage}
-                  exclusive
-                  onChange={handleRowsPerPageChange}
-                  size="small"
-                >
+                <Typography variant="body2">Mostra per pagina:</Typography>
+                <ToggleButtonGroup value={rowsPerPage} exclusive onChange={handleRowsPerPageChange} size="small">
                   <ToggleButton value={5}>5</ToggleButton>
                   <ToggleButton value={10}>10</ToggleButton>
                   <ToggleButton value={25}>25</ToggleButton>
@@ -1168,30 +1069,20 @@ const CategoryDefinition = () => {
       {/* Categorie Salvate */}
       {categories.length > 0 ? (
         <Paper sx={{ p: 3 }}>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', md: 'center' },
-            mb: 2
-          }}>
-            <Typography variant="h6">
-              Categorie Salvate ({categories.length})
-            </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              mb: 2,
+            }}>
+            <Typography variant="h6">Categorie Salvate ({categories.length})</Typography>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: { xs: 2, md: 0 } }}>
               {selectedSavedCategories.length > 0 && (
-                <Chip
-                  label={`${selectedSavedCategories.length} selezionate`}
-                  color="primary"
-                  onDelete={() => setSelectedSavedCategories([])}
-                />
+                <Chip label={`${selectedSavedCategories.length} selezionate`} color="primary" onDelete={() => setSelectedSavedCategories([])} />
               )}
-              <MuiButton
-                variant="outlined"
-                startIcon={<Summarize />}
-                onClick={() => setShowSummaryModal(true)}
-                disabled={loading}
-              >
+              <MuiButton variant="outlined" startIcon={<Summarize />} onClick={() => setShowSummaryModal(true)} disabled={loading}>
                 Riepilogo
               </MuiButton>
               <MuiButton
@@ -1199,8 +1090,7 @@ const CategoryDefinition = () => {
                 color="error"
                 startIcon={<Delete />}
                 onClick={handleDeleteSelectedSaved}
-                disabled={selectedSavedCategories.length === 0 || loading}
-              >
+                disabled={selectedSavedCategories.length === 0 || loading}>
                 Elimina
               </MuiButton>
             </Box>
@@ -1222,22 +1112,20 @@ const CategoryDefinition = () => {
                   onChange={(e) => handleFilterChange('nomeCategoria', e.target.value)}
                   sx={{
                     '& .MuiInputBase-root': {
-                      height: '40px'
-                    }
+                      height: '40px',
+                    },
                   }}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Categoria</InputLabel>
-                  <Select
-                    value={filters.tipoCategoriaId}
-                    onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)}
-                    label="Categoria"
-                  >
+                  <Select value={filters.tipoCategoriaId} onChange={(e) => handleFilterChange('tipoCategoriaId', e.target.value)} label="Categoria">
                     <MenuItem value="">Tutte</MenuItem>
                     {getUniqueFilterValues(categories).categorie.map((cat) => (
-                      <MenuItem key={cat.id} value={cat.id}>{cat.nome}</MenuItem>
+                      <MenuItem key={cat.id} value={cat.id}>
+                        {cat.nome}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -1245,14 +1133,12 @@ const CategoryDefinition = () => {
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Genere</InputLabel>
-                  <Select
-                    value={filters.genere}
-                    onChange={(e) => handleFilterChange('genere', e.target.value)}
-                    label="Genere"
-                  >
+                  <Select value={filters.genere} onChange={(e) => handleFilterChange('genere', e.target.value)} label="Genere">
                     <MenuItem value="">Tutti</MenuItem>
                     {getUniqueFilterValues(categories).generi.map((gen, idx) => (
-                      <MenuItem key={idx} value={gen}>{gen}</MenuItem>
+                      <MenuItem key={idx} value={gen}>
+                        {gen}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -1260,11 +1146,7 @@ const CategoryDefinition = () => {
               <Grid item xs={12} sm={6} md={4}>
                 <FormControl fullWidth size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Fascia d'età</InputLabel>
-                  <Select
-                    value={filters.ageGroupKey}
-                    onChange={(e) => handleFilterChange('ageGroupKey', e.target.value)}
-                    label="Fascia d'età"
-                  >
+                  <Select value={filters.ageGroupKey} onChange={(e) => handleFilterChange('ageGroupKey', e.target.value)} label="Fascia d'età">
                     <MenuItem value="">Tutte</MenuItem>
                     {(competition?.ageGroupConfig?.groups || []).map((group) => (
                       <MenuItem key={group.key} value={group.key}>
@@ -1281,24 +1163,15 @@ const CategoryDefinition = () => {
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
             {getPaginatedCategories(categories).items.map((categoria, index) => (
-              <Box key={`saved_${(page - 1) * rowsPerPage + index}`}>
-                {renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, false)}
-              </Box>
+              <Box key={`saved_${(page - 1) * rowsPerPage + index}`}>{renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, false)}</Box>
             ))}
           </Box>
 
           {/* Controlli paginazione in fondo */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body2">
-                Mostra per pagina:
-              </Typography>
-              <ToggleButtonGroup
-                value={rowsPerPage}
-                exclusive
-                onChange={handleRowsPerPageChange}
-                size="small"
-              >
+              <Typography variant="body2">Mostra per pagina:</Typography>
+              <ToggleButtonGroup value={rowsPerPage} exclusive onChange={handleRowsPerPageChange} size="small">
                 <ToggleButton value={5}>5</ToggleButton>
                 <ToggleButton value={10}>10</ToggleButton>
                 <ToggleButton value={25}>25</ToggleButton>
@@ -1320,13 +1193,14 @@ const CategoryDefinition = () => {
             )}
           </Box>
         </Paper>
-      ) : !isGenerated && (
-        <Paper sx={{ p: 3 }}>
-          <Alert severity="info">
-            Non ci sono ancora categorie definite per questa competizione.
-            Usa il bottone "Genera Categorie" per crearle automaticamente.
-          </Alert>
-        </Paper>
+      ) : (
+        !isGenerated && (
+          <Paper sx={{ p: 3 }}>
+            <Alert severity="info">
+              Non ci sono ancora categorie definite per questa competizione. Usa il bottone "Genera Categorie" per crearle automaticamente.
+            </Alert>
+          </Paper>
+        )
       )}
 
       {/* Dialog Modifica */}
@@ -1337,17 +1211,17 @@ const CategoryDefinition = () => {
             fullWidth
             label="Nome Categoria"
             value={editDialog.categoria?.nome || ''}
-            onChange={(e) => setEditDialog({
-              ...editDialog,
-              categoria: { ...editDialog.categoria, nome: e.target.value }
-            })}
+            onChange={(e) =>
+              setEditDialog({
+                ...editDialog,
+                categoria: { ...editDialog.categoria, nome: e.target.value },
+              })
+            }
             sx={{ mt: 2 }}
           />
         </DialogContent>
         <DialogActions>
-          <MuiButton onClick={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>
-            Annulla
-          </MuiButton>
+          <MuiButton onClick={() => setEditDialog({ open: false, categoria: null, originalNome: null })}>Annulla</MuiButton>
           <MuiButton onClick={handleSaveEdit} variant="contained">
             Salva
           </MuiButton>
@@ -1364,13 +1238,10 @@ const CategoryDefinition = () => {
 
           <List dense>
             {selectedGenCategories.map((key, idx) => {
-              const cat = generatedCategories.find(c => c.key === key);
+              const cat = generatedCategories.find((c) => c.key === key);
               return (
                 <ListItem key={idx}>
-                  <ListItemText
-                    primary={cat?.nome}
-                    secondary={`${cat?.atleti?.length || 0} atleti`}
-                  />
+                  <ListItemText primary={cat?.nome} secondary={`${cat?.atleti?.length || 0} atleti`} />
                 </ListItem>
               );
             })}
@@ -1386,9 +1257,7 @@ const CategoryDefinition = () => {
           />
         </DialogContent>
         <DialogActions>
-          <MuiButton onClick={() => setMergeDialog({ open: false, mergedName: '' })}>
-            Annulla
-          </MuiButton>
+          <MuiButton onClick={() => setMergeDialog({ open: false, mergedName: '' })}>Annulla</MuiButton>
           <MuiButton onClick={handleMerge} variant="contained">
             Unisci
           </MuiButton>
@@ -1404,11 +1273,7 @@ const CategoryDefinition = () => {
       />
 
       {/* Category Summary Modal */}
-      <CategorySummaryModal
-        open={showSummaryModal}
-        onClose={() => setShowSummaryModal(false)}
-        competitionId={competizioneId}
-      />
+      <CategorySummaryModal open={showSummaryModal} onClose={() => setShowSummaryModal(false)} competitionId={competizioneId} />
 
       {/* Confirm Action Modals */}
       <ConfirmActionModal

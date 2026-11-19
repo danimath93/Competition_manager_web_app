@@ -12,17 +12,17 @@ const getAllTipiCompetizione = async (req, res) => {
           as: 'tipiCategoria',
           where: { attivo: true },
           required: false, // LEFT JOIN per includere anche tipi senza categorie
-          order: [['nome', 'ASC']]
-        }
+          order: [['nome', 'ASC']],
+        },
       ],
-      order: [['id', 'ASC']]
+      order: [['id', 'ASC']],
     });
     res.json(tipiCompetizione);
   } catch (error) {
     logger.error(`Errore nel recupero dei tipi di competizione: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dei tipi di competizione',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -38,9 +38,9 @@ const getTipoCompetizioneById = async (req, res) => {
           as: 'tipiCategoria',
           where: { attivo: true },
           required: false,
-          order: [['nome', 'ASC']]
-        }
-      ]
+          order: [['nome', 'ASC']],
+        },
+      ],
     });
 
     if (!tipoCompetizione) {
@@ -49,10 +49,12 @@ const getTipoCompetizioneById = async (req, res) => {
 
     res.json(tipoCompetizione);
   } catch (error) {
-    logger.error(`Errore nel recupero del tipo di competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel recupero del tipo di competizione ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel recupero del tipo di competizione',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -65,15 +67,15 @@ const getCategorieByTipoCompetizione = async (req, res) => {
     const categorie = await ConfigTipoCategoria.findAll({
       where: {
         tipoCompetizioneId,
-        attivo: true
+        attivo: true,
       },
       include: [
         {
           model: ConfigTipoCompetizione,
-          as: 'tipoCompetizione'
-        }
+          as: 'tipoCompetizione',
+        },
       ],
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
 
     res.json(categorie);
@@ -81,7 +83,7 @@ const getCategorieByTipoCompetizione = async (req, res) => {
     logger.error(`Errore nel recupero delle categorie per tipo competizione ${req.params.tipoCompetizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle categorie',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -94,17 +96,20 @@ const getAllTipiCategoria = async (req, res) => {
       include: [
         {
           model: ConfigTipoCompetizione,
-          as: 'tipoCompetizione'
-        }
+          as: 'tipoCompetizione',
+        },
       ],
-      order: [['tipoCompetizioneId', 'ASC'], ['nome', 'ASC']]
+      order: [
+        ['tipoCompetizioneId', 'ASC'],
+        ['nome', 'ASC'],
+      ],
     });
     res.json(tipiCategoria);
   } catch (error) {
     logger.error(`Errore nel recupero dei tipi di categoria: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dei tipi di categoria',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -117,9 +122,9 @@ const getTipoCategoriaById = async (req, res) => {
       include: [
         {
           model: ConfigTipoCompetizione,
-          as: 'tipoCompetizione'
-        }
-      ]
+          as: 'tipoCompetizione',
+        },
+      ],
     });
 
     if (!tipoCategoria) {
@@ -131,7 +136,7 @@ const getTipoCategoriaById = async (req, res) => {
     logger.error(`Errore nel recupero del tipo categoria ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero del tipo categoria',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -140,14 +145,14 @@ const getAllEsperienze = async (req, res) => {
   try {
     const esperienze = await ConfigEsperienza.findAll({
       where: { attivo: true },
-      order: [['id', 'ASC']]
+      order: [['id', 'ASC']],
     });
     res.json(esperienze);
   } catch (error) {
     logger.error(`Errore nel recupero delle esperienze: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle esperienze',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -163,8 +168,8 @@ const getEsperienzaById = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nel recupero dell'esperienza ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nel recupero dell\'esperienza',
-      details: error.message
+      error: "Errore nel recupero dell'esperienza",
+      details: error.message,
     });
   }
 };
@@ -177,14 +182,14 @@ const getAllTipiCosti = async (req, res) => {
 
     const tipiCosti = await ConfigTipoCosti.findAll({
       where: whereClause,
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
     res.json(tipiCosti);
   } catch (error) {
     logger.error(`Errore nel recupero dei tipi di costi: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dei tipi di costi',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -204,7 +209,7 @@ const getTipoCostoById = async (req, res) => {
     logger.error(`Errore nel recupero del tipo di costo ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero del tipo di costo',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -221,17 +226,17 @@ const getAllNomiQuyen = async (req, res) => {
         {
           model: ConfigTipoCategoria,
           as: 'tipoCategoria',
-          attributes: ['id', 'nome', 'descrizione']
-        }
+          attributes: ['id', 'nome', 'descrizione'],
+        },
       ],
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
     res.json(nomiQuyen);
   } catch (error) {
     logger.error(`Errore nel recupero dei nomi quyen: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dei nomi quyen',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -245,9 +250,9 @@ const getNomeQuyenById = async (req, res) => {
         {
           model: ConfigTipoCategoria,
           as: 'tipoCategoria',
-          attributes: ['id', 'nome', 'descrizione']
-        }
-      ]
+          attributes: ['id', 'nome', 'descrizione'],
+        },
+      ],
     });
 
     if (!nomeQuyen) {
@@ -259,7 +264,7 @@ const getNomeQuyenById = async (req, res) => {
     logger.error(`Errore nel recupero del nome quyen ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero del nome quyen',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -272,16 +277,16 @@ const getNomiQuyenByTipoCategoria = async (req, res) => {
     const nomiQuyen = await ConfigNomiQuyen.findAll({
       where: {
         tipoCategoriaId,
-        attivo: true
+        attivo: true,
       },
       include: [
         {
           model: ConfigTipoCategoria,
           as: 'tipoCategoria',
-          attributes: ['id', 'nome', 'descrizione']
-        }
+          attributes: ['id', 'nome', 'descrizione'],
+        },
       ],
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
 
     res.json(nomiQuyen);
@@ -289,7 +294,7 @@ const getNomiQuyenByTipoCategoria = async (req, res) => {
     logger.error(`Errore nel recupero dei nomi quyen per tipo categoria ${req.params.tipoCategoriaId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero dei nomi quyen',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -306,5 +311,5 @@ module.exports = {
   getTipoCostoById,
   getAllNomiQuyen,
   getNomeQuyenById,
-  getNomiQuyenByTipoCategoria
+  getNomiQuyenByTipoCategoria,
 };

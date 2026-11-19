@@ -2,20 +2,20 @@
 export const CompetitionTipology = Object.freeze({
   QUYEN: 1,
   COMBATTIMENTO: 3,
-  COMPLEMENTARI: 4
+  COMPLEMENTARI: 4,
 });
 
 export const CompetitionTipologyLabels = Object.freeze({
   [CompetitionTipology.QUYEN]: 'Quyen',
   [CompetitionTipology.COMBATTIMENTO]: 'Combattimento',
-  [CompetitionTipology.COMPLEMENTARI]: 'Attività complementari'
+  [CompetitionTipology.COMPLEMENTARI]: 'Attività complementari',
 });
 
 export const CompetitionLevel = Object.freeze({
   LOCAL: 'Locale',
   REGIONAL: 'Regionale',
   NATIONAL: 'Nazionale',
-  INTERNATIONAL: 'Internazionale'
+  INTERNATIONAL: 'Internazionale',
 });
 
 export const CompetitionStatus = Object.freeze({
@@ -24,11 +24,11 @@ export const CompetitionStatus = Object.freeze({
   OPEN: 'Aperta',
   ONGOING: 'In corso',
   COMPLETED: 'Conclusa',
-  CANCELLED: 'Annullata'
+  CANCELLED: 'Annullata',
 });
 
 export const MembershipType = Object.freeze({
   FIWUK: 'FIWUK',
   ASI: 'ASI',
-  REQUEST: 'Richiedi tesseramento' 
+  REQUEST: 'Richiedi tesseramento',
 });

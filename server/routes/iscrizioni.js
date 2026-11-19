@@ -15,8 +15,8 @@ const uploadDocumenti = multer({
     }
   },
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limite
-  }
+    fileSize: 10 * 1024 * 1024, // 10MB limite
+  },
 });
 
 // ============ ISCRIZIONI ATLETI ============
@@ -54,7 +54,14 @@ router.get('/club-iscrizione/:clubId/:competizioneId/documento/:tipoDocumento', 
 router.get('/club-iscrizione/:clubId/:competizioneId', iscrizioneController.getIscrizioneClub);
 
 // POST /api/iscrizioni/club-iscrizione/documenti - Upload documenti per l'iscrizione del club
-router.post('/club-iscrizione/documenti', uploadDocumenti.fields([{ name: 'confermaPresidente', maxCount: 1 }, { name: 'bonifico', maxCount: 1 }]), iscrizioneController.uploadDocumentiIscrizioneClub);
+router.post(
+  '/club-iscrizione/documenti',
+  uploadDocumenti.fields([
+    { name: 'confermaPresidente', maxCount: 1 },
+    { name: 'bonifico', maxCount: 1 },
+  ]),
+  iscrizioneController.uploadDocumentiIscrizioneClub
+);
 
 // POST /api/iscrizioni/club-iscrizione/conferma - Conferma l'iscrizione del club (dopo upload documenti)
 router.post('/club-iscrizione/conferma', iscrizioneController.confermaIscrizioneClub);

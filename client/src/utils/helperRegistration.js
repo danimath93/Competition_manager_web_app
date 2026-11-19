@@ -63,7 +63,10 @@ const checkCategoryConstraints = (category, tipoCompetizioneId, athlete, selecte
     }
     // Vincolo esperienza (es. "idEsperienza:6|7")
     else if (vincolo.startsWith('idEsperienza:')) {
-      const allowedIds = vincolo.substring(13).split('|').map(id => parseInt(id.trim()));
+      const allowedIds = vincolo
+        .substring(13)
+        .split('|')
+        .map((id) => parseInt(id.trim()));
       const selectedExp = selectedExperiences[tipoCompetizioneId];
 
       if (!selectedExp || !allowedIds.includes(selectedExp.id)) {
@@ -86,7 +89,7 @@ const getCategoryLimitErrors = (competition, selectedCategoryIds, categoryDetail
 
   const limitsByType = competition?.maxCategorieTipoCompetizione || {};
   const countByType = {};
-  selectedCategoryIds.forEach(categoryId => {
+  selectedCategoryIds.forEach((categoryId) => {
     const typeId = categoryDetails[categoryId]?.tipoCompetizioneId;
     if (typeId) {
       countByType[typeId] = (countByType[typeId] || 0) + 1;
@@ -119,11 +122,12 @@ const getAthleteRegistrationConfig = (competition, athlete, isBlackBelt) => {
   return {
     ageGroup,
     isBlackBelt,
-    categorie: getEligibleCategories(competition.categoryConfig, ageGroup, isBlackBelt)
-      .map(category => ({ configTipoCategoria: category.categoryTypeId })),
+    categorie: getEligibleCategories(competition.categoryConfig, ageGroup, isBlackBelt).map((category) => ({
+      configTipoCategoria: category.categoryTypeId,
+    })),
     esperienzaCategorie: (competition.categoryConfig.experienceLevels || [])
-      .filter(level => level.grouping === ageGroup.grouping)
-      .map(level => ({ configTipoCompetizione: level.competitionTypeId, idEsperienza: level.experienceIds })),
+      .filter((level) => level.grouping === ageGroup.grouping)
+      .map((level) => ({ configTipoCompetizione: level.competitionTypeId, idEsperienza: level.experienceIds })),
   };
 };
 
@@ -136,8 +140,8 @@ const getAthleteRegistrationConfig = (competition, athlete, isBlackBelt) => {
 const loadRegistrationConfig = async (athleteConfig) => {
   const categories = athleteConfig?.categorie || [];
   const experienceConfigs = athleteConfig?.esperienzaCategorie || [];
-  const categoryIds = categories.map(category => category.configTipoCategoria);
-  const experienceIds = experienceConfigs.flatMap(expConfig => expConfig.idEsperienza || []);
+  const categoryIds = categories.map((category) => category.configTipoCategoria);
+  const experienceIds = experienceConfigs.flatMap((expConfig) => expConfig.idEsperienza || []);
 
   const [categoryDetails, experiencesById, nomiQuyenByCategory] = await Promise.all([
     getManyById(categoryIds, getCategoryType),
@@ -147,11 +151,11 @@ const loadRegistrationConfig = async (athleteConfig) => {
 
   const experiencesByType = {};
   // Livelli filtrati per cintura dell'atleta
-  experienceConfigs.forEach(expConfig => {
+  experienceConfigs.forEach((expConfig) => {
     experiencesByType[expConfig.configTipoCompetizione] = (expConfig.idEsperienza || [])
-      .map(expId => experiencesById[expId])
+      .map((expId) => experiencesById[expId])
       .filter(Boolean)
-      .filter(exp => isExperienceBeltAllowed(exp.belt, athleteConfig.isBlackBelt));
+      .filter((exp) => isExperienceBeltAllowed(exp.belt, athleteConfig.isBlackBelt));
   });
 
   const detailOptionsByCategory = {};

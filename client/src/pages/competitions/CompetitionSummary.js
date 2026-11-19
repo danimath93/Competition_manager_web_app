@@ -2,9 +2,26 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
-import { Tooltip, Chip, Box, Container, CircularProgress, Alert, IconButton, FormControl, InputLabel, MenuItem, Select, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import {
+  Tooltip,
+  Chip,
+  Box,
+  Container,
+  CircularProgress,
+  Alert,
+  IconButton,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { Autocomplete, TextField } from '@mui/material';
-import { ArrowBack, Description, Download, Info, Edit} from '@mui/icons-material';
+import { ArrowBack, Description, Download, Info, Edit } from '@mui/icons-material';
 import MuiButton from '@mui/material/Button';
 import { FaTrophy } from 'react-icons/fa';
 import { format } from 'date-fns';
@@ -18,7 +35,7 @@ import {
   loadRegistrationsByCompetition,
   downloadClubRegistrationDocument,
   toggleVerificaIscrizioneClub,
-  toggleVerificaIscrizioneAtleta
+  toggleVerificaIscrizioneAtleta,
 } from '../../api/registrations';
 import Button from '../../components/common/Button';
 import PageHeader from '../../components/PageHeader';
@@ -29,8 +46,6 @@ import RegistrationModal from '../../components/RegistrationModal';
 import muiTheme from '../../styles/muiTheme';
 import { getCompetitionCategoryTypeIds } from '../../utils/competitionCategoryConfig';
 import { resolveAgeGroup } from '../../utils/ageGroups';
-
-
 
 const CompetitionSummary = () => {
   const { competitionId } = useParams();
@@ -58,7 +73,7 @@ const CompetitionSummary = () => {
   // Configurazione dei tabs
   const summaryTabs = [
     { label: 'Amministrativo', value: 'administrative', disabled: false },
-    { label: 'Tecnico', value: 'technical', disabled: false }
+    { label: 'Tecnico', value: 'technical', disabled: false },
   ];
 
   const handleGoBack = () => {
@@ -109,16 +124,10 @@ const CompetitionSummary = () => {
     try {
       await toggleVerificaIscrizioneClub(competitionId, clubId);
       // Aggiorna lo stato locale
-      setClubRegistrations(prev =>
-        prev.map(reg =>
-          reg.clubId === clubId
-            ? { ...reg, verificato: !currentValue }
-            : reg
-        )
-      );
+      setClubRegistrations((prev) => prev.map((reg) => (reg.clubId === clubId ? { ...reg, verificato: !currentValue } : reg)));
     } catch (err) {
-      console.error('Errore nell\'aggiornamento del flag verificato:', err);
-      setError('Errore nell\'aggiornamento del flag verificato: ' + (err.response?.data?.message || err.message));
+      console.error("Errore nell'aggiornamento del flag verificato:", err);
+      setError("Errore nell'aggiornamento del flag verificato: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -126,16 +135,10 @@ const CompetitionSummary = () => {
     try {
       await toggleVerificaIscrizioneAtleta(competitionId, athleteId);
       // Aggiorna lo stato locale
-      setAthleteRegistrations(prev =>
-        prev.map(reg =>
-          reg.atleta.id === athleteId
-            ? { ...reg, verificato: !currentValue }
-            : reg
-        )
-      );
+      setAthleteRegistrations((prev) => prev.map((reg) => (reg.atleta.id === athleteId ? { ...reg, verificato: !currentValue } : reg)));
     } catch (err) {
-      console.error('Errore nell\'aggiornamento del flag verificato:', err);
-      setError('Errore nell\'aggiornamento del flag verificato: ' + (err.response?.data?.message || err.message));
+      console.error("Errore nell'aggiornamento del flag verificato:", err);
+      setError("Errore nell'aggiornamento del flag verificato: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -193,23 +196,25 @@ const CompetitionSummary = () => {
       const clubRegs = await getClubRegistrationsByCompetition(competitionId);
 
       // Aggiungo il riepilogo costi e totali iscrizione per club
-      const clubRegsWithSummary = await Promise.all(clubRegs.map(async (clubReg) => {
-        try {
-          const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
-          return { ...clubReg, summary };
-        } catch (err) {
-          console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
-          return { ...clubReg, summary: null };
-        }
-      }));
+      const clubRegsWithSummary = await Promise.all(
+        clubRegs.map(async (clubReg) => {
+          try {
+            const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
+            return { ...clubReg, summary };
+          } catch (err) {
+            console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
+            return { ...clubReg, summary: null };
+          }
+        })
+      );
       setClubRegistrations(clubRegsWithSummary);
 
       // Carica tutte le iscrizioni degli atleti
       const athleteRegs = await loadRegistrationsByCompetition(competitionId);
       setAthleteRegistrations(athleteRegs);
     } catch (err) {
-      console.error('Errore nel ricaricamento dei dati dopo la modifica dell\'iscrizione:', err);
-      setError('Errore nel ricaricamento dei dati dopo la modifica dell\'iscrizione: ' + (err.response?.data?.message || err.message));
+      console.error("Errore nel ricaricamento dei dati dopo la modifica dell'iscrizione:", err);
+      setError("Errore nel ricaricamento dei dati dopo la modifica dell'iscrizione: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -232,21 +237,22 @@ const CompetitionSummary = () => {
         const clubRegs = await getClubRegistrationsByCompetition(competitionId);
 
         // Aggiungo il riepilogo costi e totali iscrizione per club
-        const clubRegsWithSummary = await Promise.all(clubRegs.map(async (clubReg) => {
-          try {
-            const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
-            return { ...clubReg, summary };
-          } catch (err) {
-            console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
-            return { ...clubReg, summary: null };
-          }
-        }));
+        const clubRegsWithSummary = await Promise.all(
+          clubRegs.map(async (clubReg) => {
+            try {
+              const summary = await getClubCompetitionRegistrationSummary(competitionId, clubReg.clubId);
+              return { ...clubReg, summary };
+            } catch (err) {
+              console.warn(`Errore nel caricamento del riepilogo per il club ${clubReg.clubId}:`, err);
+              return { ...clubReg, summary: null };
+            }
+          })
+        );
         setClubRegistrations(clubRegsWithSummary);
 
         // Carica tutte le iscrizioni degli atleti
         const athleteRegs = await loadRegistrationsByCompetition(competitionId);
         setAthleteRegistrations(athleteRegs);
-
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
         setError('Errore nel caricamento dei dati della competizione: ' + (err.response?.data?.message || err.message));
@@ -268,7 +274,7 @@ const CompetitionSummary = () => {
           registrations: [],
           verification: registration.verificato || false,
           tesseramento: registration.tesseramento || 'N/A',
-          totalCost: parseFloat(registration.quota || '0')
+          totalCost: parseFloat(registration.quota || '0'),
         };
       }
 
@@ -287,7 +293,7 @@ const CompetitionSummary = () => {
 
   // Categorie previste dalla competizione (colonne della tabella)
   const categoryColumns = useMemo(
-    () => getCompetitionCategoryTypeIds(competition).map(id => ({ id })),
+    () => getCompetitionCategoryTypeIds(competition).map((id) => ({ id })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [competition?.categoryConfig]
   );
@@ -358,13 +364,7 @@ const CompetitionSummary = () => {
               <Chip
                 size="small"
                 label={params?.row?.stato || 'N/A'}
-                color={
-                  params.value === 'Confermata'
-                    ? 'success'
-                    : params.value === 'In attesa'
-                      ? 'warning'
-                      : 'default'
-                }
+                color={params.value === 'Confermata' ? 'success' : params.value === 'In attesa' ? 'warning' : 'default'}
               />
             </Tooltip>
           );
@@ -378,8 +378,7 @@ const CompetitionSummary = () => {
         filterable: true,
         sortable: true,
         type: 'number',
-        valueGetter: (value, row) => Object.values(row.summary?.athleteTypeTotals || {})
-          .reduce((sum, totals) => sum + (totals?.total || 0), 0),
+        valueGetter: (value, row) => Object.values(row.summary?.athleteTypeTotals || {}).reduce((sum, totals) => sum + (totals?.total || 0), 0),
         renderCell: (params) => {
           const totals = Object.entries(params.row.summary?.athleteTypeTotals || {});
           const total = totals.reduce((sum, [, t]) => sum + (t?.total || 0), 0);
@@ -397,8 +396,7 @@ const CompetitionSummary = () => {
         minWidth: 150,
         filterable: true,
         sortable: true,
-        valueGetter: (value, row) => {
-        },
+        valueGetter: (value, row) => {},
         renderCell: (params) => {
           const typeTotals = params.row.summary?.categoryTypeTotals || {};
           const counts = [
@@ -430,16 +428,18 @@ const CompetitionSummary = () => {
           const hasFile = !!params.row.confermaPresidenteId;
           const iconStyle = {
             fontSize: 28,
-            color: hasFile ? '#4caf50' : '#9e9e9e'
+            color: hasFile ? '#4caf50' : '#9e9e9e',
           };
           return (
-            <Tooltip title={hasFile ? "Conferma Presidente disponibile" : "Nessuna Conferma Presidente"} arrow>
-              <IconButton size="small" onClick={(e) => {
-                e.stopPropagation();
-                if (hasFile) {
-                  handleDownloadDocument(params.row?.club?.id, 'confermaPresidente', `conferma_presidente_${params.row.club.denominazione}.pdf`);
-                }
-              }}>
+            <Tooltip title={hasFile ? 'Conferma Presidente disponibile' : 'Nessuna Conferma Presidente'} arrow>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (hasFile) {
+                    handleDownloadDocument(params.row?.club?.id, 'confermaPresidente', `conferma_presidente_${params.row.club.denominazione}.pdf`);
+                  }
+                }}>
                 <Description sx={iconStyle} />
               </IconButton>
             </Tooltip>
@@ -459,16 +459,18 @@ const CompetitionSummary = () => {
           const hasFile = !!params.row.bonificoId;
           const iconStyle = {
             fontSize: 28,
-            color: hasFile ? '#4caf50' : '#9e9e9e'
+            color: hasFile ? '#4caf50' : '#9e9e9e',
           };
           return (
-            <Tooltip title={hasFile ? "Ricevuta bonifico disponibile" : "Nessuna ricevuta bonifico caricata"} arrow>
-              <IconButton size="small" onClick={(e) => {
-                e.stopPropagation();
-                if (hasFile) {
-                  handleDownloadDocument(params.row?.club?.id, 'bonifico', `bonifico_${params.row.club.denominazione}.pdf`);
-                }
-              }}>
+            <Tooltip title={hasFile ? 'Ricevuta bonifico disponibile' : 'Nessuna ricevuta bonifico caricata'} arrow>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (hasFile) {
+                    handleDownloadDocument(params.row?.club?.id, 'bonifico', `bonifico_${params.row.club.denominazione}.pdf`);
+                  }
+                }}>
                 <Description sx={iconStyle} />
               </IconButton>
             </Tooltip>
@@ -503,7 +505,7 @@ const CompetitionSummary = () => {
         type: 'string',
         valueGetter: (value, row) => {
           return row.club?.tesseramento || 'N/A';
-        }
+        },
       },
       {
         field: 'quota',
@@ -528,12 +530,7 @@ const CompetitionSummary = () => {
       headerName: 'Azioni',
       width: 80,
       getActions: (params) => [
-        <GridActionsCellItem
-          icon={<Info />}
-          label="Visualizza informazioni club"
-          onClick={() => handleDisplayClubInfo(params.row?.club)}
-          showInMenu={true}
-        />,
+        <GridActionsCellItem icon={<Info />} label="Visualizza informazioni club" onClick={() => handleDisplayClubInfo(params.row?.club)} showInMenu={true} />,
       ],
     });
     return baseColumns;
@@ -616,21 +613,28 @@ const CompetitionSummary = () => {
 
           const iconStyle = {
             fontSize: 28,
-            color: stato.colore === 'gray' ? '#9e9e9e' :
-                   stato.colore === 'red' ? '#f44336' :
-                   stato.colore === 'orange' ? '#ff9800' :
-                   stato.colore === 'green' ? '#4caf50' :
-                   '#2196f3'
+            color:
+              stato.colore === 'gray'
+                ? '#9e9e9e'
+                : stato.colore === 'red'
+                  ? '#f44336'
+                  : stato.colore === 'orange'
+                    ? '#ff9800'
+                    : stato.colore === 'green'
+                      ? '#4caf50'
+                      : '#2196f3',
           };
 
           return (
             <Tooltip title={stato.tooltip} arrow>
-              <IconButton size="small" onClick={(e) => {
-                e.stopPropagation();
-                if (hasCertificato) {
-                  handleDownloadCertificato(params.row.athlete);
-                }
-              }}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (hasCertificato) {
+                    handleDownloadCertificato(params.row.athlete);
+                  }
+                }}>
                 <Description sx={iconStyle} />
               </IconButton>
             </Tooltip>
@@ -662,11 +666,11 @@ const CompetitionSummary = () => {
             onClick={(e) => e.stopPropagation()}
           />
         ),
-      }
+      },
     ];
 
     // Aggiungi colonne per ogni categoria disponibile
-    categoryColumns.forEach(category => {
+    categoryColumns.forEach((category) => {
       const categoryDetails = categoryDetailsCache[category.id];
 
       baseColumns.push({
@@ -680,9 +684,7 @@ const CompetitionSummary = () => {
         sortable: true,
         valueGetter: (value, row) => {
           // Trova l'iscrizione per questa categoria
-          const registration = row.registrations.find(
-            reg => reg.tipoCategoria?.id === category.id
-          );
+          const registration = row.registrations.find((reg) => reg.tipoCategoria?.id === category.id);
 
           if (!registration) {
             return null; // Non iscritto: restituisce null (permette filtro "is empty")
@@ -694,19 +696,12 @@ const CompetitionSummary = () => {
         },
         renderCell: (params) => {
           // Trova se l'atleta è iscritto a questa categoria
-          const registration = params.row.registrations.find(
-            reg => reg.tipoCategoria?.id === category.id
-          );
+          const registration = params.row.registrations.find((reg) => reg.tipoCategoria?.id === category.id);
 
           if (registration && registration.dettagli?.nome) {
             return (
               <Tooltip title={`${registration?.dettagli?.nome}`} arrow>
-                <Chip
-                  label="✓"
-                  size="small"
-                  color="success"
-                  sx={{ fontSize: '0.75rem', height: '20px' }}
-                />
+                <Chip label="✓" size="small" color="success" sx={{ fontSize: '0.75rem', height: '20px' }} />
               </Tooltip>
             );
           } else if (registration && registration.peso) {
@@ -718,24 +713,12 @@ const CompetitionSummary = () => {
           } else if (registration) {
             return (
               <Tooltip title="Iscritto" arrow>
-                <Chip
-                  label="✓"
-                  size="small"
-                  color="success"
-                  sx={{ fontSize: '0.75rem', height: '20px' }}
-                />
+                <Chip label="✓" size="small" color="success" sx={{ fontSize: '0.75rem', height: '20px' }} />
               </Tooltip>
             );
           }
 
-          return (
-            <Chip
-              label="-"
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.75rem', height: '20px', borderColor: '#e0e0e0' }}
-            />
-          );
+          return <Chip label="-" size="small" variant="outlined" sx={{ fontSize: '0.75rem', height: '20px', borderColor: '#e0e0e0' }} />;
         },
       });
     });
@@ -746,14 +729,7 @@ const CompetitionSummary = () => {
       type: 'actions',
       headerName: 'Azioni',
       width: 80,
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<Edit />}
-          label="Modifica"
-          onClick={() => handleEditAthleteReg(params.row)}
-          showInMenu={true}
-        />,
-      ],
+      getActions: (params) => [<GridActionsCellItem icon={<Edit />} label="Modifica" onClick={() => handleEditAthleteReg(params.row)} showInMenu={true} />],
     });
 
     return baseColumns;
@@ -766,9 +742,7 @@ const CompetitionSummary = () => {
 
     // Filtra per club se è selezionato un club specifico
     if (clubFilter) {
-      filteredRegistrations = clubRegistrations.filter(
-        clubReg => clubReg.club?.denominazione === clubFilter
-      );
+      filteredRegistrations = clubRegistrations.filter((clubReg) => clubReg.club?.denominazione === clubFilter);
     }
 
     return filteredRegistrations.map((clubReg, index) => ({
@@ -779,7 +753,7 @@ const CompetitionSummary = () => {
   // Calcola i totali per il riepilogo amministrativo
   const administrativeSummary = useMemo(() => {
     const totalClubs = administrativeTableRows.length;
-    const confirmedClubs = administrativeTableRows.filter(row => row.stato === 'Confermata').length;
+    const confirmedClubs = administrativeTableRows.filter((row) => row.stato === 'Confermata').length;
     const totalAthletes = administrativeTableRows.reduce((sum, row) => {
       return sum + (row.summary?.totals?.totalAthletes || 0);
     }, 0);
@@ -789,18 +763,17 @@ const CompetitionSummary = () => {
     const totalQuota = administrativeTableRows.reduce((sum, row) => {
       return sum + (row.summary?.totals?.totalCost || 0);
     }, 0);
-    const documentsPresidente = administrativeTableRows.filter(row => row.confermaPresidenteId).length;
-    const documentsBonifico = administrativeTableRows.filter(row => row.bonificoId).length;
+    const documentsPresidente = administrativeTableRows.filter((row) => row.confermaPresidenteId).length;
+    const documentsBonifico = administrativeTableRows.filter((row) => row.bonificoId).length;
 
     // Aggiungo il tooltip per le categorie raggruppate per tipo categoria con quelle realmente presenti
     const categoryByTypeCounts = {};
-    administrativeTableRows.forEach(row => {
+    administrativeTableRows.forEach((row) => {
       if (row.summary?.categoryTypeTotals) {
         Object.entries(row.summary.categoryTypeTotals).forEach(([typeId, data]) => {
-          const typeName = CompetitionTipologyLabels[typeId]|| `N/A`;
+          const typeName = CompetitionTipologyLabels[typeId] || `N/A`;
           categoryByTypeCounts[typeName] = (categoryByTypeCounts[typeName] || 0) + data;
-        }
-        );
+        });
       }
     });
     const tooltipCategories = Object.entries(categoryByTypeCounts)
@@ -808,12 +781,20 @@ const CompetitionSummary = () => {
       .map(([typeName, count]) => `${typeName}: ${count}`)
       .join(', ');
 
-
-    return { totalClubs, confirmedClubs, totalAthletes, totalCategories, totalQuota, documentsPresidente, documentsBonifico, tooltipCategories };
+    return {
+      totalClubs,
+      confirmedClubs,
+      totalAthletes,
+      totalCategories,
+      totalQuota,
+      documentsPresidente,
+      documentsBonifico,
+      tooltipCategories,
+    };
   }, [administrativeTableRows]);
 
   const technicalTableRows = useMemo(() => {
-    const filteredGroups = Object.values(athleteGroups).filter(group => {
+    const filteredGroups = Object.values(athleteGroups).filter((group) => {
       // Se ho un testo valido, filtro per nome, cognome, club o categorie
       if (technicalSearchFilter) {
         const searchText = technicalSearchFilter.toLowerCase();
@@ -821,10 +802,7 @@ const CompetitionSummary = () => {
         const surname = group.athlete.cognome?.toLowerCase() || '';
         const clubName = group.athlete.club?.denominazione?.toLowerCase() || '';
         const athleteType = getAthleteProfileLabel(group).toLowerCase();
-        return (name.includes(searchText) ||
-                surname.includes(searchText) ||
-                clubName.includes(searchText) ||
-                athleteType.includes(searchText));
+        return name.includes(searchText) || surname.includes(searchText) || clubName.includes(searchText) || athleteType.includes(searchText);
       }
       return true;
     });
@@ -857,10 +835,7 @@ const CompetitionSummary = () => {
         title="Riepilogo iscrizioni"
         subtitle={`${competition.nome} - Luogo: ${competition.luogo} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna alle Competizioni
       </MuiButton>
 
@@ -874,19 +849,20 @@ const CompetitionSummary = () => {
       {/* Tabs */}
       <Tabs tabs={summaryTabs} activeTab={activeTab} onTabChange={handleTabChange}>
         {/* Tab Panel - Riepilogo amministrativo */}
-        { activeTab === "administrative" && (
+        {activeTab === 'administrative' && (
           <>
             {/* Riepilogo totali */}
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-              gap: 1,
-              mb: 3,
-              p: 1.5,
-              bgcolor: '#f5f5f5',
-              borderRadius: 1,
-              border: '1px solid #e0e0e0'
-            }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: 1,
+                mb: 3,
+                p: 1.5,
+                bgcolor: '#f5f5f5',
+                borderRadius: 1,
+                border: '1px solid #e0e0e0',
+              }}>
               <Box sx={{ textAlign: 'center' }}>
                 <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Club Iscritti</Box>
                 <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'primary.main' }}>{administrativeSummary.totalClubs}</Box>
@@ -907,11 +883,15 @@ const CompetitionSummary = () => {
               </Box>
               <Box sx={{ textAlign: 'center' }}>
                 <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Conf. Presidente</Box>
-                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'info.main' }}>{administrativeSummary.documentsPresidente}/{administrativeSummary.totalClubs}</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'info.main' }}>
+                  {administrativeSummary.documentsPresidente}/{administrativeSummary.totalClubs}
+                </Box>
               </Box>
               <Box sx={{ textAlign: 'center' }}>
                 <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Bonifici</Box>
-                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'info.main' }}>{administrativeSummary.documentsBonifico}/{administrativeSummary.totalClubs}</Box>
+                <Box sx={{ fontSize: '1.25rem', fontWeight: 600, color: 'info.main' }}>
+                  {administrativeSummary.documentsBonifico}/{administrativeSummary.totalClubs}
+                </Box>
               </Box>
               <Box sx={{ textAlign: 'center' }}>
                 <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>Quota Totale</Box>
@@ -920,22 +900,16 @@ const CompetitionSummary = () => {
             </Box>
 
             <FormControl fullWidth variant="outlined" sx={{ minWidth: 200, maxWidth: 400, mb: 3 }}>
-                <Autocomplete
-                  id="club-select-settings"
-                  value={clubName}
-                  groupBy={(club) => club.charAt(0).toUpperCase()}
-                  getOptionLabel={(club) => club}
-                  onChange={(event, value) => handleClubSelectChange(value)}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Club"
-                      size="small"
-                    />
-                  )}
-                  options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
-                />
+              <Autocomplete
+                id="club-select-settings"
+                value={clubName}
+                groupBy={(club) => club.charAt(0).toUpperCase()}
+                getOptionLabel={(club) => club}
+                onChange={(event, value) => handleClubSelectChange(value)}
+                isOptionEqualToValue={(option, value) => option === value}
+                renderInput={(params) => <TextField {...params} label="Club" size="small" />}
+                options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
+              />
             </FormControl>
 
             <DataGrid
@@ -954,7 +928,7 @@ const CompetitionSummary = () => {
         )}
 
         {/* Tab Panel - Riepilogo tecnico */}
-        { activeTab === "technical" && (
+        {activeTab === 'technical' && (
           <>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={3}>
               <SearchTextField
@@ -963,16 +937,13 @@ const CompetitionSummary = () => {
                 placeholder="Filtra per Atleta, Club o tipo atleta"
                 sx={{
                   width: '100%',
-                  maxWidth: "800px",
+                  maxWidth: '800px',
                   '& .MuiOutlinedInput-root': {
                     height: '60px',
-                  }
+                  },
                 }}
               />
-              <Button
-                icon={Download}
-                onClick={handleOpenExportModal}
-              >
+              <Button icon={Download} onClick={handleOpenExportModal}>
                 Scarica iscrizioni
               </Button>
             </Box>
@@ -993,14 +964,7 @@ const CompetitionSummary = () => {
         )}
       </Tabs>
 
-      {isClubInfoModalOpen && (
-        <ClubModal
-          open={isClubInfoModalOpen}
-          onClose={handleClubInfoCloseModal}
-          club={selectedClub}
-          isReadOnlyMode={true}
-        />
-      )}
+      {isClubInfoModalOpen && <ClubModal open={isClubInfoModalOpen} onClose={handleClubInfoCloseModal} club={selectedClub} isReadOnlyMode={true} />}
 
       {/* Modale per modifica iscrizione */}
       {isRegistrationModalOpen && (
@@ -1022,11 +986,7 @@ const CompetitionSummary = () => {
           <Box sx={{ mt: 2 }}>
             <FormControl fullWidth>
               <InputLabel>Modalità</InputLabel>
-              <Select
-                value={exportMode}
-                label="Modalità"
-                onChange={handleExportModeChange}
-              >
+              <Select value={exportMode} label="Modalità" onChange={handleExportModeChange}>
                 <MenuItem value="simple">VVD Italia</MenuItem>
                 <MenuItem value="full">Completa</MenuItem>
               </Select>
@@ -1045,9 +1005,7 @@ const CompetitionSummary = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <MuiButton onClick={handleCloseExportModal}>
-            Annulla
-          </MuiButton>
+          <MuiButton onClick={handleCloseExportModal}>Annulla</MuiButton>
           <MuiButton onClick={handleDownloadExcelReport} variant="contained" startIcon={<Download />}>
             Scarica
           </MuiButton>

@@ -29,11 +29,7 @@ import {
 } from '@mui/icons-material';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
-import {
-  CONFIG_VERSION,
-  getBirthDateRange,
-  validateAgeGroupConfig,
-} from '../utils/ageGroups';
+import { CONFIG_VERSION, getBirthDateRange, validateAgeGroupConfig } from '../utils/ageGroups';
 import './common/DrawerModal.css';
 
 export const SEASON_START_OPTIONS = [
@@ -46,8 +42,7 @@ export const AGE_GROUPING_OPTIONS = [
   { value: 'adults', label: 'Adulti' },
 ];
 
-export const getGroupingLabel = (grouping) =>
-  AGE_GROUPING_OPTIONS.find(o => o.value === grouping)?.label || '-';
+export const getGroupingLabel = (grouping) => AGE_GROUPING_OPTIONS.find((o) => o.value === grouping)?.label || '-';
 
 // Data odierna in formato 'YYYY-MM-DD'
 export const todayYmd = () => {
@@ -66,19 +61,20 @@ export const formatYmd = (ymd) => {
 export const describeAgeGroupMode = (config) => {
   if (!config) return '';
   if (config.mode === 'seasonAge') {
-    const option = SEASON_START_OPTIONS.find(o => o.value === config.seasonStart);
+    const option = SEASON_START_OPTIONS.find((o) => o.value === config.seasonStart);
     return `Età sportiva - stagione dal ${option ? option.label : config.seasonStart}`;
   }
   return 'Età esatta a inizio gara';
 };
 
 // Chiave stabile generata dall'etichetta (es. 'Masters A' -> 'masters-a')
-const slugify = (text) => text
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/g, '-')
-  .replace(/^-+|-+$/g, '') || 'fascia';
+const slugify = (text) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'fascia';
 
 const toFormGroup = (group) => ({
   key: group.key || '',
@@ -108,16 +104,7 @@ const emptyForm = {
  * @param {function} props.onDelete - Eliminazione della configurazione
  * @param {function} props.onDuplicate - Duplica la configurazione nel club (solo sola lettura)
  */
-const AgeGroupConfigurationModal = ({
-  open,
-  onClose,
-  onSubmit,
-  onDelete,
-  onDuplicate,
-  configuration,
-  isEditMode,
-  readOnly = false,
-}) => {
+const AgeGroupConfigurationModal = ({ open, onClose, onSubmit, onDelete, onDuplicate, configuration, isEditMode, readOnly = false }) => {
   const [formData, setFormData] = useState(emptyForm);
   const [errors, setErrors] = useState([]);
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -127,20 +114,24 @@ const AgeGroupConfigurationModal = ({
   useEffect(() => {
     if (!open) return;
     const config = configuration?.config;
-    setFormData(config ? {
-      name: configuration.name || '',
-      description: configuration.description || '',
-      mode: config.mode,
-      seasonStart: config.seasonStart || '01-01',
-      groups: (config.groups || []).map(toFormGroup),
-    } : emptyForm);
+    setFormData(
+      config
+        ? {
+            name: configuration.name || '',
+            description: configuration.description || '',
+            mode: config.mode,
+            seasonStart: config.seasonStart || '01-01',
+            groups: (config.groups || []).map(toFormGroup),
+          }
+        : emptyForm
+    );
     setErrors([]);
     setSubmitAttempted(false);
   }, [open, configuration]);
 
   // Costruisce il JSON della configurazione dal form, generando le chiavi mancanti
   const buildConfig = (data) => {
-    const usedKeys = new Set(data.groups.map(g => g.key).filter(Boolean));
+    const usedKeys = new Set(data.groups.map((g) => g.key).filter(Boolean));
     const groups = data.groups.map((group, index) => {
       let key = group.key;
       if (!key) {
@@ -198,7 +189,9 @@ const AgeGroupConfigurationModal = ({
   const handleAddGroup = () => {
     const last = formData.groups[formData.groups.length - 1];
     const nextMin = last && last.maxAge !== '' ? String(Number(last.maxAge) + 1) : '';
-    updateForm({ groups: [...formData.groups, { key: '', label: '', grouping: last?.grouping || '', minAge: nextMin, maxAge: '' }] });
+    updateForm({
+      groups: [...formData.groups, { key: '', label: '', grouping: last?.grouping || '', minAge: nextMin, maxAge: '' }],
+    });
   };
 
   const handleRemoveGroup = (index) => {
@@ -239,17 +232,20 @@ const AgeGroupConfigurationModal = ({
     try {
       await onDelete(configuration.id);
     } catch (error) {
-      setErrors([error.response?.data?.error || error.message || 'Errore nell\'eliminazione della configurazione']);
+      setErrors([error.response?.data?.error || error.message || "Errore nell'eliminazione della configurazione"]);
     } finally {
       setIsDeleteConfirmOpen(false);
     }
   };
 
   // Intervalli date di nascita calcolati sempre rispetto al giorno corrente
-  const previewConfig = useMemo(() => ({
-    mode: formData.mode,
-    seasonStart: formData.seasonStart,
-  }), [formData.mode, formData.seasonStart]);
+  const previewConfig = useMemo(
+    () => ({
+      mode: formData.mode,
+      seasonStart: formData.seasonStart,
+    }),
+    [formData.mode, formData.seasonStart]
+  );
   const today = todayYmd();
 
   const getGroupBirthRange = (group) => {
@@ -260,9 +256,7 @@ const AgeGroupConfigurationModal = ({
     }
     const range = getBirthDateRange({ minAge, maxAge }, previewConfig, today);
     if (!range) return 'Atleti nati: -';
-    return range.from
-      ? `Atleti nati dal ${formatYmd(range.from)} al ${formatYmd(range.to)}`
-      : `Atleti nati fino al ${formatYmd(range.to)}`;
+    return range.from ? `Atleti nati dal ${formatYmd(range.from)} al ${formatYmd(range.to)}` : `Atleti nati fino al ${formatYmd(range.to)}`;
   };
 
   const renderGroupInfo = (group) => (
@@ -272,9 +266,7 @@ const AgeGroupConfigurationModal = ({
     </Box>
   );
 
-  const title = readOnly
-    ? 'Configurazione di default'
-    : (isEditMode ? 'Modifica Configurazione Fasce Età' : 'Nuova Configurazione Fasce Età');
+  const title = readOnly ? 'Configurazione di default' : isEditMode ? 'Modifica Configurazione Fasce Età' : 'Nuova Configurazione Fasce Età';
 
   return (
     <>
@@ -287,12 +279,7 @@ const AgeGroupConfigurationModal = ({
           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Box>
               {isEditMode && !readOnly && onDelete && (
-                <Button
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                >
+                <Button onClick={() => setIsDeleteConfirmOpen(true)} variant="outlined" color="error" startIcon={<DeleteIcon />}>
                   Elimina
                 </Button>
               )}
@@ -314,11 +301,12 @@ const AgeGroupConfigurationModal = ({
               )}
             </Box>
           </Box>
-        }
-      >
+        }>
         {errors.length > 0 && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {errors.map((err, i) => <div key={i}>{err}</div>)}
+            {errors.map((err, i) => (
+              <div key={i}>{err}</div>
+            ))}
           </Alert>
         )}
 
@@ -357,16 +345,8 @@ const AgeGroupConfigurationModal = ({
             <FormControl disabled={readOnly}>
               <FormLabel>Modalità</FormLabel>
               <RadioGroup name="mode" value={formData.mode} onChange={handleChange}>
-                <FormControlLabel
-                  value="seasonAge"
-                  control={<Radio size="small" />}
-                  label="Età sportiva: età compiuta entro la fine della stagione"
-                />
-                <FormControlLabel
-                  value="age"
-                  control={<Radio size="small" />}
-                  label="Età esatta alla data di inizio gara"
-                />
+                <FormControlLabel value="seasonAge" control={<Radio size="small" />} label="Età sportiva: età compiuta entro la fine della stagione" />
+                <FormControlLabel value="age" control={<Radio size="small" />} label="Età esatta alla data di inizio gara" />
               </RadioGroup>
             </FormControl>
             {formData.mode === 'seasonAge' && (
@@ -378,10 +358,11 @@ const AgeGroupConfigurationModal = ({
                 onChange={handleChange}
                 size="small"
                 sx={{ maxWidth: 360 }}
-                disabled={readOnly}
-              >
-                {SEASON_START_OPTIONS.map(option => (
-                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                disabled={readOnly}>
+                {SEASON_START_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
                 ))}
               </TextField>
             )}
@@ -408,7 +389,9 @@ const AgeGroupConfigurationModal = ({
                 {formData.groups.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={readOnly ? 5 : 7}>
-                      <Typography variant="body2" color="text.secondary">Nessuna fascia definita</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Nessuna fascia definita
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -441,10 +424,11 @@ const AgeGroupConfigurationModal = ({
                         onChange={(e) => handleGroupChange(index, 'grouping', e.target.value)}
                         size="small"
                         fullWidth
-                        disabled={readOnly}
-                      >
-                        {AGE_GROUPING_OPTIONS.map(option => (
-                          <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                        disabled={readOnly}>
+                        {AGE_GROUPING_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
                         ))}
                       </TextField>
                     </TableCell>

@@ -45,25 +45,18 @@ const Header = () => {
     <header className="header">
       <div className="header-left">
         <div className="logo-container">
-          <img 
-            src="/logo_ufficiale.png" 
-            alt="Logo" 
-            className="header-logo"
-          />
+          <img src="/logo_ufficiale.png" alt="Logo" className="header-logo" />
         </div>
         <h3 className="header-title">{t('welcomeMessage')}</h3>
       </div>
-      
+
       <div className="header-right">
         {user && (
           <div className="user-menu" ref={userRef}>
-            <button 
-              className="user-button"
-              onClick={() => setShowUserDropdown(!showUserDropdown)}
-            >
+            <button className="user-button" onClick={() => setShowUserDropdown(!showUserDropdown)}>
               <FaUser className="user-icon" />
             </button>
-            
+
             {showUserDropdown && (
               <div className="user-dropdown">
                 <div className="user-info-dropdown">
@@ -80,26 +73,17 @@ const Header = () => {
         )}
 
         <div className="language-selector" ref={languageRef}>
-          <button 
-            className="language-button"
-            onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-          >
+          <button className="language-button" onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}>
             <span className="flag-emoji">{getFlagEmoji(language)}</span>
           </button>
-          
+
           {showLanguageDropdown && (
             <div className="language-dropdown">
-              <button 
-                className={`language-option ${language === 'it' ? 'active' : ''}`}
-                onClick={() => handleLanguageChange('it')}
-              >
+              <button className={`language-option ${language === 'it' ? 'active' : ''}`} onClick={() => handleLanguageChange('it')}>
                 <span className="flag-emoji">🇮🇹</span>
                 <span>{t('italian')}</span>
               </button>
-              <button 
-                className={`language-option ${language === 'en' ? 'active' : ''}`}
-                onClick={() => handleLanguageChange('en')}
-              >
+              <button className={`language-option ${language === 'en' ? 'active' : ''}`} onClick={() => handleLanguageChange('en')}>
                 <span className="flag-emoji">🇬🇧</span>
                 <span>{t('english')}</span>
               </button>

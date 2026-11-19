@@ -26,7 +26,7 @@ export const createClub = async (clubData) => {
     const response = await axios.post('/clubs/', clubData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante la creazione dell\'club:', error);
+    console.error("Errore durante la creazione dell'club:", error);
     throw error;
   }
 };
@@ -37,7 +37,7 @@ export const updateClub = async (clubId, clubData) => {
     const response = await axios.put(`/clubs/${clubId}/`, clubData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'aggiornamento dell\'club:', error);
+    console.error("Errore durante l'aggiornamento dell'club:", error);
     throw error;
   }
 };
@@ -47,7 +47,7 @@ export const deleteClub = async (clubId) => {
   try {
     await axios.delete(`/clubs/${clubId}/`);
   } catch (error) {
-    console.error('Errore durante l\'eliminazione dell\'club:', error);
+    console.error("Errore durante l'eliminazione dell'club:", error);
     throw error;
   }
 };
@@ -57,7 +57,7 @@ export const checkClubExists = async (codiceFiscale, partitaIva) => {
     const response = await axios.post('/clubs/check', { codiceFiscale, partitaIva });
     return response.data;
   } catch (error) {
-    console.error('Errore durante la verifica dell\'club:', error);
+    console.error("Errore durante la verifica dell'club:", error);
     throw error;
   }
 };
@@ -68,14 +68,12 @@ export const uploadLogoClub = async (clubId, file) => {
     formData.append('logo', file);
     const response = await axios.put(`/clubs/${clubId}/logo`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'upload del logo:', error);
+    console.error("Errore durante l'upload del logo:", error);
     throw error;
   }
 };
-
-

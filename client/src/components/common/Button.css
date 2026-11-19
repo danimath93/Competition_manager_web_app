@@ -10,7 +10,12 @@
   gap: 0.5rem;
   border: none;
   border-radius: var(--radius-md, 8px);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Outfit',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   font-weight: var(--font-semibold, 600);
   cursor: pointer;
   transition: all var(--transition-normal, 0.3s ease);
@@ -291,19 +296,19 @@
   .btn {
     gap: 0.35rem;
   }
-  
+
   /* Mantiene altezza fissa per btn-m ma riduce larghezza */
   .btn-m {
     height: 56px;
     width: 100%;
     padding: 0 16px;
   }
-  
+
   .btn-m.btn-inline {
     width: auto;
     min-width: fit-content;
   }
-  
+
   .btn-l {
     padding: clamp(0.75rem, 0.875rem, 1.25rem) clamp(1.25rem, 1.5rem, 2rem);
   }
@@ -318,24 +323,24 @@
   .btn {
     gap: 0.3rem;
   }
-  
+
   /* Su schermi molto piccoli, forza full-width per bottoni grandi se necessario */
   .btn-l:not(.btn-inline),
   .btn-xl:not(.btn-inline) {
     width: 100%;
   }
-  
+
   /* Mantiene font-size e altezza per btn-m */
   .btn-m {
     height: 56px;
     font-size: 0.9rem;
     padding: 0 12px;
   }
-  
+
   .btn-l {
     font-size: clamp(0.95rem, 1rem, 1.125rem);
   }
-  
+
   .btn-xl {
     font-size: clamp(1rem, 1.1rem, 1.25rem);
   }

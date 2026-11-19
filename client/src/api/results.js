@@ -34,7 +34,7 @@ export const getCategoriesResult = async (competitionId) => {
 export const printResults = async (competizioneId) => {
   try {
     const response = await axios.get(`/results/competizioni/${competizioneId}/print-results`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
     // Crea un URL blob e trigger il download
     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -56,7 +56,7 @@ export const printResults = async (competizioneId) => {
 export const printClubResults = async (competizioneId) => {
   try {
     const response = await axios.get(`/results/competizioni/${competizioneId}/print-club-results`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
     // Crea un URL blob e trigger il download
     const url = window.URL.createObjectURL(new Blob([response.data]));

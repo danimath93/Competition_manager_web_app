@@ -2,18 +2,7 @@ import React, { useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './PasswordInput.css';
 
-const PasswordInput = ({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
-  required = false,
-  name,
-  autoComplete = 'current-password',
-  maxLength
-}) => {
+const PasswordInput = ({ id, label, value, onChange, placeholder, disabled = false, required = false, name, autoComplete = 'current-password', maxLength }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePasswordVisibility = () => {
@@ -49,8 +38,7 @@ const PasswordInput = ({
           className="password-toggle"
           onClick={togglePasswordVisibility}
           disabled={disabled}
-          aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
-        >
+          aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}>
           {showPassword ? <FaEyeSlash /> : <FaEye />}
         </button>
       </div>

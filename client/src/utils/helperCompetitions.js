@@ -1,5 +1,5 @@
 import { CompetitionStatus } from '../constants/enums/CompetitionEnums';
-  
+
 const getCompetitionStatusColor = (status) => {
   switch (status) {
     case CompetitionStatus.PLANNED:
@@ -17,6 +17,6 @@ const getCompetitionStatusColor = (status) => {
     default:
       return 'default';
   }
-}
+};
 
 export { getCompetitionStatusColor };

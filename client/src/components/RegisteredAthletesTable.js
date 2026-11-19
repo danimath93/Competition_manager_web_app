@@ -20,7 +20,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
 
   // Categorie previste dalla competizione (colonne della tabella)
   const categoryColumns = useMemo(
-    () => getCompetitionCategoryTypeIds(competition).map(id => ({ id })),
+    () => getCompetitionCategoryTypeIds(competition).map((id) => ({ id })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [competition?.categoryConfig]
   );
@@ -30,10 +30,12 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
     if (categoryColumns.length === 0) return;
 
     let isMounted = true;
-    getManyById(categoryColumns.map(category => category.id), getCategoryType)
-      .then(details => {
-        if (isMounted) setCategoryDetailsCache(details);
-      });
+    getManyById(
+      categoryColumns.map((category) => category.id),
+      getCategoryType
+    ).then((details) => {
+      if (isMounted) setCategoryDetailsCache(details);
+    });
 
     return () => {
       isMounted = false;
@@ -48,7 +50,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
         groups[athlete.id] = {
           athlete: athlete,
           registrations: [],
-          totalCost: 0
+          totalCost: 0,
         };
       }
       groups[athlete.id].registrations.push(registration);
@@ -84,11 +86,11 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
             </div> */}
           </div>
         ),
-      }
+      },
     ];
 
     // Aggiungi colonne per ogni categoria disponibile
-    categoryColumns.forEach(category => {
+    categoryColumns.forEach((category) => {
       const categoryDetails = categoryDetailsCache[category.id];
 
       cols.push({
@@ -100,53 +102,29 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
         type: 'actions',
         renderCell: (params) => {
           // Trova se l'atleta è iscritto a questa categoria
-          const registration = params.row.registrations.find(
-            reg => reg.tipoCategoria?.id === category.id
-          );
+          const registration = params.row.registrations.find((reg) => reg.tipoCategoria?.id === category.id);
 
           if (registration && registration.dettagli?.nome) {
             return (
               <Tooltip title={`${registration?.dettagli?.nome}`} arrow>
-                <Chip
-                  label="✓"
-                  size="small"
-                  color="success"
-                  sx={{ fontSize: '0.75rem', height: '20px' }}
-                />
+                <Chip label="✓" size="small" color="success" sx={{ fontSize: '0.75rem', height: '20px' }} />
               </Tooltip>
             );
           } else if (registration && registration.peso) {
             return (
               <Tooltip title={`Peso: ${registration.peso} kg`} arrow>
-                <Chip
-                  label="✓"
-                  size="small"
-                  color="success"
-                  sx={{ fontSize: '0.75rem', height: '20px' }}
-                />
+                <Chip label="✓" size="small" color="success" sx={{ fontSize: '0.75rem', height: '20px' }} />
               </Tooltip>
             );
           } else if (registration) {
             return (
               <Tooltip title="Iscritto" arrow>
-                <Chip
-                  label="✓"
-                  size="small"
-                  color="success"
-                  sx={{ fontSize: '0.75rem', height: '20px' }}
-                />
+                <Chip label="✓" size="small" color="success" sx={{ fontSize: '0.75rem', height: '20px' }} />
               </Tooltip>
             );
           }
 
-          return (
-            <Chip
-              label="-"
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.75rem', height: '20px', borderColor: '#e0e0e0' }}
-            />
-          );
+          return <Chip label="-" size="small" variant="outlined" sx={{ fontSize: '0.75rem', height: '20px', borderColor: '#e0e0e0' }} />;
         },
       });
     });
@@ -161,13 +139,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
       sortable: true,
       filterable: false,
       valueGetter: (value, row) => row.totalCost || 0,
-      renderCell: (params) => (
-        <Chip
-          label={`${params.row.totalCost.toFixed(2)} €`}
-          color="primary"
-          size="small"
-        />
-      ),
+      renderCell: (params) => <Chip label={`${params.row.totalCost.toFixed(2)} €`} color="primary" size="small" />,
     });
 
     // Colonna Azioni (sempre ultima)
@@ -278,9 +250,7 @@ const RegisteredAthletesTable = ({ registrations, competition, isClubRegistered,
   if (rows.length === 0) {
     return (
       <Paper sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'text.secondary' }}>
-          Nessun atleta iscritto alla competizione
-        </div>
+        <div style={{ textAlign: 'center', color: 'text.secondary' }}>Nessun atleta iscritto alla competizione</div>
       </Paper>
     );
   }

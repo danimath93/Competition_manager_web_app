@@ -27,16 +27,12 @@ const EmblaCarousel = ({
 }) => {
   const hasMultipleSlides = slides.length > slidesPerView;
 
-  const plugins = useMemo(() => (
-    autoplayDelay && hasMultipleSlides
-      ? [Autoplay({ delay: autoplayDelay, stopOnInteraction: false, stopOnMouseEnter: true })]
-      : []
-  ), [autoplayDelay, hasMultipleSlides]);
-
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: hasMultipleSlides, align: 'start', active: hasMultipleSlides, ...options },
-    plugins
+  const plugins = useMemo(
+    () => (autoplayDelay && hasMultipleSlides ? [Autoplay({ delay: autoplayDelay, stopOnInteraction: false, stopOnMouseEnter: true })] : []),
+    [autoplayDelay, hasMultipleSlides]
   );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: hasMultipleSlides, align: 'start', active: hasMultipleSlides, ...options }, plugins);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
@@ -67,20 +63,12 @@ const EmblaCarousel = ({
   if (slides.length === 0) return null;
 
   return (
-    <div
-      className={`embla ${className}`}
-      style={{ '--embla-slides-per-view': slidesPerView, '--embla-object-fit': objectFit }}
-    >
+    <div className={`embla ${className}`} style={{ '--embla-slides-per-view': slidesPerView, '--embla-object-fit': objectFit }}>
       <div className="embla__viewport" ref={emblaRef}>
         <div className="embla__container">
           {slides.map((slide, index) => (
             <div className="embla__slide" key={slide.src + index}>
-              <img
-                className="embla__slide-img"
-                src={slide.src}
-                alt={slide.alt || `Slide ${index + 1}`}
-                loading={index < slidesPerView ? 'eager' : 'lazy'}
-              />
+              <img className="embla__slide-img" src={slide.src} alt={slide.alt || `Slide ${index + 1}`} loading={index < slidesPerView ? 'eager' : 'lazy'} />
             </div>
           ))}
         </div>

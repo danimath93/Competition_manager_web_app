@@ -21,7 +21,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Paper
+  Paper,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import EmailIcon from '@mui/icons-material/Email';
@@ -66,7 +66,7 @@ const ClubUser = () => {
 
     const loadLogo = async () => {
       // Revoca URL precedente
-      setLogoSource(prevUrl => {
+      setLogoSource((prevUrl) => {
         if (prevUrl && prevUrl.startsWith('blob:')) {
           URL.revokeObjectURL(prevUrl);
         }
@@ -78,7 +78,7 @@ const ClubUser = () => {
         setLoadingLogo(true);
         try {
           const blob = await getBlobDocumento(club.logoId);
-          
+
           if (blob && isMounted) {
             currentBlobUrl = URL.createObjectURL(blob);
             setLogoSource(currentBlobUrl);
@@ -160,10 +160,7 @@ const ClubUser = () => {
   if (!club) {
     return (
       <div className="page-container">
-        <PageHeader
-          title="Gestione Club"
-          icon={FaUniversity}
-        />
+        <PageHeader title="Gestione Club" icon={FaUniversity} />
         <div className="page-content">
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
@@ -175,10 +172,7 @@ const ClubUser = () => {
 
   return (
     <div className="page-container">
-      <PageHeader
-        title="Gestione Club"
-        icon={FaUniversity}
-      />
+      <PageHeader title="Gestione Club" icon={FaUniversity} />
 
       {/* Contenuto della pagina */}
       <div className="page-content">
@@ -189,8 +183,7 @@ const ClubUser = () => {
               overflow: 'visible',
               borderRadius: 1,
               boxShadow: 3,
-            }}
-          >
+            }}>
             {/* Immagine di copertina */}
             <Box
               sx={{
@@ -201,8 +194,7 @@ const ClubUser = () => {
                 backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 overflow: 'hidden',
                 borderRadius: '8px 8px 0 0',
-            }}
-            >
+              }}>
               <CardMedia
                 component="img"
                 image="/assets/club-cover.jpg"
@@ -227,8 +219,7 @@ const ClubUser = () => {
                 top: { xs: 90, sm: 120 },
                 left: { xs: 20, sm: 30 },
                 zIndex: 1,
-              }}
-            >
+              }}>
               <Box sx={{ position: 'relative' }}>
                 {loadingLogo ? (
                   <Box
@@ -242,8 +233,7 @@ const ClubUser = () => {
                       borderRadius: '50%',
                       bgcolor: '#f5f5f5',
                       boxShadow: 3,
-                    }}
-                  >
+                    }}>
                     <CircularProgress />
                   </Box>
                 ) : (
@@ -273,8 +263,7 @@ const ClubUser = () => {
                       height: { xs: 30, sm: 36 },
                     }}
                     onClick={handleLogoEditClick}
-                    size="small"
-                  >
+                    size="small">
                     <EditIcon sx={{ fontSize: { xs: 16, sm: 20 } }} />
                   </IconButton>
                 </Tooltip>
@@ -294,15 +283,13 @@ const ClubUser = () => {
                   borderBottom: '1px solid',
                   borderColor: 'divider',
                   pb: 1,
-                }}
-              >
+                }}>
                 <Typography
                   variant="h5"
                   sx={{
                     fontWeight: 600,
                     flex: 1,
-                  }}
-                >
+                  }}>
                   {club.denominazione}
                 </Typography>
                 <Tooltip title="Modifica dati club">
@@ -317,8 +304,7 @@ const ClubUser = () => {
                       width: { xs: 36, sm: 40 },
                       height: { xs: 36, sm: 40 },
                     }}
-                    size="small"
-                  >
+                    size="small">
                     <EditIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
                   </IconButton>
                 </Tooltip>
@@ -330,8 +316,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <AccountBalanceIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -347,8 +332,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <AccountBalanceIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -364,8 +348,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <AccountBalanceIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -381,8 +364,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <LocationOnIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -401,8 +383,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <EmailIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -421,8 +402,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <PhoneIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -438,8 +418,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <PersonIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -455,8 +434,7 @@ const ClubUser = () => {
                 <ListItem
                   sx={{
                     px: 0,
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: { xs: 40, sm: 48 } }}>
                     <BadgeIcon color="secondary" sx={{ fontSize: { xs: 20, sm: 24 } }} />
                   </ListItemIcon>
@@ -467,7 +445,6 @@ const ClubUser = () => {
                     }}
                   />
                 </ListItem>
-
               </List>
             </Box>
           </Card>
@@ -475,20 +452,9 @@ const ClubUser = () => {
       </div>
 
       {/* Modale modifica dati club */}
-      <ClubModal
-        open={editOpen}
-        onClose={handleEditClose}
-        onSubmit={handleEditSubmit}
-        club={club}
-        isEditMode={true}
-      />
+      <ClubModal open={editOpen} onClose={handleEditClose} onSubmit={handleEditSubmit} club={club} isEditMode={true} />
       {/* Modale upload logo */}
-      <LogoUploadModal
-        open={logoModalOpen}
-        onClose={handleLogoModalClose}
-        club={club}
-        onSuccess={handleLogoUpdateComplete}
-      />
+      <LogoUploadModal open={logoModalOpen} onClose={handleLogoModalClose} club={club} onSuccess={handleLogoUpdateComplete} />
     </div>
   );
 };
@@ -537,7 +503,7 @@ const LogoUploadModal = ({ open, onClose, club, onSuccess }) => {
       const updated = await uploadLogoClub(club.id, selectedFile);
       setSuccess('Logo caricato con successo!');
       setSelectedFile(null);
-      
+
       // Chiama la callback di successo dopo 1.5 secondi
       setTimeout(() => {
         if (onSuccess) onSuccess(updated);
@@ -560,9 +526,7 @@ const LogoUploadModal = ({ open, onClose, club, onSuccess }) => {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
-            Carica nuovo logo
-          </Typography>
+          <Typography variant="h6">Carica nuovo logo</Typography>
           <IconButton onClick={handleClose} size="small">
             <Close />
           </IconButton>
@@ -587,28 +551,15 @@ const LogoUploadModal = ({ open, onClose, club, onSuccess }) => {
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Seleziona il logo del club
             </Typography>
-            
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<CloudUpload />}
-              fullWidth
-              sx={{ mb: 1 }}
-            >
+
+            <Button variant="outlined" component="label" startIcon={<CloudUpload />} fullWidth sx={{ mb: 1 }}>
               Seleziona immagine
-              <input
-                type="file"
-                hidden
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFileSelect}
-              />
+              <input type="file" hidden accept=".jpg,.jpeg,.png" onChange={handleFileSelect} />
             </Button>
 
             {selectedFile && (
               <Box sx={{ mt: 1 }}>
-                <Typography variant="body2">
-                  File selezionato: {selectedFile.name}
-                </Typography>
+                <Typography variant="body2">File selezionato: {selectedFile.name}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   Dimensione: {(selectedFile.size / 1024).toFixed(2)} KB
                 </Typography>
@@ -636,12 +587,7 @@ const LogoUploadModal = ({ open, onClose, club, onSuccess }) => {
           Chiudi
         </Button>
         {selectedFile && (
-          <Button
-            onClick={handleUpload}
-            variant="contained"
-            disabled={uploading}
-            startIcon={<CloudUpload />}
-          >
+          <Button onClick={handleUpload} variant="contained" disabled={uploading} startIcon={<CloudUpload />}>
             Carica
           </Button>
         )}

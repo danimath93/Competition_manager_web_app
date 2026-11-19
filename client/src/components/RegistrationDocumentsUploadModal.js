@@ -1,43 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Alert,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress
-} from '@mui/material';
-import {
-  CloudUpload as UploadIcon,
-  CheckCircle as CheckIcon,
-  Delete as DeleteIcon,
-  PictureAsPdf as PdfIcon,
-} from '@mui/icons-material';
+import { Box, Typography, Button, Alert, Paper, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
+import { CloudUpload as UploadIcon, CheckCircle as CheckIcon, Delete as DeleteIcon, PictureAsPdf as PdfIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { uploadClubRegistrationDocuments } from '../api/registrations';
 
-const RegistrationDocumentsUploadModal = ({
-  open,
-  onClose,
-  disabled = false,
-  clubRegistration = {},
-}) => {
-  const { user } = useAuth();  
+const RegistrationDocumentsUploadModal = ({ open, onClose, disabled = false, clubRegistration = {} }) => {
+  const { user } = useAuth();
   const competitionId = clubRegistration?.competizioneId;
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [error, setError] = useState(null);
 
   // File visualizzati (caricati da clubRegistration o nuovi selezionati)
   const [displayedFiles, setDisplayedFiles] = useState({
-    confermaPresidente: null
+    confermaPresidente: null,
   });
 
   const [displayedFileNames, setDisplayedFileNames] = useState({
-    confermaPresidente: ''
+    confermaPresidente: '',
   });
 
   const [uploadStatus, setUploadStatus] = useState({
@@ -75,7 +54,7 @@ const RegistrationDocumentsUploadModal = ({
     if (file.type !== 'application/pdf') {
       setUploadStatus({
         message: 'Solo file PDF sono accettati',
-        error: true
+        error: true,
       });
       event.target.value = '';
       return;
@@ -85,37 +64,37 @@ const RegistrationDocumentsUploadModal = ({
     if (file.size > 10 * 1024 * 1024) {
       setUploadStatus({
         message: 'Il file non può superare i 10MB',
-        error: true
+        error: true,
       });
       event.target.value = '';
       return;
     }
 
-    setDisplayedFiles(prev => ({
+    setDisplayedFiles((prev) => ({
       ...prev,
-      [fileType]: file
+      [fileType]: file,
     }));
 
-    setDisplayedFileNames(prev => ({
+    setDisplayedFileNames((prev) => ({
       ...prev,
-      [fileType]: file.name
+      [fileType]: file.name,
     }));
 
     setUploadStatus({
       message: '',
-      error: false
+      error: false,
     });
   };
 
   const handleRemoveFile = (fileType) => {
-    setDisplayedFiles(prev => ({
+    setDisplayedFiles((prev) => ({
       ...prev,
-      [fileType]: null
+      [fileType]: null,
     }));
 
-    setDisplayedFileNames(prev => ({
+    setDisplayedFileNames((prev) => ({
       ...prev,
-      [fileType]: ''
+      [fileType]: '',
     }));
 
     // Reset input file
@@ -130,7 +109,7 @@ const RegistrationDocumentsUploadModal = ({
     setDisplayedFileNames({
       confermaPresidente: '',
     });
-    
+
     // Reset degli input file
     const inputConferma = document.getElementById('confermaPresidente-input');
     if (inputConferma) inputConferma.value = '';
@@ -145,7 +124,7 @@ const RegistrationDocumentsUploadModal = ({
     if (!displayedFiles.confermaPresidente) {
       setUploadStatus({
         message: 'Il documento di conferma del presidente è obbligatorio',
-        error: true
+        error: true,
       });
       return;
     }
@@ -154,14 +133,9 @@ const RegistrationDocumentsUploadModal = ({
       setUploadingDocuments(true);
 
       // Upload documento
-      await uploadClubRegistrationDocuments(
-        user.clubId,
-        competitionId,
-        displayedFiles.confermaPresidente
-      );
+      await uploadClubRegistrationDocuments(user.clubId, competitionId, displayedFiles.confermaPresidente);
       setError(null);
-      if (onClose)
-        onClose();      
+      if (onClose) onClose();
     } catch (err) {
       console.error('Errore durante il caricamento del documento:', err);
       setError('Errore durante il caricamento del documento: ' + (err.response?.data?.error || err.message));
@@ -172,10 +146,10 @@ const RegistrationDocumentsUploadModal = ({
 
   // Verifica se il file è presente
   const hasAnyFile = displayedFileNames.confermaPresidente;
-  
+
   // Verifica se il file è un File object nuovo (non solo nome da DB)
   const hasAllNewFiles = displayedFiles.confermaPresidente;
-  
+
   // Il pulsante "Carica Documento" è abilitato solo se c'è il file NUOVO
   const canUpload = hasAllNewFiles && !uploadingDocuments;
 
@@ -191,9 +165,8 @@ const RegistrationDocumentsUploadModal = ({
           p: 3,
           mb: 2,
           border: hasFile ? '2px solid #4caf50' : '2px dashed #ccc',
-          backgroundColor: hasFile ? '#f1f8f4' : 'transparent'
-        }}
-      >
+          backgroundColor: hasFile ? '#f1f8f4' : 'transparent',
+        }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">
             <PdfIcon sx={{ mr: 1, color: hasFile ? '#4caf50' : '#666' }} />
@@ -230,9 +203,8 @@ const RegistrationDocumentsUploadModal = ({
               sx={{
                 mt: 0.5,
                 wordBreak: 'break-all',
-                fontStyle: 'italic'
-              }}
-            >
+                fontStyle: 'italic',
+              }}>
               {fileName}
             </Typography>
           </Box>
@@ -249,13 +221,7 @@ const RegistrationDocumentsUploadModal = ({
               disabled={disabled}
             />
             <label htmlFor={`${fileType}-input`}>
-              <Button
-                variant="contained"
-                component="span"
-                startIcon={<UploadIcon />}
-                disabled={disabled}
-                fullWidth
-              >
+              <Button variant="contained" component="span" startIcon={<UploadIcon />} disabled={disabled} fullWidth>
                 Seleziona PDF
               </Button>
             </label>
@@ -266,12 +232,7 @@ const RegistrationDocumentsUploadModal = ({
   };
 
   return (
-    <Dialog
-      open={open}
-      maxWidth="md"
-      keepMounted={false}
-      fullWidth
-    >
+    <Dialog open={open} maxWidth="md" keepMounted={false} fullWidth>
       <DialogTitle>
         <Typography variant="h5" fontWeight="bold">
           Documenti Iscrizione
@@ -296,44 +257,26 @@ const RegistrationDocumentsUploadModal = ({
               {uploadStatus.message}
             </Alert>
           )}
-          
+
           <Typography variant="caption" color="text.secondary" display="block" mt={2}>
             * Formato accettato: PDF | Dimensione massima: 10MB per file
           </Typography>
         </Box>
-        {error && (
-          <Alert severity="error">
-            {error}
-          </Alert>
-        )}
+        {error && <Alert severity="error">{error}</Alert>}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3, justifyContent: 'space-between' }}>
         <Box>
           {hasAnyFile && (
-            <Button
-              onClick={handleResetAll}
-              disabled={uploadingDocuments}
-              color="warning"
-              variant="outlined"
-            >
+            <Button onClick={handleResetAll} disabled={uploadingDocuments} color="warning" variant="outlined">
               Reset
             </Button>
           )}
         </Box>
         <Box>
-          <Button
-            onClick={handleCloseModal}
-            disabled={uploadingDocuments}
-            sx={{ mr: 1 }}
-          >
+          <Button onClick={handleCloseModal} disabled={uploadingDocuments} sx={{ mr: 1 }}>
             Annulla
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleUploadDocuments}
-            disabled={!canUpload}
-          >
+          <Button variant="contained" color="primary" onClick={handleUploadDocuments} disabled={!canUpload}>
             {uploadingDocuments ? (
               <>
                 <CircularProgress size={20} sx={{ mr: 1 }} />

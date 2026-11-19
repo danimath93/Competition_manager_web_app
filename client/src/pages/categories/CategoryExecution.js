@@ -1,25 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  Box,
-  Paper,
-  Alert,
-  CircularProgress,
-  Tooltip,
-  Chip
-} from '@mui/material';
+import { Container, Typography, Box, Paper, Alert, CircularProgress, Tooltip, Chip } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import { itIT } from '@mui/x-data-grid/locales';
 import { FaTags } from 'react-icons/fa';
 import { PlayArrow, Print, ArrowBack, Person, FormatListNumbered } from '@mui/icons-material';
@@ -87,9 +71,9 @@ const CategoryExecution = () => {
   const updateCategoryState = (categoriaId, newState) => {
     setCategoryStates((prevStates) => ({
       ...prevStates,
-      [categoriaId]: newState
+      [categoriaId]: newState,
     }));
-  }
+  };
 
   const handleClosePrintModal = () => {
     setShowPrintModal(false);
@@ -128,29 +112,23 @@ const CategoryExecution = () => {
     try {
       await updateCategoria(selectedCategory.id, { tableUserId: userId });
       // Aggiorna solo lo stato locale invece di ricaricare tutto
-      setCategories(prevCategories => 
-        prevCategories.map(cat => 
-          cat.id === selectedCategory.id 
-            ? { ...cat, tableUserId: userId }
-            : cat
-        )
-      );
+      setCategories((prevCategories) => prevCategories.map((cat) => (cat.id === selectedCategory.id ? { ...cat, tableUserId: userId } : cat)));
       handleCloseTableUserModal();
     } catch (error) {
-      console.error('Errore nell\'aggiornamento dell\'utente tavolo:', error);
-      setError('Errore nell\'aggiornamento dell\'utente tavolo');
+      console.error("Errore nell'aggiornamento dell'utente tavolo:", error);
+      setError("Errore nell'aggiornamento dell'utente tavolo");
     }
   };
 
   const handleConfirmOrder = async () => {
     const orderNum = parseInt(orderValue, 10);
-    
+
     // Validazione
     if (!orderValue || isNaN(orderNum)) {
       setOrderError('Inserire un numero valido');
       return;
     }
-    
+
     if (orderNum < 1 || orderNum > 999) {
       setOrderError('Il numero deve essere compreso tra 1 e 999');
       return;
@@ -159,23 +137,16 @@ const CategoryExecution = () => {
     try {
       await updateCategoria(selectedCategory.id, { ordine: orderNum });
       // Aggiorna solo lo stato locale invece di ricaricare tutto
-      setCategories(prevCategories => 
-        prevCategories.map(cat => 
-          cat.id === selectedCategory.id 
-            ? { ...cat, ordine: orderNum }
-            : cat
-        )
-      );
+      setCategories((prevCategories) => prevCategories.map((cat) => (cat.id === selectedCategory.id ? { ...cat, ordine: orderNum } : cat)));
       handleCloseOrderModal();
     } catch (error) {
-      console.error('Errore nell\'aggiornamento dell\'ordine:', error);
-      setOrderError('Errore nell\'aggiornamento dell\'ordine');
+      console.error("Errore nell'aggiornamento dell'ordine:", error);
+      setOrderError("Errore nell'aggiornamento dell'ordine");
     }
   };
 
   // Definizione delle colonne
   const columns = useMemo(() => {
-
     const getName = (id) => {
       const tipo = allCategorie.find((cat) => cat.id === id);
       if (tipo) return tipo.nome;
@@ -183,11 +154,16 @@ const CategoryExecution = () => {
     };
 
     const handlePlay = async (cat) => {
-      const res = await startSvolgimentoCategoria({categoriaId: cat.id, competizioneId});
-      const pageParameters = "svolgimentoId=" + res?.svolgimentoId +
-        "&categoriaNome=" + encodeURIComponent(cat?.nome) +
-        "&competizioneId=" + competizioneId +
-        "&tipoCompetizioneId=" + cat?.tipoCategoria?.tipoCompetizione?.id;
+      const res = await startSvolgimentoCategoria({ categoriaId: cat.id, competizioneId });
+      const pageParameters =
+        'svolgimentoId=' +
+        res?.svolgimentoId +
+        '&categoriaNome=' +
+        encodeURIComponent(cat?.nome) +
+        '&competizioneId=' +
+        competizioneId +
+        '&tipoCompetizioneId=' +
+        cat?.tipoCategoria?.tipoCompetizione?.id;
       // Voglio aprire la pagina in una nuova scheda
       updateCategoryState(cat.id, res?.stato);
       window.open(`/category-execution/${cat.id}/category-in-progress?${pageParameters}`, '_blank');
@@ -250,7 +226,7 @@ const CategoryExecution = () => {
         renderCell: (params) => {
           return (
             <Tooltip title={categoryStates[params.row.id] || CategoryStates.DA_DEFINIRE} arrow>
-              <Chip 
+              <Chip
                 label={categoryStates[params.row.id] || CategoryStates.DA_DEFINIRE}
                 color={getStatusColor(categoryStates[params.row.id] || CategoryStates.DA_DEFINIRE)}
                 size="small"
@@ -273,7 +249,7 @@ const CategoryExecution = () => {
         sortable: true,
         filterable: false,
         renderCell: (params) => {
-          const tableUser = tableUsers.find(u => u.id === params.row.tableUserId);
+          const tableUser = tableUsers.find((u) => u.id === params.row.tableUserId);
           return tableUser ? tableUser.username : '-';
         },
       });
@@ -288,29 +264,14 @@ const CategoryExecution = () => {
       minWidth: 80,
       getActions: (params) => {
         const actions = [
-          <GridActionsCellItem
-            icon={<PlayArrow />}
-            label="Avvia svolgimento"
-            onClick={() => handlePlay(params.row)}
-            showInMenu={true}
-          />,
-          <GridActionsCellItem
-            icon={<Print />}
-            label="Stampa quaderno di gara"
-            onClick={() => handlePrintCategory(params.row)}
-            showInMenu={true}
-          />,
+          <GridActionsCellItem icon={<PlayArrow />} label="Avvia svolgimento" onClick={() => handlePlay(params.row)} showInMenu={true} />,
+          <GridActionsCellItem icon={<Print />} label="Stampa quaderno di gara" onClick={() => handlePrintCategory(params.row)} showInMenu={true} />,
         ];
 
         // Aggiungi azione per selezionare utente tavolo solo per admin/superAdmin
         if (isAdminOrSuperAdmin) {
           actions.push(
-            <GridActionsCellItem
-              icon={<Person />}
-              label="Seleziona utente tavolo"
-              onClick={() => handleOpenTableUserModal(params.row)}
-              showInMenu={true}
-            />
+            <GridActionsCellItem icon={<Person />} label="Seleziona utente tavolo" onClick={() => handleOpenTableUserModal(params.row)} showInMenu={true} />
           );
           actions.push(
             <GridActionsCellItem
@@ -329,8 +290,7 @@ const CategoryExecution = () => {
     return baseColumns;
   }, [allCategorie, categoryStates, competizioneId, isAdminOrSuperAdmin, tableUsers]);
 
-    useEffect(() => {
-
+  useEffect(() => {
     const loadCompetition = async () => {
       try {
         const data = await getCompetitionDetails(competizioneId);
@@ -360,9 +320,7 @@ const CategoryExecution = () => {
 
     const loadCategoryType = async () => {
       try {
-        const [categorie] = await Promise.all([
-          loadAllCategoryTypes(),
-        ]);
+        const [categorie] = await Promise.all([loadAllCategoryTypes()]);
         setAllCategorie(categorie || []);
       } catch (error) {
         console.error('Errore nel caricamento dei config:', error);
@@ -373,7 +331,7 @@ const CategoryExecution = () => {
       try {
         const svolgimenti = await getSvolgimentiByCompetizione(competizioneId);
         const statesMap = {};
-        svolgimenti.forEach(svolg => {
+        svolgimenti.forEach((svolg) => {
           if (svolg.categoriaId) {
             statesMap[svolg.categoriaId] = svolg.stato || CategoryStates.DA_DEFINIRE;
           }
@@ -432,38 +390,32 @@ const CategoryExecution = () => {
         title="Svolgimento categorie"
         subtitle={`${competition?.nome} - Organizzatore: ${competition?.organizzatore?.denominazione || 'N/A'}`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna alle Competizioni
       </MuiButton>
-    
+
       {/* Lista categorie */}
-      <Paper sx={{ width: '100%', height: '100%', p:3 }}>
+      <Paper sx={{ width: '100%', height: '100%', p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Categorie definite
         </Typography>
-        
+
         {categories.length === 0 && (
           <Typography variant="body2" color="text.secondary">
             Nessuna categoria trovata per questa competizione.
           </Typography>
         )}
         {categories.length > 0 && (
-          <DataGrid
-            rows={categories}
-            columns={columns}
-            disableColumnMenu={false}
-            localeText={itIT.components.MuiDataGrid.defaultProps.localeText}
-          />
+          <DataGrid rows={categories} columns={columns} disableColumnMenu={false} localeText={itIT.components.MuiDataGrid.defaultProps.localeText} />
         )}
       </Paper>
 
       {/* Competition Notebook Print Modal */}
       <CategoryNotebookPrint
         open={showPrintModal}
-        onClose={() => { handleClosePrintModal(); }}
+        onClose={() => {
+          handleClosePrintModal();
+        }}
         category={printCategory}
       />
 
@@ -503,7 +455,7 @@ const CategoryExecution = () => {
             inputProps={{
               min: 1,
               max: 999,
-              step: 1
+              step: 1,
             }}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {

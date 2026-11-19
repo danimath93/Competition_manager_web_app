@@ -5,24 +5,24 @@ Questo sistema fornisce stili comuni e componenti riutilizzabili per tutte le pa
 ## 📦 Componenti Disponibili
 
 ### 1. PageHeader
+
 Componente per l'intestazione delle pagine con icona, titolo, sottotitolo e azioni.
 
 **Importazione:**
+
 ```javascript
 import PageHeader from '../components/PageHeader';
 import { FaTachometerAlt } from 'react-icons/fa';
 ```
 
 **Utilizzo Base:**
+
 ```jsx
-<PageHeader
-  icon={FaTachometerAlt}
-  title="Titolo Pagina"
-  subtitle="Descrizione opzionale della pagina"
-/>
+<PageHeader icon={FaTachometerAlt} title="Titolo Pagina" subtitle="Descrizione opzionale della pagina" />
 ```
 
 **Con Azioni:**
+
 ```jsx
 <PageHeader
   icon={FaTachometerAlt}
@@ -38,6 +38,7 @@ import { FaTachometerAlt } from 'react-icons/fa';
 ```
 
 **Props:**
+
 - `icon` (Component): Componente icona da React Icons
 - `title` (string): Titolo principale
 - `subtitle` (string, opzionale): Sottotitolo/descrizione
@@ -56,15 +57,9 @@ import './styles/CommonPageStyles.css';
 const MyPage = () => {
   return (
     <div className="page-container">
-      <PageHeader
-        icon={MyIcon}
-        title="Titolo"
-        subtitle="Sottotitolo"
-      />
-      
-      <div className="page-content">
-        {/* Contenuto qui */}
-      </div>
+      <PageHeader icon={MyIcon} title="Titolo" subtitle="Sottotitolo" />
+
+      <div className="page-content">{/* Contenuto qui */}</div>
     </div>
   );
 };
@@ -75,16 +70,19 @@ const MyPage = () => {
 ## 📋 Classi CSS Disponibili
 
 ### Container
+
 - **`page-container`**: Container principale della pagina
 - **`page-content`**: Contenuto con padding appropriato
 
 ### Card
+
 - **`page-card`**: Card generica con bordo e ombra
 - **`page-card-header`**: Header della card
 - **`page-card-title`**: Titolo della card
 - **`page-card-body`**: Corpo della card
 
 **Esempio:**
+
 ```jsx
 <div className="page-card">
   <div className="page-card-header">
@@ -97,11 +95,13 @@ const MyPage = () => {
 ```
 
 ### Sezioni
+
 - **`page-section`**: Sezione della pagina con margine
 - **`page-section-title`**: Titolo della sezione
 - **`page-section-subtitle`**: Sottotitolo della sezione
 
 **Esempio:**
+
 ```jsx
 <div className="page-section">
   <h2 className="page-section-title">Titolo Sezione</h2>
@@ -111,12 +111,14 @@ const MyPage = () => {
 ```
 
 ### Grid Layouts
+
 - **`page-grid`**: Grid responsive automatica (min 300px per colonna)
 - **`page-grid-2`**: Grid a 2 colonne
 - **`page-grid-3`**: Grid a 3 colonne
 - **`page-grid-4`**: Grid a 4 colonne
 
 **Esempio:**
+
 ```jsx
 <div className="page-grid-3">
   <div className="page-card">Item 1</div>
@@ -128,23 +130,27 @@ const MyPage = () => {
 **Nota:** Su mobile, tutte le grid diventano 1 colonna automaticamente.
 
 ### Spaziature
+
 - **`page-spacing-sm`**: Margine bottom 1rem
 - **`page-spacing-md`**: Margine bottom 1.5rem
 - **`page-spacing-lg`**: Margine bottom 2rem
 - **`page-spacing-xl`**: Margine bottom 3rem
 
 ### Flex Utilities
+
 - **`page-flex-center`**: Centra contenuto
 - **`page-flex-between`**: Space between
 - **`page-flex-start`**: Allinea a sinistra con gap
 - **`page-flex-end`**: Allinea a destra con gap
 
 ### Text Utilities
+
 - **`page-text-center`**: Testo centrato
 - **`page-text-muted`**: Testo secondario (grigio)
 - **`page-text-light`**: Testo terziario (grigio chiaro)
 
 ### Altri
+
 - **`page-divider`**: Linea di separazione orizzontale
 
 ---
@@ -152,18 +158,18 @@ const MyPage = () => {
 ## 🎭 Stati Speciali
 
 ### Empty State (Nessun Dato)
+
 ```jsx
 <div className="page-empty-state">
   <div className="page-empty-state-icon">📭</div>
   <h3 className="page-empty-state-title">Nessun dato disponibile</h3>
-  <p className="page-empty-state-text">
-    Non ci sono ancora elementi da visualizzare.
-  </p>
+  <p className="page-empty-state-text">Non ci sono ancora elementi da visualizzare.</p>
   <button className="btn btn-primary">Aggiungi Nuovo</button>
 </div>
 ```
 
 ### Loading State
+
 ```jsx
 <div className="page-loading">
   <p>Caricamento in corso...</p>
@@ -171,6 +177,7 @@ const MyPage = () => {
 ```
 
 ### Error State
+
 ```jsx
 <div className="page-error">
   <p>Si è verificato un errore durante il caricamento dei dati.</p>
@@ -182,22 +189,26 @@ const MyPage = () => {
 ## 📱 Comportamento Responsive
 
 ### Desktop (> 1024px)
+
 - Sidebar aperta: 255px
 - Layout completo con tutte le funzionalità
 - Grid multiple colonne
 
 ### Tablet (769px - 1024px)
+
 - Sidebar chiusa: 105px
 - Grid-3 e Grid-4 diventano 2 colonne
 - Padding ridotto
 
 ### Mobile (≤ 768px)
+
 - Sidebar chiusa: 105px
 - Tutte le grid diventano 1 colonna
 - Header actions vanno sotto
 - Padding ulteriormente ridotto
 
 ### Mobile Piccolo (≤ 480px)
+
 - Dimensioni e spaziature minime
 - Icone e testi più piccoli
 
@@ -229,7 +240,7 @@ const Competitions = () => {
         {/* Sezione principale */}
         <div className="page-section">
           <h2 className="page-section-title">Competizioni Attive</h2>
-          
+
           <div className="page-grid">
             <div className="page-card">
               <div className="page-card-header">
@@ -279,6 +290,7 @@ export default Competitions;
 ## 🔧 Variabili CSS Utilizzate
 
 Gli stili utilizzano le variabili globali definite in `variables.css`:
+
 - `--color-primary`: Colore primario (rosso)
 - `--text-primary`: Testo principale
 - `--text-secondary`: Testo secondario

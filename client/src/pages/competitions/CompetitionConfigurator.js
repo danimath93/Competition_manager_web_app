@@ -118,25 +118,25 @@ const CompetitionConfigurator = () => {
   }, [id, isEditMode]);
 
   const handleFieldChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Cambio configurazione fasce: le fasce non più presenti vengono tolte dalle categorie
   const handleAgeGroupConfigChange = (config) => {
     if (!config) return;
     setAgeGroupConfig(config);
-    setFormData(prev => ({ ...prev, categoryConfig: pruneCategoryConfig(prev.categoryConfig, config) }));
+    setFormData((prev) => ({ ...prev, categoryConfig: pruneCategoryConfig(prev.categoryConfig, config) }));
   };
 
   const handleCostsChange = (costsData) => {
-    setFormData(prev => ({ ...prev, ...costsData }));
+    setFormData((prev) => ({ ...prev, ...costsData }));
   };
 
   // Validazione degli step senza form; restituisce il messaggio di errore o null
   const validateStep = (stepKey) => {
     switch (stepKey) {
       case 'ageGroups':
-        return formData.ageGroupConfigurationId ? null : 'Seleziona la configurazione delle fasce d\'età';
+        return formData.ageGroupConfigurationId ? null : "Seleziona la configurazione delle fasce d'età";
       case 'categories':
         return (formData.categoryConfig?.categories || []).length > 0 ? null : 'Seleziona almeno una categoria';
       default:
@@ -147,7 +147,7 @@ const CompetitionConfigurator = () => {
   const goToStep = (index) => {
     setError(null);
     setActiveStep(index);
-    setMaxVisitedStep(prev => Math.max(prev, index));
+    setMaxVisitedStep((prev) => Math.max(prev, index));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -231,14 +231,7 @@ const CompetitionConfigurator = () => {
   const renderStepContent = () => {
     switch (STEPS[activeStep].key) {
       case 'general':
-        return (
-          <GeneralInfoTab
-            formData={formData}
-            onChange={handleFieldChange}
-            onSubmit={handleStepFormSubmit}
-            formId={STEP_FORM_ID}
-          />
-        );
+        return <GeneralInfoTab formData={formData} onChange={handleFieldChange} onSubmit={handleStepFormSubmit} formId={STEP_FORM_ID} />;
       case 'ageGroups':
         return (
           <AgeGroupsTab
@@ -310,10 +303,7 @@ const CompetitionConfigurator = () => {
         title="Configurazione Competizione"
         subtitle={isEditMode ? `Modifica competizione: ${formData.nome || ''}` : `Nuova competizione`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={() => navigate('/competitions')}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={() => navigate('/competitions')}>
         Torna alle Competizioni
       </MuiButton>
 
@@ -331,7 +321,9 @@ const CompetitionConfigurator = () => {
           {error.message}
           {error.details?.length > 0 && (
             <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem' }}>
-              {error.details.map((detail, index) => <li key={index}>{detail}</li>)}
+              {error.details.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
             </ul>
           )}
         </Alert>
@@ -341,7 +333,14 @@ const CompetitionConfigurator = () => {
 
       {/* Navigazione */}
       <div style={{ display: 'flex', justifyContent: 'center', margin: '2rem 0' }}>
-        <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem', display: 'flex', justifyContent: 'space-between' }}>
+        <div
+          style={{
+            maxWidth: '1024px',
+            width: '100%',
+            padding: '0 1rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}>
           <Button variant="outline-primary" size="m" onClick={() => goToStep(activeStep - 1)} disabled={activeStep === 0}>
             Indietro
           </Button>

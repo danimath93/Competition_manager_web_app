@@ -1,12 +1,36 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Paper, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, Tooltip, Divider, IconButton, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import {
+  Box,
+  Container,
+  Typography,
+  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  CircularProgress,
+  Alert,
+  Tooltip,
+  Divider,
+  IconButton,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@mui/material';
 import { Autocomplete, TextField } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { itIT } from '@mui/x-data-grid/locales';
 import MuiButton from '@mui/material/Button';
 import { FaTags } from 'react-icons/fa';
-import { ExpandMore as ExpandMoreIcon, EmojiEvents as EmojiEventsIcon, ArrowBack, NavigateNext as NavigateNextIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import {
+  ExpandMore as ExpandMoreIcon,
+  EmojiEvents as EmojiEventsIcon,
+  ArrowBack,
+  NavigateNext as NavigateNextIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { format } from 'date-fns';
 import { getAtletiResults, getClubResults, getClubMedalsDetails } from '../../api/results';
 import { printResults, printClubResults } from '../../api/results';
@@ -23,7 +47,7 @@ const CategoryResults = () => {
   const query = new URLSearchParams(location.search);
   const competitionId = query.get('competizioneId');
 
-  const [activeTab, setActiveTab] = useState("categoryResults");
+  const [activeTab, setActiveTab] = useState('categoryResults');
   const [categoriesResult, setCategoriesResult] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,7 +69,7 @@ const CategoryResults = () => {
   const resultTabs = [
     { label: 'Classifiche', value: 'categoryResults', disabled: false },
     { label: 'Miglior atleta per fascia', value: 'athleteResults', disabled: false },
-    { label: 'Miglior club per medaglie', value: 'clubResults', disabled: false }
+    { label: 'Miglior club per medaglie', value: 'clubResults', disabled: false },
   ];
 
   // Carica tutti i dati all'apertura della pagina
@@ -79,7 +103,9 @@ const CategoryResults = () => {
       }
     };
     fetchAllData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [competitionId]);
 
   const handleTabChange = (newValue) => {
@@ -90,26 +116,50 @@ const CategoryResults = () => {
     navigate('/categories');
   };
 
-  const handleClubDrawerOpen = useCallback(async (clubId) => {
-    setSelectedClubId(clubId);
-    setClubDrawerOpen(true);
-    if (!clubDetails[clubId]) {
-      const details = await getClubMedalsDetails(clubId, competitionId);
-      setClubDetails(prev => ({ ...prev, [clubId]: details }));
-    }
-  }, [clubDetails, competitionId]);
+  const handleClubDrawerOpen = useCallback(
+    async (clubId) => {
+      setSelectedClubId(clubId);
+      setClubDrawerOpen(true);
+      if (!clubDetails[clubId]) {
+        const details = await getClubMedalsDetails(clubId, competitionId);
+        setClubDetails((prev) => ({ ...prev, [clubId]: details }));
+      }
+    },
+    [clubDetails, competitionId]
+  );
 
   const handleClubFilterChange = (value) => {
     setClubFilter(value || '');
   };
 
   // --- Tab 1: Classifiche - columns & rows ---
-  const categoryResultsColumns = useMemo(() => [
-    { field: 'nomeCategoria', headerName: 'Nome Categoria', flex: 1, minWidth: 180 },
-    { field: 'oro', headerName: 'Medaglia d\'oro 🥇', flex: 1, minWidth: 180, renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span> },
-    { field: 'argento', headerName: 'Medaglia d\'argento 🥈', flex: 1, minWidth: 180, renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span> },
-    { field: 'bronzo', headerName: 'Medaglia di bronzo 🥉', flex: 1, minWidth: 180, renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span> },
-  ], []);
+  const categoryResultsColumns = useMemo(
+    () => [
+      { field: 'nomeCategoria', headerName: 'Nome Categoria', flex: 1, minWidth: 180 },
+      {
+        field: 'oro',
+        headerName: "Medaglia d'oro 🥇",
+        flex: 1,
+        minWidth: 180,
+        renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span>,
+      },
+      {
+        field: 'argento',
+        headerName: "Medaglia d'argento 🥈",
+        flex: 1,
+        minWidth: 180,
+        renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span>,
+      },
+      {
+        field: 'bronzo',
+        headerName: 'Medaglia di bronzo 🥉',
+        flex: 1,
+        minWidth: 180,
+        renderCell: (params) => <span style={{ whiteSpace: 'pre-line' }}>{params.value}</span>,
+      },
+    ],
+    []
+  );
 
   const categoryResultsRows = useMemo(() => {
     const getDisplay = (entry) => {
@@ -117,14 +167,12 @@ const CategoryResults = () => {
       return `${entry.nomeAtleta} - ${entry.club || '-'}`;
     };
 
-    const allRows = categoriesResult.map(cat => {
+    const allRows = categoriesResult.map((cat) => {
       const classifica = cat.classifica || [];
-      const oroEntry = classifica.find(x => x.pos === 1);
-      const argEntry = classifica.find(x => x.pos === 2);
-      const bronziEntries = classifica.filter(x => x.pos === 3);
-      const bronzo = bronziEntries.length === 0 ? '-'
-        : bronziEntries.length === 1 ? getDisplay(bronziEntries[0])
-        : bronziEntries.map(getDisplay).join(' / ');
+      const oroEntry = classifica.find((x) => x.pos === 1);
+      const argEntry = classifica.find((x) => x.pos === 2);
+      const bronziEntries = classifica.filter((x) => x.pos === 3);
+      const bronzo = bronziEntries.length === 0 ? '-' : bronziEntries.length === 1 ? getDisplay(bronziEntries[0]) : bronziEntries.map(getDisplay).join(' / ');
       return {
         id: cat.id,
         nomeCategoria: cat.nome,
@@ -136,38 +184,40 @@ const CategoryResults = () => {
 
     if (!categorySearchFilter) return allRows;
     const search = categorySearchFilter.toLowerCase();
-    return allRows.filter(row =>
-      row.nomeCategoria?.toLowerCase().includes(search) ||
-      row.oro?.toLowerCase().includes(search) ||
-      row.argento?.toLowerCase().includes(search) ||
-      row.bronzo?.toLowerCase().includes(search)
+    return allRows.filter(
+      (row) =>
+        row.nomeCategoria?.toLowerCase().includes(search) ||
+        row.oro?.toLowerCase().includes(search) ||
+        row.argento?.toLowerCase().includes(search) ||
+        row.bronzo?.toLowerCase().includes(search)
     );
   }, [categoriesResult, categorySearchFilter]);
 
   // --- Tab 2: Atleti - columns & rows ---
-  const athleteResultsColumns = useMemo(() => [
-    { field: 'atleta', headerName: 'Atleta', flex: 1, minWidth: 140 },
-    { field: 'clubDisplay', headerName: 'Club', flex: 1, minWidth: 120 },
-    { field: 'sesso', headerName: 'Sesso', flex: 0.5, minWidth: 80 },
-    { field: 'tipoAtleta', headerName: 'Profilo', flex: 1, minWidth: 120 },
-    { field: 'fasciaEtaDisplay', headerName: 'Fascia Età', flex: 1, minWidth: 120 },
-    { field: 'note', headerName: 'Note', flex: 1, minWidth: 200 },
-    { field: 'punti', headerName: 'Punteggio', flex: 0.7, minWidth: 90, type: 'number', sortable: true },
-    { field: 'oro', headerName: '🥇', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
-    { field: 'argento', headerName: '🥈', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
-    { field: 'bronzo', headerName: '🥉', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
-  ], []);
+  const athleteResultsColumns = useMemo(
+    () => [
+      { field: 'atleta', headerName: 'Atleta', flex: 1, minWidth: 140 },
+      { field: 'clubDisplay', headerName: 'Club', flex: 1, minWidth: 120 },
+      { field: 'sesso', headerName: 'Sesso', flex: 0.5, minWidth: 80 },
+      { field: 'tipoAtleta', headerName: 'Profilo', flex: 1, minWidth: 120 },
+      { field: 'fasciaEtaDisplay', headerName: 'Fascia Età', flex: 1, minWidth: 120 },
+      { field: 'note', headerName: 'Note', flex: 1, minWidth: 200 },
+      { field: 'punti', headerName: 'Punteggio', flex: 0.7, minWidth: 90, type: 'number', sortable: true },
+      { field: 'oro', headerName: '🥇', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+      { field: 'argento', headerName: '🥈', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+      { field: 'bronzo', headerName: '🥉', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+    ],
+    []
+  );
 
   const athleteResultsRows = useMemo(() => {
     if (!atleti) return [];
-    const allRows = atleti.map(a => ({
+    const allRows = atleti.map((a) => ({
       ...a,
       id: a.atletaId,
       atleta: `${a.cognome} ${a.nome}`,
       clubDisplay: a.clubAbbr || a.club,
-      fasciaEtaDisplay: a.fasciaEta === 'Non Definita' && a.fasciaEtaNote
-        ? `${a.fasciaEta} (${a.fasciaEtaNote})`
-        : a.fasciaEta,
+      fasciaEtaDisplay: a.fasciaEta === 'Non Definita' && a.fasciaEtaNote ? `${a.fasciaEta} (${a.fasciaEtaNote})` : a.fasciaEta,
       note: a.fasciaEtaNote,
       oro: a.medaglie?.oro || 0,
       argento: a.medaglie?.argento || 0,
@@ -176,10 +226,7 @@ const CategoryResults = () => {
 
     if (!athleteSearchFilter) return allRows;
     const search = athleteSearchFilter.toLowerCase();
-    return allRows.filter(row =>
-      row.atleta?.toLowerCase().includes(search) ||
-      row.clubDisplay?.toLowerCase().includes(search)
-    );
+    return allRows.filter((row) => row.atleta?.toLowerCase().includes(search) || row.clubDisplay?.toLowerCase().includes(search));
   }, [atleti, athleteSearchFilter]);
 
   // --- Drawer data per fascia di età ---
@@ -190,56 +237,62 @@ const CategoryResults = () => {
     let bestOverall = [];
     if (showSummary) {
       let allAtleti = [];
-      Object.values(fasce).forEach(sesso => {
+      Object.values(fasce).forEach((sesso) => {
         allAtleti = allAtleti.concat(sesso.M || [], sesso.F || []);
       });
       allAtleti = allAtleti.filter(Boolean);
       if (allAtleti.length > 0) {
-        const maxPunti = Math.max(...allAtleti.map(a => a.punti));
-        bestOverall = allAtleti.filter(a => a.punti === maxPunti);
+        const maxPunti = Math.max(...allAtleti.map((a) => a.punti));
+        bestOverall = allAtleti.filter((a) => a.punti === maxPunti);
       }
     }
     return { fasce, showSummary, bestOverall };
   }, [selectedTipo, bestByFascia]);
 
   // --- Tab 3: Club - columns & rows ---
-  const clubResultsColumns = useMemo(() => [
-    { field: 'club', headerName: 'Club', flex: 1, minWidth: 180 },
-    { field: 'ori', headerName: '🥇', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
-    { field: 'argenti', headerName: '🥈', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
-    { field: 'bronzi', headerName: '🥉', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
-    { field: 'totaleMedaglie', headerName: 'Totale Medaglie', flex: 0.7, minWidth: 120, type: 'number', sortable: true },
-    {
-      field: 'dettagli',
-      headerName: 'Dettagli',
-      flex: 0.4,
-      minWidth: 80,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <IconButton
-          size="small"
-          onClick={() => handleClubDrawerOpen(params.row.clubId)}
-          title="Vedi atleti medagliati"
-        >
-          <VisibilityIcon fontSize="small" />
-        </IconButton>
-      ),
-    },
-  ], [handleClubDrawerOpen]);
+  const clubResultsColumns = useMemo(
+    () => [
+      { field: 'club', headerName: 'Club', flex: 1, minWidth: 180 },
+      { field: 'ori', headerName: '🥇', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+      { field: 'argenti', headerName: '🥈', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+      { field: 'bronzi', headerName: '🥉', flex: 0.5, minWidth: 60, type: 'number', sortable: true },
+      {
+        field: 'totaleMedaglie',
+        headerName: 'Totale Medaglie',
+        flex: 0.7,
+        minWidth: 120,
+        type: 'number',
+        sortable: true,
+      },
+      {
+        field: 'dettagli',
+        headerName: 'Dettagli',
+        flex: 0.4,
+        minWidth: 80,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+          <IconButton size="small" onClick={() => handleClubDrawerOpen(params.row.clubId)} title="Vedi atleti medagliati">
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        ),
+      },
+    ],
+    [handleClubDrawerOpen]
+  );
 
   const clubNames = useMemo(() => {
     if (!club?.classifica) return [];
-    return club.classifica.map(c => c.club).sort((a, b) => a.localeCompare(b));
+    return club.classifica.map((c) => c.club).sort((a, b) => a.localeCompare(b));
   }, [club]);
 
   const clubResultsRows = useMemo(() => {
     if (!club?.classifica) return [];
     let filtered = club.classifica;
     if (clubFilter) {
-      filtered = filtered.filter(c => c.club === clubFilter);
+      filtered = filtered.filter((c) => c.club === clubFilter);
     }
-    return filtered.map(c => ({
+    return filtered.map((c) => ({
       id: c.clubId,
       clubId: c.clubId,
       club: c.club,
@@ -267,10 +320,7 @@ const CategoryResults = () => {
         title="Risultati competizione"
         subtitle={`${competition?.nome} - ${competition?.luogo} - ${format(new Date(competition?.dataInizio), 'dd/MM/yyyy')} - ${format(new Date(competition?.dataFine), 'dd/MM/yyyy')}`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna alle Competizioni
       </MuiButton>
 
@@ -282,7 +332,7 @@ const CategoryResults = () => {
 
       <Tabs tabs={resultTabs} activeTab={activeTab} onTabChange={handleTabChange}>
         {/* Tab Panel - Classifiche per categoria */}
-        {activeTab === "categoryResults" && (
+        {activeTab === 'categoryResults' && (
           <Box>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={3}>
               <SearchTextField
@@ -292,7 +342,7 @@ const CategoryResults = () => {
                 sx={{
                   width: '100%',
                   maxWidth: '800px',
-                  '& .MuiOutlinedInput-root': { height: '60px' }
+                  '& .MuiOutlinedInput-root': { height: '60px' },
                 }}
               />
               <MuiButton
@@ -304,8 +354,7 @@ const CategoryResults = () => {
                   } catch (err) {
                     alert('Errore durante la generazione del PDF delle classifiche');
                   }
-                }}
-              >
+                }}>
                 Stampa Classifiche
               </MuiButton>
             </Box>
@@ -325,17 +374,20 @@ const CategoryResults = () => {
         )}
 
         {/* Tab Panel - Classifiche per atleta */}
-        {activeTab === "athleteResults" && atleti && (
+        {activeTab === 'athleteResults' && atleti && (
           <Box>
             {/* Selettori per tipologia atleta */}
             {!bestByFascia ? (
               <Typography>Caricamento...</Typography>
             ) : (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-                {Object.keys(bestByFascia).map(tipo => (
+                {Object.keys(bestByFascia).map((tipo) => (
                   <Box
                     key={tipo}
-                    onClick={() => { setSelectedTipo(tipo); setDrawerBestByAgeOpen(true); }}
+                    onClick={() => {
+                      setSelectedTipo(tipo);
+                      setDrawerBestByAgeOpen(true);
+                    }}
                     sx={{
                       flex: '1 1 220px',
                       display: 'flex',
@@ -350,9 +402,10 @@ const CategoryResults = () => {
                       boxShadow: 1,
                       '&:hover': { bgcolor: 'action.hover', boxShadow: 2 },
                       transition: 'box-shadow 0.2s',
-                    }}
-                  >
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>{tipo}</Typography>
+                    }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {tipo}
+                    </Typography>
                     <NavigateNextIcon sx={{ color: 'text.secondary' }} />
                   </Box>
                 ))}
@@ -367,7 +420,7 @@ const CategoryResults = () => {
                 sx={{
                   width: '100%',
                   maxWidth: '800px',
-                  '& .MuiOutlinedInput-root': { height: '60px' }
+                  '& .MuiOutlinedInput-root': { height: '60px' },
                 }}
               />
             </Box>
@@ -386,11 +439,7 @@ const CategoryResults = () => {
             />
 
             {/* Drawer per fascia di età */}
-            <DrawerModal
-              open={drawerBestByAgeOpen}
-              onClose={() => setDrawerBestByAgeOpen(false)}
-              title={`Migliori per Fascia di Età: ${selectedTipo || ''}`}
-            >
+            <DrawerModal open={drawerBestByAgeOpen} onClose={() => setDrawerBestByAgeOpen(false)} title={`Migliori per Fascia di Età: ${selectedTipo || ''}`}>
               {drawerBestByAgeData && (
                 <Box>
                   {/* Miglior atleta assoluto */}
@@ -405,8 +454,22 @@ const CategoryResults = () => {
                             {a.cognome} {a.nome} – {a.club}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, mb: 1, flexWrap: 'wrap' }}>
-                            {[['🥇', a.medaglie.oro], ['🥈', a.medaglie.argento], ['🥉', a.medaglie.bronzo]].map(([medal, count]) => (
-                              <Box key={medal} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, border: '1px solid #d0d0d0', borderRadius: 1 }}>
+                            {[
+                              ['🥇', a.medaglie.oro],
+                              ['🥈', a.medaglie.argento],
+                              ['🥉', a.medaglie.bronzo],
+                            ].map(([medal, count]) => (
+                              <Box
+                                key={medal}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  px: 1,
+                                  py: 0.25,
+                                  border: '1px solid #d0d0d0',
+                                  borderRadius: 1,
+                                }}>
                                 <span>{medal}</span>
                                 <Typography sx={{ fontWeight: 600 }}>{count}</Typography>
                               </Box>
@@ -423,7 +486,9 @@ const CategoryResults = () => {
                   {Object.entries(drawerBestByAgeData.fasce).map(([fascia, sesso]) => (
                     <Accordion key={fascia} sx={{ mb: 1 }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{fascia}</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          {fascia}
+                        </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
                         <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
@@ -433,14 +498,28 @@ const CategoryResults = () => {
                               Maschile
                             </Typography>
                             {(sesso.M || []).length > 0 ? (
-                              (sesso.M || []).map(a => (
+                              (sesso.M || []).map((a) => (
                                 <Box key={a.atletaId} sx={{ mb: 1.5 }}>
                                   <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
                                     {a.cognome} {a.nome} – {a.club}
                                   </Typography>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
-                                    {[['🥇', a.medaglie.oro], ['🥈', a.medaglie.argento], ['🥉', a.medaglie.bronzo]].map(([medal, count]) => (
-                                      <Box key={medal} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, border: '1px solid #d0d0d0', borderRadius: 1 }}>
+                                    {[
+                                      ['🥇', a.medaglie.oro],
+                                      ['🥈', a.medaglie.argento],
+                                      ['🥉', a.medaglie.bronzo],
+                                    ].map(([medal, count]) => (
+                                      <Box
+                                        key={medal}
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
+                                          px: 1,
+                                          py: 0.25,
+                                          border: '1px solid #d0d0d0',
+                                          borderRadius: 1,
+                                        }}>
                                         <span>{medal}</span>
                                         <Typography sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{count}</Typography>
                                       </Box>
@@ -462,14 +541,28 @@ const CategoryResults = () => {
                               Femminile
                             </Typography>
                             {(sesso.F || []).length > 0 ? (
-                              (sesso.F || []).map(a => (
+                              (sesso.F || []).map((a) => (
                                 <Box key={a.atletaId} sx={{ mb: 1.5 }}>
                                   <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
                                     {a.cognome} {a.nome} – {a.club}
                                   </Typography>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
-                                    {[['🥇', a.medaglie.oro], ['🥈', a.medaglie.argento], ['🥉', a.medaglie.bronzo]].map(([medal, count]) => (
-                                      <Box key={medal} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1, py: 0.25, border: '1px solid #d0d0d0', borderRadius: 1 }}>
+                                    {[
+                                      ['🥇', a.medaglie.oro],
+                                      ['🥈', a.medaglie.argento],
+                                      ['🥉', a.medaglie.bronzo],
+                                    ].map(([medal, count]) => (
+                                      <Box
+                                        key={medal}
+                                        sx={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
+                                          px: 1,
+                                          py: 0.25,
+                                          border: '1px solid #d0d0d0',
+                                          borderRadius: 1,
+                                        }}>
                                         <span>{medal}</span>
                                         <Typography sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{count}</Typography>
                                       </Box>
@@ -493,7 +586,7 @@ const CategoryResults = () => {
         )}
 
         {/* Tab Panel - Classifiche per club */}
-        {activeTab === "clubResults" && club && (
+        {activeTab === 'clubResults' && club && (
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 3, mb: 5 }}>
               {club.podio.map((c, idx) => {
@@ -517,8 +610,7 @@ const CategoryResults = () => {
                       background: style.bg,
                       borderRadius: 2,
                       flexShrink: 0,
-                    }}
-                  >
+                    }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                       <EmojiEventsIcon sx={{ fontSize: 36, color: style.icon, flexShrink: 0 }} />
                       <Tooltip title={c.club} arrow disableHoverListener={c.club.length <= 30}>
@@ -532,8 +624,7 @@ const CategoryResults = () => {
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
                             lineHeight: 1.3,
-                          }}
-                        >
+                          }}>
                           {c.club}
                         </Typography>
                       </Tooltip>
@@ -545,8 +636,7 @@ const CategoryResults = () => {
                         gap: 2,
                         fontSize: '1.3rem',
                         whiteSpace: 'nowrap',
-                      }}
-                    >
+                      }}>
                       <span>🥇 {c.ori}</span>
                       <span>🥈 {c.argenti}</span>
                       <span>🥉 {c.bronzi}</span>
@@ -565,13 +655,7 @@ const CategoryResults = () => {
                 getOptionLabel={(option) => option}
                 onChange={(event, value) => handleClubFilterChange(value)}
                 isOptionEqualToValue={(option, value) => option === value}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Club"
-                    size="small"
-                  />
-                )}
+                renderInput={(params) => <TextField {...params} label="Club" size="small" />}
                 sx={{ minWidth: 200, maxWidth: 400, flexGrow: 1 }}
               />
               <MuiButton
@@ -583,8 +667,7 @@ const CategoryResults = () => {
                   } catch (err) {
                     alert('Errore durante la generazione del PDF delle classifiche');
                   }
-                }}
-              >
+                }}>
                 Stampa Classifiche Club
               </MuiButton>
             </Box>
@@ -606,29 +689,42 @@ const CategoryResults = () => {
             <DrawerModal
               open={clubDrawerOpen}
               onClose={() => setClubDrawerOpen(false)}
-              title={`Dettaglio medaglie – ${club?.classifica?.find(c => c.clubId === selectedClubId)?.club || ''}`}
-            >
-              {selectedClubId && (
-                clubDetails[selectedClubId]?.atleti ? (
+              title={`Dettaglio medaglie – ${club?.classifica?.find((c) => c.clubId === selectedClubId)?.club || ''}`}>
+              {selectedClubId &&
+                (clubDetails[selectedClubId]?.atleti ? (
                   clubDetails[selectedClubId].atleti.length > 0 ? (
                     <Table size="small">
                       <TableHead>
                         <TableRow>
                           <TableCell sx={{ fontWeight: 700 }}>Atleta</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>Ori</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>Argenti</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>Bronzi</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Ori
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Argenti
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            Bronzi
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {[...clubDetails[selectedClubId].atleti]
                           .sort((a, b) => b.ori - a.ori || b.argenti - a.argenti || b.bronzi - a.bronzi)
-                          .map(a => (
+                          .map((a) => (
                             <TableRow key={a.atletaId}>
-                              <TableCell>{a.cognome} {a.nome}</TableCell>
-                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>{'🥇'.repeat(a.ori)}</TableCell>
-                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>{'🥈'.repeat(a.argenti)}</TableCell>
-                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>{'🥉'.repeat(a.bronzi)}</TableCell>
+                              <TableCell>
+                                {a.cognome} {a.nome}
+                              </TableCell>
+                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>
+                                {'🥇'.repeat(a.ori)}
+                              </TableCell>
+                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>
+                                {'🥈'.repeat(a.argenti)}
+                              </TableCell>
+                              <TableCell align="center" sx={{ letterSpacing: '0.1em' }}>
+                                {'🥉'.repeat(a.bronzi)}
+                              </TableCell>
                             </TableRow>
                           ))}
                       </TableBody>
@@ -640,13 +736,11 @@ const CategoryResults = () => {
                   <Box display="flex" justifyContent="center" p={4}>
                     <CircularProgress />
                   </Box>
-                )
-              )}
+                ))}
             </DrawerModal>
           </Box>
         )}
       </Tabs>
-
     </div>
   );
 };

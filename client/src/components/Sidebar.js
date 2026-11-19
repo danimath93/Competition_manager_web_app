@@ -1,17 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { 
-  FaTachometerAlt, 
-  FaTrophy, 
-  FaUsers, 
-  FaUniversity, 
-  FaGavel, 
-  FaTags, 
-  FaCog,
-  FaChevronRight,
-  FaChevronLeft,
-  FaSignOutAlt
-} from 'react-icons/fa';
+import { FaTachometerAlt, FaTrophy, FaUsers, FaUniversity, FaGavel, FaTags, FaCog, FaChevronRight, FaChevronLeft, FaSignOutAlt } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import { hasPermission } from '../utils/permissions';
 import './styles/Sidebar.css';
@@ -40,9 +29,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
   ];
 
   // Filtra i menu items in base ai permessi dell'utente
-  const menuItems = allMenuItems.filter(item => 
-    hasPermission(userPermissions, item.permission)
-  );
+  const menuItems = allMenuItems.filter((item) => hasPermission(userPermissions, item.permission));
 
   // Carica il logo del club quando l'utente cambia
   useEffect(() => {
@@ -51,7 +38,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
 
     const loadLogo = async () => {
       // Revoca URL precedente
-      setLogoSource(prevUrl => {
+      setLogoSource((prevUrl) => {
         if (prevUrl && prevUrl.startsWith('blob:')) {
           URL.revokeObjectURL(prevUrl);
         }
@@ -62,10 +49,10 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
         setLoadingLogo(true);
         try {
           const club = await loadClubByID(user.clubId);
-          
+
           if (club?.logoId && isMounted) {
             const blob = await getBlobDocumento(club.logoId);
-            
+
             if (blob && isMounted) {
               currentBlobUrl = URL.createObjectURL(blob);
               setLogoSource(currentBlobUrl);
@@ -117,138 +104,109 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
   return (
     <>
       {/* Overlay per mobile */}
-      <div 
-        className={`sidebar-overlay ${isOpen ? 'active' : ''}`} 
-        onClick={toggleSidebar}
-      />
-      
-      <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
-      {/* Header Account */}
-      <div className="sidebar-header">
-        <button 
-          className="sidebar-toggle-btn" 
-          onClick={toggleSidebar}
-          aria-label="Toggle sidebar"
-        >
-          {isOpen ? <FaChevronLeft /> : <FaChevronRight />}
-          {isOpen && <span className="sidebar-header-text">Account</span>}
-        </button>
-      </div>
+      <div className={`sidebar-overlay ${isOpen ? 'active' : ''}`} onClick={toggleSidebar} />
 
-      {/* Club Logo, Nome Utente e Nome Club */}
-      <div className="sidebar-club">
-        <div 
-          className="sidebar-club-logo"
-          title={!isOpen ? `${user?.username || 'Utente'}${user?.clubName ? `\n${user.clubName}` : ''}` : ''}
-        >
-          {/* Logo del club o placeholder */}
-          {!loadingLogo && (
-            <>
-              {logoSource ? (
-                <img 
-                  src={logoSource} 
-                  alt="Club Logo" 
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div 
-                className="sidebar-club-logo-placeholder" 
-                style={{ display: logoSource ? 'none' : 'flex' }}
-              >
-                <FaUniversity />
-              </div>
-            </>
-          )}
+      <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
+        {/* Header Account */}
+        <div className="sidebar-header">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} aria-label="Toggle sidebar">
+            {isOpen ? <FaChevronLeft /> : <FaChevronRight />}
+            {isOpen && <span className="sidebar-header-text">Account</span>}
+          </button>
         </div>
-        {isOpen && (
-          <div className="sidebar-club-info">
-            <div className="sidebar-user-name">
-              {user?.username || 'Utente'}
-            </div>
-            {user?.clubName && (
-              <div className="sidebar-club-name">
-                {user.clubName}
-              </div>
+
+        {/* Club Logo, Nome Utente e Nome Club */}
+        <div className="sidebar-club">
+          <div className="sidebar-club-logo" title={!isOpen ? `${user?.username || 'Utente'}${user?.clubName ? `\n${user.clubName}` : ''}` : ''}>
+            {/* Logo del club o placeholder */}
+            {!loadingLogo && (
+              <>
+                {logoSource ? (
+                  <img
+                    src={logoSource}
+                    alt="Club Logo"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className="sidebar-club-logo-placeholder" style={{ display: logoSource ? 'none' : 'flex' }}>
+                  <FaUniversity />
+                </div>
+              </>
             )}
           </div>
-        )}
-      </div>
+          {isOpen && (
+            <div className="sidebar-club-info">
+              <div className="sidebar-user-name">{user?.username || 'Utente'}</div>
+              {user?.clubName && <div className="sidebar-club-name">{user.clubName}</div>}
+            </div>
+          )}
+        </div>
 
-      {/* Menu Navigation */}
-      <nav className="sidebar-nav">
-        <ul className="nav-list">
-          {menuItems.map((item, index) => (
-            <li key={index} className="nav-item">
-              <NavLink 
-                to={item.path} 
-                className={({ isActive }) => 
-                  `nav-link ${isActive ? 'active' : ''}`
-                }
-                title={!isOpen ? item.label : ''}
-                onClick={handleNavClick}
-              >
-                <item.icon className="nav-icon" />
-                {isOpen && <span className="nav-label">{item.label}</span>}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-
-        {/* Separatore */}
-        <div className="sidebar-separator"></div>
-
-        {/* Impostazioni */}
-        {hasPermission(userPermissions, 'settings') && (
+        {/* Menu Navigation */}
+        <nav className="sidebar-nav">
           <ul className="nav-list">
-            <li className="nav-item">
-              <NavLink 
-                to="/settings" 
-                className={({ isActive }) => 
-                  `nav-link ${isActive ? 'active' : ''}`
-                }
-                title={!isOpen ? t('settings') : ''}
-                onClick={handleNavClick}
-              >
-                <FaCog className="nav-icon" />
-                {isOpen && <span className="nav-label">{t('settings')}</span>}
-              </NavLink>
-            </li>
+            {menuItems.map((item, index) => (
+              <li key={index} className="nav-item">
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  title={!isOpen ? item.label : ''}
+                  onClick={handleNavClick}>
+                  <item.icon className="nav-icon" />
+                  {isOpen && <span className="nav-label">{item.label}</span>}
+                </NavLink>
+              </li>
+            ))}
           </ul>
+
+          {/* Separatore */}
+          <div className="sidebar-separator"></div>
+
+          {/* Impostazioni */}
+          {hasPermission(userPermissions, 'settings') && (
+            <ul className="nav-list">
+              <li className="nav-item">
+                <NavLink
+                  to="/settings"
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                  title={!isOpen ? t('settings') : ''}
+                  onClick={handleNavClick}>
+                  <FaCog className="nav-icon" />
+                  {isOpen && <span className="nav-label">{t('settings')}</span>}
+                </NavLink>
+              </li>
+            </ul>
+          )}
+        </nav>
+
+        {/* Logout Button */}
+        <div className="sidebar-footer">
+          <button className="sidebar-logout-btn" onClick={handleLogoutCheckConfirm} title={!isOpen ? 'Logout' : ''}>
+            <FaSignOutAlt className="nav-icon" />
+            {isOpen && <span className="nav-label">Logout</span>}
+          </button>
+        </div>
+
+        {isConfirmLogoutModalOpen && (
+          <ConfirmActionModal
+            open={isConfirmLogoutModalOpen}
+            onClose={() => setIsConfirmLogoutModalOpen(false)}
+            title="Conferma Logout"
+            message="Sei sicuro di voler effettuare il logout?"
+            primaryButton={{
+              text: 'Conferma',
+              onClick: handleLogout,
+            }}
+            secondaryButton={{
+              text: 'Annulla',
+              onClick: () => setIsConfirmLogoutModalOpen(false),
+            }}
+          />
         )}
-      </nav>
-
-      {/* Logout Button */}
-      <div className="sidebar-footer">
-        <button 
-          className="sidebar-logout-btn" 
-          onClick={handleLogoutCheckConfirm}
-          title={!isOpen ? 'Logout' : ''}
-        >
-          <FaSignOutAlt className="nav-icon" />
-          {isOpen && <span className="nav-label">Logout</span>}
-        </button>
-      </div>
-
-      { isConfirmLogoutModalOpen && (
-        <ConfirmActionModal
-          open={isConfirmLogoutModalOpen}
-          onClose={() => setIsConfirmLogoutModalOpen(false)}
-          title="Conferma Logout"
-          message="Sei sicuro di voler effettuare il logout?"
-          primaryButton={{
-            text: 'Conferma',
-            onClick: handleLogout,  
-          }}
-          secondaryButton={{
-            text: 'Annulla',
-            onClick: () => setIsConfirmLogoutModalOpen(false),
-          }}
-        />
-      )}
-    </aside>
+      </aside>
     </>
   );
 };

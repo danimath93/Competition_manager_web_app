@@ -15,6 +15,7 @@ Sistema completo per la gestione di competizioni di arti marziali con backend No
 ## 🚀 Quick Start
 
 ### Prerequisiti
+
 - Docker Desktop installato
 - Docker Compose
 - Git
@@ -207,6 +208,7 @@ docker-compose -f docker-compose.dev.yml logs frontend-dev
 ### Problemi Comuni
 
 1. **Porta già in uso**
+
    ```bash
    # Cambia le porte nei file docker-compose
    ports:
@@ -214,10 +216,11 @@ docker-compose -f docker-compose.dev.yml logs frontend-dev
    ```
 
 2. **Database non si connette**
+
    ```bash
    # Verifica che PostgreSQL sia avviato
    docker-compose -f docker-compose.dev.yml logs postgres
-   
+
    # Riavvia solo il database
    docker-compose -f docker-compose.dev.yml restart postgres
    ```
@@ -245,6 +248,7 @@ docker-compose -f docker-compose.dev.yml ps
 ## 📚 API Documentation
 
 Una volta avviato il backend, la documentazione API è disponibile su:
+
 - **API Base**: http://localhost:3050/api
 - **Health Check**: http://localhost:3050/api/health
 
@@ -260,11 +264,13 @@ Una volta avviato il backend, la documentazione API è disponibile su:
 Per il deployment in produzione:
 
 1. **Build delle immagini**:
+
    ```bash
    docker-compose build
    ```
 
 2. **Avvio in produzione**:
+
    ```bash
    docker-compose up -d
    ```

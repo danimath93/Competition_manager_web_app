@@ -77,23 +77,30 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
 
           const iconStyle = {
             fontSize: 28,
-            color: stato.colore === 'gray' ? '#9e9e9e' :
-                   stato.colore === 'red' ? '#f44336' :
-                   stato.colore === 'orange' ? '#ff9800' :
-                   stato.colore === 'green' ? '#4caf50' :
-                   '#2196f3'
+            color:
+              stato.colore === 'gray'
+                ? '#9e9e9e'
+                : stato.colore === 'red'
+                  ? '#f44336'
+                  : stato.colore === 'orange'
+                    ? '#ff9800'
+                    : stato.colore === 'green'
+                      ? '#4caf50'
+                      : '#2196f3',
           };
 
           return (
             <Tooltip title={stato.tooltip} arrow>
-              <IconButton size="small" onClick={(e) => {
-                e.stopPropagation();
-                if (hasCertificato && params.row.onDownloadCertificato) {
-                  params.row.onDownloadCertificato(params.row);
-                } else if (!hasCertificato && params.row.onUploadCertificato) {
-                  params.row.onUploadCertificato(params.row);
-                }
-              }}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (hasCertificato && params.row.onDownloadCertificato) {
+                    params.row.onDownloadCertificato(params.row);
+                  } else if (!hasCertificato && params.row.onUploadCertificato) {
+                    params.row.onUploadCertificato(params.row);
+                  }
+                }}>
                 <Description sx={iconStyle} />
               </IconButton>
             </Tooltip>
@@ -107,12 +114,12 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
         width: 150,
         filterable: false,
         sortable: true,
-        valueGetter: (value, row) => row.scadenzaCertificato ? new Date(row.scadenzaCertificato) : null,
+        valueGetter: (value, row) => (row.scadenzaCertificato ? new Date(row.scadenzaCertificato) : null),
         valueFormatter: (value) => {
           if (!value) return 'N/A';
           return format(new Date(value), 'dd/MM/yyyy');
         },
-      }
+      },
     ];
 
     // Aggiungi colonna Club solo per admin e superAdmin
@@ -135,18 +142,8 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
       headerName: 'Azioni',
       width: 80,
       getActions: (params) => [
-        <GridActionsCellItem
-          icon={<Edit />}
-          label="Modifica"
-          onClick={() => onEdit(params.row)}
-          showInMenu={true}
-        />,
-        <GridActionsCellItem
-          icon={<Delete />}
-          label="Elimina"
-          onClick={() => onDelete(params.row.id)}
-          showInMenu={true}
-        />,
+        <GridActionsCellItem icon={<Edit />} label="Modifica" onClick={() => onEdit(params.row)} showInMenu={true} />,
+        <GridActionsCellItem icon={<Delete />} label="Elimina" onClick={() => onDelete(params.row.id)} showInMenu={true} />,
       ],
     });
 
@@ -155,7 +152,7 @@ const AthletesTable = ({ athletes, onEdit, onDelete }) => {
 
   // Prepara i dati per la griglia
   const rows = useMemo(() => {
-    return athletes.map(athlete => ({
+    return athletes.map((athlete) => ({
       ...athlete,
       id: athlete.id || athlete.athleteId, // Assicurati che ci sia un id univoco
     }));

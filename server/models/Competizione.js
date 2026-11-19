@@ -2,221 +2,227 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const { validateAgeGroupConfig } = require('../helpers/ageGroups');
 
-const Competizione = sequelize.define('Competizione', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  nome: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
-  },
-  descrizione: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  dataInizio: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    field: 'data_inizio',
-  },
-  dataFine: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    validate: {
-      isAfterStartDate(value) {
-        if (value <= this.dataInizio) {
-          throw new Error('La data di fine deve essere successiva alla data di inizio');
-        }
-      }
+const Competizione = sequelize.define(
+  'Competizione',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    field: 'data_fine'
-  },
-  luogo: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
-  },
-  indirizzo: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  tipiCompetizione: {
-    type: DataTypes.ARRAY(DataTypes.INTEGER),
-    allowNull: false,
-    defaultValue: [],
-    field: 'tipi_competizione'
-  },
-  categorieAtleti: {
-    type: DataTypes.ARRAY(DataTypes.JSONB),
-    allowNull: false,
-    defaultValue: [],
-    field: 'categorie_atleti',
-    comment: 'DEPRECATO: sostituito da categoryConfig. Categorie/esperienze ammesse per tipologia di atleta'
-  },
-  categoryConfig: {
-    type: DataTypes.JSONB,
-    allowNull: true,
-    field: 'category_config',
-    comment: 'Struttura JSON: { version: 1, categories: [{ categoryTypeId, ageGroupKeys, belt }], experienceLevels: [{ competitionTypeId, grouping, experienceIds }] } - vedi helpers/competitionCategoryConfig.js. Validata nel controller rispetto ad ageGroupConfig'
-  },
-  gestioneLivelloAtleti: {
-    type: DataTypes.ARRAY(DataTypes.JSONB),
-    allowNull: true,
-    field: 'gestione_livello_atleti',
-  },
-  livello: {
-    type: DataTypes.ENUM('Locale', 'Regionale', 'Nazionale', 'Internazionale'),
-    allowNull: false,
-    defaultValue: 'Locale'
-  },
-  stato: {
-    type: DataTypes.ENUM('Pianificata', 'Aperta', 'In preparazione', 'In corso', 'Conclusa', 'Annullata'),
-    allowNull: false,
-    defaultValue: 'Pianificata'
-  },
-  maxPartecipanti: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    validate: {
-      min: 1
+    nome: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      },
     },
-    field: 'max_partecipanti'
-  },
-  costiIscrizione: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    field: 'costi_iscrizione',
-    comment: 'Struttura JSON: { tesseramento: { enabled, amount }, specialCategories: [{ idConfigTipoCategoria, singleCost, withOthersCost }], categories: [{ idConfigTipoAtleta: 1, type: "fixed|minimum|additional", config: {...} }] } - vedi helpers/costCalculator.js'
-  },
-  iban: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  intestatario: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  causale: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  dataScadenzaIscrizioni: {
-    type: DataTypes.DATE,
-    allowNull: true,
-    field: 'data_scadenza_iscrizioni'
-  },
-  organizzatoreClubId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'clubs',
-      key: 'id'
+    descrizione: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
-    field: 'organizzatore_club_id'
-  },
-  maxCategorieAtleta: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    validate: {
-      min: 1
+    dataInizio: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'data_inizio',
     },
-    field: 'max_categorie_atleta'
-  },
-  maxCategorieTipoCompetizione: {
-    type: DataTypes.JSONB,
-    allowNull: true,
-    defaultValue: {},
-    validate: {
-      isValidLimits(value) {
-        if (value === null || value === undefined) return;
-        if (typeof value !== 'object' || Array.isArray(value)) {
-          throw new Error('maxCategorieTipoCompetizione deve essere un oggetto { idTipoCompetizione: max }');
-        }
-        Object.values(value).forEach(max => {
-          if (!Number.isInteger(max) || max < 1) {
-            throw new Error('Il numero massimo di categorie per tipologia deve essere un intero maggiore di 0');
+    dataFine: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      validate: {
+        isAfterStartDate(value) {
+          if (value <= this.dataInizio) {
+            throw new Error('La data di fine deve essere successiva alla data di inizio');
           }
-        });
-      }
+        },
+      },
+      field: 'data_fine',
     },
-    field: 'max_categorie_tipo_competizione',
-    comment: 'Numero massimo di categorie per atleta per tipo competizione: { idTipoCompetizione: max }. Tipo assente = nessun limite'
+    luogo: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      },
+    },
+    indirizzo: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    tipiCompetizione: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: false,
+      defaultValue: [],
+      field: 'tipi_competizione',
+    },
+    categorieAtleti: {
+      type: DataTypes.ARRAY(DataTypes.JSONB),
+      allowNull: false,
+      defaultValue: [],
+      field: 'categorie_atleti',
+      comment: 'DEPRECATO: sostituito da categoryConfig. Categorie/esperienze ammesse per tipologia di atleta',
+    },
+    categoryConfig: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      field: 'category_config',
+      comment:
+        'Struttura JSON: { version: 1, categories: [{ categoryTypeId, ageGroupKeys, belt }], experienceLevels: [{ competitionTypeId, grouping, experienceIds }] } - vedi helpers/competitionCategoryConfig.js. Validata nel controller rispetto ad ageGroupConfig',
+    },
+    gestioneLivelloAtleti: {
+      type: DataTypes.ARRAY(DataTypes.JSONB),
+      allowNull: true,
+      field: 'gestione_livello_atleti',
+    },
+    livello: {
+      type: DataTypes.ENUM('Locale', 'Regionale', 'Nazionale', 'Internazionale'),
+      allowNull: false,
+      defaultValue: 'Locale',
+    },
+    stato: {
+      type: DataTypes.ENUM('Pianificata', 'Aperta', 'In preparazione', 'In corso', 'Conclusa', 'Annullata'),
+      allowNull: false,
+      defaultValue: 'Pianificata',
+    },
+    maxPartecipanti: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 1,
+      },
+      field: 'max_partecipanti',
+    },
+    costiIscrizione: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: 'costi_iscrizione',
+      comment:
+        'Struttura JSON: { tesseramento: { enabled, amount }, specialCategories: [{ idConfigTipoCategoria, singleCost, withOthersCost }], categories: [{ idConfigTipoAtleta: 1, type: "fixed|minimum|additional", config: {...} }] } - vedi helpers/costCalculator.js',
+    },
+    iban: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    intestatario: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    causale: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    dataScadenzaIscrizioni: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'data_scadenza_iscrizioni',
+    },
+    organizzatoreClubId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'clubs',
+        key: 'id',
+      },
+      field: 'organizzatore_club_id',
+    },
+    maxCategorieAtleta: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: 1,
+      },
+      field: 'max_categorie_atleta',
+    },
+    maxCategorieTipoCompetizione: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {},
+      validate: {
+        isValidLimits(value) {
+          if (value === null || value === undefined) return;
+          if (typeof value !== 'object' || Array.isArray(value)) {
+            throw new Error('maxCategorieTipoCompetizione deve essere un oggetto { idTipoCompetizione: max }');
+          }
+          Object.values(value).forEach((max) => {
+            if (!Number.isInteger(max) || max < 1) {
+              throw new Error('Il numero massimo di categorie per tipologia deve essere un intero maggiore di 0');
+            }
+          });
+        },
+      },
+      field: 'max_categorie_tipo_competizione',
+      comment: 'Numero massimo di categorie per atleta per tipo competizione: { idTipoCompetizione: max }. Tipo assente = nessun limite',
+    },
+    circolareGaraId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'documenti',
+        key: 'id',
+      },
+      field: 'circolare_gara_id',
+      comment: 'Riferimento al documento circolare di gara',
+    },
+    locandinaId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'documenti',
+        key: 'id',
+      },
+      field: 'locandina_id',
+      comment: 'Riferimento al documento locandina della competizione',
+    },
+    fileExtra1Id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'documenti',
+        key: 'id',
+      },
+      field: 'file_extra_1_id',
+      comment: 'Riferimento a documento extra 1',
+    },
+    fileExtra2Id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'documenti',
+        key: 'id',
+      },
+      field: 'file_extra_2_id',
+      comment: 'Riferimento a documento extra 2',
+    },
+    ageGroupConfigurationId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'age_group_configurations',
+        key: 'id',
+      },
+      field: 'age_group_configuration_id',
+      comment: 'Configurazione fasce età di origine (solo riferimento storico, fa fede ageGroupConfig)',
+    },
+    ageGroupConfig: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      validate: {
+        isValidConfig(value) {
+          if (value === null || value === undefined) return;
+          const { valid, errors } = validateAgeGroupConfig(value);
+          if (!valid) {
+            throw new Error(errors.join('; '));
+          }
+        },
+      },
+      field: 'age_group_config',
+      comment: 'Copia della configurazione fasce età usata dalla competizione - vedi helpers/ageGroups.js',
+    },
   },
-  circolareGaraId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'documenti',
-      key: 'id'
-    },
-    field: 'circolare_gara_id',
-    comment: 'Riferimento al documento circolare di gara'
-  },
-  locandinaId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'documenti',
-      key: 'id'
-    },
-    field: 'locandina_id',
-    comment: 'Riferimento al documento locandina della competizione'
-  },
-  fileExtra1Id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'documenti',
-      key: 'id'
-    },
-    field: 'file_extra_1_id',
-    comment: 'Riferimento a documento extra 1'
-  },
-  fileExtra2Id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'documenti',
-      key: 'id'
-    },
-    field: 'file_extra_2_id',
-    comment: 'Riferimento a documento extra 2'
-  },
-  ageGroupConfigurationId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'age_group_configurations',
-      key: 'id'
-    },
-    field: 'age_group_configuration_id',
-    comment: 'Configurazione fasce età di origine (solo riferimento storico, fa fede ageGroupConfig)'
-  },
-  ageGroupConfig: {
-    type: DataTypes.JSONB,
-    allowNull: true,
-    validate: {
-      isValidConfig(value) {
-        if (value === null || value === undefined) return;
-        const { valid, errors } = validateAgeGroupConfig(value);
-        if (!valid) {
-          throw new Error(errors.join('; '));
-        }
-      }
-    },
-    field: 'age_group_config',
-    comment: 'Copia della configurazione fasce età usata dalla competizione - vedi helpers/ageGroups.js'
+  {
+    tableName: 'competizioni',
+    timestamps: true,
   }
-}, {
-  tableName: 'competizioni',
-  timestamps: true
-});
+);
 
 module.exports = Competizione;

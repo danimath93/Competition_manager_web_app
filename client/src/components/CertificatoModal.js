@@ -1,17 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  LinearProgress,
-  Alert,
-  IconButton,
-  Stack
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, LinearProgress, Alert, IconButton, Stack } from '@mui/material';
 import { CloudUpload, Close, Download, Delete } from '@mui/icons-material';
 import { uploadCertificato, downloadCertificato, deleteCertificato } from '../api/certificati';
 
@@ -56,7 +44,7 @@ const CertificatoModal = ({ open, onClose, atleta, onSuccess }) => {
       await uploadCertificato(atleta.id, selectedFile);
       setSuccess('Certificato caricato con successo!');
       setSelectedFile(null);
-      
+
       // Chiama la callback di successo dopo 1.5 secondi
       setTimeout(() => {
         if (onSuccess) onSuccess();
@@ -95,13 +83,13 @@ const CertificatoModal = ({ open, onClose, atleta, onSuccess }) => {
     try {
       await deleteCertificato(atleta.id);
       setSuccess('Certificato eliminato con successo!');
-      
+
       setTimeout(() => {
         if (onSuccess) onSuccess();
         onClose();
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Errore durante l\'eliminazione del certificato');
+      setError(err.response?.data?.message || "Errore durante l'eliminazione del certificato");
     }
   };
 
@@ -158,21 +146,10 @@ const CertificatoModal = ({ open, onClose, atleta, onSuccess }) => {
                 Certificato presente
               </Typography>
               <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Download />}
-                  onClick={handleDownload}
-                  fullWidth
-                >
+                <Button variant="outlined" startIcon={<Download />} onClick={handleDownload} fullWidth>
                   Scarica
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<Delete />}
-                  onClick={handleDelete}
-                  fullWidth
-                >
+                <Button variant="outlined" color="error" startIcon={<Delete />} onClick={handleDelete} fullWidth>
                   Elimina
                 </Button>
               </Stack>
@@ -183,28 +160,15 @@ const CertificatoModal = ({ open, onClose, atleta, onSuccess }) => {
             <Typography variant="body2" color="text.secondary" gutterBottom>
               {hasCertificato ? 'Sostituisci certificato' : 'Carica nuovo certificato'}
             </Typography>
-            
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<CloudUpload />}
-              fullWidth
-              sx={{ mb: 1 }}
-            >
+
+            <Button variant="outlined" component="label" startIcon={<CloudUpload />} fullWidth sx={{ mb: 1 }}>
               Seleziona file
-              <input
-                type="file"
-                hidden
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={handleFileSelect}
-              />
+              <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} />
             </Button>
 
             {selectedFile && (
               <Box sx={{ mt: 1 }}>
-                <Typography variant="body2">
-                  File selezionato: {selectedFile.name}
-                </Typography>
+                <Typography variant="body2">File selezionato: {selectedFile.name}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   Dimensione: {(selectedFile.size / 1024).toFixed(2)} KB
                 </Typography>
@@ -232,12 +196,7 @@ const CertificatoModal = ({ open, onClose, atleta, onSuccess }) => {
           Chiudi
         </Button>
         {selectedFile && (
-          <Button
-            onClick={handleUpload}
-            variant="contained"
-            disabled={uploading}
-            startIcon={<CloudUpload />}
-          >
+          <Button onClick={handleUpload} variant="contained" disabled={uploading} startIcon={<CloudUpload />}>
             Carica
           </Button>
         )}

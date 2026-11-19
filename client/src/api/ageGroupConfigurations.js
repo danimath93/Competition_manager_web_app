@@ -4,7 +4,7 @@ import axios from './axios';
 export const loadAgeGroupConfigurations = async (clubId = null) => {
   try {
     const response = await axios.get('/age-group-configurations', {
-      params: clubId ? { clubId } : {}
+      params: clubId ? { clubId } : {},
     });
     return response.data;
   } catch (error) {
@@ -52,7 +52,7 @@ export const updateAgeGroupConfiguration = async (id, data) => {
     const response = await axios.put(`/age-group-configurations/${id}`, data);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'aggiornamento della configurazione fasce età:', error);
+    console.error("Errore durante l'aggiornamento della configurazione fasce età:", error);
     throw error;
   }
 };
@@ -63,7 +63,7 @@ export const deleteAgeGroupConfiguration = async (id) => {
     const response = await axios.delete(`/age-group-configurations/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'eliminazione della configurazione fasce età:', error);
+    console.error("Errore durante l'eliminazione della configurazione fasce età:", error);
     throw error;
   }
 };

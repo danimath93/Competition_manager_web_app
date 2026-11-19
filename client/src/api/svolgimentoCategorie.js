@@ -4,7 +4,7 @@ export const startSvolgimentoCategoria = async ({ categoriaId, competizioneId })
   try {
     const response = await axios.post('/svolgimento-categorie/start', {
       categoriaId,
-      competizioneId
+      competizioneId,
     });
     return response.data;
   } catch (error) {
@@ -60,7 +60,7 @@ export const postGenerateTabellone = async (svolgimentoId) => {
 // imposta vincitore match
 export const postSetMatchWinner = async (svolgimentoId, matchId, winnerAtletaId) => {
   const res = await axios.post(`/svolgimento-categorie/${svolgimentoId}/match/${encodeURIComponent(matchId)}/winner`, {
-    winnerAtletaId
+    winnerAtletaId,
   });
   return res.data;
 };

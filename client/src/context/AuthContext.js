@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { clearAuthData } from '../utils/auth';
 import { clearConfigCache } from '../services/configCacheService';
-import { loginUser, checkAuthLevel  } from '../api/auth';
+import { loginUser, checkAuthLevel } from '../api/auth';
 
 const AuthContext = createContext();
 
@@ -19,12 +19,20 @@ export const AuthProvider = ({ children }) => {
 
       // Salvo su localStorage solo le info essenziali
       localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify({username: response.user.username, email: response.user.email, clubName: response.user.clubName, clubBadge: response.user.clubBadge}) );
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          username: response.user.username,
+          email: response.user.email,
+          clubName: response.user.clubName,
+          clubBadge: response.user.clubBadge,
+        })
+      );
 
       return { success: true, user: response.user, token: response.token };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error, type: error.type, message: error.message};
+      return { success: false, error, type: error.type, message: error.message };
     }
   };
 
@@ -64,11 +72,7 @@ export const AuthProvider = ({ children }) => {
     verifyAuth();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
@@ -78,4 +82,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

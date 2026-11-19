@@ -1,19 +1,6 @@
 // FightingExecution.js
 import React, { useState, useEffect } from 'react';
-import {
-  Paper,
-  Typography,
-  Box,
-  Divider,
-  Alert,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
-} from '@mui/material';
+import { Paper, Typography, Box, Divider, Alert, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
 import MatchComponent from './MatchComponent';
 import ConfirmActionModal from '../../../../components/common/ConfirmActionModal';
@@ -30,15 +17,15 @@ const COMMISSIONE_LABELS = [
   'Giudice di Riserva',
   '1° Addetto al Tavolo',
   '2° Addetto al Tavolo',
-  '3° Addetto al Tavolo'
+  '3° Addetto al Tavolo',
 ];
 
 /**
  * Componente per l'esecuzione dei combattimenti e visualizzazione risultati
  * Gestisce gli stati: IN_CORSO e CONCLUSA
  */
-const FightingExecution = ({ 
-  atleti, 
+const FightingExecution = ({
+  atleti,
   tabellone,
   classifica,
   commissione,
@@ -47,7 +34,7 @@ const FightingExecution = ({
   onUpdateSvolgimento,
   onCommissioneChange,
   onStartCategory,
-  onConcludeCategory
+  onConcludeCategory,
 }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isConfirmingConcludeDialogOpen, setIsConfirmingConcludeDialogOpen] = useState(false);
@@ -75,16 +62,16 @@ const FightingExecution = ({
     // Primo posto: vincitore finale
     const winner = finalMatch.winner;
     // Secondo posto: perdente finale
-    const finalLoser = finalMatch.players.find(p => p && p !== winner);
+    const finalLoser = finalMatch.players.find((p) => p && p !== winner);
 
     // Terzi posti: perdenti semifinali
     const semiRound = tabellone.rounds.length > 1 ? tabellone.rounds[tabellone.rounds.length - 2] : null;
     const semiLosers = [];
-    
+
     if (semiRound) {
-      semiRound.matches.forEach(match => {
+      semiRound.matches.forEach((match) => {
         if (match.winner) {
-          const loser = match.players.find(p => p && p !== match.winner);
+          const loser = match.players.find((p) => p && p !== match.winner);
           if (loser && loser !== winner && loser !== finalLoser) {
             semiLosers.push(loser);
           }
@@ -95,27 +82,27 @@ const FightingExecution = ({
     const result = [
       { pos: 1, atletaId: winner },
       finalLoser ? { pos: 2, atletaId: finalLoser } : null,
-      ...semiLosers.slice(0, 2).map(id => ({ pos: 3, atletaId: id }))
+      ...semiLosers.slice(0, 2).map((id) => ({ pos: 3, atletaId: id })),
     ].filter(Boolean);
 
     return result;
   };
 
   const getAthleteById = (id) => {
-    return atleti?.find(a => a.id === id) || null;
+    return atleti?.find((a) => a.id === id) || null;
   };
 
   const handleRoundClick = (matchId, roundIndex) => {
     if (!canEdit) return;
 
     const copy = JSON.parse(JSON.stringify(tabellone));
-    
+
     // Trova il match
     let targetMatch = null;
     let roundIdx = -1;
-    
+
     for (let rIdx = 0; rIdx < copy.rounds.length; rIdx++) {
-      const match = copy.rounds[rIdx].matches.find(m => m.id === matchId);
+      const match = copy.rounds[rIdx].matches.find((m) => m.id === matchId);
       if (match) {
         targetMatch = match;
         roundIdx = rIdx;
@@ -136,8 +123,8 @@ const FightingExecution = ({
     targetMatch.roundResults[roundIndex] = next;
 
     // Calcola vincitore automaticamente
-    const redWins = targetMatch.roundResults.filter(r => r === 'red').length;
-    const blueWins = targetMatch.roundResults.filter(r => r === 'blue').length;
+    const redWins = targetMatch.roundResults.filter((r) => r === 'red').length;
+    const blueWins = targetMatch.roundResults.filter((r) => r === 'blue').length;
 
     if (redWins > 1) {
       targetMatch.winner = targetMatch.players[0];
@@ -150,7 +137,7 @@ const FightingExecution = ({
     // Propaga vincitore al turno successivo
     if (targetMatch.winner && roundIdx < copy.rounds.length - 1) {
       const nextRound = copy.rounds[roundIdx + 1];
-      nextRound.matches.forEach(nm => {
+      nextRound.matches.forEach((nm) => {
         const pos = nm.from?.indexOf(targetMatch.id);
         if (pos !== -1 && pos !== undefined) {
           nm.players[pos] = targetMatch.winner;
@@ -165,13 +152,13 @@ const FightingExecution = ({
     if (!canEdit) return;
 
     const copy = JSON.parse(JSON.stringify(tabellone));
-    
+
     // Trova il match
     let targetMatch = null;
     let roundIdx = -1;
-    
+
     for (let rIdx = 0; rIdx < copy.rounds.length; rIdx++) {
-      const match = copy.rounds[rIdx].matches.find(m => m.id === matchId);
+      const match = copy.rounds[rIdx].matches.find((m) => m.id === matchId);
       if (match) {
         targetMatch = match;
         roundIdx = rIdx;
@@ -204,7 +191,7 @@ const FightingExecution = ({
     // Propaga vincitore al turno successivo
     if (targetMatch.winner && roundIdx < copy.rounds.length - 1) {
       const nextRound = copy.rounds[roundIdx + 1];
-      nextRound.matches.forEach(nm => {
+      nextRound.matches.forEach((nm) => {
         const pos = nm.from?.indexOf(targetMatch.id);
         if (pos !== -1 && pos !== undefined) {
           nm.players[pos] = targetMatch.winner;
@@ -213,7 +200,7 @@ const FightingExecution = ({
     } else if (!targetMatch.winner && roundIdx < copy.rounds.length - 1) {
       // Rimuovi il vincitore dal turno successivo se viene resettato
       const nextRound = copy.rounds[roundIdx + 1];
-      nextRound.matches.forEach(nm => {
+      nextRound.matches.forEach((nm) => {
         const pos = nm.from?.indexOf(targetMatch.id);
         if (pos !== -1 && pos !== undefined) {
           nm.players[pos] = null;
@@ -225,27 +212,29 @@ const FightingExecution = ({
   };
 
   const getRoundName = (roundIndex, numMatches) => {
-    if (numMatches === 1) return "Finale";
-    if (numMatches === 2) return "Semifinale";
-    if (numMatches === 4) return "Quarti di finale";
-    if (numMatches === 8) return "Ottavi di finale";
+    if (numMatches === 1) return 'Finale';
+    if (numMatches === 2) return 'Semifinale';
+    if (numMatches === 4) return 'Quarti di finale';
+    if (numMatches === 8) return 'Ottavi di finale';
     return `Turno ${roundIndex + 1}`;
   };
 
   const getClassifiedAthlete = (position) => {
-    const entries = localClassifica.filter(c => c.pos === position);
+    const entries = localClassifica.filter((c) => c.pos === position);
     if (entries.length === 0) return null;
-    
+
     if (entries.length === 1) {
       const atleta = getAthleteById(entries[0].atletaId);
       return atleta ? `${atleta.cognome} ${atleta.nome}` : '-';
     }
-    
+
     // Più atleti nella stessa posizione
-    return entries.map(e => {
-      const atleta = getAthleteById(e.atletaId);
-      return atleta ? `${atleta.cognome} ${atleta.nome}` : '-';
-    }).join('\n');
+    return entries
+      .map((e) => {
+        const atleta = getAthleteById(e.atletaId);
+        return atleta ? `${atleta.cognome} ${atleta.nome}` : '-';
+      })
+      .join('\n');
   };
 
   const handleStartCategory = async () => {
@@ -286,58 +275,63 @@ const FightingExecution = ({
             )}
 
             {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'row', 
-                gap: 8,
-                alignItems: 'flex-start',
-                overflowX: 'auto',
-                pb: 1
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 8,
+                  alignItems: 'flex-start',
+                  overflowX: 'auto',
+                  pb: 1,
+                }}>
                 {tabellone.rounds.map((round, roundIndex) => {
                   const MATCH_HEIGHT = 200;
                   const MATCH_SPACING = 50;
-                  
+
                   // Calcola margine per centrare rispetto al turno precedente
                   const calculateMargin = (matchIndex) => {
                     if (roundIndex === 0) return MATCH_SPACING / 2; // Primo round, margine standard
                     // Ogni match del turno corrente deve essere centrato tra due match del turno precedente
-                    return (Math.pow(2, roundIndex-1) * 2 * (MATCH_SPACING + MATCH_HEIGHT) - MATCH_HEIGHT) / 2;
+                    return (Math.pow(2, roundIndex - 1) * 2 * (MATCH_SPACING + MATCH_HEIGHT) - MATCH_HEIGHT) / 2;
                   };
-                  
+
                   return (
                     <Box key={roundIndex} sx={{ minWidth: 350 }}>
-                      <Typography 
-                        variant="subtitle1" 
-                        fontWeight="bold" 
-                        sx={{ mb: 3, color: 'primary.main', textAlign: 'center', borderBottom: '1px solid black', pb: 1 }}
-                      >
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        sx={{
+                          mb: 3,
+                          color: 'primary.main',
+                          textAlign: 'center',
+                          borderBottom: '1px solid black',
+                          pb: 1,
+                        }}>
                         {getRoundName(roundIndex, round.matches.length)}
                       </Typography>
-                      
+
                       <Box sx={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
                         {round.matches.map((match, matchIndex) => {
                           const atleta1 = getAthleteById(match.players[0]);
                           const atleta2 = getAthleteById(match.players[1]);
                           const emptyBoxSize = calculateMargin(matchIndex);
-                          
+
                           return (
                             <>
-                              <Box 
+                              <Box
                                 key={`empty-top-box-match-${match.id}`}
                                 sx={{
                                   height: emptyBoxSize,
                                 }}
                               />
-                              <Box 
+                              <Box
                                 key={match.id}
                                 sx={{
                                   height: MATCH_HEIGHT,
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'space-between',
-                                }}
-                              >
+                                }}>
                                 <MatchComponent
                                   match={match}
                                   atleta1={atleta1}
@@ -348,7 +342,7 @@ const FightingExecution = ({
                                   onWinnerClick={handleWinnerClick}
                                 />
                               </Box>
-                              <Box 
+                              <Box
                                 key={`empty-bottom-box-match-${match.id}`}
                                 sx={{
                                   height: emptyBoxSize,
@@ -363,11 +357,8 @@ const FightingExecution = ({
                 })}
               </Box>
             ) : (
-              <Alert severity="warning">
-                Nessun tabellone disponibile.
-              </Alert>
+              <Alert severity="warning">Nessun tabellone disponibile.</Alert>
             )}
-
           </div>
         </div>
         <Box className="page-card-actions" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
@@ -377,31 +368,34 @@ const FightingExecution = ({
                 Modifica
               </Button>
             )}
-            
+
             {stato !== CategoryStates.IN_CORSO && isEditMode && (
               <Button variant="info" onClick={() => setIsEditMode(false)}>
                 Annulla Modifica
               </Button>
             )}
           </AuthComponent>
-          
+
           {stato === CategoryStates.IN_ATTESA_DI_AVVIO && (
             <Button variant="success" onClick={handleStartCategory}>
               Avvia categoria
             </Button>
           )}
 
-          {(stato === CategoryStates.IN_CORSO || isEditMode) && canEdit && (
-            <Button onClick={handleConfirmConclude}>
-              Concludi Categoria
-            </Button>
-          )}
+          {(stato === CategoryStates.IN_CORSO || isEditMode) && canEdit && <Button onClick={handleConfirmConclude}>Concludi Categoria</Button>}
         </Box>
-
       </div>
 
       {/* Sidebar: Classifica e Commissione - Destra */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: 'calc(100vh - 280px)', minHeight: 0, overflow: 'hidden' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.5rem',
+          maxHeight: 'calc(100vh - 280px)',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}>
         {/* Classifica */}
         <Paper sx={{ p: 2, overflow: 'hidden', flex: 1, minHeight: 280, display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6" gutterBottom>
@@ -414,13 +408,15 @@ const FightingExecution = ({
               <TableHead>
                 <TableRow>
                   <TableCell></TableCell>
-                  <TableCell><b>Atleta</b></TableCell>
+                  <TableCell>
+                    <b>Atleta</b>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {[1, 2, 3].map((pos) => {
                   const athlete = getClassifiedAthlete(pos);
-                  
+
                   return (
                     <TableRow key={pos}>
                       <TableCell>
@@ -434,20 +430,18 @@ const FightingExecution = ({
                             justifyContent: 'center',
                             bgcolor: pos === 1 ? 'warning.main' : pos === 2 ? 'grey.400' : pos === 3 ? 'warning.dark' : 'grey.300',
                             color: '#fff',
-                            fontWeight: 'bold'
-                          }}
-                        >
+                            fontWeight: 'bold',
+                          }}>
                           {pos}°
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
+                        <Typography
+                          variant="body2"
+                          sx={{
                             whiteSpace: 'pre-line',
-                            fontWeight: 'bold'
-                          }}
-                        >
+                            fontWeight: 'bold',
+                          }}>
                           {athlete || '-'}
                         </Typography>
                       </TableCell>
@@ -486,7 +480,7 @@ const FightingExecution = ({
         </Paper>
       </div>
 
-      <ConfirmActionModal 
+      <ConfirmActionModal
         open={isConfirmingConcludeDialogOpen}
         onClose={() => setIsConfirmingConcludeDialogOpen(false)}
         title="Conferma conclusione categoria"

@@ -72,7 +72,7 @@ export const loadExperienceById = async (id) => {
     const response = await axios.get(`/config/esperienze/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Errore durante il caricamento dell\'esperienza:', error);
+    console.error("Errore durante il caricamento dell'esperienza:", error);
     throw error;
   }
 };
@@ -87,4 +87,3 @@ export const loadNomiQuyenByCategoryType = async (tipoCategoriaId) => {
     throw error;
   }
 };
-

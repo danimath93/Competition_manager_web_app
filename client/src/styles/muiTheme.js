@@ -11,13 +11,13 @@ const muiCustomTheme = createTheme({
   // Tipografia globale con responsive breakpoints - Utilizza variabili CSS dove possibile
   typography: {
     fontFamily: "'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
-    
+
     // Font weights - Valori da var(--font-*)
     fontWeightLight: 300,
     fontWeightRegular: 400,
     fontWeightMedium: 500,
     fontWeightBold: 700,
-    
+
     // Varianti tipografiche con dimensioni responsive da variabili CSS
     h1: {
       fontFamily: "'Outfit', sans-serif",
@@ -151,14 +151,7 @@ const muiCustomTheme = createTheme({
   },
 
   // Shadows personalizzate - Utilizza variabili CSS
-  shadows: [
-    'none',
-    'var(--shadow-sm)',
-    'var(--shadow-md)',
-    'var(--shadow-lg)',
-    'var(--shadow-primary)',
-    ...Array(20).fill('var(--shadow-md)'),
-  ],
+  shadows: ['none', 'var(--shadow-sm)', 'var(--shadow-md)', 'var(--shadow-lg)', 'var(--shadow-primary)', ...Array(20).fill('var(--shadow-md)')],
 
   // Componenti specifici
   components: {

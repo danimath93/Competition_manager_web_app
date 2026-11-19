@@ -1,26 +1,12 @@
 import React from 'react';
-import {
-  TextField,
-  Button,
-  Alert,
-  Box,
-  Autocomplete,
-} from '@mui/material';
+import { TextField, Button, Alert, Box, Autocomplete } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import AuthComponent from './AuthComponent';
 import './common/DrawerModal.css';
 
-const ClubModal = ({
-  open,
-  onClose,
-  onSubmit,
-  onDelete,
-  club,
-  isEditMode,
-  isReadOnlyMode,
-}) => {
+const ClubModal = ({ open, onClose, onSubmit, onDelete, club, isEditMode, isReadOnlyMode }) => {
   const [formData, setFormData] = React.useState({});
   const [displayError, setDisplayError] = React.useState('');
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
@@ -39,7 +25,6 @@ const ClubModal = ({
         tesseramento: club?.tesseramento,
         abbreviazione: club?.abbreviazione,
       });
-
     } else {
       setFormData({
         denominazione: '',
@@ -102,12 +87,7 @@ const ClubModal = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <Box>
             {isEditMode && onDelete && (
-              <Button
-                onClick={() => setConfirmDeleteModalOpen(true)}
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-              >
+              <Button onClick={() => setConfirmDeleteModalOpen(true)} variant="outlined" color="error" startIcon={<DeleteIcon />}>
                 Elimina club
               </Button>
             )}
@@ -117,17 +97,13 @@ const ClubModal = ({
               {isReadOnlyMode ? 'Chiudi' : 'Annulla'}
             </Button>
             {!isReadOnlyMode && (
-              <Button
-                onClick={handleSubmit}
-                variant="contained"
-              >
+              <Button onClick={handleSubmit} variant="contained">
                 {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
               </Button>
             )}
           </Box>
         </Box>
-      }
-    >
+      }>
       {/* Informazioni generali */}
       <div className="drawer-section">
         <h3 className="drawer-section-title">Informazioni generali</h3>
@@ -283,7 +259,9 @@ const ClubModal = ({
           message="Sei sicuro di voler eliminare questo club? Questa azione non può essere annullata."
           primaryButton={{
             text: 'Elimina',
-            onClick: async () => { await handleDelete(); },
+            onClick: async () => {
+              await handleDelete();
+            },
           }}
           secondaryButton={{
             text: 'Annulla',

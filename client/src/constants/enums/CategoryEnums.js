@@ -3,5 +3,5 @@ export const CategoryStates = {
   IN_DEFINIZIONE: 'In definizione',
   IN_ATTESA_DI_AVVIO: 'In attesa di avvio',
   IN_CORSO: 'In corso',
-  CONCLUSA: 'Conclusa'
+  CONCLUSA: 'Conclusa',
 };

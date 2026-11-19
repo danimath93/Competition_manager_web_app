@@ -16,10 +16,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import { 
-  Print as PrintIcon,
-  Close as CloseIcon 
-} from '@mui/icons-material';
+import { Print as PrintIcon, Close as CloseIcon } from '@mui/icons-material';
 import { useReactToPrint } from 'react-to-print';
 import { getCompetitionDetails } from '../../../api/competitions';
 import { getSvolgimentoByCategoriaId } from '../../../api/svolgimentoCategorie';
@@ -75,7 +72,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
     };
     loadData();
   }, [category, open]);
-  
+
   // TODO: inserire la gestione della commisione caricando i dati necessari
 
   const orderAthletesByKeyLetter = (atleti, keyLetter) => {
@@ -90,20 +87,13 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
 
     // Ruota l'array in modo che i primi atleti siano quelli con la lettera estratta
     let orderedByLetter = [];
-    let orderIdx = orderedAthletes.findIndex(a => (a.cognome || '').toUpperCase().startsWith(keyLetter.toUpperCase()));
+    let orderIdx = orderedAthletes.findIndex((a) => (a.cognome || '').toUpperCase().startsWith(keyLetter.toUpperCase()));
     if (orderIdx !== -1) {
-      orderedByLetter = [
-        ...orderedAthletes.slice(orderIdx),
-        ...orderedAthletes.slice(0, orderIdx)
-      ];
+      orderedByLetter = [...orderedAthletes.slice(orderIdx), ...orderedAthletes.slice(0, orderIdx)];
     } else {
       // Se la lettera non corrisponde a nessun atleta, prende il primo cognome successivo con la lettera più vicina
-      orderIdx = orderedAthletes.findIndex(a => (a.cognome || '').toUpperCase() > keyLetter.toUpperCase());
-      orderedByLetter = orderIdx !== -1
-        ? [
-          ...orderedAthletes.slice(orderIdx),
-          ...orderedAthletes.slice(0, orderIdx)
-        ] : orderedAthletes;
+      orderIdx = orderedAthletes.findIndex((a) => (a.cognome || '').toUpperCase() > keyLetter.toUpperCase());
+      orderedByLetter = orderIdx !== -1 ? [...orderedAthletes.slice(orderIdx), ...orderedAthletes.slice(0, orderIdx)] : orderedAthletes;
     }
     return orderedByLetter;
   };
@@ -116,16 +106,11 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
-  
+
   if (!category) return null;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="lg"
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">Quaderno di Gara - {category.nome}</Typography>
@@ -198,14 +183,13 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
             }
           `}
         </style>
-        <Box 
-          ref={printRef} 
-          sx={{ 
-            bgcolor: 'white', 
+        <Box
+          ref={printRef}
+          sx={{
+            bgcolor: 'white',
             p: 3,
-            '& *': { fontFamily: 'Arial, sans-serif' }
-          }}
-        >
+            '& *': { fontFamily: 'Arial, sans-serif' },
+          }}>
           {/* PRIMA PAGINA */}
           <Box>
             {/* Intestazione */}
@@ -275,34 +259,77 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                     <Table size="small">
                       <TableHead>
                         <TableRow sx={{ bgcolor: 'grey.200' }}>
-                          <TableCell sx={{ fontWeight: 'bold', border: '1px solid black', width: '15%', fontSize: '0.7rem', p: 0.5 }}>
+                          <TableCell
+                            sx={{
+                              fontWeight: 'bold',
+                              border: '1px solid black',
+                              width: '15%',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
                             Posizione
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', border: '1px solid black', width: '45%', fontSize: '0.7rem', p: 0.5 }}>
+                          <TableCell
+                            sx={{
+                              fontWeight: 'bold',
+                              border: '1px solid black',
+                              width: '45%',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
                             Cognome Nome
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', border: '1px solid black', width: '40%', fontSize: '0.7rem', p: 0.5 }}>
+                          <TableCell
+                            sx={{
+                              fontWeight: 'bold',
+                              border: '1px solid black',
+                              width: '40%',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
                             Associazione
                           </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', bgcolor: '#FFD700', fontSize: '0.7rem', p: 0.5 }}>
+                          <TableCell
+                            sx={{
+                              border: '1px solid black',
+                              fontWeight: 'bold',
+                              bgcolor: '#FFD700',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
                             🥇 1°
                           </TableCell>
                           <TableCell sx={{ border: '1px solid black', height: 35, fontSize: '0.65rem', p: 0.5 }}>&nbsp;</TableCell>
                           <TableCell sx={{ border: '1px solid black', height: 35, fontSize: '0.65rem', p: 0.5 }}>&nbsp;</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', bgcolor: '#C0C0C0', fontSize: '0.7rem', p: 0.5 }}>
+                          <TableCell
+                            sx={{
+                              border: '1px solid black',
+                              fontWeight: 'bold',
+                              bgcolor: '#C0C0C0',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
                             🥈 2°
                           </TableCell>
                           <TableCell sx={{ border: '1px solid black', height: 35, fontSize: '0.65rem', p: 0.5 }}>&nbsp;</TableCell>
                           <TableCell sx={{ border: '1px solid black', height: 35, fontSize: '0.65rem', p: 0.5 }}>&nbsp;</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', bgcolor: '#CD7F32', color: 'white', fontSize: '0.7rem', p: 0.5 }}>
+                          <TableCell
+                            sx={{
+                              border: '1px solid black',
+                              fontWeight: 'bold',
+                              bgcolor: '#CD7F32',
+                              color: 'white',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
                             🥉 3°
                           </TableCell>
                           <TableCell sx={{ border: '1px solid black', height: 35, fontSize: '0.65rem', p: 0.5 }}>&nbsp;</TableCell>
@@ -322,19 +349,52 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                     <Table size="small">
                       <TableHead>
                         <TableRow sx={{ bgcolor: 'grey.200' }}>
-                          <TableCell sx={{ fontWeight: 'bold', border: '1px solid black', width: '15%', fontSize: '0.7rem', p: 0.5 }}>Qualifica</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', border: '1px solid black', width: '45%', fontSize: '0.7rem', p: 0.5 }}>Cognome Nome</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', border: '1px solid black', width: '40%', fontSize: '0.7rem', p: 0.5 }}>Firma</TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 'bold',
+                              border: '1px solid black',
+                              width: '15%',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
+                            Qualifica
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 'bold',
+                              border: '1px solid black',
+                              width: '45%',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
+                            Cognome Nome
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              fontWeight: 'bold',
+                              border: '1px solid black',
+                              width: '40%',
+                              fontSize: '0.7rem',
+                              p: 0.5,
+                            }}>
+                            Firma
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {/* Capo commissione */}
                         <TableRow>
-                          <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', width: '10%', fontSize: '0.65rem', p: 0.3 }}>
+                          <TableCell
+                            sx={{
+                              border: '1px solid black',
+                              fontWeight: 'bold',
+                              width: '10%',
+                              fontSize: '0.65rem',
+                              p: 0.3,
+                            }}>
                             Capo Commissione
                           </TableCell>
-                          <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
-                          </TableCell>
+                          <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}></TableCell>
                           <TableCell sx={{ border: '1px solid black', height: 25, p: 0.3 }}>&nbsp;</TableCell>
                         </TableRow>
 
@@ -343,9 +403,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                           const judge = null;
                           return (
                             <TableRow key={`main-${num}`}>
-                              <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', fontSize: '0.65rem', p: 0.3 }}>
-                                Giudice {num}
-                              </TableCell>
+                              <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', fontSize: '0.65rem', p: 0.3 }}>Giudice {num}</TableCell>
                               <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
                                 {judge ? `${judge.cognome} ${judge.nome}` : ''}
                               </TableCell>
@@ -353,13 +411,20 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                             </TableRow>
                           );
                         })}
-                        
+
                         {/* Giudici riserva */}
                         {[1].map((num) => {
                           const judge = null;
                           return (
                             <TableRow key={`reserve-${num}`}>
-                              <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', fontStyle: 'italic', fontSize: '0.65rem', p: 0.3 }}>
+                              <TableCell
+                                sx={{
+                                  border: '1px solid black',
+                                  fontWeight: 'bold',
+                                  fontStyle: 'italic',
+                                  fontSize: '0.65rem',
+                                  p: 0.3,
+                                }}>
                                 Giudice R. {num}
                               </TableCell>
                               <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
@@ -375,7 +440,14 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
                           const judge = null;
                           return (
                             <TableRow key={`table-${num}`}>
-                              <TableCell sx={{ border: '1px solid black', fontWeight: 'bold', fontStyle: 'italic', fontSize: '0.65rem', p: 0.3 }}>
+                              <TableCell
+                                sx={{
+                                  border: '1px solid black',
+                                  fontWeight: 'bold',
+                                  fontStyle: 'italic',
+                                  fontSize: '0.65rem',
+                                  p: 0.3,
+                                }}>
                                 Addetto T. {num}
                               </TableCell>
                               <TableCell sx={{ border: '1px solid black', fontSize: '0.65rem', p: 0.3 }}>
@@ -397,29 +469,20 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
           <Box className="page-break" sx={{ pt: 3 }}>
             <Box className="second-page-content">
               {/* Intestazione seconda pagina */}
-              {
-                competitionTipology === CompetitionTipology.COMBATTIMENTO ? null : (
-                  <Box sx={{ textAlign: 'center', mb: 1.5 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
-                      {category.nome} - {competitionTipology === CompetitionTipology.COMBATTIMENTO ? 'Tabellone Combattimenti' : 'Tabella Punteggi'}
-                    </Typography>
-                    <Divider sx={{ my: 1 }} />
-                  </Box>
-                )
-              }
+              {competitionTipology === CompetitionTipology.COMBATTIMENTO ? null : (
+                <Box sx={{ textAlign: 'center', mb: 1.5 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                    {category.nome} - {competitionTipology === CompetitionTipology.COMBATTIMENTO ? 'Tabellone Combattimenti' : 'Tabella Punteggi'}
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+                </Box>
+              )}
 
               {/* Visualizzazione condizionale: Tabellone o Griglia */}
               {competitionTipology === CompetitionTipology.COMBATTIMENTO ? (
-                <CategoryNotebookPrintBracketView
-                  tabellone={tabellone}
-                  athletes={athletes}
-                />
+                <CategoryNotebookPrintBracketView tabellone={tabellone} athletes={athletes} />
               ) : (
-                <CategoryNotebookPrintTableView 
-                  orderedAthletes={orderedAthletes}
-                  getUppercase={getUppercase}
-                  getUpperLowerCase={getUpperLowerCase}
-                />
+                <CategoryNotebookPrintTableView orderedAthletes={orderedAthletes} getUppercase={getUppercase} getUpperLowerCase={getUpperLowerCase} />
               )}
             </Box>
           </Box>
@@ -428,12 +491,7 @@ const CategoryNotebookPrint = ({ open, onClose, category, tabellone }) => {
 
       <DialogActions>
         <Button onClick={onClose}>Chiudi</Button>
-        <Button 
-          onClick={handlePrint} 
-          variant="contained" 
-          startIcon={<PrintIcon />}
-          color="primary"
-        >
+        <Button onClick={handlePrint} variant="contained" startIcon={<PrintIcon />} color="primary">
           Stampa Quaderno
         </Button>
       </DialogActions>

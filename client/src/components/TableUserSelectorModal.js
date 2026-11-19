@@ -11,7 +11,7 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
-  Box
+  Box,
 } from '@mui/material';
 import { getTableUsers } from '../api/auth';
 
@@ -63,13 +63,13 @@ const TableUserSelectorModal = ({ open, onClose, onConfirm, currentUserId }) => 
             <CircularProgress />
           </Box>
         )}
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        
+
         {!loading && !error && (
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel id="table-user-select-label">Utente Tavolo</InputLabel>
@@ -78,8 +78,7 @@ const TableUserSelectorModal = ({ open, onClose, onConfirm, currentUserId }) => 
               id="table-user-select"
               value={selectedUserId}
               label="Utente Tavolo"
-              onChange={(e) => setSelectedUserId(e.target.value)}
-            >
+              onChange={(e) => setSelectedUserId(e.target.value)}>
               <MenuItem value="">
                 <em>Nessuno</em>
               </MenuItem>
@@ -96,12 +95,7 @@ const TableUserSelectorModal = ({ open, onClose, onConfirm, currentUserId }) => 
         <Button onClick={handleClose} color="secondary">
           Annulla
         </Button>
-        <Button 
-          onClick={handleConfirm} 
-          color="primary" 
-          variant="contained"
-          disabled={loading}
-        >
+        <Button onClick={handleConfirm} color="primary" variant="contained" disabled={loading}>
           Conferma
         </Button>
       </DialogActions>

@@ -26,7 +26,7 @@ export const saveCategories = async (competizioneId, data) => {
 export const getCategoriesByCompetizione = async (competizioneId, includiIscrizioni = true) => {
   try {
     const response = await axios.get(`/categorie/competizioni/${competizioneId}`, {
-      params: { includiIscrizioni }
+      params: { includiIscrizioni },
     });
     return response.data;
   } catch (error) {
@@ -52,7 +52,7 @@ export const getCategoriesByTableUser = async (competizioneId) => {
     const response = await axios.get(`/categorie/competizioni/${competizioneId}/table-user`);
     return response.data;
   } catch (error) {
-    console.error('Errore nel recupero delle categorie dell\'utente tavolo:', error);
+    console.error("Errore nel recupero delle categorie dell'utente tavolo:", error);
     throw error;
   }
 };
@@ -63,7 +63,7 @@ export const updateCategoria = async (id, data) => {
     const response = await axios.put(`/categorie/${id}`, data);
     return response.data;
   } catch (error) {
-    console.error('Errore nell\'aggiornamento della categoria:', error);
+    console.error("Errore nell'aggiornamento della categoria:", error);
     throw error;
   }
 };
@@ -74,7 +74,7 @@ export const deleteCategoria = async (id) => {
     const response = await axios.delete(`/categorie/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Errore nell\'eliminazione della categoria:', error);
+    console.error("Errore nell'eliminazione della categoria:", error);
     throw error;
   }
 };
@@ -85,7 +85,7 @@ export const deleteCategoriesByCompetition = async (competitionId) => {
     const response = await axios.delete(`/categorie/${competitionId}/categorie`);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'eliminazione delle categorie della competizione:', error);
+    console.error("Errore durante l'eliminazione delle categorie della competizione:", error);
     throw error;
   }
 };
@@ -95,7 +95,7 @@ export const moveAtleti = async (atletiIds, targetCategoriaId) => {
   try {
     const response = await axios.post('/categorie/move-atleti', {
       atletiIds,
-      targetCategoriaId
+      targetCategoriaId,
     });
     return response.data;
   } catch (error) {
@@ -110,11 +110,11 @@ export const mergeCategorie = async (categoria1Id, categoria2Id, nuovoNome) => {
     const response = await axios.post('/categorie/merge', {
       categoria1Id,
       categoria2Id,
-      nuovoNome
+      nuovoNome,
     });
     return response.data;
   } catch (error) {
-    console.error('Errore nell\'unione delle categorie:', error);
+    console.error("Errore nell'unione delle categorie:", error);
     throw error;
   }
 };
@@ -127,7 +127,7 @@ export const splitCategoria = async (categoriaId, atleti1, atleti2, nomeCategori
       atleti1,
       atleti2,
       nomeCategoria1,
-      nomeCategoria2
+      nomeCategoria2,
     });
     return response.data;
   } catch (error) {
@@ -140,7 +140,7 @@ export const splitCategoria = async (categoriaId, atleti1, atleti2, nomeCategori
 export const printCategories = async (competizioneId) => {
   try {
     const response = await axios.get(`/competizioni/${competizioneId}/print-categories`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
 
     // Crea un URL blob e trigger il download
@@ -163,7 +163,7 @@ export const printCategories = async (competizioneId) => {
 export const exportCategories = async (competizioneId) => {
   try {
     const response = await axios.get(`/competizioni/${competizioneId}/export-categories`, {
-      responseType: 'blob'
+      responseType: 'blob',
     });
     // Crea un URL blob e trigger il download
     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -176,7 +176,7 @@ export const exportCategories = async (competizioneId) => {
     window.URL.revokeObjectURL(url);
     return true;
   } catch (error) {
-    console.error('Errore nell\'esportazione delle categorie:', error);
+    console.error("Errore nell'esportazione delle categorie:", error);
     throw error;
   }
 };
@@ -224,5 +224,3 @@ export const getCategoryExecution = async (categoriaId) => {
     throw error;
   }
 };
-
-

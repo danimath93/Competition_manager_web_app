@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from "react";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const AuthComponent = ({ requiredRoles, children }) => {
   const { user, loading } = useAuth();
@@ -28,7 +28,7 @@ const AuthComponent = ({ requiredRoles, children }) => {
 
   if (loading) return null;
   if (!authorized) return null;
-  
+
   return <>{children}</>;
 };
 

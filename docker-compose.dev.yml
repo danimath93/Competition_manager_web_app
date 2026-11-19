@@ -10,14 +10,14 @@ services:
       POSTGRES_PASSWORD: password
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_dev_data_17:/var/lib/postgresql/data
       - ./database/init:/docker-entrypoint-initdb.d
     networks:
       - martial_arts_dev_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d martial_arts_db"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d martial_arts_db']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,7 +38,7 @@ services:
       - DB_PORT=5432
       - PORT=3050
     ports:
-      - "3050:3050"
+      - '3050:3050'
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,7 +62,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - WDS_SOCKET_HOST=localhost
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - backend-dev
     networks:

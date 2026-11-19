@@ -1,19 +1,7 @@
 import React from 'react';
 import './TextInput.css';
 
-const TextInput = ({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
-  required = false,
-  type = 'text',
-  name,
-  autoComplete,
-  maxLength
-}) => {
+const TextInput = ({ id, label, value, onChange, placeholder, disabled = false, required = false, type = 'text', name, autoComplete, maxLength }) => {
   return (
     <div className="text-input-container">
       {label && (

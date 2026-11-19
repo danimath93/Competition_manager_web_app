@@ -5,16 +5,16 @@ exports.startSvolgimentoCategoria = async (req, res) => {
     const { categoriaId, competizioneId } = req.body;
 
     if (!categoriaId) {
-      return res.status(400).json({ error: "categoriaId è richiesto" });
+      return res.status(400).json({ error: 'categoriaId è richiesto' });
     }
     if (!competizioneId) {
-      return res.status(400).json({ error: "competizioneId è richiesto" });
+      return res.status(400).json({ error: 'competizioneId è richiesto' });
     }
 
     const competizione = await Competizione.findByPk(competizioneId);
 
     if (!competizione) {
-      return res.status(404).json({ error: "Competizione non trovata" });
+      return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
     // 2. Sceglie casualmente una lettera da A a Z
@@ -27,12 +27,12 @@ exports.startSvolgimentoCategoria = async (req, res) => {
         categoriaId,
         competizioneId,
         letteraEstratta: categoryLetter,
-        stato: 'In definizione'
+        stato: 'In definizione',
       });
 
       // Prendi atleti dalla categoria
       const categoria = await Categoria.findByPk(categoriaId, {
-        attributes: ['id', 'nome', 'tipoCategoriaId']
+        attributes: ['id', 'nome', 'tipoCategoriaId'],
       });
       if (!categoria) return res.status(404).json({ error: 'Categoria non trovata' });
 
@@ -69,22 +69,20 @@ exports.getSvolgimentoCategoria = async (req, res) => {
               {
                 model: Club,
                 as: 'club',
-                attributes: ['id', 'denominazione']
-              }
-            ]
-          }
-        ]
+                attributes: ['id', 'denominazione'],
+              },
+            ],
+          },
+        ],
       });
       // Creo l'array di atleti e aggiungo il peso preso dall'iscrizione
-      const atleti = iscrizioni.map(
-        ia => {
-          const atletaData = ia.atleta ? ia.atleta.get({ plain: true }) : null;
-          if (atletaData) {
-            atletaData.peso = ia.peso || null;
-          }
-          return atletaData;
+      const atleti = iscrizioni.map((ia) => {
+        const atletaData = ia.atleta ? ia.atleta.get({ plain: true }) : null;
+        if (atletaData) {
+          atletaData.peso = ia.peso || null;
         }
-      );
+        return atletaData;
+      });
       svolg.dataValues.atleti = atleti;
     }
     res.json(svolg);
@@ -111,13 +109,13 @@ exports.getSvolgimentoByCategoriaId = async (req, res) => {
             {
               model: Club,
               as: 'club',
-              attributes: ['id', 'denominazione', 'abbreviazione']
-            }
-          ]
-        }
-      ]
+              attributes: ['id', 'denominazione', 'abbreviazione'],
+            },
+          ],
+        },
+      ],
     });
-    const atleti = iscrizioni.map(ia => ia.atleta);
+    const atleti = iscrizioni.map((ia) => ia.atleta);
     svolg.dataValues.atleti = atleti;
     res.json(svolg);
   } catch (err) {
@@ -145,17 +143,15 @@ exports.patchSvolgimentoCategoria = async (req, res) => {
   }
 };
 
-
-
 exports.getSvolgimentiByCompetizione = async (req, res) => {
   try {
     const svolg = await SvolgimentoCategoria.findAll({
-      where: { competizioneId: req.params.id }
+      where: { competizioneId: req.params.id },
     });
 
     return res.json(svolg);
   } catch (err) {
-    res.status(500).json({ error: "Errore nel recupero svolgimenti" });
+    res.status(500).json({ error: 'Errore nel recupero svolgimenti' });
   }
 };
 
@@ -168,7 +164,7 @@ exports.generateTabellone = async (req, res) => {
 
     // prendi atleti snapshot
     const atletiSnap = {};
-    const participants = atletiSnap.map(a => ({ id: a.atletaId, nome: a.nome, cognome: a.cognome }));
+    const participants = atletiSnap.map((a) => ({ id: a.atletaId, nome: a.nome, cognome: a.cognome }));
 
     // genera tabellone (stessa logica frontend)
     const nextPow2 = Math.pow(2, Math.ceil(Math.log2(Math.max(1, participants.length))));
@@ -181,7 +177,7 @@ exports.generateTabellone = async (req, res) => {
         id: `r0m${matchesRound0.length}`,
         players: [p1, p2],
         winner: null,
-        from: []
+        from: [],
       });
       idx += 2;
     }
@@ -197,7 +193,7 @@ exports.generateTabellone = async (req, res) => {
           id: `r${roundIdx}m${cur.length}`,
           players: [null, null],
           winner: null,
-          from: [left.id, right ? right.id : null]
+          from: [left.id, right ? right.id : null],
         });
       }
       rounds.push({ matches: cur });
@@ -249,7 +245,7 @@ exports.setMatchWinner = async (req, res) => {
         const m = tab.rounds[r].matches[mi];
         if (m.id === matchId) {
           // trova l'oggetto atleta tra i players
-          const winnerObj = (m.players || []).find(p => p && p.id === winnerAtletaId);
+          const winnerObj = (m.players || []).find((p) => p && p.id === winnerAtletaId);
           if (!winnerObj) return res.status(400).json({ error: 'Atleta non presente nel match' });
           m.winner = winnerObj;
           found = true;
@@ -268,15 +264,14 @@ exports.setMatchWinner = async (req, res) => {
       }
     }
     if (!found) return res.status(404).json({ error: 'Match non trovato' });
-    
+
     // --- NUOVA VERSIONE SALVATAGGIO CLASSIFICA ---
     const finalRound = tab.rounds[tab.rounds.length - 1];
     const finalMatch = finalRound.matches[0];
     const finalWinner = finalMatch.winner;
 
     if (finalWinner) {
-        
-      const finalLoser = finalMatch.players.find(p => p && p.id !== finalWinner.id);
+      const finalLoser = finalMatch.players.find((p) => p && p.id !== finalWinner.id);
 
       // ---- Preleva semifinali ----
       const semiRound = tab.rounds[tab.rounds.length - 2];
@@ -285,10 +280,10 @@ exports.setMatchWinner = async (req, res) => {
       if (semiRound) {
         for (const sm of semiRound.matches) {
           if (sm.winner) {
-            const loser = sm.players.find(p => p && p.id !== sm.winner.id);
+            const loser = sm.players.find((p) => p && p.id !== sm.winner.id);
             if (loser) semisLosers.push(loser);
           } else {
-            const loser = sm.players.find(p => p);
+            const loser = sm.players.find((p) => p);
             if (loser) semisLosers.push(loser);
           }
         }
@@ -296,8 +291,8 @@ exports.setMatchWinner = async (req, res) => {
 
       // ---- Determina tipo categoria ----
       const categoria = await Categoria.findByPk(svolg.categoriaId);
-      const nomeCat = categoria.nome || "";
-      const isQuyen = nomeCat.toLowerCase().startsWith("quyen");
+      const nomeCat = categoria.nome || '';
+      const isQuyen = nomeCat.toLowerCase().startsWith('quyen');
 
       // ---- Costruisci nuova classifica finale ----
       let newClassifica = [];
@@ -315,7 +310,7 @@ exports.setMatchWinner = async (req, res) => {
         if (semisLosers.length > 0) {
           newClassifica.push({
             pos: 3,
-            atletaId: semisLosers[0].atletaId
+            atletaId: semisLosers[0].atletaId,
           });
         }
       } else {
@@ -326,18 +321,15 @@ exports.setMatchWinner = async (req, res) => {
       }
 
       svolg.classifica = newClassifica;
-      svolg.stato = "Conclusa";
-
+      svolg.stato = 'Conclusa';
     } else {
-      svolg.stato = "In corso";
+      svolg.stato = 'In corso';
     }
 
-
     svolg.tabellone = tab;
-    console.log(">> CLASSIFICA SALVATA:", JSON.stringify(computedClassifica, null, 2));
+    console.log('>> CLASSIFICA SALVATA:', JSON.stringify(computedClassifica, null, 2));
     svolg.classifica = computedClassifica;
     await svolg.save();
-
 
     return res.json({ tabellone: tab, classifica: computedClassifica, stato: svolg.stato });
   } catch (err) {

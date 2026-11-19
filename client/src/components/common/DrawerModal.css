@@ -62,7 +62,7 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-xl);
-  
+
   /* Custom scrollbar */
   scrollbar-width: thin;
   scrollbar-color: var(--border-medium) var(--bg-secondary);

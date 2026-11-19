@@ -32,7 +32,7 @@ const uploadDocumento = async (req, res) => {
       'file_extra2_competizione',
       'locandina_competizione',
       'conferma_presidente',
-      'altro'
+      'altro',
     ];
 
     if (!tipiDocumentoValidi.includes(tipoDocumento)) {
@@ -46,7 +46,7 @@ const uploadDocumento = async (req, res) => {
       mimeType: file.mimetype,
       dimensione: file.size,
       tipoDocumento,
-      descrizione: descrizione || null
+      descrizione: descrizione || null,
     });
 
     // Associa il documento all'entità specificata
@@ -61,13 +61,13 @@ const uploadDocumento = async (req, res) => {
       dimensione: documento.dimensione,
       tipoDocumento: documento.tipoDocumento,
       descrizione: documento.descrizione,
-      dataCaricamento: documento.dataCaricamento
+      dataCaricamento: documento.dataCaricamento,
     });
   } catch (error) {
     logger.error(`Errore nell'upload del documento: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'upload del documento',
-      details: error.message
+      error: "Errore nell'upload del documento",
+      details: error.message,
     });
   }
 };
@@ -91,7 +91,7 @@ const downloadDocumento = async (req, res) => {
     res.set({
       'Content-Type': documento.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(documento.nomeFile)}"`,
-      'Content-Length': documento.file.length
+      'Content-Length': documento.file.length,
     });
 
     logger.info(`Download documento - ID: ${id}, Nome: ${documento.nomeFile}`);
@@ -100,7 +100,7 @@ const downloadDocumento = async (req, res) => {
     logger.error(`Errore nel download del documento ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel download del documento',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -114,7 +114,7 @@ const getDocumentoInfo = async (req, res) => {
     const { id } = req.params;
 
     const documento = await Documento.findByPk(id, {
-      attributes: { exclude: ['file'] }
+      attributes: { exclude: ['file'] },
     });
 
     if (!documento) {
@@ -127,7 +127,7 @@ const getDocumentoInfo = async (req, res) => {
     logger.error(`Errore nel recupero info documento ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle informazioni del documento',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -162,8 +162,8 @@ const deleteDocumento = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nell'eliminazione del documento ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'eliminazione del documento',
-      details: error.message
+      error: "Errore nell'eliminazione del documento",
+      details: error.message,
     });
   }
 };
@@ -172,10 +172,7 @@ const deleteDocumento = async (req, res) => {
 const removeRiferimentiDocumento = async (entitaId, entitaTipo, tipoDocumento) => {
   switch (entitaTipo) {
     case 'club':
-      await Club.update(
-        { logoId: null },
-        { where: { id: entitaId } }
-      );
+      await Club.update({ logoId: null }, { where: { id: entitaId } });
       break;
     case 'competizione':
       // Determina quale campo azzerare in base al tipoDocumento
@@ -189,16 +186,10 @@ const removeRiferimentiDocumento = async (entitaId, entitaTipo, tipoDocumento) =
       } else if (tipoDocumento === 'file_extra2_competizione') {
         updateField = { fileExtra2Id: null };
       }
-      await Competizione.update(
-        updateField,
-        { where: { id: entitaId } }
-      );
+      await Competizione.update(updateField, { where: { id: entitaId } });
       break;
     case 'iscrizione_club':
-      await IscrizioneClub.update(
-        { confermaPresidenteId: null },
-        { where: { id: entitaId } }
-      );
+      await IscrizioneClub.update({ confermaPresidenteId: null }, { where: { id: entitaId } });
       break;
     default:
       // Se tipo non riconosciuto, non fare niente
@@ -210,10 +201,7 @@ const removeRiferimentiDocumento = async (entitaId, entitaTipo, tipoDocumento) =
 const associateDocumentoToEntity = async (documentoId, entitaId, entitaTipo, tipoDocumento) => {
   switch (entitaTipo) {
     case 'club':
-      await Club.update(
-        { logoId: documentoId },
-        { where: { id: entitaId } }
-      );
+      await Club.update({ logoId: documentoId }, { where: { id: entitaId } });
       break;
     case 'competizione':
       // Determina quale campo aggiornare in base al tipoDocumento
@@ -229,25 +217,19 @@ const associateDocumentoToEntity = async (documentoId, entitaId, entitaTipo, tip
       } else {
         throw new Error('Tipo documento non valido per competizione');
       }
-      await Competizione.update(
-        updateField,
-        { where: { id: entitaId } }
-      );
+      await Competizione.update(updateField, { where: { id: entitaId } });
       break;
     case 'iscrizione_club':
-      await IscrizioneClub.update(
-        { confermaPresidenteId: documentoId },
-        { where: { id: entitaId } }
-      );
+      await IscrizioneClub.update({ confermaPresidenteId: documentoId }, { where: { id: entitaId } });
       break;
     default:
-      throw new Error('Tipo entità non valido per l\'associazione del documento');
+      throw new Error("Tipo entità non valido per l'associazione del documento");
   }
-}
+};
 
 module.exports = {
   uploadDocumento,
   downloadDocumento,
   getDocumentoInfo,
-  deleteDocumento
+  deleteDocumento,
 };

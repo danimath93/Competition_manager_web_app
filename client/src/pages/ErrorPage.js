@@ -27,13 +27,13 @@ const ErrorPage = ({ error, resetError }) => {
         url: window.location.href,
         error: {
           message: error ? error.toString() : 'Nessun messaggio di errore',
-          stack: error && error.stack ? error.stack : 'Nessuno stack trace disponibile'
+          stack: error && error.stack ? error.stack : 'Nessuno stack trace disponibile',
         },
         browserInfo: {
           platform: navigator.platform,
           language: navigator.language,
-          cookieEnabled: navigator.cookieEnabled
-        }
+          cookieEnabled: navigator.cookieEnabled,
+        },
       };
 
       const reportText = JSON.stringify(errorReport, null, 2);
@@ -56,10 +56,8 @@ const ErrorPage = ({ error, resetError }) => {
       <div className="error-container">
         <div className="error-icon">⚠️</div>
         <h1 className="error-title">Oops! Qualcosa è andato storto</h1>
-        <p className="error-message">
-          Si è verificato un errore imprevisto. Ci scusiamo per l'inconveniente.
-        </p>
-        
+        <p className="error-message">Si è verificato un errore imprevisto. Ci scusiamo per l'inconveniente.</p>
+
         {process.env.NODE_ENV === 'development' && error && (
           <details className="error-details">
             <summary>Dettagli errore (solo in sviluppo)</summary>

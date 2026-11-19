@@ -1,17 +1,7 @@
 // Carica .env prima dei modelli (config/database legge le variabili al require)
 require('dotenv').config({ quiet: true });
 
-const {
-  Club,
-  Atleta,
-  Giudice,
-  Competizione,
-  Categoria,
-  IscrizioneAtleta,
-  UtentiLogin,
-  AgeGroupConfiguration,
-  sequelize
-} = require('./models');
+const { Club, Atleta, Giudice, Competizione, Categoria, IscrizioneAtleta, UtentiLogin, AgeGroupConfiguration, sequelize } = require('./models');
 
 // Fasce d'età standard usate dalle configurazioni di default
 const DEFAULT_AGE_GROUPS = [
@@ -22,21 +12,21 @@ const DEFAULT_AGE_GROUPS = [
   { key: 'junior', label: 'Junior', grouping: 'adults', order: 5, minAge: 16, maxAge: 18 },
   { key: 'seniores', label: 'Seniores', grouping: 'adults', order: 6, minAge: 19, maxAge: 40 },
   { key: 'masters-a', label: 'MastersA', grouping: 'adults', order: 7, minAge: 41, maxAge: 50 },
-  { key: 'masters-b', label: 'MastersB', grouping: 'adults', order: 8, minAge: 51, maxAge: null }
+  { key: 'masters-b', label: 'MastersB', grouping: 'adults', order: 8, minAge: 51, maxAge: null },
 ];
 
 // Allineato a scripts/seed_age_group_configurations.sql
 const DEFAULT_AGE_GROUP_CONFIGURATIONS = [
   {
     name: 'Età sportiva',
-    description: 'Età compiuta entro il 31/12 dell\'anno della gara',
-    config: { version: 1, mode: 'seasonAge', seasonStart: '01-01', groups: DEFAULT_AGE_GROUPS }
+    description: "Età compiuta entro il 31/12 dell'anno della gara",
+    config: { version: 1, mode: 'seasonAge', seasonStart: '01-01', groups: DEFAULT_AGE_GROUPS },
   },
   {
     name: 'Età a inizio gara',
     description: 'Età esatta alla data di inizio gara',
-    config: { version: 1, mode: 'age', groups: DEFAULT_AGE_GROUPS }
-  }
+    config: { version: 1, mode: 'age', groups: DEFAULT_AGE_GROUPS },
+  },
 ];
 
 // Crea le configurazioni di default mancanti e riallinea quelle esistenti (rieseguibile, ricerca per nome)
@@ -45,7 +35,7 @@ const seedAgeGroupConfigurations = async () => {
   for (const { name, description, config } of DEFAULT_AGE_GROUP_CONFIGURATIONS) {
     const [configuration, isNew] = await AgeGroupConfiguration.findOrCreate({
       where: { clubId: null, name },
-      defaults: { description, config }
+      defaults: { description, config },
     });
     if (isNew) {
       created++;
@@ -70,29 +60,137 @@ const seedData = async () => {
     ]);
 
     const configTipiCategoria = await sequelize.models.ConfigTipoCategoria.bulkCreate([
-      { nome: 'Quyen programma', descrizione: 'Categoria per Quyen a mani nude o con armi', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Quyen internazionale', descrizione: 'Categoria per Quyen secondo regolamenti internazionali', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Quyen mani nude a squadre', descrizione: 'Categoria per Quyen a mani nude in squadre', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Song luyen mani nude', descrizione: 'Categoria per Song Luyen a mani nude', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Quyen con armi lunghe', descrizione: 'Categoria per Quyen con armi lunghe', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Quyen con armi corte', descrizione: 'Categoria per Quyen con armi corte', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Quyen con armi snodate', descrizione: 'Categoria per Quyen con armi snodate', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Quyen con armi a squadre', descrizione: 'Categoria per Quyen con armi in squadre', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Song luyen con armi', descrizione: 'Categoria per Song Luyen con armi', tipoCompetizioneId: 1, idConfigTipiAtleti: [1,2,3], obbligoPeso: false },
-      { nome: 'Light contact', descrizione: 'Categoria per combattimenti di light contact', tipoCompetizioneId: 3, idConfigTipiAtleti: [1,2,3], obbligoPeso: true },
-      { nome: 'Lotta tradizionale', descrizione: 'Categoria per combattimenti di lotta tradizionale vietnamita vat', tipoCompetizioneId: 3, idConfigTipiAtleti: [2,3], obbligoPeso: false },
-      { nome: 'Fighting ball', descrizione: 'Categoria per combattimenti fighting ball per bambini', tipoCompetizioneId: 3, idConfigTipiAtleti: [1], obbligoPeso: true },
-      { nome: 'Festa di Natale', descrizione: 'Categoria per attività ludiche per bambini', tipoCompetizioneId: 4, idConfigTipiAtleti: [1], obbligoPeso: false }
+      {
+        nome: 'Quyen programma',
+        descrizione: 'Categoria per Quyen a mani nude o con armi',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Quyen internazionale',
+        descrizione: 'Categoria per Quyen secondo regolamenti internazionali',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Quyen mani nude a squadre',
+        descrizione: 'Categoria per Quyen a mani nude in squadre',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Song luyen mani nude',
+        descrizione: 'Categoria per Song Luyen a mani nude',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Quyen con armi lunghe',
+        descrizione: 'Categoria per Quyen con armi lunghe',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Quyen con armi corte',
+        descrizione: 'Categoria per Quyen con armi corte',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Quyen con armi snodate',
+        descrizione: 'Categoria per Quyen con armi snodate',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Quyen con armi a squadre',
+        descrizione: 'Categoria per Quyen con armi in squadre',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Song luyen con armi',
+        descrizione: 'Categoria per Song Luyen con armi',
+        tipoCompetizioneId: 1,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Light contact',
+        descrizione: 'Categoria per combattimenti di light contact',
+        tipoCompetizioneId: 3,
+        idConfigTipiAtleti: [1, 2, 3],
+        obbligoPeso: true,
+      },
+      {
+        nome: 'Lotta tradizionale',
+        descrizione: 'Categoria per combattimenti di lotta tradizionale vietnamita vat',
+        tipoCompetizioneId: 3,
+        idConfigTipiAtleti: [2, 3],
+        obbligoPeso: false,
+      },
+      {
+        nome: 'Fighting ball',
+        descrizione: 'Categoria per combattimenti fighting ball per bambini',
+        tipoCompetizioneId: 3,
+        idConfigTipiAtleti: [1],
+        obbligoPeso: true,
+      },
+      {
+        nome: 'Festa di Natale',
+        descrizione: 'Categoria per attività ludiche per bambini',
+        tipoCompetizioneId: 4,
+        idConfigTipiAtleti: [1],
+        obbligoPeso: false,
+      },
     ]);
 
     await seedAgeGroupConfigurations();
 
     const configEsperienze = await sequelize.models.ConfigEsperienza.bulkCreate([
-      { nome: 'Esordiente', descrizione: 'Atleta con al massimo 3 match combattuti', tipiCompetizione: [3], belt: 'all', attivo: true },
-      { nome: 'Esperto', descrizione: 'Atleta con 4 o più match combattuti', tipiCompetizione: [3], belt: 'all', attivo: true },
-      { nome: 'I livello', descrizione: 'Atleta iscritto a settembre dell\'anno corrente', tipiCompetizione: [1], belt: 'whiteBelt', attivo: true },
-      { nome: 'II livello', descrizione: 'Atleta iscritto da 1 oppure 2 anni', tipiCompetizione: [1], belt: 'whiteBelt', attivo: true },
-      { nome: 'III livello', descrizione: 'Atleta iscritto da 3 o più anni', tipiCompetizione: [1], belt: 'whiteBelt', attivo: true },
+      {
+        nome: 'Esordiente',
+        descrizione: 'Atleta con al massimo 3 match combattuti',
+        tipiCompetizione: [3],
+        belt: 'all',
+        attivo: true,
+      },
+      {
+        nome: 'Esperto',
+        descrizione: 'Atleta con 4 o più match combattuti',
+        tipiCompetizione: [3],
+        belt: 'all',
+        attivo: true,
+      },
+      {
+        nome: 'I livello',
+        descrizione: "Atleta iscritto a settembre dell'anno corrente",
+        tipiCompetizione: [1],
+        belt: 'whiteBelt',
+        attivo: true,
+      },
+      {
+        nome: 'II livello',
+        descrizione: 'Atleta iscritto da 1 oppure 2 anni',
+        tipiCompetizione: [1],
+        belt: 'whiteBelt',
+        attivo: true,
+      },
+      {
+        nome: 'III livello',
+        descrizione: 'Atleta iscritto da 3 o più anni',
+        tipiCompetizione: [1],
+        belt: 'whiteBelt',
+        attivo: true,
+      },
       { nome: 'I Dang', descrizione: 'Cintura nera I Dang', tipiCompetizione: [1], belt: 'blackBelt', attivo: true },
       { nome: 'II Dang', descrizione: 'Cintura nera II Dang', tipiCompetizione: [1], belt: 'blackBelt', attivo: true },
     ]);
@@ -109,7 +207,7 @@ const seedData = async () => {
         legaleRappresentante: 'Valerio Verde',
         direttoreTecnico: 'Mario Rossi',
         recapitoTelefonico: '',
-        email: ''
+        email: '',
       },
       {
         denominazione: 'Club Truong Son',
@@ -119,7 +217,7 @@ const seedData = async () => {
         legaleRappresentante: 'Marilena Crivellaro',
         direttoreTecnico: 'Giuseppe Bianchi',
         recapitoTelefonico: '',
-        email: ''
+        email: '',
       },
       {
         denominazione: 'Club Hoa Lu',
@@ -129,8 +227,8 @@ const seedData = async () => {
         legaleRappresentante: 'Marco Bottosso',
         direttoreTecnico: 'Luca Verdi',
         recapitoTelefonico: '',
-        email: ''
-      }
+        email: '',
+      },
     ]);
     console.log('✅ Club creati');
 
@@ -146,7 +244,7 @@ const seedData = async () => {
         isBlackBelt: true,
         telefono: '333-1111111',
         email: 'andrea.ferrari@email.com',
-        clubId: 1
+        clubId: 1,
       },
       {
         nome: 'Sofia Giulia',
@@ -158,7 +256,7 @@ const seedData = async () => {
         isBlackBelt: true,
         telefono: '333-2222222',
         email: 'sofia.martini@email.com',
-        clubId: 1
+        clubId: 1,
       },
       {
         nome: 'Marco',
@@ -170,7 +268,7 @@ const seedData = async () => {
         isBlackBelt: true,
         telefono: '333-3333333',
         email: 'marco.romano@email.com',
-        clubId: 2
+        clubId: 2,
       },
       {
         nome: 'Giulia',
@@ -182,8 +280,8 @@ const seedData = async () => {
         isBlackBelt: true,
         telefono: '333-4444444',
         email: 'giulia.conti@email.com',
-        clubId: 3
-      }
+        clubId: 3,
+      },
     ]);
     console.log('✅ Atleti creati');
 
@@ -199,7 +297,7 @@ const seedData = async () => {
         certificazioni: 'Arbitro Nazionale, Corso Aggiornamento 2023',
         telefono: '333-5555555',
         email: 'roberto.esposito@email.com',
-        clubId: 1
+        clubId: 1,
       },
       {
         nome: 'Elena',
@@ -211,7 +309,7 @@ const seedData = async () => {
         certificazioni: 'Arbitro Regionale',
         telefono: '333-6666666',
         email: 'elena.ricci@email.com',
-        clubId: 2
+        clubId: 2,
       },
       {
         nome: 'Alessandro',
@@ -223,8 +321,8 @@ const seedData = async () => {
         certificazioni: 'Arbitro Internazionale WKF, Corso Aggiornamento 2024',
         telefono: '333-7777777',
         email: 'alessandro.moretti@email.com',
-        clubId: 3
-      }
+        clubId: 3,
+      },
     ]);
     console.log('✅ Giudici creati');
 
@@ -241,9 +339,9 @@ const seedData = async () => {
         livello: 'Regionale',
         stato: 'Aperta',
         maxPartecipanti: 300,
-        quotaIscrizione: 15.00,
+        quotaIscrizione: 15.0,
         dataScadenzaIscrizioni: new Date('2025-12-05T23:59:59'),
-        organizzatoreClubId: 1
+        organizzatoreClubId: 1,
       },
       {
         nome: 'Torneo Nazionale Quyen Fiwuk 2025',
@@ -256,10 +354,10 @@ const seedData = async () => {
         livello: 'Nazionale',
         stato: 'Conclusa',
         maxPartecipanti: 150,
-        quotaIscrizione: 35.00,
+        quotaIscrizione: 35.0,
         dataScadenzaIscrizioni: new Date('2025-11-01T23:59:59'),
-        organizzatoreClubId: 2
-      }
+        organizzatoreClubId: 2,
+      },
     ]);
     console.log('✅ Competizioni create');
 
@@ -276,7 +374,7 @@ const seedData = async () => {
         status: 'E',
         clubId: 1,
         permissions: 'superAdmin',
-        salt: 'de684853376e06375694'
+        salt: 'de684853376e06375694',
       },
       {
         username: 'Accademia Nuovo Cielo',
@@ -285,7 +383,7 @@ const seedData = async () => {
         status: 'E',
         clubId: 1,
         permissions: 'club',
-        salt: 'de684853376e06375694'
+        salt: 'de684853376e06375694',
       },
       {
         username: 'Truong Son',
@@ -294,7 +392,7 @@ const seedData = async () => {
         status: 'E',
         clubId: 2,
         permissions: 'club',
-        salt: 'de684853376e06375694'
+        salt: 'de684853376e06375694',
       },
       {
         username: 'Tavolo1',
@@ -302,8 +400,8 @@ const seedData = async () => {
         password: '5048d49079ca14cb3f9ff9a9bba623a89c7713a1ecb4ffb10f712d2596682591', //psw: bastoneDagnogo21
         status: 'E',
         permissions: 'tableUser',
-        salt: 'de684853376e06375694'
-      }
+        salt: 'de684853376e06375694',
+      },
     ]);
 
     console.log('🎉 Seed completato con successo!');
@@ -315,7 +413,6 @@ const seedData = async () => {
     console.log(`   - ${competizioni.length} Competizioni`);
     console.log(`   - ${categorie.length} Categorie`);
     console.log(`   - ${utentiLogin.length} UtentiLogin`);
-
   } catch (error) {
     console.error('❌ Errore durante il seed:', error);
   }
@@ -325,9 +422,7 @@ const seedConfigurations = async () => {
   await seedAgeGroupConfigurations();
 
   console.log('✅ Configurazioni create');
-}
-
-
+};
 
 module.exports = { seedData, seedConfigurations, seedAgeGroupConfigurations };
 
@@ -336,7 +431,7 @@ module.exports = { seedData, seedConfigurations, seedAgeGroupConfigurations };
 if (require.main === module) {
   const seeds = {
     configurations: seedConfigurations,
-    ageGroups: seedAgeGroupConfigurations
+    ageGroups: seedAgeGroupConfigurations,
   };
   const seedName = process.argv[2] || 'configurations';
   const seed = seeds[seedName];
@@ -346,7 +441,7 @@ if (require.main === module) {
   }
   seed()
     .then(() => process.exit(0))
-    .catch(error => {
+    .catch((error) => {
       console.error('❌ Errore durante il seed:', error);
       process.exit(1);
     });

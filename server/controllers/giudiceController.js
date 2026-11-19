@@ -5,14 +5,14 @@ const logger = require('../helpers/logger/logger');
 const getAllJudges = async (req, res) => {
   try {
     const judges = await Giudice.findAll({
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
     res.json(judges);
   } catch (error) {
     logger.error(`Errore nel recupero dei giudici: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nel recupero dei giudici',
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -46,16 +46,16 @@ const createJudge = async (req, res) => {
     res.status(201).json(newjudge);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nella creazione giudice: ${error.errors.map(e => e.message).join(', ')}`);
-      return res.status(400).json({ 
+      logger.warn(`Validazione fallita nella creazione giudice: ${error.errors.map((e) => e.message).join(', ')}`);
+      return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     logger.error(`Errore nella creazione del giudice: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nella creazione del giudice',
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -65,9 +65,9 @@ const updateJudge = async (req, res) => {
   try {
     const { id } = req.params;
     const [updatedRowsCount] = await Giudice.update(req.body, {
-      where: { id }
+      where: { id },
     });
-    
+
     if (updatedRowsCount === 0) {
       logger.warn(`Tentativo aggiornamento giudice inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Giudice non trovato' });
@@ -78,16 +78,16 @@ const updateJudge = async (req, res) => {
     res.json(updatedJudge);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nell'aggiornamento giudice ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
-      return res.status(400).json({ 
+      logger.warn(`Validazione fallita nell'aggiornamento giudice ${req.params.id}: ${error.errors.map((e) => e.message).join(', ')}`);
+      return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     logger.error(`Errore nell'aggiornamento del giudice ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nell\'aggiornamento del giudice',
-      details: error.message 
+    res.status(500).json({
+      error: "Errore nell'aggiornamento del giudice",
+      details: error.message,
     });
   }
 };
@@ -97,21 +97,21 @@ const deleteJudge = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedRowsCount = await Giudice.destroy({
-      where: { id }
+      where: { id },
     });
-    
+
     if (deletedRowsCount === 0) {
       logger.warn(`Tentativo eliminazione giudice inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Giudice non trovato' });
     }
-    
+
     logger.info(`Giudice eliminato - ID: ${id}`);
     res.status(204).send();
   } catch (error) {
     logger.error(`Errore nell'eliminazione del giudice ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'eliminazione del giudice',
-      details: error.message
+      error: "Errore nell'eliminazione del giudice",
+      details: error.message,
     });
   }
 };
@@ -121,5 +121,5 @@ module.exports = {
   //getJudgeById,
   createJudge,
   updateJudge,
-  deleteJudge
+  deleteJudge,
 };

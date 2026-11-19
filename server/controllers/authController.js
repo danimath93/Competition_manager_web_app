@@ -9,7 +9,6 @@ const logger = require('../helpers/logger/logger');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-
 const loginUser = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -21,27 +20,29 @@ const loginUser = async (req, res) => {
     const user = await UtentiLogin.findOne({
       where: {
         status: 'E',
-        [Op.or]: [
-          { username: username },
-          { email: username }
-        ]
-      }
+        [Op.or]: [{ username: username }, { email: username }],
+      },
     });
     if (!user) {
       return res.status(401).json({ error: 'Credenziali non valide. Account non trovato.' });
     }
 
-    const hash = crypto.createHash('sha256').update(password + '.' + user.username + '.' + user.salt, 'utf8').digest('hex');
+    const hash = crypto
+      .createHash('sha256')
+      .update(password + '.' + user.username + '.' + user.salt, 'utf8')
+      .digest('hex');
     if (hash !== user.password) {
-      return res.status(401).json({ error: "Credenziali errate" });
+      return res.status(401).json({ error: 'Credenziali errate' });
     }
 
-    const token = jwt.sign({ username: user.username, permissions: user?.permissions }, JWT_SECRET, { expiresIn: "8h" });
+    const token = jwt.sign({ username: user.username, permissions: user?.permissions }, JWT_SECRET, {
+      expiresIn: '8h',
+    });
     const outUser = {
       username: user.username,
       email: user.email,
       permissions: user.permissions,
-      clubId: user.clubId
+      clubId: user.clubId,
     };
 
     if (user.clubId) {
@@ -58,7 +59,7 @@ const loginUser = async (req, res) => {
     logger.error(`Errore durante il login per utente ${req.body.username}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore durante il login',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -70,7 +71,7 @@ const logoutUser = async (req, res) => {
     logger.error(`Errore durante il logout: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore durante il logout',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -87,7 +88,10 @@ const checkAuthLevel = async (req, res) => {
     if (!user) {
       return res.status(401).json({ error: 'Utente non trovato o non attivo' });
     }
-    res.status(200).json({ ok: true, user: { username: user.username, email: user.email, permissions: user.permissions, clubId: user.clubId } });
+    res.status(200).json({
+      ok: true,
+      user: { username: user.username, email: user.email, permissions: user.permissions, clubId: user.clubId },
+    });
   } catch (error) {
     res.status(401).json({ error: 'Token non valido o scaduto' });
   }
@@ -130,19 +134,25 @@ const registerUser = async (req, res) => {
 
       var clubId = createClubResult.id;
       const salt = crypto.randomBytes(10).toString('hex');
-      const hashedPassword = crypto.createHash('sha256').update(user.password + '.' + user.username + '.' + salt, 'utf8').digest('hex');
+      const hashedPassword = crypto
+        .createHash('sha256')
+        .update(user.password + '.' + user.username + '.' + salt, 'utf8')
+        .digest('hex');
       const confirmationToken = crypto.randomBytes(32).toString('hex');
 
-      await UtentiLogin.create({
-        username: user.username,
-        email: user.email,
-        password: hashedPassword,
-        salt,
-        clubId: clubId || null,
-        status: 'S',
-        permissions: club ? 'club' : 'user',
-        confirmationToken
-      }, { transaction });
+      await UtentiLogin.create(
+        {
+          username: user.username,
+          email: user.email,
+          password: hashedPassword,
+          salt,
+          clubId: clubId || null,
+          status: 'S',
+          permissions: club ? 'club' : 'user',
+          confirmationToken,
+        },
+        { transaction }
+      );
 
       await sendConfirmationEmail(user.email, confirmationToken);
 
@@ -155,10 +165,10 @@ const registerUser = async (req, res) => {
     }
   } catch (error) {
     logger.error(`Errore durante la registrazione utente: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante la registrazione',
-      details: error.message
-     });
+      details: error.message,
+    });
   }
 };
 
@@ -169,48 +179,56 @@ const confirmUser = async (req, res) => {
 
     if (!token) {
       logger.warn('Nessun token fornito per la conferma utente');
-      return res.status(400).send(createConfirmationResponsePage({
-        title: 'Errore di Conferma',
-        message: 'Token di accesso mancante o non valido.',
-        status: 'error',
-        redirectUrl: loginUrl
-      }));
+      return res.status(400).send(
+        createConfirmationResponsePage({
+          title: 'Errore di Conferma',
+          message: 'Token di accesso mancante o non valido.',
+          status: 'error',
+          redirectUrl: loginUrl,
+        })
+      );
     }
 
     const user = await UtentiLogin.findOne({ where: { confirmationToken: token } });
     if (!user) {
       logger.warn('Token non trovato tra gli user per la conferma utente');
-      return res.status(400).send(createConfirmationResponsePage({
-        title: 'Token Non Valido',
-        message: 'Il token di conferma non è valido o è scaduto.',
-        details: 'Per favore richiedi una nuova email di conferma.',
-        status: 'error',
-        redirectUrl: loginUrl
-      }));
+      return res.status(400).send(
+        createConfirmationResponsePage({
+          title: 'Token Non Valido',
+          message: 'Il token di conferma non è valido o è scaduto.',
+          details: 'Per favore richiedi una nuova email di conferma.',
+          status: 'error',
+          redirectUrl: loginUrl,
+        })
+      );
     }
 
     user.status = 'E';
     user.confirmationToken = null;
     await user.save();
     logger.info(`Account confermato per utente: ${user.username}`);
-    
-    return res.status(200).send(createConfirmationResponsePage({
-      title: 'Account Confermato!',
-      message: 'Il tuo account è stato confermato con successo.',
-      details: 'Ora puoi effettuare il login e iniziare ad utilizzare l\'applicazione.',
-      status: 'success',
-      redirectUrl: loginUrl
-    }));
+
+    return res.status(200).send(
+      createConfirmationResponsePage({
+        title: 'Account Confermato!',
+        message: 'Il tuo account è stato confermato con successo.',
+        details: "Ora puoi effettuare il login e iniziare ad utilizzare l'applicazione.",
+        status: 'success',
+        redirectUrl: loginUrl,
+      })
+    );
   } catch (error) {
     logger.error(`Errore durante la conferma account: ${error.message}`, { stack: error.stack });
     const loginUrl = `${process.env.FRONTEND_URL}/login`;
-    return res.status(500).send(createConfirmationResponsePage({
-      title: 'Errore',
-      message: 'Si è verificato un errore durante la conferma dell\'account.',
-      details: 'Per favore riprova più tardi o contatta l\'assistenza.',
-      status: 'warning',
-      redirectUrl: loginUrl
-    }));
+    return res.status(500).send(
+      createConfirmationResponsePage({
+        title: 'Errore',
+        message: "Si è verificato un errore durante la conferma dell'account.",
+        details: "Per favore riprova più tardi o contatta l'assistenza.",
+        status: 'warning',
+        redirectUrl: loginUrl,
+      })
+    );
   }
 };
 
@@ -225,7 +243,7 @@ const updateUserData = async (req, res) => {
     if (!user || !user.permissions) {
       return res.status(404).json({ error: 'Utente non trovato o non autorizzato' });
     }
-    
+
     if (user.permissions !== 'superAdmin' && user.permissions !== 'admin') {
       return res.status(403).json({ error: 'Permessi insufficienti per aggiornare le impostazioni' });
     }
@@ -239,9 +257,9 @@ const updateUserData = async (req, res) => {
   } catch (error) {
     logger.error(`Errore durante l'aggiornamento delle impostazioni utente: ${error.message}`, { stack: error.stack });
     return res.status(500).json({
-      error: 'Errore durante l\'aggiornamento delle impostazioni',
-      details: error.message
-     });
+      error: "Errore durante l'aggiornamento delle impostazioni",
+      details: error.message,
+    });
   }
 };
 
@@ -254,7 +272,7 @@ const requestPasswordReset = async (req, res) => {
     }
     const user = await UtentiLogin.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ error: 'Utente non esistente per l\'email fornita.' });
+      return res.status(404).json({ error: "Utente non esistente per l'email fornita." });
     }
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
@@ -264,10 +282,10 @@ const requestPasswordReset = async (req, res) => {
     return res.json({ success: true, message: 'Controlla la tua email per il reset della password.' });
   } catch (error) {
     logger.error(`Errore durante la richiesta di reset password: ${error.message}`, { stack: error.stack });
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Errore nel reset della password',
-      details: error.message
-     });
+      details: error.message,
+    });
   }
 };
 
@@ -283,7 +301,10 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ error: 'Token non valido o utente non trovato' });
     }
     const salt = crypto.randomBytes(10).toString('hex');
-    const hashedPassword = crypto.createHash('sha256').update(password + '.' + user.username + '.' + salt, 'utf8').digest('hex');
+    const hashedPassword = crypto
+      .createHash('sha256')
+      .update(password + '.' + user.username + '.' + salt, 'utf8')
+      .digest('hex');
     user.password = hashedPassword;
     user.salt = salt;
     user.resetPasswordToken = null; // invalida il token
@@ -291,10 +312,10 @@ const resetPassword = async (req, res) => {
     return res.json({ success: true, message: 'Password aggiornata correttamente.' });
   } catch (error) {
     logger.error(`Errore durante il reset della password: ${error.message}`, { stack: error.stack });
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Errore nel reset della password',
-      details: error.message
-     });
+      details: error.message,
+    });
   }
 };
 const getTableUsers = async (req, res) => {
@@ -302,10 +323,10 @@ const getTableUsers = async (req, res) => {
     const tableUsers = await UtentiLogin.findAll({
       where: {
         permissions: 'table',
-        status: 'E'
+        status: 'E',
       },
       attributes: ['id', 'username', 'email'],
-      order: [['username', 'ASC']]
+      order: [['username', 'ASC']],
     });
 
     res.status(200).json({ ok: true, users: tableUsers });
@@ -313,7 +334,7 @@ const getTableUsers = async (req, res) => {
     logger.error(`Errore durante il recupero degli utenti tavolo: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore durante il recupero degli utenti tavolo',
-      details: error.message
+      details: error.message,
     });
   }
 };

@@ -50,7 +50,7 @@ Una volta connesso, troverai queste tabelle:
 
 ```sql
 -- Lista tutti i club con numero di atleti
-SELECT 
+SELECT
     c.nome as club,
     c.citta,
     COUNT(a.id) as numero_atleti
@@ -60,7 +60,7 @@ GROUP BY c.id, c.nome, c.citta
 ORDER BY numero_atleti DESC;
 
 -- Atleti per categoria di peso
-SELECT 
+SELECT
     categoria,
     COUNT(*) as numero_atleti,
     AVG(peso) as peso_medio
@@ -70,7 +70,7 @@ GROUP BY categoria
 ORDER BY categoria;
 
 -- Competizioni attive
-SELECT 
+SELECT
     nome,
     "dataInizio",
     "dataFine",
@@ -84,12 +84,15 @@ ORDER BY "dataInizio";
 ### 🔧 Risoluzione Problemi
 
 **Connessione rifiutata**:
+
 - Verifica che i container siano avviati: `docker ps`
 - Controlla i logs: `docker-compose -f docker-compose.dev.yml logs postgres`
 
 **Database non trovato**:
+
 - Assicurati che il seed sia stato eseguito: `docker-compose -f docker-compose.dev.yml exec backend-dev npm run seed`
 
 **Timeout connessione**:
+
 - Attendi che PostgreSQL sia completamente avviato (status "healthy")
 - Riavvia i container se necessario

@@ -1,8 +1,4 @@
-import {
-  loadCategoryTypeById,
-  loadExperienceById,
-  loadNomiQuyenByCategoryType
-} from '../api/config';
+import { loadCategoryTypeById, loadExperienceById, loadNomiQuyenByCategoryType } from '../api/config';
 
 /**
  * Servizio di cache per i dati di configurazione (tipi categoria, esperienze, nomi quyen).
@@ -35,10 +31,7 @@ const readEntry = (key) => {
 
 const writeEntry = (key, data, ttlMs) => {
   try {
-    localStorage.setItem(
-      CACHE_PREFIX + key,
-      JSON.stringify({ data, expiresAt: Date.now() + ttlMs })
-    );
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ data, expiresAt: Date.now() + ttlMs }));
   } catch (error) {
     // localStorage pieno o non disponibile: la cache resta solo in memoria per la richiesta corrente
     console.warn(`Impossibile salvare in cache la chiave ${key}:`, error);
@@ -69,11 +62,9 @@ const getCached = (key, loader, ttlMs = DEFAULT_TTL_MS) => {
   return request;
 };
 
-export const getCategoryType = (id) =>
-  getCached(`tipoCategoria:${id}`, () => loadCategoryTypeById(id));
+export const getCategoryType = (id) => getCached(`tipoCategoria:${id}`, () => loadCategoryTypeById(id));
 
-export const getExperience = (id) =>
-  getCached(`esperienza:${id}`, () => loadExperienceById(id));
+export const getExperience = (id) => getCached(`esperienza:${id}`, () => loadExperienceById(id));
 
 // Salva solo i campi utili per ridurre lo spazio occupato in localStorage
 export const getNomiQuyenByCategoryType = (tipoCategoriaId) =>
@@ -83,7 +74,7 @@ export const getNomiQuyenByCategoryType = (tipoCategoriaId) =>
       id,
       nome,
       descrizione,
-      esperienzeId
+      esperienzeId,
     }));
   });
 

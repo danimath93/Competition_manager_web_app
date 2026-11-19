@@ -9,14 +9,7 @@ import { getClubCompetitionRegistrationSummary } from '../../api/competitions';
 import '../../components/common/DrawerModal.css';
 import '../styles/CompetitionFinalization.css';
 
-const CompetitionFinalization = ({
-  open,
-  onClose,
-  clubRegistration = {},
-  competitionId,
-  totalCost,
-  onFinalizationSuccess,
-}) => {
+const CompetitionFinalization = ({ open, onClose, clubRegistration = {}, competitionId, totalCost, onFinalizationSuccess }) => {
   const { user } = useAuth();
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [error, setError] = useState(null);
@@ -114,7 +107,7 @@ const CompetitionFinalization = ({
     if (file.type !== 'application/pdf') {
       setUploadStatus({
         message: 'Solo file PDF sono accettati',
-        error: true
+        error: true,
       });
       event.target.value = '';
       return;
@@ -124,37 +117,37 @@ const CompetitionFinalization = ({
     if (file.size > 10 * 1024 * 1024) {
       setUploadStatus({
         message: 'Il file non può superare i 10MB',
-        error: true
+        error: true,
       });
       event.target.value = '';
       return;
     }
 
-    setDisplayedFiles(prev => ({
+    setDisplayedFiles((prev) => ({
       ...prev,
-      [fileType]: file
+      [fileType]: file,
     }));
 
-    setDisplayedFileNames(prev => ({
+    setDisplayedFileNames((prev) => ({
       ...prev,
-      [fileType]: file.name
+      [fileType]: file.name,
     }));
 
     setUploadStatus({
       message: '',
-      error: false
+      error: false,
     });
   };
 
   const handleRemoveFile = (fileType) => {
-    setDisplayedFiles(prev => ({
+    setDisplayedFiles((prev) => ({
       ...prev,
-      [fileType]: null
+      [fileType]: null,
     }));
 
-    setDisplayedFileNames(prev => ({
+    setDisplayedFileNames((prev) => ({
       ...prev,
-      [fileType]: ''
+      [fileType]: '',
     }));
 
     // Reset input file
@@ -162,9 +155,9 @@ const CompetitionFinalization = ({
     if (input) input.value = '';
 
     // Reset file size display
-    setDisplayingFileSizes(prev => ({
+    setDisplayingFileSizes((prev) => ({
       ...prev,
-      [fileType]: ''
+      [fileType]: '',
     }));
   };
 
@@ -175,7 +168,7 @@ const CompetitionFinalization = ({
         setIbanCopied(true);
         setTimeout(() => setIbanCopied(false), 2000);
       } catch (err) {
-        console.error('Errore durante la copia dell\'IBAN:', err);
+        console.error("Errore durante la copia dell'IBAN:", err);
       }
     }
   };
@@ -185,15 +178,15 @@ const CompetitionFinalization = ({
     if (!displayedFiles.confermaPresidente && !displayedFileNames.confermaPresidente) {
       setUploadStatus({
         message: 'Il documento di conferma del presidente è obbligatorio',
-        error: true
+        error: true,
       });
       return;
     }
 
     if (!displayedFiles.bonifico && !displayedFileNames.bonifico) {
       setUploadStatus({
-        message: 'Il documento di bonifico è obbligatorio per completare l\'iscrizione',
-        error: true
+        message: "Il documento di bonifico è obbligatorio per completare l'iscrizione",
+        error: true,
       });
       return;
     }
@@ -204,12 +197,7 @@ const CompetitionFinalization = ({
 
       // Upload documenti se ci sono nuovi file
       if (displayedFiles.confermaPresidente || displayedFiles.bonifico) {
-        await uploadClubRegistrationDocuments(
-          user.clubId,
-          competitionId,
-          displayedFiles.confermaPresidente,
-          displayedFiles.bonifico
-        );
+        await uploadClubRegistrationDocuments(user.clubId, competitionId, displayedFiles.confermaPresidente, displayedFiles.bonifico);
       }
 
       // Conferma iscrizione
@@ -217,7 +205,7 @@ const CompetitionFinalization = ({
 
       setUploadStatus({
         message: 'Iscrizione finalizzata con successo!',
-        error: false
+        error: false,
       });
 
       // Chiama callback di successo
@@ -229,7 +217,7 @@ const CompetitionFinalization = ({
       setError('Errore durante la finalizzazione: ' + (err.response?.data?.error || err.message));
       setUploadStatus({
         message: '',
-        error: false
+        error: false,
       });
     } finally {
       setUploadingDocuments(false);
@@ -237,9 +225,8 @@ const CompetitionFinalization = ({
   };
 
   // Verifica se tutti i documenti obbligatori sono presenti
-  const hasAllRequiredDocuments = 
-    (displayedFiles.confermaPresidente || displayedFileNames.confermaPresidente) &&
-    (displayedFiles.bonifico || displayedFileNames.bonifico);
+  const hasAllRequiredDocuments =
+    (displayedFiles.confermaPresidente || displayedFileNames.confermaPresidente) && (displayedFiles.bonifico || displayedFileNames.bonifico);
 
   const canFinalize = hasAllRequiredDocuments && !uploadingDocuments;
 
@@ -264,22 +251,18 @@ const CompetitionFinalization = ({
           {label} {required && <span className="required-mark">*</span>}
         </div>
         <p className="file-upload-description">{description}</p>
-        
+
         <div className={`file-upload-box ${hasFile ? 'has-file' : ''}`}>
           {hasFile ? (
             <>
               <div className="file-content-center">
                 <div className="file-name-display">{fileName}</div>
-                {fileSize && (
-                  <div className="file-size-display">{fileSize}</div>
-                )}
+                {fileSize && <div className="file-size-display">{fileSize}</div>}
               </div>
               <div className="file-actions">
-                <IconButton size="small"
-                  onClick={() => handleRemoveFile(fileType)}
-                >
+                <IconButton size="small" onClick={() => handleRemoveFile(fileType)}>
                   <Delete />
-                </IconButton> 
+                </IconButton>
               </div>
             </>
           ) : (
@@ -297,9 +280,7 @@ const CompetitionFinalization = ({
                   Seleziona un file
                 </label>
               </div>
-              <div className="upload-requirements">
-                Formato accettato: PDF | Dimensione massima: 10MB per file
-              </div>
+              <div className="upload-requirements">Formato accettato: PDF | Dimensione massima: 10MB per file</div>
             </div>
           )}
         </div>
@@ -309,18 +290,10 @@ const CompetitionFinalization = ({
 
   const footer = (
     <div className="drawer-footer-actions">
-      <Button
-        variant="secondary"
-        onClick={onClose}
-        disabled={uploadingDocuments}
-      >
+      <Button variant="secondary" onClick={onClose} disabled={uploadingDocuments}>
         Annulla
       </Button>
-      <Button
-        variant="success"
-        onClick={handleUploadAndFinalize}
-        disabled={!canFinalize}
-      >
+      <Button variant="success" onClick={handleUploadAndFinalize} disabled={!canFinalize}>
         {uploadingDocuments ? (
           <>
             <i className="fa fa-spinner fa-spin" /> Finalizzazione in corso...
@@ -335,13 +308,7 @@ const CompetitionFinalization = ({
   );
 
   return (
-    <DrawerModal
-      open={open}
-      onClose={onClose}
-      title="Finalizza iscrizione alla competizione"
-      footer={footer}
-      width="900px"
-    >
+    <DrawerModal open={open} onClose={onClose} title="Finalizza iscrizione alla competizione" footer={footer} width="900px">
       {/* Informazioni generali */}
       <div className="drawer-section">
         <h3 className="drawer-section-title">Riepilogo iscrizione e costi</h3>
@@ -356,26 +323,23 @@ const CompetitionFinalization = ({
             <div>
               <div>
                 <p>
-                  In totale hai iscritto <strong>{costSummary?.totals?.totalAthletes}</strong> atleti
-                  alla competizione per un totale di <strong>{costSummary?.totals?.totalCategories}</strong> categorie.
+                  In totale hai iscritto <strong>{costSummary?.totals?.totalAthletes}</strong> atleti alla competizione per un totale di{' '}
+                  <strong>{costSummary?.totals?.totalCategories}</strong> categorie.
                 </p>
                 <p>Di seguito i dettagli:</p>
               </div>
 
               {/* Dettaglio per tipo atleta */}
-              {costSummary?.athleteTypeTotals && Object.entries(costSummary?.athleteTypeTotals).map(([type, detail]) => (
-                <div key={type} className="athlete-type-detail">
-                  <p>
-                    • <strong>{detail.total}</strong> {type} iscritti alla gara, di cui
-                  </p>
-                  <p className="detail-sub">
-                    - {detail.singleCategory} iscritti ad una sola categoria
-                  </p>
-                  <p className="detail-sub">
-                    - {detail.multiCategory} iscritti a 2 o più categorie
-                  </p>
-                </div>
-              ))}
+              {costSummary?.athleteTypeTotals &&
+                Object.entries(costSummary?.athleteTypeTotals).map(([type, detail]) => (
+                  <div key={type} className="athlete-type-detail">
+                    <p>
+                      • <strong>{detail.total}</strong> {type} iscritti alla gara, di cui
+                    </p>
+                    <p className="detail-sub">- {detail.singleCategory} iscritti ad una sola categoria</p>
+                    <p className="detail-sub">- {detail.multiCategory} iscritti a 2 o più categorie</p>
+                  </div>
+                ))}
 
               <div className="divider" />
 
@@ -386,11 +350,7 @@ const CompetitionFinalization = ({
                   <div className="info-value-with-action">
                     <span className="iban-value">{costSummary?.versamento?.iban || 'Non disponibile'}</span>
                     {costSummary?.versamento?.iban && (
-                      <button
-                        className="btn-icon btn-primary"
-                        onClick={handleCopyIban}
-                        title={ibanCopied ? 'IBAN copiato!' : 'Copia IBAN'}
-                      >
+                      <button className="btn-icon btn-primary" onClick={handleCopyIban} title={ibanCopied ? 'IBAN copiato!' : 'Copia IBAN'}>
                         <i className={ibanCopied ? 'fa fa-check' : 'fa fa-copy'} />
                       </button>
                     )}
@@ -421,30 +381,13 @@ const CompetitionFinalization = ({
       <div className="drawer-section">
         <h3 className="drawer-section-title">Documenti richiesti</h3>
         <div className="drawer-section-content">
-          <FileUploadBox
-            fileType="confermaPresidente"
-            label="Dichiarazione del Presidente"
-            required={true}
-          />
+          <FileUploadBox fileType="confermaPresidente" label="Dichiarazione del Presidente" required={true} />
 
-          <FileUploadBox
-            fileType="bonifico"
-            label="Ricevuta Bonifico"
-            required={true}
-          />
+          <FileUploadBox fileType="bonifico" label="Ricevuta Bonifico" required={true} />
 
-          {uploadStatus.message && (
-            <div className={`alert ${uploadStatus.error ? 'alert-danger' : 'alert-success'}`}>
-              {uploadStatus.message}
-            </div>
-          )}
+          {uploadStatus.message && <div className={`alert ${uploadStatus.error ? 'alert-danger' : 'alert-success'}`}>{uploadStatus.message}</div>}
 
-          {error && (
-            <div className="alert alert-danger">
-              {error}
-            </div>
-          )}
-
+          {error && <div className="alert alert-danger">{error}</div>}
         </div>
       </div>
     </DrawerModal>

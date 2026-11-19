@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  TextField,
-  Button,
-  Autocomplete,
-  Alert,
-  Box,
-  Chip,
-} from '@mui/material';
+import { TextField, Button, Autocomplete, Alert, Box, Chip } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { editAthleteRegistrations } from '../api/registrations';
 import DrawerModal from './common/DrawerModal';
@@ -20,16 +13,7 @@ const getRegistrationCategoryId = (reg) => reg.tipoCategoria?.id || reg.tipoCate
 /**
  * @param {boolean|null} props.isBlackBelt - grado CN salvato nell'iscrizione (se assente si usa quello dell'atleta)
  */
-const RegistrationModal = ({
-  open,
-  onClose,
-  onSubmit,
-  onDelete,
-  athlete,
-  registrations,
-  competition,
-  isBlackBelt,
-}) => {
+const RegistrationModal = ({ open, onClose, onSubmit, onDelete, athlete, registrations, competition, isBlackBelt }) => {
   // Configurazione di iscrizione: fascia d'età dell'atleta e grado CN al momento dell'iscrizione
   const registrationBlackBelt = isBlackBelt ?? !!athlete?.isBlackBelt;
   const athleteConfig = useMemo(
@@ -45,12 +29,10 @@ const RegistrationModal = ({
   const [categoryDetailOptions, setCategoryDetailOptions] = useState({});
 
   // Selezioni utente, inizializzate dalle iscrizioni esistenti
-  const [selectedCategories, setSelectedCategories] = useState(
-    () => (registrations || []).map(getRegistrationCategoryId).filter(Boolean)
-  );
+  const [selectedCategories, setSelectedCategories] = useState(() => (registrations || []).map(getRegistrationCategoryId).filter(Boolean));
   const [categoryDetailSelections, setCategoryDetailSelections] = useState(() => {
     const detailSelections = {};
-    (registrations || []).forEach(reg => {
+    (registrations || []).forEach((reg) => {
       const catId = getRegistrationCategoryId(reg);
       if (reg.dettagli && catId) {
         detailSelections[catId] = reg.dettagli;
@@ -58,9 +40,7 @@ const RegistrationModal = ({
     });
     return detailSelections;
   });
-  const [weight, setWeight] = useState(
-    () => (registrations || []).find(reg => reg.peso)?.peso?.toString() || ''
-  );
+  const [weight, setWeight] = useState(() => (registrations || []).find((reg) => reg.peso)?.peso?.toString() || '');
   const [selectedExperiences, setSelectedExperiences] = useState({});
 
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
@@ -88,7 +68,7 @@ const RegistrationModal = ({
 
         // Imposta le esperienze selezionate (raggruppa per tipoCompetizioneId, saranno tutte uguali)
         const experiences = {};
-        (registrations || []).forEach(reg => {
+        (registrations || []).forEach((reg) => {
           const tipoCompId = config.categoryDetails[getRegistrationCategoryId(reg)]?.tipoCompetizioneId;
           if (reg.esperienza && tipoCompId && !experiences[tipoCompId]) {
             experiences[tipoCompId] = reg.esperienza;
@@ -97,7 +77,7 @@ const RegistrationModal = ({
         setSelectedExperiences(experiences);
       } catch (err) {
         console.error('Errore nel caricamento dei dati:', err);
-        if (isMounted) setError('Errore nel caricamento dei dati dell\'iscrizione');
+        if (isMounted) setError("Errore nel caricamento dei dati dell'iscrizione");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -112,9 +92,9 @@ const RegistrationModal = ({
 
   // Gestisce la selezione/deselezione di una categoria
   const handleCategoryToggle = (categoryId) => {
-    setSelectedCategories(prev => {
+    setSelectedCategories((prev) => {
       if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
+        return prev.filter((id) => id !== categoryId);
       } else {
         return [...prev, categoryId];
       }
@@ -123,9 +103,9 @@ const RegistrationModal = ({
 
   // Gestisce la selezione dei dettagli di una categoria
   const handleCategoryDetailChange = (categoryId, newValue) => {
-    setCategoryDetailSelections(prev => ({
+    setCategoryDetailSelections((prev) => ({
       ...prev,
-      [categoryId]: newValue
+      [categoryId]: newValue,
     }));
   };
 
@@ -136,9 +116,9 @@ const RegistrationModal = ({
 
   // Gestisce la selezione dell'esperienza per un tipo competizione
   const handleExperienceChange = (tipoCompetizioneId, newValue) => {
-    setSelectedExperiences(prev => ({
+    setSelectedExperiences((prev) => ({
       ...prev,
-      [tipoCompetizioneId]: newValue
+      [tipoCompetizioneId]: newValue,
     }));
   };
 
@@ -153,7 +133,7 @@ const RegistrationModal = ({
       }
 
       if (selectedCategories.length === 0) {
-        setError('Seleziona almeno una categoria per l\'iscrizione.');
+        setError("Seleziona almeno una categoria per l'iscrizione.");
         return;
       }
 
@@ -225,13 +205,13 @@ const RegistrationModal = ({
   };
 
   // Verifica se esiste almeno una categoria con obbligo peso
-  const hasWeightRequirement = availableCategories.some(category => {
+  const hasWeightRequirement = availableCategories.some((category) => {
     const details = categoryDetails[category.configTipoCategoria];
     return isFightCategory(category.configTipoCategoria) && details?.obbligoPeso;
   });
 
   // Verifica se almeno una categoria selezionata richiede il peso
-  const selectedRequiresWeight = selectedCategories.some(categoryId => {
+  const selectedRequiresWeight = selectedCategories.some((categoryId) => {
     const details = categoryDetails[categoryId];
     return isFightCategory(categoryId) && details?.obbligoPeso;
   });
@@ -240,10 +220,10 @@ const RegistrationModal = ({
   const categoriesByType = {
     [CompetitionTipology.QUYEN]: [],
     [CompetitionTipology.COMBATTIMENTO]: [],
-    [CompetitionTipology.COMPLEMENTARI]: []
+    [CompetitionTipology.COMPLEMENTARI]: [],
   };
 
-  availableCategories.forEach(category => {
+  availableCategories.forEach((category) => {
     const details = categoryDetails[category.configTipoCategoria];
     if (details?.tipoCompetizioneId && categoriesByType[details.tipoCompetizioneId]) {
       // Verifica i vincoli prima di aggiungere la categoria
@@ -264,7 +244,7 @@ const RegistrationModal = ({
       return (
         <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
           {athleteConfig?.ageGroup === null
-            ? 'L\'atleta non rientra in nessuna fascia d\'età prevista dalla competizione.'
+            ? "L'atleta non rientra in nessuna fascia d'età prevista dalla competizione."
             : 'Nessuna categoria disponibile per questo atleta.'}
         </div>
       );
@@ -285,21 +265,13 @@ const RegistrationModal = ({
                     onChange={(event, newValue) => handleExperienceChange(CompetitionTipology.QUYEN, newValue)}
                     options={quyenExperiences}
                     getOptionLabel={(option) => option.nome || ''}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Livello Esperienza"
-                        variant="outlined"
-                        required
-                        size="small"
-                      />
-                    )}
+                    renderInput={(params) => <TextField {...params} label="Livello Esperienza" variant="outlined" required size="small" />}
                   />
                 </div>
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[CompetitionTipology.QUYEN].map(category => {
+                {categoriesByType[CompetitionTipology.QUYEN].map((category) => {
                   const categoryId = category.configTipoCategoria;
                   const details = categoryDetails[categoryId];
                   const isSelected = selectedCategories.includes(categoryId);
@@ -316,8 +288,7 @@ const RegistrationModal = ({
                         backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
                         borderRadius: '8px',
                         border: '1px solid #e0e0e0',
-                      }}
-                    >
+                      }}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -327,12 +298,7 @@ const RegistrationModal = ({
                       <div style={{ flex: 1, fontWeight: '500' }}>
                         {details?.nome || 'Categoria'}
                         {category.costo && (
-                          <Chip
-                            label={`€ ${parseFloat(category.costo).toFixed(2)}`}
-                            size="small"
-                            color="primary"
-                            sx={{ ml: 1, height: '20px' }}
-                          />
+                          <Chip label={`€ ${parseFloat(category.costo).toFixed(2)}`} size="small" color="primary" sx={{ ml: 1, height: '20px' }} />
                         )}
                       </div>
                       {detailOptions.length > 0 && (
@@ -345,15 +311,7 @@ const RegistrationModal = ({
                             getOptionLabel={(option) => option.nome || ''}
                             isOptionEqualToValue={(option, value) => option.nome === value.nome}
                             disabled={!isSelected}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                label="Dettagli"
-                                required={isSelected}
-                                variant="outlined"
-                                size="small"
-                              />
-                            )}
+                            renderInput={(params) => <TextField {...params} label="Dettagli" required={isSelected} variant="outlined" size="small" />}
                           />
                         </div>
                       )}
@@ -380,15 +338,7 @@ const RegistrationModal = ({
                       onChange={(event, newValue) => handleExperienceChange(CompetitionTipology.COMBATTIMENTO, newValue)}
                       options={availableExperiencesByType[CompetitionTipology.COMBATTIMENTO]}
                       getOptionLabel={(option) => option.nome || ''}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="Livello Esperienza"
-                          variant="outlined"
-                          required
-                          size="small"
-                        />
-                      )}
+                      renderInput={(params) => <TextField {...params} label="Livello Esperienza" variant="outlined" required size="small" />}
                     />
                   </div>
                 )}
@@ -412,7 +362,7 @@ const RegistrationModal = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[CompetitionTipology.COMBATTIMENTO].map(category => {
+                {categoriesByType[CompetitionTipology.COMBATTIMENTO].map((category) => {
                   const categoryId = category.configTipoCategoria;
                   const details = categoryDetails[categoryId];
                   const isSelected = selectedCategories.includes(categoryId);
@@ -428,8 +378,7 @@ const RegistrationModal = ({
                         backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
                         borderRadius: '8px',
                         border: '1px solid #e0e0e0',
-                      }}
-                    >
+                      }}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -439,12 +388,7 @@ const RegistrationModal = ({
                       <div style={{ flex: 1, fontWeight: '500' }}>
                         {details?.nome || 'Categoria'}
                         {category.costo && (
-                          <Chip
-                            label={`€ ${parseFloat(category.costo).toFixed(2)}`}
-                            size="small"
-                            color="primary"
-                            sx={{ ml: 1, height: '20px' }}
-                          />
+                          <Chip label={`€ ${parseFloat(category.costo).toFixed(2)}`} size="small" color="primary" sx={{ ml: 1, height: '20px' }} />
                         )}
                       </div>
                     </div>
@@ -468,21 +412,13 @@ const RegistrationModal = ({
                     onChange={(event, newValue) => handleExperienceChange(CompetitionTipology.COMPLEMENTARI, newValue)}
                     options={availableExperiencesByType[CompetitionTipology.COMPLEMENTARI]}
                     getOptionLabel={(option) => option.nome || ''}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Livello Esperienza"
-                        variant="outlined"
-                        required
-                        size="small"
-                      />
-                    )}
+                    renderInput={(params) => <TextField {...params} label="Livello Esperienza" variant="outlined" required size="small" />}
                   />
                 </div>
               )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {categoriesByType[CompetitionTipology.COMPLEMENTARI].map(category => {
+                {categoriesByType[CompetitionTipology.COMPLEMENTARI].map((category) => {
                   const categoryId = category.configTipoCategoria;
                   const details = categoryDetails[categoryId];
                   const isSelected = selectedCategories.includes(categoryId);
@@ -498,17 +434,14 @@ const RegistrationModal = ({
                         backgroundColor: isSelected ? '#f0f7ff' : 'transparent',
                         borderRadius: '8px',
                         border: '1px solid #e0e0e0',
-                      }}
-                    >
+                      }}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleCategoryToggle(categoryId)}
                         style={{ cursor: 'pointer', width: '20px', height: '20px' }}
                       />
-                      <div style={{ flex: 1, fontWeight: '500' }}>
-                        {details?.nome || 'Categoria'}
-                      </div>
+                      <div style={{ flex: 1, fontWeight: '500' }}>{details?.nome || 'Categoria'}</div>
                     </div>
                   );
                 })}
@@ -553,12 +486,7 @@ const RegistrationModal = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <Box>
             {onDelete && (
-              <Button
-                onClick={() => setIsDeleteConfirmModalOpen(true)}
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-              >
+              <Button onClick={() => setIsDeleteConfirmModalOpen(true)} variant="outlined" color="error" startIcon={<DeleteIcon />}>
                 Elimina iscrizione
               </Button>
             )}
@@ -567,17 +495,12 @@ const RegistrationModal = ({
             <Button onClick={onClose} variant="outlined">
               Annulla
             </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              disabled={loading || selectedCategories.length === 0}
-            >
+            <Button onClick={handleSubmit} variant="contained" disabled={loading || selectedCategories.length === 0}>
               Salva Modifiche
             </Button>
           </Box>
         </Box>
-      }
-    >
+      }>
       {renderContent()}
 
       {error && (

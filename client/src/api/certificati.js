@@ -7,8 +7,8 @@ export const uploadCertificato = async (atletaId, file) => {
 
   const response = await axios.post(`/certificati/atleta/${atletaId}`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+      'Content-Type': 'multipart/form-data',
+    },
   });
   return response.data;
 };
@@ -16,7 +16,7 @@ export const uploadCertificato = async (atletaId, file) => {
 // Download certificato medico di un atleta
 export const downloadCertificato = async (atletaId) => {
   const response = await axios.get(`/certificati/atleta/${atletaId}/download`, {
-    responseType: 'blob'
+    responseType: 'blob',
   });
   return response.data;
 };
@@ -40,7 +40,7 @@ export const getStatoCertificato = (scadenzaCertificato, hasCertificato) => {
       stato: 'assente',
       colore: 'gray',
       icona: 'file-x',
-      tooltip: 'Certificato non caricato'
+      tooltip: 'Certificato non caricato',
     };
   }
 
@@ -49,7 +49,7 @@ export const getStatoCertificato = (scadenzaCertificato, hasCertificato) => {
       stato: 'presente',
       colore: 'blue',
       icona: 'file-text',
-      tooltip: 'Certificato presente (senza data di scadenza)'
+      tooltip: 'Certificato presente (senza data di scadenza)',
     };
   }
 
@@ -57,7 +57,7 @@ export const getStatoCertificato = (scadenzaCertificato, hasCertificato) => {
   oggi.setHours(0, 0, 0, 0);
   const scadenza = new Date(scadenzaCertificato);
   scadenza.setHours(0, 0, 0, 0);
-  
+
   const differenzaGiorni = Math.floor((scadenza - oggi) / (1000 * 60 * 60 * 24));
 
   if (differenzaGiorni < 0) {
@@ -65,7 +65,7 @@ export const getStatoCertificato = (scadenzaCertificato, hasCertificato) => {
       stato: 'scaduto',
       colore: 'red',
       icona: 'file-x',
-      tooltip: `Certificato scaduto il ${new Date(scadenzaCertificato).toLocaleDateString('it-IT')}`
+      tooltip: `Certificato scaduto il ${new Date(scadenzaCertificato).toLocaleDateString('it-IT')}`,
     };
   }
 
@@ -74,7 +74,7 @@ export const getStatoCertificato = (scadenzaCertificato, hasCertificato) => {
       stato: 'in_scadenza',
       colore: 'orange',
       icona: 'file-warning',
-      tooltip: `Certificato in scadenza il ${new Date(scadenzaCertificato).toLocaleDateString('it-IT')} (${differenzaGiorni} giorni)`
+      tooltip: `Certificato in scadenza il ${new Date(scadenzaCertificato).toLocaleDateString('it-IT')} (${differenzaGiorni} giorni)`,
     };
   }
 
@@ -82,6 +82,6 @@ export const getStatoCertificato = (scadenzaCertificato, hasCertificato) => {
     stato: 'valido',
     colore: 'green',
     icona: 'file-check',
-    tooltip: `Certificato valido fino al ${new Date(scadenzaCertificato).toLocaleDateString('it-IT')}`
+    tooltip: `Certificato valido fino al ${new Date(scadenzaCertificato).toLocaleDateString('it-IT')}`,
   };
 };

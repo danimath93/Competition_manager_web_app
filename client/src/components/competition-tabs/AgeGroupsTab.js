@@ -37,16 +37,7 @@ const OPEN_MANAGEMENT_PAGE = '__open_age_groups_page__';
  * @param {boolean} props.locked - true se le categorie sono già state generate
  * @param {string} props.competitionStartDate - Data inizio gara 'YYYY-MM-DD', usata per l'anteprima
  */
-const AgeGroupsTab = ({
-  value,
-  onChange,
-  onConfigChange,
-  savedConfiguration,
-  savedConfig,
-  organizerClubId,
-  locked = false,
-  competitionStartDate,
-}) => {
+const AgeGroupsTab = ({ value, onChange, onConfigChange, savedConfiguration, savedConfig, organizerClubId, locked = false, competitionStartDate }) => {
   const { user } = useAuth();
   const [configurations, setConfigurations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +50,7 @@ const AgeGroupsTab = ({
     setLoading(true);
     try {
       const data = await loadAgeGroupConfigurations(ADMIN_ROLES.includes(user?.permissions) ? clubId : null);
-      setConfigurations(data.filter(c => c.clubId === null || !clubId || c.clubId === clubId));
+      setConfigurations(data.filter((c) => c.clubId === null || !clubId || c.clubId === clubId));
       setError(null);
     } catch (err) {
       setError('Errore nel caricamento delle configurazioni fasce età');
@@ -81,9 +72,9 @@ const AgeGroupsTab = ({
     onChange(e.target.value === '' ? null : Number(e.target.value));
   };
 
-  const clubConfigurations = configurations.filter(c => c.clubId !== null);
-  const defaultConfigurations = configurations.filter(c => c.clubId === null);
-  const selectedConfiguration = configurations.find(c => c.id === value) || null;
+  const clubConfigurations = configurations.filter((c) => c.clubId !== null);
+  const defaultConfigurations = configurations.filter((c) => c.clubId === null);
+  const selectedConfiguration = configurations.find((c) => c.id === value) || null;
   // Configurazione salvata non più disponibile (eliminata): resta selezionabile per non perdere il valore
   const isSavedMissing = !!value && !selectedConfiguration && savedConfiguration?.id === value;
 
@@ -115,7 +106,9 @@ const AgeGroupsTab = ({
       <h6 className="text-primary text-center register-section-title">Seleziona la configurazione delle fasce d'età</h6>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
       )}
       {locked && (
         <Alert severity="info" sx={{ mb: 2 }}>
@@ -132,17 +125,16 @@ const AgeGroupsTab = ({
         disabled={locked}
         required
         SelectProps={{ onOpen: fetchConfigurations }}
-        helperText={loading ? 'Caricamento configurazioni...' : ' '}
-      >
-        {isSavedMissing && (
-          <MenuItem value={value}>{savedConfiguration.name} (eliminata)</MenuItem>
-        )}
+        helperText={loading ? 'Caricamento configurazioni...' : ' '}>
+        {isSavedMissing && <MenuItem value={value}>{savedConfiguration.name} (eliminata)</MenuItem>}
         {clubConfigurations.length > 0 && <ListSubheader>Configurazioni del club</ListSubheader>}
         {clubConfigurations.map(renderOption)}
         {defaultConfigurations.length > 0 && <ListSubheader>Configurazioni di default</ListSubheader>}
         {defaultConfigurations.map(renderOption)}
         <MenuItem value={OPEN_MANAGEMENT_PAGE} sx={{ borderTop: 1, borderColor: 'divider', mt: 1 }}>
-          <ListItemIcon><OpenInNewIcon fontSize="small" /></ListItemIcon>
+          <ListItemIcon>
+            <OpenInNewIcon fontSize="small" />
+          </ListItemIcon>
           Gestisci configurazioni fasce d'età (nuova pagina)
         </MenuItem>
       </TextField>
@@ -163,18 +155,14 @@ const AgeGroupsTab = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {previewConfig.groups.map(group => {
+              {previewConfig.groups.map((group) => {
                 const range = getBirthDateRange(group, previewConfig, referenceDate);
                 return (
                   <TableRow key={group.key}>
                     <TableCell>{group.label}</TableCell>
                     <TableCell>{getGroupingLabel(group.grouping)}</TableCell>
                     <TableCell>{group.maxAge === null ? `${group.minAge}+` : `${group.minAge} - ${group.maxAge}`}</TableCell>
-                    <TableCell>
-                      {range && (range.from
-                        ? `dal ${formatYmd(range.from)} al ${formatYmd(range.to)}`
-                        : `fino al ${formatYmd(range.to)}`)}
-                    </TableCell>
+                    <TableCell>{range && (range.from ? `dal ${formatYmd(range.from)} al ${formatYmd(range.to)}` : `fino al ${formatYmd(range.to)}`)}</TableCell>
                   </TableRow>
                 );
               })}

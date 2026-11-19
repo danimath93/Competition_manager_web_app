@@ -7,20 +7,20 @@ const authenticateToken = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
-    return res.status(401).json({ 
+    return res.status(401).json({
       error: 'Token di accesso richiesto',
-      details: 'Nessun token fornito' 
+      details: 'Nessun token fornito',
     });
   }
 
   jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
     if (err) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Token non valido',
-        details: 'Token scaduto o non valido' 
+        details: 'Token scaduto o non valido',
       });
     }
-    
+
     req.user = user; // Aggiunge le informazioni utente alla richiesta
     next();
   });
@@ -38,11 +38,11 @@ const optionalAuth = (req, res, next) => {
       }
     });
   }
-  
+
   next();
 };
 
 module.exports = {
   authenticateToken,
-  optionalAuth
+  optionalAuth,
 };

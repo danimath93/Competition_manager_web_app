@@ -28,7 +28,7 @@ export const updateJudge = async (judgeId, judgeData) => {
     const response = await axios.put(`/giudici/${judgeId}/`, judgeData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'aggiornamento del giudice:', error);
+    console.error("Errore durante l'aggiornamento del giudice:", error);
     throw error;
   }
 };
@@ -38,7 +38,7 @@ export const deleteJudge = async (judgeId) => {
   try {
     await axios.delete(`/giudici/${judgeId}/`);
   } catch (error) {
-    console.error('Errore durante l\'eliminazione del giudice:', error);
+    console.error("Errore durante l'eliminazione del giudice:", error);
     throw error;
   }
 };

@@ -14,7 +14,7 @@ const translations = {
   it: {
     // Header
     welcomeMessage: 'Gestore competizioni',
-    
+
     // Sidebar
     dashboard: 'Dashboard',
     competitions: 'Competizioni',
@@ -24,9 +24,9 @@ const translations = {
     categories: 'Categorie',
     settings: 'Impostazioni',
     logout: 'Esci',
-    
+
     // Login
-    loginIntro: "Accedi al tuo account",
+    loginIntro: 'Accedi al tuo account',
     login: 'Accedi',
     signIn: 'Accedi',
     signInButton: 'Accedi',
@@ -39,16 +39,16 @@ const translations = {
     noAccount: 'Non hai un account?',
     forgotPassword: 'Password dimenticata?',
     userNotFound: 'Utente non trovato o credenziali errate',
-    
+
     // Common
     language: 'Lingua',
     italian: 'Italiano',
-    english: 'Inglese'
+    english: 'Inglese',
   },
   en: {
     // Header
     welcomeMessage: 'Competition Manager',
-    
+
     // Sidebar
     dashboard: 'Dashboard',
     competitions: 'Competitions',
@@ -58,9 +58,9 @@ const translations = {
     categories: 'Categories',
     settings: 'Settings',
     logout: 'Logout',
-    
+
     // Login
-    loginIntro: "Access your account",
+    loginIntro: 'Access your account',
     login: 'Login',
     signIn: 'Sign In',
     signInButton: 'Sign In',
@@ -73,12 +73,12 @@ const translations = {
     noAccount: "Don't have an account?",
     forgotPassword: 'Forgot password?',
     userNotFound: 'User not found or invalid credentials',
-    
+
     // Common
     language: 'Language',
     italian: 'Italian',
-    english: 'English'
-  }
+    english: 'English',
+  },
 };
 
 export const LanguageProvider = ({ children }) => {
@@ -101,9 +101,5 @@ export const LanguageProvider = ({ children }) => {
     }
   }, []);
 
-  return (
-    <LanguageContext.Provider value={{ language, changeLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={{ language, changeLanguage, t }}>{children}</LanguageContext.Provider>;
 };

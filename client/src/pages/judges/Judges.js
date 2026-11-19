@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-} from '@mui/material';
+import { Box } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { FaGavel } from 'react-icons/fa';
 import { loadAllJudges, createJudge, updateJudge, deleteJudge } from '../../api/judges';
@@ -43,18 +41,11 @@ const Judges = () => {
     let result = judges;
 
     if (filters.name) {
-      result = result.filter(
-        (judge) =>
-          `${judge.nome} ${judge.cognome}`
-            .toLowerCase()
-            .includes(filters.name.toLowerCase())
-      );
+      result = result.filter((judge) => `${judge.nome} ${judge.cognome}`.toLowerCase().includes(filters.name.toLowerCase()));
     }
 
     if (filters.experience) {
-      result = result.filter((judge) =>
-        judge.experience.toLowerCase().includes(filters.experience.toLowerCase())
-      );
+      result = result.filter((judge) => judge.experience.toLowerCase().includes(filters.experience.toLowerCase()));
     }
 
     setFilteredJudges(result);
@@ -85,7 +76,7 @@ const Judges = () => {
       const judgesData = await loadAllJudges();
       setJudges(judgesData);
     } catch (error) {
-      console.error("Errore nel salvataggio del giudice:", error);
+      console.error('Errore nel salvataggio del giudice:', error);
     } finally {
       handleCloseModal();
     }
@@ -108,10 +99,7 @@ const Judges = () => {
 
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <PageHeader
-        icon={FaGavel}
-        title="Gestione Giudici"
-      />
+      <PageHeader icon={FaGavel} title="Gestione Giudici" />
 
       {/* Contenuto della pagina */}
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -125,16 +113,13 @@ const Judges = () => {
                 placeholder="Filtra per Nome/Cognome"
                 sx={{
                   width: '100%',
-                  maxWidth: "800px",
+                  maxWidth: '800px',
                   '& .MuiOutlinedInput-root': {
                     height: '60px',
-                  }
+                  },
                 }}
               />
-              <Button
-                icon={Add}
-                onClick={() => handleOpenModal()}
-              >
+              <Button icon={Add} onClick={() => handleOpenModal()}>
                 Aggiungi Giudice
               </Button>
             </Box>
@@ -143,41 +128,38 @@ const Judges = () => {
 
         <div className="page-card" style={{ padding: '0', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div className="page-card-body" style={{ flex: 1, overflow: 'auto' }}>
+            <JudgesTable judges={filteredJudges} onEdit={handleOpenModal} onDelete={handleJudgeDeleteConfirm} />
 
-          <JudgesTable
-            judges={filteredJudges}
-            onEdit={handleOpenModal}
-            onDelete={handleJudgeDeleteConfirm}
-          />
+            {isModalOpen && (
+              <JudgeModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onSubmit={handleSaveJudge}
+                onDelete={handleDeleteJudge}
+                isEditMode={isEditMode}
+                judge={selectedJudge}
+              />
+            )}
 
-          {isModalOpen && (
-            <JudgeModal
-              open={isModalOpen}
-              onClose={handleCloseModal}
-              onSubmit={handleSaveJudge}
-              onDelete={handleDeleteJudge}
-              isEditMode={isEditMode}
-              judge={selectedJudge}
-            />
-          )}
-
-          {isDeleteJudgeConfirmModalOpen && (
-            <ConfirmActionModal
-              open={isDeleteJudgeConfirmModalOpen}
-              onClose={() => setIsDeleteJudgeConfirmModalOpen(false)}
-              title="Conferma Eliminazione"
-              message="Sei sicuro di voler eliminare il giudice selezionato?"
-              primaryButton={{
-                text: 'Elimina',
-                onClick: async () => { await handleDeleteJudge(selectedJudge); setIsDeleteJudgeConfirmModalOpen(false); },
-              }}
-              secondaryButton={{
-                text: 'Annulla',
-                onClick: () => setIsDeleteJudgeConfirmModalOpen(false),
-              }}
-            />
-          )}
-
+            {isDeleteJudgeConfirmModalOpen && (
+              <ConfirmActionModal
+                open={isDeleteJudgeConfirmModalOpen}
+                onClose={() => setIsDeleteJudgeConfirmModalOpen(false)}
+                title="Conferma Eliminazione"
+                message="Sei sicuro di voler eliminare il giudice selezionato?"
+                primaryButton={{
+                  text: 'Elimina',
+                  onClick: async () => {
+                    await handleDeleteJudge(selectedJudge);
+                    setIsDeleteJudgeConfirmModalOpen(false);
+                  },
+                }}
+                secondaryButton={{
+                  text: 'Annulla',
+                  onClick: () => setIsDeleteJudgeConfirmModalOpen(false),
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

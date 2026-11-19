@@ -7,27 +7,27 @@
  */
 
 export const LOGIN_IMAGE_VARIANTS = {
-  MOBILE: "mobile",
-  DESKTOP: "desktop",
+  MOBILE: 'mobile',
+  DESKTOP: 'desktop',
 };
 
 const STATIC_LOGIN_IMAGES = {
   [LOGIN_IMAGE_VARIANTS.MOBILE]: [
     {
-      src: "/assets/login/mobile/Vietvodao_Sfondo_Pagoda.jpg",
-      alt: "Pagoda Vietnam",
+      src: '/assets/login/mobile/Vietvodao_Sfondo_Pagoda.jpg',
+      alt: 'Pagoda Vietnam',
     },
   ],
   [LOGIN_IMAGE_VARIANTS.DESKTOP]: [
     {
-      src: "/assets/login/desktop/7X5A2309_1.jpg",
-      alt: "Atleta con ventaglio",
+      src: '/assets/login/desktop/7X5A2309_1.jpg',
+      alt: 'Atleta con ventaglio',
     },
     {
-      src: "/assets/login/desktop/Rubino_Riccardo.LongGian.jpg",
-      alt: "Atleta con armi tradizionali",
+      src: '/assets/login/desktop/Rubino_Riccardo.LongGian.jpg',
+      alt: 'Atleta con armi tradizionali',
     },
-    { src: "/assets/login/desktop/7X5A2537_1.jpg", alt: "Atleta in posizione" },
+    { src: '/assets/login/desktop/7X5A2537_1.jpg', alt: 'Atleta in posizione' },
   ],
 };
 
@@ -37,8 +37,5 @@ const STATIC_LOGIN_IMAGES = {
  * @returns {Promise<Array<{src: string, alt: string}>>}
  */
 export const getLoginImages = async (variant) => {
-  return (
-    STATIC_LOGIN_IMAGES[variant] ||
-    STATIC_LOGIN_IMAGES[LOGIN_IMAGE_VARIANTS.DESKTOP]
-  );
+  return STATIC_LOGIN_IMAGES[variant] || STATIC_LOGIN_IMAGES[LOGIN_IMAGE_VARIANTS.DESKTOP];
 };

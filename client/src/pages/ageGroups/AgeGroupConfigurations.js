@@ -5,11 +5,7 @@ import { FaLayerGroup } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/PageHeader';
 import { Button } from '../../components/common';
-import AgeGroupConfigurationModal, {
-  describeAgeGroupMode,
-  formatYmd,
-  todayYmd,
-} from '../../components/AgeGroupConfigurationModal';
+import AgeGroupConfigurationModal, { describeAgeGroupMode, formatYmd, todayYmd } from '../../components/AgeGroupConfigurationModal';
 import { loadAllClubs } from '../../api/clubs';
 import {
   loadAgeGroupConfigurations,
@@ -30,34 +26,27 @@ const ConfigurationCard = ({ configuration, actions }) => {
   return (
     <div className="page-card" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <Box>
-        <Typography variant="h6" fontWeight={600}>{configuration.name}</Typography>
+        <Typography variant="h6" fontWeight={600}>
+          {configuration.name}
+        </Typography>
         {configuration.description && (
-          <Typography variant="body2" color="text.secondary">{configuration.description}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {configuration.description}
+          </Typography>
         )}
       </Box>
       <Box>
         <Chip size="small" color="primary" variant="outlined" label={describeAgeGroupMode(config)} />
       </Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-        {config.groups.map(group => {
+        {config.groups.map((group) => {
           const range = getBirthDateRange(group, config, today);
           const ages = group.maxAge === null ? `${group.minAge}+` : `${group.minAge}-${group.maxAge}`;
-          const birthInfo = range
-            ? (range.from ? `Nati dal ${formatYmd(range.from)} al ${formatYmd(range.to)}` : `Nati fino al ${formatYmd(range.to)}`)
-            : '';
-          return (
-            <Chip
-              key={group.key}
-              size="small"
-              label={`${group.label} ${ages}`}
-              title={birthInfo}
-            />
-          );
+          const birthInfo = range ? (range.from ? `Nati dal ${formatYmd(range.from)} al ${formatYmd(range.to)}` : `Nati fino al ${formatYmd(range.to)}`) : '';
+          return <Chip key={group.key} size="small" label={`${group.label} ${ages}`} title={birthInfo} />;
         })}
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 'auto' }}>
-        {actions}
-      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 'auto' }}>{actions}</Box>
     </div>
   );
 };
@@ -93,16 +82,13 @@ const AgeGroupConfigurations = () => {
   useEffect(() => {
     if (!isAdmin) return;
     loadAllClubs()
-      .then(data => setClubs([...data].sort((a, b) => a.denominazione.localeCompare(b.denominazione))))
+      .then((data) => setClubs([...data].sort((a, b) => a.denominazione.localeCompare(b.denominazione))))
       .catch(() => setError('Errore nel caricamento dei club'));
   }, [isAdmin]);
 
-  const defaultConfigurations = useMemo(() => configurations.filter(c => c.clubId === null), [configurations]);
-  const clubConfigurations = useMemo(
-    () => (selectedClubId ? configurations.filter(c => c.clubId === selectedClubId) : []),
-    [configurations, selectedClubId]
-  );
-  const selectedClub = clubs.find(c => c.id === selectedClubId) || null;
+  const defaultConfigurations = useMemo(() => configurations.filter((c) => c.clubId === null), [configurations]);
+  const clubConfigurations = useMemo(() => (selectedClubId ? configurations.filter((c) => c.clubId === selectedClubId) : []), [configurations, selectedClubId]);
+  const selectedClub = clubs.find((c) => c.id === selectedClubId) || null;
 
   const handleOpenModal = (configuration = null, { editMode = false, readOnly = false } = {}) => {
     setSelectedConfiguration(configuration);
@@ -183,7 +169,9 @@ const AgeGroupConfigurations = () => {
 
         <div className="page-section">
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={2}>
-            <h2 className="page-section-title" style={{ margin: 0 }}>Configurazioni del club</h2>
+            <h2 className="page-section-title" style={{ margin: 0 }}>
+              Configurazioni del club
+            </h2>
             <Button icon={Add} onClick={() => handleOpenModal()} disabled={!canManageClub}>
               Nuova Configurazione
             </Button>
@@ -191,18 +179,16 @@ const AgeGroupConfigurations = () => {
           {!canManageClub ? (
             <div className="page-card">
               <Typography color="text.secondary">
-                {isAdmin ? 'Seleziona un club per gestirne le configurazioni.' : 'Nessun club associato all\'utente.'}
+                {isAdmin ? 'Seleziona un club per gestirne le configurazioni.' : "Nessun club associato all'utente."}
               </Typography>
             </div>
           ) : clubConfigurations.length === 0 ? (
             <div className="page-card">
-              <Typography color="text.secondary">
-                Nessuna configurazione salvata. Creane una nuova oppure duplica una configurazione di default.
-              </Typography>
+              <Typography color="text.secondary">Nessuna configurazione salvata. Creane una nuova oppure duplica una configurazione di default.</Typography>
             </div>
           ) : (
             <div className="page-grid-3">
-              {clubConfigurations.map(configuration => (
+              {clubConfigurations.map((configuration) => (
                 <ConfigurationCard
                   key={configuration.id}
                   configuration={configuration}
@@ -232,7 +218,7 @@ const AgeGroupConfigurations = () => {
             </div>
           ) : (
             <div className="page-grid-3">
-              {defaultConfigurations.map(configuration => (
+              {defaultConfigurations.map((configuration) => (
                 <ConfigurationCard
                   key={configuration.id}
                   configuration={configuration}

@@ -1,25 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  IconButton,
-  Alert,
-} from '@mui/material';
-import {
-  CloudUpload as UploadIcon,
-  Download as DownloadIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, IconButton, Alert } from '@mui/material';
+import { CloudUpload as UploadIcon, Download as DownloadIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import { uploadDocumento, downloadDocumento, deleteDocumento, getDocumentoInfo } from '../api/documents';
 
 const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competition, userClubId, userPermissions }) => {
-
   const [files, setFiles] = useState({
     locandina: null,
     circolareGara: null,
@@ -122,9 +107,9 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
 
   const handleFileChange = (fileType, event) => {
     const file = event.target.files[0];
-    setFiles(prev => ({
+    setFiles((prev) => ({
       ...prev,
-      [fileType]: file
+      [fileType]: file,
     }));
   };
 
@@ -133,20 +118,18 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       setUploadStatus({
         loading: false,
         message: 'Errore: competizione non valida',
-        error: true
+        error: true,
       });
       return;
     }
 
-    const filesToUpload = Object.fromEntries(
-      Object.entries(files).filter(([_, file]) => file !== null)
-    );
+    const filesToUpload = Object.fromEntries(Object.entries(files).filter(([_, file]) => file !== null));
 
     if (Object.keys(filesToUpload).length === 0) {
       setUploadStatus({
         loading: false,
         message: 'Seleziona almeno un file da caricare',
-        error: true
+        error: true,
       });
       return;
     }
@@ -168,7 +151,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       if (files.fileExtra1) {
         await uploadDocumento(files.fileExtra1, 'file_extra1_competizione', competition.id, 'competizione');
       }
-      
+
       // Upload file extra 2
       if (files.fileExtra2) {
         await uploadDocumento(files.fileExtra2, 'file_extra2_competizione', competition.id, 'competizione');
@@ -177,12 +160,12 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       setUploadStatus({
         loading: false,
         message: 'File caricati con successo',
-        error: false
+        error: false,
       });
       setFiles({ locandina: null, circolareGara: null, fileExtra1: null, fileExtra2: null });
 
       // Reset dei file input
-      document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+      document.querySelectorAll('input[type="file"]').forEach((input) => (input.value = ''));
 
       setTimeout(() => {
         setUploadStatus({ loading: false, message: '', error: false });
@@ -193,7 +176,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       setUploadStatus({
         loading: false,
         message: 'Errore durante il caricamento dei file',
-        error: true
+        error: true,
       });
     }
   };
@@ -219,7 +202,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         setUploadStatus({
           loading: false,
           message: 'Documento non trovato',
-          error: true
+          error: true,
         });
         return;
       }
@@ -229,7 +212,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       setUploadStatus({
         loading: false,
         message: 'Errore durante il download del file',
-        error: true
+        error: true,
       });
     }
   };
@@ -267,7 +250,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         setUploadStatus({
           loading: false,
           message: 'Documento non trovato',
-          error: true
+          error: true,
         });
         return;
       }
@@ -276,7 +259,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
       setUploadStatus({
         loading: false,
         message: 'File eliminato con successo',
-        error: false
+        error: false,
       });
 
       setTimeout(() => {
@@ -287,8 +270,8 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
     } catch (error) {
       setUploadStatus({
         loading: false,
-        message: 'Errore durante l\'eliminazione del file',
-        error: true
+        message: "Errore durante l'eliminazione del file",
+        error: true,
       });
     }
   };
@@ -304,14 +287,9 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
             {title}
           </Typography>
 
-          <div style={{ marginLeft: "auto", cursor: 'pointer' }}>
+          <div style={{ marginLeft: 'auto', cursor: 'pointer' }}>
             {existingFileName && (
-              <IconButton
-                size="small"
-                style={{ marginLeft: "auto" }}
-                onClick={() => handleFileDownload(apiFileType)}
-                title="Download"
-              >
+              <IconButton size="small" style={{ marginLeft: 'auto' }} onClick={() => handleFileDownload(apiFileType)} title="Download">
                 <DownloadIcon />
               </IconButton>
             )}
@@ -325,23 +303,14 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
                   onChange={(e) => handleFileChange(fileType, e)}
                 />
                 <label htmlFor={`${fileType}-upload`}>
-                  <IconButton
-                    component="span"
-                    size="small"
-                    title="Carica file"
-                  >
+                  <IconButton component="span" size="small" title="Carica file">
                     <UploadIcon />
                   </IconButton>
                 </label>
               </>
             )}
             {existingFileName && isEditable && (
-              <IconButton
-                size="small"
-                onClick={() => handleFileDeleteConfirm(apiFileType)}
-                title="Elimina"
-                color="error"
-              >
+              <IconButton size="small" onClick={() => handleFileDeleteConfirm(apiFileType)} title="Elimina" color="error">
                 <DeleteIcon />
               </IconButton>
             )}
@@ -359,11 +328,7 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
               Selezionato: {selectedFile.name}
             </Typography>
           )}
-          {existingFileName && !selectedFile && (
-            <Typography variant="body2">
-              {existingFileName}
-            </Typography>
-          )}
+          {existingFileName && !selectedFile && <Typography variant="body2">{existingFileName}</Typography>}
         </Box>
       </Box>
     );
@@ -387,51 +352,24 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
         </Typography>
 
         {/* Locandina */}
-        {renderFileSection(
-          'Locandina',
-          'locandina',
-          'locandina',
-          '.png,.jpg,.jpeg,.webp'
-        )}
+        {renderFileSection('Locandina', 'locandina', 'locandina', '.png,.jpg,.jpeg,.webp')}
 
         {/* Circolare di Gara */}
-        {renderFileSection(
-          'Circolare di Gara',
-          'circolareGara',
-          'circolare',
-          '.pdf,.doc,.docx,.txt'
-        )}
+        {renderFileSection('Circolare di Gara', 'circolareGara', 'circolare', '.pdf,.doc,.docx,.txt')}
 
         {/* File Extra 1 */}
-        {renderFileSection(
-          'File Extra 1',
-          'fileExtra1',
-          'extra1',
-          '.pdf,.doc,.docx,.txt,.xls,.xlsx'
-        )}
+        {renderFileSection('File Extra 1', 'fileExtra1', 'extra1', '.pdf,.doc,.docx,.txt,.xls,.xlsx')}
 
         {/* File Extra 2 */}
-        {renderFileSection(
-          'File Extra 2',
-          'fileExtra2',
-          'extra2',
-          '.pdf,.doc,.docx,.txt,.xls,.xlsx'
-        )}
+        {renderFileSection('File Extra 2', 'fileExtra2', 'extra2', '.pdf,.doc,.docx,.txt,.xls,.xlsx')}
 
         {/* Pulsante Upload File */}
-        {isEditable && Object.values(files).some(file => file !== null) && (
-          <Button
-            variant="contained"
-            onClick={handleFileUpload}
-            disabled={uploadStatus.loading}
-            startIcon={<UploadIcon />}
-            fullWidth
-            sx={{ mt: 2 }}
-          >
+        {isEditable && Object.values(files).some((file) => file !== null) && (
+          <Button variant="contained" onClick={handleFileUpload} disabled={uploadStatus.loading} startIcon={<UploadIcon />} fullWidth sx={{ mt: 2 }}>
             {uploadStatus.loading ? 'Caricamento...' : 'Carica File Selezionati'}
           </Button>
         )}
- 
+
         {/* Messaggio di stato upload */}
         {uploadStatus.message && (
           <Alert severity={uploadStatus.error ? 'error' : 'success'} sx={{ mb: 2 }}>
@@ -451,16 +389,17 @@ const CompetitionDocumentsModal = ({ open, onClose, onDocumentChange, competitio
           message="Eliminare definitivamente il file selezionato?"
           primaryButton={{
             text: 'Elimina',
-            onClick: () => {handleFileDelete(fileTypeToDelete);}
+            onClick: () => {
+              handleFileDelete(fileTypeToDelete);
+            },
           }}
           secondaryButton={{
             text: 'Annulla',
-            onClick: () => setConfirmDeleteModalOpen(false)
+            onClick: () => setConfirmDeleteModalOpen(false),
           }}
         />
       )}
     </Dialog>
-    
   );
 };
 

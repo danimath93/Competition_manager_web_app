@@ -12,7 +12,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
   useEffect(() => {
     loadCompetitionTypes()
       .then(setCompetitionTypes)
-      .catch(error => console.error('Errore nel caricamento dei tipi competizione:', error));
+      .catch((error) => console.error('Errore nel caricamento dei tipi competizione:', error));
   }, []);
 
   const handleChange = (e) => {
@@ -28,9 +28,9 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
   };
 
   return (
-    <form id={formId} onSubmit={onSubmit} className="register-form" style={{ maxWidth: "1024px" }}>
+    <form id={formId} onSubmit={onSubmit} className="register-form" style={{ maxWidth: '1024px' }}>
       <h6 className="text-primary text-center register-section-title">Definizione competizione</h6>
-      
+
       <div className="register-form-grid">
         <TextInput
           id="nome"
@@ -43,22 +43,9 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
           autoComplete="nome"
         />
 
-        <TextInput
-          name="luogo"
-          label="Luogo"
-          value={formData.luogo}
-          onChange={handleChange}
-          fullWidth
-          required
-        />
+        <TextInput name="luogo" label="Luogo" value={formData.luogo} onChange={handleChange} fullWidth required />
 
-        <TextInput
-          name="indirizzo"
-          label="Indirizzo"
-          value={formData.indirizzo}
-          onChange={handleChange}
-          fullWidth
-        />
+        <TextInput name="indirizzo" label="Indirizzo" value={formData.indirizzo} onChange={handleChange} fullWidth />
 
         <div className="text-input-container">
           <label className="text-input-label">
@@ -75,8 +62,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
             fullWidth
             required
             select
-            SelectProps={{ native: true }}
-          >
+            SelectProps={{ native: true }}>
             {Object.entries(CompetitionLevel).map(([value, label]) => (
               <option key={value} value={label}>
                 {label}
@@ -119,14 +105,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
 
         <h6 className="text-primary text-center register-section-title">Informazioni aggiuntive</h6>
 
-        <TextInput
-          name="descrizione"
-          label="Descrizione"
-          value={formData.descrizione}
-          onChange={handleChange}
-          fullWidth
-          multiline
-        />
+        <TextInput name="descrizione" label="Descrizione" value={formData.descrizione} onChange={handleChange} fullWidth multiline />
 
         <h6 className="text-primary text-center register-section-title">Informazioni organizzative</h6>
         <div className="text-input-container">
@@ -144,8 +123,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
             fullWidth
             required
             select
-            SelectProps={{ native: true }}
-          >
+            SelectProps={{ native: true }}>
             {Object.entries(CompetitionStatus).map(([value, label]) => (
               <option key={value} value={label}>
                 {label}
@@ -164,7 +142,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
           fullWidth
         />
 
-        {competitionTypes.map(type => (
+        {competitionTypes.map((type) => (
           <TextInput
             key={type.id}
             name={`maxCategorieTipo_${type.id}`}
@@ -184,7 +162,6 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
           onChange={handleChange}
           fullWidth
         />
-
       </div>
     </form>
   );

@@ -6,13 +6,13 @@ export const PERMISSIONS = {
   admin: ['competitions', 'athletes', 'clubs/admin', 'judges', 'categories'],
   club: ['competitions', 'athletes', 'club', 'categories'],
   user: ['competitions'],
-  table: ['categories']
+  table: ['categories'],
 };
 
 // Verifica se l'utente ha permesso per una pagina specifica
 export const hasPermission = (userRole, page) => {
   if (!userRole || !page) return false;
-  
+
   const userPermissions = PERMISSIONS[userRole] || [];
   return userPermissions.includes(page);
 };

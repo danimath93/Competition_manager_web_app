@@ -18,15 +18,12 @@ const Tabs = ({ tabs = [], activeTab, onTabChange, children }) => {
             className={`tab-button ${activeTab === tab.value ? 'active' : ''} ${tab.disabled ? 'disabled' : ''}`}
             onClick={() => !tab.disabled && onTabChange(tab.value)}
             disabled={tab.disabled}
-            type="button"
-          >
+            type="button">
             {tab.label}
           </button>
         ))}
       </div>
-      <div className="tabs-content">
-        {children}
-      </div>
+      <div className="tabs-content">{children}</div>
     </div>
   );
 };

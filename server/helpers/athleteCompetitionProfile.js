@@ -9,7 +9,7 @@ const { resolveAgeGroup } = require('./ageGroups');
 
 const GROUPING_LABELS = {
   children: 'Bambini',
-  adults: 'Adulti'
+  adults: 'Adulti',
 };
 
 /**
@@ -18,9 +18,9 @@ const GROUPING_LABELS = {
 const loadRegistrationBlackBelts = async (competizioneId) => {
   const details = await DettaglioIscrizioneAtleta.findAll({
     where: { competizioneId },
-    attributes: ['atletaId', 'isBlackBelt']
+    attributes: ['atletaId', 'isBlackBelt'],
   });
-  return new Map(details.map(d => [d.atletaId, d.isBlackBelt]));
+  return new Map(details.map((d) => [d.atletaId, d.isBlackBelt]));
 };
 
 /**
@@ -41,7 +41,7 @@ const getAthleteCompetitionProfile = (athlete, competition, registrationBlackBel
     ageGroupLabel: ageGroup ? ageGroup.label : 'Non definita',
     grouping: ageGroup ? ageGroup.grouping : null,
     groupingLabel,
-    profileLabel: `${groupingLabel} ${belt}`
+    profileLabel: `${groupingLabel} ${belt}`,
   };
 };
 
@@ -50,12 +50,12 @@ const getAthleteCompetitionProfile = (athlete, competition, registrationBlackBel
  */
 const getAgeGroupLabels = (ageGroupKeys, competition) => {
   const groups = competition?.ageGroupConfig?.groups || [];
-  return (ageGroupKeys || []).map(key => groups.find(g => g.key === key)?.label || key);
+  return (ageGroupKeys || []).map((key) => groups.find((g) => g.key === key)?.label || key);
 };
 
 module.exports = {
   GROUPING_LABELS,
   loadRegistrationBlackBelts,
   getAthleteCompetitionProfile,
-  getAgeGroupLabels
+  getAgeGroupLabels,
 };

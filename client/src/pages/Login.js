@@ -49,11 +49,11 @@ const Login = () => {
     }
 
     const result = await login(username, password);
-    
+
     if (!result.success) {
       setError(result.message || t('userNotFound'));
     }
-    
+
     setLoading(false);
   };
 
@@ -68,13 +68,13 @@ const Login = () => {
   return (
     <div className="layout">
       <Header />
-      <div className='layout-content'>
+      <div className="layout-content">
         <div className="login-container">
           <div className="login-left">
             <div className="login-card">
               <form onSubmit={handleSubmit} className="login-form">
                 <h5 className="text-red text-center">{t('loginIntro')}</h5>
-                
+
                 <TextInput
                   id="username"
                   label={t('username')}
@@ -98,25 +98,22 @@ const Login = () => {
                     autoComplete="current-password"
                   />
                   <div className="forgot-password-link">
-                    <a href="#" onClick={(e) => { e.preventDefault(); handleResetPWClick(); }}>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleResetPWClick();
+                      }}>
                       {t('forgotPassword')}
                     </a>
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="login-button"
-                  disabled={loading}
-                >
+                <button type="submit" className="login-button" disabled={loading}>
                   {loading ? t('signingIn') : t('signInButton')}
                 </button>
 
-                {error && (
-                  <div className="error-message">
-                    {error}
-                  </div>
-                )}
+                {error && <div className="error-message">{error}</div>}
               </form>
 
               <div className="login-footer">
@@ -125,8 +122,10 @@ const Login = () => {
                   <a
                     href="#"
                     className="register-link"
-                    onClick={(e) => { e.preventDefault(); handleRegisterClick(); }}
-                  >
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRegisterClick();
+                    }}>
                     {t('registerNow')}
                   </a>
                 </span>
@@ -135,11 +134,7 @@ const Login = () => {
           </div>
 
           <div className="login-right">
-            <EmblaCarousel
-              key={isSmallScreen ? LOGIN_IMAGE_VARIANTS.MOBILE : LOGIN_IMAGE_VARIANTS.DESKTOP}
-              slides={carouselImages}
-              autoplayDelay={5000}
-            />
+            <EmblaCarousel key={isSmallScreen ? LOGIN_IMAGE_VARIANTS.MOBILE : LOGIN_IMAGE_VARIANTS.DESKTOP} slides={carouselImages} autoplayDelay={5000} />
           </div>
         </div>
       </div>

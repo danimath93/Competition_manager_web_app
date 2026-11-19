@@ -20,8 +20,7 @@ export const GROUPING_LABELS = {
   adults: 'Adulti',
 };
 
-export const getCategoryBeltLabel = (belt) =>
-  CATEGORY_BELT_OPTIONS.find(o => o.value === belt)?.label || belt;
+export const getCategoryBeltLabel = (belt) => CATEGORY_BELT_OPTIONS.find((o) => o.value === belt)?.label || belt;
 
 export const emptyCategoryConfig = () => ({
   version: CATEGORY_CONFIG_VERSION,
@@ -42,31 +41,31 @@ export const getDefaultGroupings = (categoryType) => {
 
 // Chiavi delle fasce della configurazione età appartenenti ai raggruppamenti indicati
 export const getGroupKeysByGroupings = (ageGroupConfig, groupings) =>
-  (ageGroupConfig?.groups || []).filter(g => groupings.includes(g.grouping)).map(g => g.key);
+  (ageGroupConfig?.groups || []).filter((g) => groupings.includes(g.grouping)).map((g) => g.key);
 
 // Rimuove dalla configurazione categorie le fasce non presenti nella configurazione età
 // (es. dopo il cambio della configurazione fasce); le categorie senza fasce vengono rimosse
 export const pruneCategoryConfig = (categoryConfig, ageGroupConfig) => {
   if (!categoryConfig) return emptyCategoryConfig();
-  const keys = new Set((ageGroupConfig?.groups || []).map(g => g.key));
+  const keys = new Set((ageGroupConfig?.groups || []).map((g) => g.key));
   return {
     ...categoryConfig,
     categories: (categoryConfig.categories || [])
-      .map(c => ({ ...c, ageGroupKeys: c.ageGroupKeys.filter(k => keys.has(k)) }))
-      .filter(c => c.ageGroupKeys.length > 0),
+      .map((c) => ({ ...c, ageGroupKeys: c.ageGroupKeys.filter((k) => keys.has(k)) }))
+      .filter((c) => c.ageGroupKeys.length > 0),
   };
 };
 
 // Raggruppamenti effettivamente usati per ogni tipo competizione, dato l'elenco dei tipi categoria
 export const getUsedGroupingsByCompetitionType = (categoryConfig, ageGroupConfig, categoryTypes) => {
-  const groupingByKey = new Map((ageGroupConfig?.groups || []).map(g => [g.key, g.grouping]));
+  const groupingByKey = new Map((ageGroupConfig?.groups || []).map((g) => [g.key, g.grouping]));
   const result = {};
-  (categoryConfig?.categories || []).forEach(category => {
-    const categoryType = categoryTypes.find(ct => ct.id === category.categoryTypeId);
+  (categoryConfig?.categories || []).forEach((category) => {
+    const categoryType = categoryTypes.find((ct) => ct.id === category.categoryTypeId);
     if (!categoryType) return;
     const typeId = categoryType.tipoCompetizioneId;
     if (!result[typeId]) result[typeId] = new Set();
-    category.ageGroupKeys.forEach(key => {
+    category.ageGroupKeys.forEach((key) => {
       const grouping = groupingByKey.get(key);
       if (grouping) result[typeId].add(grouping);
     });
@@ -91,11 +90,8 @@ export const isExperienceBeltAllowed = (experienceBelt, isBlackBelt) => {
 // Categorie della configurazione a cui l'atleta può iscriversi (fascia d'età e cintura)
 export const getEligibleCategories = (categoryConfig, ageGroup, isBlackBelt) => {
   if (!categoryConfig || !Array.isArray(categoryConfig.categories) || !ageGroup) return [];
-  return categoryConfig.categories.filter(category =>
-    category.ageGroupKeys.includes(ageGroup.key) && isBeltAllowed(category.belt, isBlackBelt)
-  );
+  return categoryConfig.categories.filter((category) => category.ageGroupKeys.includes(ageGroup.key) && isBeltAllowed(category.belt, isBlackBelt));
 };
 
 // ID dei tipi categoria previsti dalla competizione
-export const getCompetitionCategoryTypeIds = (competition) =>
-  (competition?.categoryConfig?.categories || []).map(c => c.categoryTypeId);
+export const getCompetitionCategoryTypeIds = (competition) => (competition?.categoryConfig?.categories || []).map((c) => c.categoryTypeId);

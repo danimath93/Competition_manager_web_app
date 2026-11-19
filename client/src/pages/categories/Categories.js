@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Typography, Box} from '@mui/material';
+import { Container, Typography, Box } from '@mui/material';
 import { FaTags } from 'react-icons/fa';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { loadAllCompetitions } from '../../api/competitions';
-import CategoryCard from './CategoryCard';  
+import CategoryCard from './CategoryCard';
 import PageHeader from '../../components/PageHeader';
 
 const Categories = () => {
@@ -38,9 +38,8 @@ const Categories = () => {
           let filteredData = data;
           if (user.permissions === 'club') {
             if (user.clubId) {
-              filteredData = data.filter(comp => comp.organizzatoreClubId && comp.organizzatoreClubId === user.clubId);
-            }
-            else {
+              filteredData = data.filter((comp) => comp.organizzatoreClubId && comp.organizzatoreClubId === user.clubId);
+            } else {
               filteredData = [];
               throw new Error('Utente club senza clubId associato');
             }
@@ -73,10 +72,7 @@ const Categories = () => {
 
   return (
     <div className="page-container">
-      <PageHeader
-        icon={FaTags}
-        title={t('categories')}
-      />
+      <PageHeader icon={FaTags} title={t('categories')} />
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {competitions.length === 0 ? (
@@ -84,19 +80,19 @@ const Categories = () => {
             Nessuna competizione organizzata da visualizzare.
           </Typography>
         ) : (
-        <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 400 }}>
-        {competitions.map((comp) => (
-          <CategoryCard
-            key={comp.id}
-            competition={comp}
-            onDefinition={handleDefinizione}
-            onExecution={handleSvolgimento}
-            onCheckResults={handleRisultati}
-            userClubId={user?.clubId}
-            userPermissions={user?.permissions}
-          />
-        ))}
-        </div>
+          <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 400 }}>
+            {competitions.map((comp) => (
+              <CategoryCard
+                key={comp.id}
+                competition={comp}
+                onDefinition={handleDefinizione}
+                onExecution={handleSvolgimento}
+                onCheckResults={handleRisultati}
+                userClubId={user?.clubId}
+                userPermissions={user?.permissions}
+              />
+            ))}
+          </div>
         )}
       </Box>
     </div>

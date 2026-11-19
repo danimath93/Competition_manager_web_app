@@ -30,7 +30,6 @@ import AgeGroupConfigurations from './pages/ageGroups/AgeGroupConfigurations';
 import './App.css';
 import muiCustomTheme from './styles/muiTheme';
 
-
 // Componente principale dell'app
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -45,9 +44,9 @@ const AppContent = () => {
   }
 
   const defaultRoute = (() => {
-    console.log("user:", user);
-    console.log("loading:", loading);
-    const isAuthenticated = user && typeof user === "object" && user.permissions && !loading;
+    console.log('user:', user);
+    console.log('loading:', loading);
+    const isAuthenticated = user && typeof user === 'object' && user.permissions && !loading;
     if (!isAuthenticated) return '/login';
 
     const role = user.permissions;
@@ -81,128 +80,182 @@ const AppContent = () => {
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
 
         {/* Dashboard - TODO: al momento in sviluppo, solo superAdmin */}
-        <Route path="/dashboard" element={
-          <AuthGate requiredPermissions={["superAdmin"]}>
-            <Dashboard />
-          </AuthGate>
-        } />
+        <Route
+          path="/dashboard"
+          element={
+            <AuthGate requiredPermissions={['superAdmin']}>
+              <Dashboard />
+            </AuthGate>
+          }
+        />
 
         {/* Competizioni - accesso comune, eventuali funzioni nascoste */}
-        <Route path="/competitions" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "user"]}>
-            <Competitions />
-          </AuthGate>
-        } />
+        <Route
+          path="/competitions"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club', 'user']}>
+              <Competitions />
+            </AuthGate>
+          }
+        />
 
         {/* Configuratore Competizione - superAdmin, admin */}
-        <Route path="/competitions/new" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
-            <CompetitionConfigurator />
-          </AuthGate>
-        } />
+        <Route
+          path="/competitions/new"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin']}>
+              <CompetitionConfigurator />
+            </AuthGate>
+          }
+        />
 
-        <Route path="/competitions/edit/:id" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
-            <CompetitionConfigurator />
-          </AuthGate>
-        } />
+        <Route
+          path="/competitions/edit/:id"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin']}>
+              <CompetitionConfigurator />
+            </AuthGate>
+          }
+        />
 
         {/* Registrazione Competizione - superAdmin, admin, club */}
-        <Route path="/competitions/:competitionId/register" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <CompetitionRegistration />
-          </AuthGate>
-        } />
+        <Route
+          path="/competitions/:competitionId/register"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <CompetitionRegistration />
+            </AuthGate>
+          }
+        />
 
         {/* Riepilogo Competizione - superAdmin, admin, club */}
-        <Route path="/competitions/:competitionId/summary" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <CompetitionSummary />
-          </AuthGate>
-        } />
+        <Route
+          path="/competitions/:competitionId/summary"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <CompetitionSummary />
+            </AuthGate>
+          }
+        />
 
         {/* Categorie Competizione - superAdmin, admin, club */}
-        <Route path="/competitions/:competitionId/categories" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <ClubCategories />
-          </AuthGate>
-        } />
+        <Route
+          path="/competitions/:competitionId/categories"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <ClubCategories />
+            </AuthGate>
+          }
+        />
 
         {/* Atleti - superAdmin, admin, club */}
-        <Route path="/athletes" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <Athletes />
-          </AuthGate>
-        } />
+        <Route
+          path="/athletes"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <Athletes />
+            </AuthGate>
+          }
+        />
 
         {/* ClubAdmin - visualizzazione dati e gestione tutti i club */}
-        <Route path="/clubs/admin" element={
-          <AuthGate requiredPermissions={["admin", "superAdmin"]}>
-            <ClubAdmin />
-          </AuthGate>
-        } />
+        <Route
+          path="/clubs/admin"
+          element={
+            <AuthGate requiredPermissions={['admin', 'superAdmin']}>
+              <ClubAdmin />
+            </AuthGate>
+          }
+        />
 
         {/* ClubUser - visualizzazione dati club specifico */}
-        <Route path="/club" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <ClubUser />
-          </AuthGate>
-        } />
+        <Route
+          path="/club"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <ClubUser />
+            </AuthGate>
+          }
+        />
 
         {/* Giudici - solo superAdmin, admin */}
-        <Route path="/judges" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
-            <Judges />
-          </AuthGate>
-        } />
+        <Route
+          path="/judges"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin']}>
+              <Judges />
+            </AuthGate>
+          }
+        />
 
         {/* Categorie - superAdmin, admin, table */}
-        <Route path="/categories" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
-            <Categories />
-          </AuthGate>
-        } />
+        <Route
+          path="/categories"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club', 'table']}>
+              <Categories />
+            </AuthGate>
+          }
+        />
 
         {/* Definizione Categorie - superAdmin, admin, club organizzatore */}
-        <Route path="/categories/definition" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <CategoryDefinition />
-          </AuthGate>
-        } />
+        <Route
+          path="/categories/definition"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <CategoryDefinition />
+            </AuthGate>
+          }
+        />
 
         {/* Svolgimento Categorie - superAdmin, admin, club organizzatore */}
-        <Route path="/categories/execution" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
-            <CategoryExecution />
-          </AuthGate>
-        } />
+        <Route
+          path="/categories/execution"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club', 'table']}>
+              <CategoryExecution />
+            </AuthGate>
+          }
+        />
 
-        <Route path="/category-execution/:id/category-in-progress" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
-            <CategoryInProgress />
-          </AuthGate>
-        } />
+        <Route
+          path="/category-execution/:id/category-in-progress"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club', 'table']}>
+              <CategoryInProgress />
+            </AuthGate>
+          }
+        />
 
         {/* Risultati Categorie - superAdmin, admin, club organizzatore */}
-        <Route path="/categories/results" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club", "table"]}>
-            <CategoryResults />
-          </AuthGate>
-        } />
+        <Route
+          path="/categories/results"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club', 'table']}>
+              <CategoryResults />
+            </AuthGate>
+          }
+        />
 
         {/* Configurazioni fasce d'età - superAdmin, admin, club */}
-        <Route path="/age-groups" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin", "club"]}>
-            <AgeGroupConfigurations />
-          </AuthGate>
-        } />
+        <Route
+          path="/age-groups"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
+              <AgeGroupConfigurations />
+            </AuthGate>
+          }
+        />
 
         {/* Impostazioni - In sviluppo admin e superAdmin */}
-        <Route path="/settings" element={
-          <AuthGate requiredPermissions={["superAdmin", "admin"]}>
-            <Settings />
-          </AuthGate>
-        } />
+        <Route
+          path="/settings"
+          element={
+            <AuthGate requiredPermissions={['superAdmin', 'admin']}>
+              <Settings />
+            </AuthGate>
+          }
+        />
 
         {/* Redirect per tutte le route non valide */}
         <Route path="*" element={<Navigate to={defaultRoute} replace />} />

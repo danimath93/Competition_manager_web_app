@@ -5,13 +5,7 @@ import { Add } from '@mui/icons-material';
 import { FaTrophy } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import {
-  loadAllCompetitions,
-  createCompetition,
-  updateCompetition,
-  deleteCompetition,
-  getCompetitionDetails
-} from '../../api/competitions';
+import { loadAllCompetitions, createCompetition, updateCompetition, deleteCompetition, getCompetitionDetails } from '../../api/competitions';
 import CompetitionCard from '../../components/CompetitionCard';
 import CompetitionDetailsModal from '../../components/CompetitionDetailsModal';
 import CompetitionOrganizerSelectorModal from '../../components/CompetitionOrganizerSelectorModal';
@@ -39,7 +33,7 @@ const Competitions = () => {
       const sortedData = data.sort((a, b) => new Date(b.dataInizio) - new Date(a.dataInizio));
       setCompetitions(sortedData);
     } catch (error) {
-      console.error("Errore nel caricamento delle competizioni:", error);
+      console.error('Errore nel caricamento delle competizioni:', error);
     }
   };
 
@@ -57,7 +51,7 @@ const Competitions = () => {
           }
         });
       } catch (error) {
-        console.error("Errore nel ricaricamento dei dati della competizione:", error);
+        console.error('Errore nel ricaricamento dei dati della competizione:', error);
       }
     }
   };
@@ -82,7 +76,7 @@ const Competitions = () => {
       setCompetitionDetails(details);
       setIsDetailsModalOpen(true);
     } catch (error) {
-      console.error("Errore nel caricamento dei dettagli:", error);
+      console.error('Errore nel caricamento dei dettagli:', error);
     }
   };
 
@@ -135,7 +129,7 @@ const Competitions = () => {
 
   const handleOpenCompetitionResults = (competitionId) => {
     navigate(`/categories/results?competizioneId=${competitionId}`);
-  }
+  };
 
   const handleOpenDocumentsModal = (competition) => {
     setSelectedCompetition(competition);
@@ -150,14 +144,11 @@ const Competitions = () => {
 
   const handleDocumentLoadedChanged = () => {
     reloadSelectedCompetitionData();
-  }
+  };
 
   return (
     <div className="page-container">
-      <PageHeader
-        icon={FaTrophy}
-        title={t('competitions')}
-      />
+      <PageHeader icon={FaTrophy} title={t('competitions')} />
 
       {/* Contenuto della pagina */}
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 400 }}>
@@ -181,24 +172,14 @@ const Competitions = () => {
 
         <AuthComponent requiredRoles={['admin', 'superAdmin']}>
           <Box sx={{ mt: 2, ml: 'auto', display: 'flex', justifyContent: 'center' }}>
-            <Button
-              icon={Add}
-              onClick={() => handleOpenModal()}
-            >
+            <Button icon={Add} onClick={() => handleOpenModal()}>
               Aggiungi Competizione
             </Button>
           </Box>
         </AuthComponent>
       </div>
 
-
-      {isDetailsModalOpen && (
-        <CompetitionDetailsModal
-          open={isDetailsModalOpen}
-          onClose={handleCloseDetailsModal}
-          competitionDetails={competitionDetails}
-        />
-      )}
+      {isDetailsModalOpen && <CompetitionDetailsModal open={isDetailsModalOpen} onClose={handleCloseDetailsModal} competitionDetails={competitionDetails} />}
 
       {editClubOrganizerModalOpen && (
         <CompetitionOrganizerSelectorModal
@@ -223,6 +204,5 @@ const Competitions = () => {
     </div>
   );
 };
-
 
 export default Competitions;

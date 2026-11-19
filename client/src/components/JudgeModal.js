@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  TextField,
-  Button,
-  Autocomplete,
-  Alert,
-  Box,
-} from '@mui/material';
+import { TextField, Button, Autocomplete, Alert, Box } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllClubs } from '../api/clubs';
 import AuthComponent from './AuthComponent';
@@ -13,14 +7,7 @@ import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import './common/DrawerModal.css';
 
-const JudgeModal = ({
-  open,
-  onClose,
-  onSubmit,
-  onDelete,
-  judge,
-  isEditMode,
-}) => {
+const JudgeModal = ({ open, onClose, onSubmit, onDelete, judge, isEditMode }) => {
   const [formData, setFormData] = React.useState({});
   const [judgeExperiences, setJudgeExperiences] = React.useState([]);
   const [isDeleteJudgeConfirmModalOpen, setIsDeleteJudgeConfirmModalOpen] = React.useState(false);
@@ -64,7 +51,7 @@ const JudgeModal = ({
     try {
       await onSubmit(formData);
     } catch (error) {
-      setError(error.message || "Errore nel salvataggio del giudice");
+      setError(error.message || 'Errore nel salvataggio del giudice');
     }
   };
 
@@ -88,12 +75,7 @@ const JudgeModal = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <Box>
             {isEditMode && onDelete && (
-              <Button
-                onClick={() => setIsDeleteJudgeConfirmModalOpen(true)}
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-              >
+              <Button onClick={() => setIsDeleteJudgeConfirmModalOpen(true)} variant="outlined" color="error" startIcon={<DeleteIcon />}>
                 Elimina profilo
               </Button>
             )}
@@ -102,39 +84,19 @@ const JudgeModal = ({
             <Button onClick={onClose} variant="outlined">
               Annulla
             </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-            >
+            <Button onClick={handleSubmit} variant="contained">
               {isEditMode ? 'Salva Modifiche' : 'Aggiungi'}
             </Button>
           </Box>
         </Box>
-      }
-    >
+      }>
       {/* Informazioni generali */}
       <div className="drawer-section">
         <h3 className="drawer-section-title">Informazioni generali</h3>
         <div className="drawer-section-content">
           <div className="drawer-fields-row-2">
-            <TextField
-              name="nome"
-              label="Nome"
-              value={formData.nome || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-              size="small"
-            />
-            <TextField
-              name="cognome"
-              label="Cognome"
-              value={formData.cognome || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-              size="small"
-            />
+            <TextField name="nome" label="Nome" value={formData.nome || ''} onChange={handleChange} fullWidth required size="small" />
+            <TextField name="cognome" label="Cognome" value={formData.cognome || ''} onChange={handleChange} fullWidth required size="small" />
           </div>
 
           <div className="drawer-fields-row-2">
@@ -151,16 +113,7 @@ const JudgeModal = ({
                 shrink: true,
               }}
             />
-            <TextField
-              name="regione"
-              label="Regione"
-              value={formData.regione || ''}
-              onChange={handleChange}
-              fullWidth
-              required
-              size="small"
-            />
-
+            <TextField name="regione" label="Regione" value={formData.regione || ''} onChange={handleChange} fullWidth required size="small" />
           </div>
         </div>
       </div>
@@ -175,15 +128,7 @@ const JudgeModal = ({
               value={formData.esperienza || null}
               getOptionLabel={(option) => option.nome || ''}
               onChange={handleJudgeExperienceChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Livello Giudice"
-                  variant="outlined"
-                  required
-                  size="small"
-                />
-              )}
+              renderInput={(params) => <TextField {...params} label="Livello Giudice" variant="outlined" required size="small" />}
               options={judgeExperiences}
             />
           </div>
@@ -204,7 +149,10 @@ const JudgeModal = ({
           message="Sei sicuro di voler eliminare il giudice selezionato?"
           primaryButton={{
             text: 'Elimina',
-            onClick: async () => { await handleDelete(); setIsDeleteJudgeConfirmModalOpen(false); },
+            onClick: async () => {
+              await handleDelete();
+              setIsDeleteJudgeConfirmModalOpen(false);
+            },
           }}
           secondaryButton={{
             text: 'Annulla',
@@ -212,7 +160,6 @@ const JudgeModal = ({
           }}
         />
       )}
-
     </DrawerModal>
   );
 };

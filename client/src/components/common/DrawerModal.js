@@ -5,7 +5,7 @@ import './DrawerModal.css';
 
 /**
  * Componente Drawer modale riutilizzabile che appare da destra
- * 
+ *
  * @param {boolean} open - Controlla se il drawer è aperto
  * @param {function} onClose - Funzione chiamata alla chiusura
  * @param {string} title - Titolo del drawer
@@ -14,15 +14,7 @@ import './DrawerModal.css';
  * @param {ReactNode} footer - Contenuto del footer (pulsanti, azioni, ecc.)
  * @param {string} width - Larghezza del drawer (default: '600px')
  */
-const DrawerModal = ({ 
-  open, 
-  onClose, 
-  title, 
-  badge,
-  children, 
-  footer,
-  width = '800px' 
-}) => {
+const DrawerModal = ({ open, onClose, title, badge, children, footer, width = '800px' }) => {
   return (
     <Drawer
       anchor="right"
@@ -33,9 +25,8 @@ const DrawerModal = ({
         sx: {
           width: width,
           maxWidth: '90vw',
-        }
-      }}
-    >
+        },
+      }}>
       <Box className="drawer-modal-container">
         {/* Header */}
         <Box className="drawer-modal-header">
@@ -43,17 +34,9 @@ const DrawerModal = ({
             <Typography variant="h5" className="drawer-modal-title">
               {title}
             </Typography>
-            {badge !== undefined && badge !== null && (
-              <Box className="drawer-modal-badge">
-                {badge}
-              </Box>
-            )}
+            {badge !== undefined && badge !== null && <Box className="drawer-modal-badge">{badge}</Box>}
           </Box>
-          <IconButton 
-            onClick={onClose}
-            className="drawer-modal-close-btn"
-            size="small"
-          >
+          <IconButton onClick={onClose} className="drawer-modal-close-btn" size="small">
             <Close />
           </IconButton>
         </Box>
@@ -61,17 +44,13 @@ const DrawerModal = ({
         <Divider />
 
         {/* Content */}
-        <Box className="drawer-modal-content">
-          {children}
-        </Box>
+        <Box className="drawer-modal-content">{children}</Box>
 
         {/* Footer */}
         {footer && (
           <>
             <Divider />
-            <Box className="drawer-modal-footer">
-              {footer}
-            </Box>
+            <Box className="drawer-modal-footer">{footer}</Box>
           </>
         )}
       </Box>

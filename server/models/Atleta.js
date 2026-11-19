@@ -1,110 +1,114 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Atleta = sequelize.define('Atleta', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  nome: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
-  },
-  cognome: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: true
-    }
-  },
-  dataNascita: {
-    type: DataTypes.DATEONLY,
-    allowNull: false,
-    field: 'data_nascita'
-  },
-  luogoNascita: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'luogo_nascita'
-  },
-  sesso: {
-    type: DataTypes.ENUM('M', 'F'),
-    allowNull: false
-  },
-  codiceFiscale: {
-    type: DataTypes.STRING(16),
-    allowNull: true,
-    validate: {
-      len: [16, 16]
+const Atleta = sequelize.define(
+  'Atleta',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-    field: 'codice_fiscale'
-  },
-  tipoAtletaId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'config_tipo_atleta',
-      key: 'id'
+    nome: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      },
     },
-    comment: 'DEPRECATO: sostituito da isBlackBelt. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati'
-  },
-  isBlackBelt: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
-    field: 'is_black_belt',
-    comment: 'Grado di cintura nera (CN) attuale. Confermato ad ogni iscrizione e copiato nel dettaglio iscrizione'
-  },
-  telefono: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  clubId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'clubs',
-      key: 'id'
+    cognome: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+      },
     },
-    field: 'club_id'
-  },
-  numeroTessera: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    field: 'numero_tessera'
-  },
-  scadenzaCertificato: {
-    type: DataTypes.DATEONLY,
-    allowNull: true,
-    field: 'scadenza_certificato'
-  },
-  certificatoId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'certificati_medici',
-      key: 'id'
+    dataNascita: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      field: 'data_nascita',
     },
-    field: 'certificato_id'
+    luogoNascita: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'luogo_nascita',
+    },
+    sesso: {
+      type: DataTypes.ENUM('M', 'F'),
+      allowNull: false,
+    },
+    codiceFiscale: {
+      type: DataTypes.STRING(16),
+      allowNull: true,
+      validate: {
+        len: [16, 16],
+      },
+      field: 'codice_fiscale',
+    },
+    tipoAtletaId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'config_tipo_atleta',
+        key: 'id',
+      },
+      comment: 'DEPRECATO: sostituito da isBlackBelt. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati',
+    },
+    isBlackBelt: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'is_black_belt',
+      comment: 'Grado di cintura nera (CN) attuale. Confermato ad ogni iscrizione e copiato nel dettaglio iscrizione',
+    },
+    telefono: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    clubId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'clubs',
+        key: 'id',
+      },
+      field: 'club_id',
+    },
+    numeroTessera: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'numero_tessera',
+    },
+    scadenzaCertificato: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      field: 'scadenza_certificato',
+    },
+    certificatoId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'certificati_medici',
+        key: 'id',
+      },
+      field: 'certificato_id',
+    },
   },
-}, {
-  tableName: 'atleti',
-  timestamps: true,
-  indexes: [
-    {
-      name: 'unique_atleta_codice_fiscale',
-      unique: true,
-      fields: ['codice_fiscale']
-    }
-  ]
-});
+  {
+    tableName: 'atleti',
+    timestamps: true,
+    indexes: [
+      {
+        name: 'unique_atleta_codice_fiscale',
+        unique: true,
+        fields: ['codice_fiscale'],
+      },
+    ],
+  }
+);
 
 module.exports = Atleta;

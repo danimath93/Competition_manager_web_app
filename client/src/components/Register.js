@@ -10,16 +10,16 @@ import './styles/Register.css';
 
 const Register = () => {
   const navigate = useNavigate();
-  
+
   // Stato per il tab attivo
   const [activeTab, setActiveTab] = useState('club');
-  
+
   // Configurazione dei tabs
   const tabs = [
     { label: 'Come Atleta', value: 'athlete', disabled: true },
-    { label: 'Come Club', value: 'club', disabled: false }
+    { label: 'Come Club', value: 'club', disabled: false },
   ];
-  
+
   // Sezione 1: credenziali utente
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -47,9 +47,8 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-
   // Funzione di redirect già presente
-  const handleRegisterSuccess = () => { };
+  const handleRegisterSuccess = () => {};
 
   const validateFields = () => {
     if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
@@ -65,9 +64,17 @@ const Register = () => {
       setError('Le password non corrispondono.');
       return false;
     }
-    if (!denominazione.trim() || !codiceFiscale.trim() ||
-      !indirizzoVia.trim() || !indirizzoComune.trim() || !indirizzoCap.trim() ||
-      !direttoreTecnico.trim() || !legaleRappresentante.trim() || !clubEmail.trim() || !tesseramento) {
+    if (
+      !denominazione.trim() ||
+      !codiceFiscale.trim() ||
+      !indirizzoVia.trim() ||
+      !indirizzoComune.trim() ||
+      !indirizzoCap.trim() ||
+      !direttoreTecnico.trim() ||
+      !legaleRappresentante.trim() ||
+      !clubEmail.trim() ||
+      !tesseramento
+    ) {
       setError('Tutti i campi del club contrassegnati con * sono obbligatori.');
       return false;
     }
@@ -78,11 +85,11 @@ const Register = () => {
       return false;
     }
     if (!privacyViewed) {
-      setError('Devi visualizzare l\'informativa sulla privacy prima di procedere.');
+      setError("Devi visualizzare l'informativa sulla privacy prima di procedere.");
       return false;
     }
     if (!privacyAccepted) {
-      setError('Devi accettare l\'informativa sulla privacy per procedere.');
+      setError("Devi accettare l'informativa sulla privacy per procedere.");
       return false;
     }
     return true;
@@ -105,7 +112,7 @@ const Register = () => {
         user: {
           username: username.trim(),
           email: email.trim().toLowerCase(),
-          password: password.trim()
+          password: password.trim(),
         },
         club: {
           denominazione,
@@ -116,8 +123,8 @@ const Register = () => {
           direttoreTecnico,
           recapitoTelefonico,
           email: clubEmail,
-          tesseramento
-        }
+          tesseramento,
+        },
       };
 
       const response = await registerUser(sendData);
@@ -144,12 +151,12 @@ const Register = () => {
           <div className="login-left">
             <div className="register-card">
               <h3 className="text-accent text-center">Benvenuto! Crea il tuo account</h3>
-              
+
               <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
                 {activeTab === 'club' && (
                   <form onSubmit={handleSubmit} className="register-form">
                     <h6 className="text-primary text-center register-section-title">Credenziali di accesso</h6>
-                    
+
                     <div className="register-form-grid">
                       <TextInput
                         id="username"
@@ -201,7 +208,7 @@ const Register = () => {
                       />
 
                       <h6 className="text-primary text-center register-section-title">Informazioni Club</h6>
-                      
+
                       <TextInput
                         id="denominazione"
                         label="Denominazione"
@@ -315,63 +322,42 @@ const Register = () => {
                           value={tesseramento}
                           onChange={(event, value) => setTesseramento(value)}
                           options={['FIWUK', 'ASI', 'Altro Ente']}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              placeholder="Seleziona affiliazione"
-                              size="small"
-                              required
-                            />
-                          )}
+                          renderInput={(params) => <TextField {...params} placeholder="Seleziona affiliazione" size="small" required />}
                           disabled={loading}
                         />
                       </div>
                     </div>
-                      <div className="privacy-section">
-                        <div className="privacy-checkbox-container">
-                          <input
-                            type="checkbox"
-                            id="privacyAccepted"
-                            checked={privacyAccepted}
-                            onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                            disabled={loading || !privacyViewed}
-                            className="privacy-checkbox"
-                          />
-                          <label htmlFor="privacyAccepted" className="privacy-label">
-                            <span className="required-asterisk">*</span>
-                            Dichiaro di aver letto e accettato l'
-                            <a
-                              href="/trattamento-dati-personali"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="privacy-link"
-                              onClick={() => setPrivacyViewed(true)}
-                            >
-                              Informativa sul Trattamento dei Dati Personali
-                            </a>
-                          </label>
-                        </div>
+                    <div className="privacy-section">
+                      <div className="privacy-checkbox-container">
+                        <input
+                          type="checkbox"
+                          id="privacyAccepted"
+                          checked={privacyAccepted}
+                          onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                          disabled={loading || !privacyViewed}
+                          className="privacy-checkbox"
+                        />
+                        <label htmlFor="privacyAccepted" className="privacy-label">
+                          <span className="required-asterisk">*</span>
+                          Dichiaro di aver letto e accettato l'
+                          <a
+                            href="/trattamento-dati-personali"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="privacy-link"
+                            onClick={() => setPrivacyViewed(true)}>
+                            Informativa sul Trattamento dei Dati Personali
+                          </a>
+                        </label>
                       </div>
+                    </div>
 
-                      <button
-                        type="submit"
-                        className="login-button register-submit-button"
-                        disabled={loading || !privacyViewed || !privacyAccepted}
-                      >
-                        {loading ? 'Registrazione in corso...' : 'Iscriviti'}
-                      </button>
+                    <button type="submit" className="login-button register-submit-button" disabled={loading || !privacyViewed || !privacyAccepted}>
+                      {loading ? 'Registrazione in corso...' : 'Iscriviti'}
+                    </button>
 
-                      {error && (
-                        <div className="error-message register-messages">
-                          {error}
-                        </div>
-                      )}
-                      {success && (
-                        <div className="success-message register-messages">
-                          {success}
-                        </div>
-                      )}
-                      
+                    {error && <div className="error-message register-messages">{error}</div>}
+                    {success && <div className="success-message register-messages">{success}</div>}
                   </form>
                 )}
               </Tabs>
@@ -382,8 +368,10 @@ const Register = () => {
                   <a
                     href="/login"
                     className="register-link"
-                    onClick={(e) => { e.preventDefault(); navigate('/login'); }}
-                  >
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/login');
+                    }}>
                     Accedi qui
                   </a>
                 </span>

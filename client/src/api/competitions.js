@@ -5,7 +5,7 @@ export const loadAllCompetitions = async (states = []) => {
   try {
     const params = new URLSearchParams();
     if (states.length > 0) {
-      states.forEach(state => params.append('stati', state));
+      states.forEach((state) => params.append('stati', state));
     }
     const response = await axios.get('/competizioni', { params });
     return response.data;
@@ -17,13 +17,13 @@ export const loadAllCompetitions = async (states = []) => {
 
 // Ottiene i dettagli di una competizione specifica (per admin)
 export const getCompetitionDetails = async (id) => {
-    try {
-        const response = await axios.get(`/competizioni/${id}`);
-        return response.data;
-    } catch (error) {
-        console.error('Errore nel caricamento dei dettagli della competizione:', error);
-        throw error;
-    }
+  try {
+    const response = await axios.get(`/competizioni/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Errore nel caricamento dei dettagli della competizione:', error);
+    throw error;
+  }
 };
 
 // Ottiene il riepilogo costi dettagliato per una competizione e club
@@ -54,7 +54,7 @@ export const updateCompetition = async (id, competitionData) => {
     const response = await axios.put(`/competizioni/${id}`, competitionData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'aggiornamento della competizione:', error);
+    console.error("Errore durante l'aggiornamento della competizione:", error);
     throw error;
   }
 };
@@ -64,7 +64,7 @@ export const deleteCompetition = async (id) => {
   try {
     await axios.delete(`/competizioni/${id}`);
   } catch (error) {
-    console.error('Errore durante l\'eliminazione della competizione:', error);
+    console.error("Errore durante l'eliminazione della competizione:", error);
     throw error;
   }
 };
@@ -74,7 +74,7 @@ export const downloadExcelRegisteredAthletes = async (competitionId, mode = 'sim
   try {
     const response = await axios.get(`/competizioni/${competitionId}/export-reg-athletes`, {
       params: { mode },
-      responseType: 'blob'
+      responseType: 'blob',
     });
     return response.data;
   } catch (error) {

@@ -6,21 +6,20 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3050/api';
 const instance = axios.create({
   baseURL: API_URL,
   timeout: 60000,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
 });
 
 // Aggiungiamo il token a ogni richiesta
 instance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (token) {
       if (isTokenExpired(token)) {
-        console.log("Token scaduto");
+        console.log('Token scaduto');
         clearAuthData();
-        window.location.href = "/login";
+        window.location.href = '/login';
         return;
-      }
-      else {
+      } else {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
@@ -38,7 +37,7 @@ const isTokenExpired = (token) => {
 
     return payload.exp < currentTime; // True se il token è scaduto
   } catch (error) {
-    console.error("Errore nella decodifica del token:", error);
+    console.error('Errore nella decodifica del token:', error);
     return true; // Consideriamo il token scaduto se c'è un errore
   }
 };

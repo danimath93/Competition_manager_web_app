@@ -40,24 +40,13 @@ const Layout = ({ user }) => {
 
   return (
     <div className="layout">
-      {!user && (
-        <Header />
-      )}
-      
-      {user && isMobile && (
-        <HeaderMenu onMenuClick={toggleSidebar} />
-      )}
-      
-      {user && (
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          toggleSidebar={toggleSidebar}
-          isMobile={isMobile}
-          onNavigate={closeSidebar}
-        />
-      )}
+      {!user && <Header />}
 
-      <div className={`layout-content ${user ? (isMobile ? 'with-header-menu' : (sidebarOpen ? 'with-sidebar-open' : 'with-sidebar-closed')) : ''}`}>
+      {user && isMobile && <HeaderMenu onMenuClick={toggleSidebar} />}
+
+      {user && <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} onNavigate={closeSidebar} />}
+
+      <div className={`layout-content ${user ? (isMobile ? 'with-header-menu' : sidebarOpen ? 'with-sidebar-open' : 'with-sidebar-closed') : ''}`}>
         <main className="main-content">
           <Outlet />
         </main>

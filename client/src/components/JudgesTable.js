@@ -8,7 +8,6 @@ import { format } from 'date-fns';
 import muiTheme from '../styles/muiTheme';
 
 const JudgesTable = ({ judges, onEdit, onDelete }) => {
-
   const { user } = useAuth();
   const isAdminOrSuperAdmin = user?.permissions === 'admin' || user?.permissions === 'superAdmin';
 
@@ -71,18 +70,8 @@ const JudgesTable = ({ judges, onEdit, onDelete }) => {
       headerName: 'Azioni',
       width: 80,
       getActions: (params) => [
-        <GridActionsCellItem
-          icon={<Edit />}
-          label="Modifica"
-          onClick={() => onEdit(params.row)}
-          showInMenu={true}
-        />,
-        <GridActionsCellItem
-          icon={<Delete />}
-          label="Elimina"
-          onClick={() => onDelete(params.row.id)}
-          showInMenu={true}
-        />,
+        <GridActionsCellItem icon={<Edit />} label="Modifica" onClick={() => onEdit(params.row)} showInMenu={true} />,
+        <GridActionsCellItem icon={<Delete />} label="Elimina" onClick={() => onDelete(params.row.id)} showInMenu={true} />,
       ],
     });
 
@@ -91,7 +80,7 @@ const JudgesTable = ({ judges, onEdit, onDelete }) => {
 
   // Prepara i dati per la griglia
   const rows = useMemo(() => {
-    return judges.map(judge => ({
+    return judges.map((judge) => ({
       ...judge,
       id: judge.id || judge.judgeId, // Assicurati che ci sia un id univoco
     }));

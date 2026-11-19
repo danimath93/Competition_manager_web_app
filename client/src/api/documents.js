@@ -27,7 +27,7 @@ export const uploadDocumento = async (file, tipoDocumento, entitaId, entitaTipo,
 
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'upload del documento:', error);
+    console.error("Errore durante l'upload del documento:", error);
     throw error;
   }
 };
@@ -98,7 +98,6 @@ export const getDocumentoInfo = async (documentoId) => {
 export const getBlobDocumento = async (documentoId) => {
   try {
     const response = await axios.get(`/documenti/${documentoId}/download`, {
-
       responseType: 'blob',
     });
     return response.data;
@@ -121,11 +120,11 @@ export const deleteDocumento = async (documentoId, entitaId, entitaTipo, tipoDoc
       data: {
         entitaId,
         entitaTipo,
-        tipoDocumento
-      }
+        tipoDocumento,
+      },
     });
   } catch (error) {
-    console.error('Errore durante l\'eliminazione del documento:', error);
+    console.error("Errore durante l'eliminazione del documento:", error);
     throw error;
   }
 };

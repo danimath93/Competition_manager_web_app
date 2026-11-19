@@ -25,5 +25,4 @@ router.put('/:id/tabellone', svolgimentoController.saveTabellone);
 // imposta vincitore di un match (body: { winnerAtletaId })
 router.post('/:id/match/:matchId/winner', svolgimentoController.setMatchWinner);
 
-
 module.exports = router;

@@ -52,7 +52,7 @@ const RequestPasswordReset = () => {
               <form onSubmit={handleSubmit} className="login-form">
                 <h5 className="text-primary text-center">Password dimenticata?</h5>
                 <h6 className="text-secondary text-center p-1">Ci pensiamo noi! Inserisci la tua email qui sotto.</h6>
-                
+
                 <TextInput
                   id="email"
                   label="Email"
@@ -66,24 +66,12 @@ const RequestPasswordReset = () => {
                   autoComplete="email"
                 />
 
-                <button
-                  type="submit"
-                  className="reset-password-button"
-                  disabled={loading}
-                >
+                <button type="submit" className="reset-password-button" disabled={loading}>
                   {loading ? 'Invio richiesta...' : 'Richiedi reset password'}
                 </button>
 
-                {error && (
-                  <div className="error-message">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="success-message">
-                    {success}
-                  </div>
-                )}
+                {error && <div className="error-message">{error}</div>}
+                {success && <div className="success-message">{success}</div>}
               </form>
 
               <div className="login-footer">
@@ -91,8 +79,10 @@ const RequestPasswordReset = () => {
                   <a
                     href="#"
                     className="register-link"
-                    onClick={(e) => { e.preventDefault(); navigate('/login'); }}
-                  >
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/login');
+                    }}>
                     ← Torna alla pagina di login
                   </a>
                 </span>

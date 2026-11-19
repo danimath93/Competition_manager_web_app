@@ -1,17 +1,7 @@
 // CategoryInProgress.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  Alert,
-  CircularProgress,
-  Divider,
-  Chip,
-  Tooltip
-} from '@mui/material';
+import { Container, Typography, Box, Button, Alert, CircularProgress, Divider, Chip, Tooltip } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import { FaTags } from 'react-icons/fa';
 import { ArrowBack, Print, Delete } from '@mui/icons-material';
@@ -35,14 +25,14 @@ const CategoryInProgress = () => {
   const [searchParams] = useSearchParams();
   const svolgimentoId = searchParams.get('svolgimentoId');
   const categoriaNome = searchParams.get('categoriaNome');
-  const competizioneId = searchParams.get("competizioneId");
-  const tipoCompetizioneId = searchParams.get("tipoCompetizioneId");
+  const competizioneId = searchParams.get('competizioneId');
+  const tipoCompetizioneId = searchParams.get('tipoCompetizioneId');
 
   // Stati principali
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stato, setStato] = useState(CategoryStates.IN_DEFINIZIONE);
-  
+
   // Dati categoria
   const [atleti, setAtleti] = useState([]);
   const [letter, setLetter] = useState('');
@@ -50,7 +40,7 @@ const CategoryInProgress = () => {
   const [commissione, setCommissione] = useState(Array(10).fill(''));
   const [classifica, setClassifica] = useState([]);
   const [tabellone, setTabellone] = useState(null);
-  
+
   // Altri stati
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(null);
@@ -70,7 +60,7 @@ const CategoryInProgress = () => {
     try {
       setLoading(true);
       const svolg = await getSvolgimentoCategoria(svolgimentoId);
-      
+
       setLetter(svolg.letteraEstratta || '');
       setStato(svolg.stato || CategoryStates.IN_DEFINIZIONE);
       setPunteggi(svolg.punteggi || {});
@@ -78,7 +68,7 @@ const CategoryInProgress = () => {
       setClassifica(svolg.classifica || []);
       setTabellone(svolg.tabellone || null);
       setAtleti(svolg.atleti || []);
-      
+
       // Genera tabellone di default per combattimenti se non presente
       if (tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString()) {
         if (!svolg.tabellone || !svolg.tabellone.rounds || svolg.tabellone.rounds.length === 0) {
@@ -97,14 +87,11 @@ const CategoryInProgress = () => {
   const loadJudgesAndCategory = async () => {
     try {
       const categoriesPromise = getCategoriesByCompetizione(competizioneId, false);
-      
-      const [judgesData, categoriesData] = await Promise.all([
-        loadAllJudges(),
-        categoriesPromise
-      ]);
+
+      const [judgesData, categoriesData] = await Promise.all([loadAllJudges(), categoriesPromise]);
       setJudges(judgesData || []);
-      
-      const categoryMatch = categoriesData.find(cat => cat.nome === decodeURIComponent(categoriaNome));
+
+      const categoryMatch = categoriesData.find((cat) => cat.nome === decodeURIComponent(categoriaNome));
       if (categoryMatch) {
         setCurrentCategory(categoryMatch);
       }
@@ -121,35 +108,35 @@ const CategoryInProgress = () => {
   const generateTabelloneFromAtleti = (atletiList) => {
     const numAtleti = atletiList.length;
     if (numAtleti < 2) return { rounds: [] };
-    
+
     // Calcola il numero di match necessari nel primo round
     // Formula: 2^(ceil(log2(numAtleti)) - 1)
     // Es: 5 atleti -> ceil(log2(5)) = 3, quindi 2^(3-1) = 4 match (8 posizioni, 3 BYE)
     const numMatchesFirstRound = Math.pow(2, Math.ceil(Math.log2(numAtleti)) - 1);
-    
+
     // Crea i match del primo round
     const matchesRound0 = [];
     let atletaIdx = 0;
-    
+
     for (let i = 0; i < numMatchesFirstRound; i++) {
       const p1 = atletaIdx < numAtleti ? atletiList[atletaIdx]?.id || null : null;
       atletaIdx++;
       const p2 = atletaIdx < numAtleti ? atletiList[atletaIdx]?.id || null : null;
       atletaIdx++;
-      
+
       matchesRound0.push({
         id: `r0m${i}`,
         players: [p1, p2],
         roundResults: [null, null, null],
         winner: null,
-        from: []
+        from: [],
       });
     }
 
     const rounds = [{ matches: matchesRound0 }];
     let prevMatches = matchesRound0;
     let roundIdx = 1;
-    
+
     while (prevMatches.length > 1) {
       const curMatches = [];
       for (let i = 0; i < prevMatches.length; i += 2) {
@@ -160,14 +147,14 @@ const CategoryInProgress = () => {
           players: [null, null],
           roundResults: [null, null, null],
           winner: null,
-          from: [left.id, right ? right.id : null]
+          from: [left.id, right ? right.id : null],
         });
       }
       rounds.push({ matches: curMatches });
       prevMatches = curMatches;
       roundIdx += 1;
     }
-    
+
     return { rounds };
   };
 
@@ -186,19 +173,19 @@ const CategoryInProgress = () => {
       alert('Devi prima generare il tabellone');
       return;
     }
-    
+
     const updates = { stato: CategoryStates.IN_ATTESA_DI_AVVIO };
-    
+
     // Se è quyen, salva la lettera
     if (loadedLetter) {
       updates.letteraEstratta = loadedLetter;
       setLetter(loadedLetter);
     }
-    
+
     if (tipoCompetizioneId === CompetitionTipology.COMBATTIMENTO.toString()) {
       updates.tabellone = tabellone;
     }
-    
+
     await patchSvolgimentoCategoria(svolgimentoId, updates);
     setStato(CategoryStates.IN_ATTESA_DI_AVVIO);
   };
@@ -219,7 +206,7 @@ const CategoryInProgress = () => {
           punteggi: {},
           commissione: Array(10).fill(''),
           classifica: [],
-          tabellone: null
+          tabellone: null,
         });
         // Ricarica i dati per rigenerare il tabellone
         await loadSvolgimento();
@@ -231,10 +218,9 @@ const CategoryInProgress = () => {
 
   // Handler per concludere categoria
   const handleConcludeQuyenCategory = async (classifica) => {
-    
-    await patchSvolgimentoCategoria(svolgimentoId, { 
+    await patchSvolgimentoCategoria(svolgimentoId, {
       stato: CategoryStates.CONCLUSA,
-      classifica: classifica
+      classifica: classifica,
     });
     setStato(CategoryStates.CONCLUSA);
   };
@@ -242,11 +228,11 @@ const CategoryInProgress = () => {
   // Handler per concludere categoria (Combattimenti)
   const handleConcludeFightingCategory = async (classifica) => {
     setClassifica(classifica);
-    
+
     await patchSvolgimentoCategoria(svolgimentoId, {
       stato: CategoryStates.CONCLUSA,
       classifica: classifica,
-      tabellone: tabellone
+      tabellone: tabellone,
     });
     setStato(CategoryStates.CONCLUSA);
   };
@@ -256,15 +242,15 @@ const CategoryInProgress = () => {
     try {
       const punteggiAtleti = { ...punteggi };
       const prevAtleta = punteggiAtleti[atletaId] || [null, null, null, null, null];
-     const newAtleta = [...prevAtleta];
+      const newAtleta = [...prevAtleta];
       newAtleta[votoIdx] = value;
       const updated = { ...punteggiAtleti, [atletaId]: newAtleta };
-    
+
       setPunteggi(updated);
-    
-      await patchSvolgimentoCategoria(svolgimentoId, { 
-        punteggi: updated, 
-        stato: CategoryStates.IN_CORSO 
+
+      await patchSvolgimentoCategoria(svolgimentoId, {
+        punteggi: updated,
+        stato: CategoryStates.IN_CORSO,
       });
     } catch (e) {
       console.error('Errore salvataggio punteggi:', e);
@@ -284,7 +270,7 @@ const CategoryInProgress = () => {
     if (updates.tabellone) setTabellone(updates.tabellone);
     if (updates.classifica) setClassifica(updates.classifica);
     if (updates.stato) setStato(updates.stato);
-    
+
     await patchSvolgimentoCategoria(svolgimentoId, updates);
   };
 
@@ -315,35 +301,27 @@ const CategoryInProgress = () => {
 
   // Determina quale componente mostrare in base a tipo e stato
   const showDefinitionPhase = stato === CategoryStates.IN_DEFINIZIONE;
-  const showExecutionPhase =
-    stato === CategoryStates.IN_ATTESA_DI_AVVIO || 
-    stato === CategoryStates.IN_CORSO || 
-    stato === CategoryStates.CONCLUSA;
+  const showExecutionPhase = stato === CategoryStates.IN_ATTESA_DI_AVVIO || stato === CategoryStates.IN_CORSO || stato === CategoryStates.CONCLUSA;
 
   return (
     <div className="page-container">
-      <PageHeader
-        icon={FaTags}
-        title="Svolgimento categoria"
-      />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <PageHeader icon={FaTags} title="Svolgimento categoria" />
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna a tutte le categorie
       </MuiButton>
-    
-      <Divider sx={{ mb: 3, borderWidth: 1.5 }}  />
+
+      <Divider sx={{ mb: 3, borderWidth: 1.5 }} />
 
       {/* Status indicator */}
-      <Box sx={{ 
-        mb: 2,
-        display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        justifyContent: { xs: 'flex-start', md: 'space-between' },
-        alignItems: { xs: 'flex-start', md: 'center' },
-        gap: 2 
-      }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: { xs: 'flex-start', md: 'space-between' },
+          alignItems: { xs: 'flex-start', md: 'center' },
+          gap: 2,
+        }}>
         {categoriaNome && (
           <Typography variant="h4">
             <b>{decodeURIComponent(categoriaNome)}</b>
@@ -352,49 +330,40 @@ const CategoryInProgress = () => {
 
         <Box sx={{ display: 'flex', gap: 2 }}>
           <AuthComponent requiredRoles={['admin', 'superAdmin']}>
-            <Button
-              variant="outlined"
-              startIcon={<Delete />}
-              onClick={handleResetCategory}
-            >
+            <Button variant="outlined" startIcon={<Delete />} onClick={handleResetCategory}>
               Reset categoria
             </Button>
           </AuthComponent>
 
           <Tooltip title="Stampa il quaderno della categoria">
-            <Button
-              variant="outlined"
-              startIcon={<Print />}
-              onClick={() => setShowPrintModal(true)}
-            >
+            <Button variant="outlined" startIcon={<Print />} onClick={() => setShowPrintModal(true)}>
               Stampa quaderno
             </Button>
           </Tooltip>
         </Box>
       </Box>
 
-
       {/* Status indicator */}
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Typography variant="h6"><b>Stato:</b></Typography>
-        <Chip 
-          label={stato} 
+        <Typography variant="h6">
+          <b>Stato:</b>
+        </Typography>
+        <Chip
+          label={stato}
           color={
-            stato === CategoryStates.IN_DEFINIZIONE ? 'warning' :
-            stato === CategoryStates.IN_ATTESA_DI_AVVIO ? 'info' :
-            stato === CategoryStates.IN_CORSO ? 'primary' : 'success'
+            stato === CategoryStates.IN_DEFINIZIONE
+              ? 'warning'
+              : stato === CategoryStates.IN_ATTESA_DI_AVVIO
+                ? 'info'
+                : stato === CategoryStates.IN_CORSO
+                  ? 'primary'
+                  : 'success'
           }
         />
       </Box>
 
       {/* Componenti condizionali in base a tipo competizione e stato */}
-      {isQuyenCompetition && showDefinitionPhase && (
-        <QuyenDefinition
-          atleti={atleti}
-          letter={letter}
-          onConfirmDefinition={handleConfirmDefinition}
-        />
-      )}
+      {isQuyenCompetition && showDefinitionPhase && <QuyenDefinition atleti={atleti} letter={letter} onConfirmDefinition={handleConfirmDefinition} />}
 
       {isQuyenCompetition && showExecutionPhase && (
         <QuyenExecution
@@ -437,19 +406,11 @@ const CategoryInProgress = () => {
       )}
 
       {!isQuyenCompetition && !isFightingCompetition && (
-        <Alert severity="info">
-          La gestione dello svolgimento per questa tipologia di competizione non è ancora attiva.
-        </Alert>
+        <Alert severity="info">La gestione dello svolgimento per questa tipologia di competizione non è ancora attiva.</Alert>
       )}
 
       {/* Competition Notebook Print Modal */}
-      <CategoryNotebookPrint
-        open={showPrintModal}
-        onClose={() => setShowPrintModal(false)}
-        category={currentCategory}
-        tabellone={tabellone}
-        judges={judges}
-      />      
+      <CategoryNotebookPrint open={showPrintModal} onClose={() => setShowPrintModal(false)} category={currentCategory} tabellone={tabellone} judges={judges} />
     </div>
   );
 };

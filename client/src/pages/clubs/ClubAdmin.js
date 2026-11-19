@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Grid,
-  TextField,
-} from '@mui/material';
+import { Box, Grid, TextField } from '@mui/material';
 import { Add, ArrowForward } from '@mui/icons-material';
 import { Alert } from '@mui/material';
 import { FaUniversity } from 'react-icons/fa';
@@ -39,7 +35,7 @@ const ClubAdmin = () => {
         setClubs(clubsData);
         setFilteredClubs(clubsData);
       } catch (error) {
-        setError('Errore nel caricamento dei dati dei club: ' + (error.message));
+        setError('Errore nel caricamento dei dati dei club: ' + error.message);
         console.error('Errore nel caricamento dei dati:', error);
       }
     };
@@ -51,21 +47,20 @@ const ClubAdmin = () => {
     let result = clubs;
 
     if (filters.denominazione) {
-      result = result.filter(
-        (club) =>
-          club.denominazione?.toLowerCase().includes(filters.denominazione.toLowerCase())
-      );
+      result = result.filter((club) => club.denominazione?.toLowerCase().includes(filters.denominazione.toLowerCase()));
     }
     if (filters.codiceFiscale) {
-      result = result.filter((club) =>
-        club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase()) ||
-        club.partitaIva?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
+      result = result.filter(
+        (club) =>
+          club.codiceFiscale?.toLowerCase().includes(filters.codiceFiscale.toLowerCase()) ||
+          club.partitaIva?.toLowerCase().includes(filters.codiceFiscale.toLowerCase())
       );
     }
     if (filters.rappresentanti) {
-      result = result.filter((club) =>
-        club.legaleRappresentante?.toLowerCase().includes(filters.rappresentanti.toLowerCase()) ||
-        club.direttoreTecnico?.toLowerCase().includes(filters.rappresentanti.toLowerCase())
+      result = result.filter(
+        (club) =>
+          club.legaleRappresentante?.toLowerCase().includes(filters.rappresentanti.toLowerCase()) ||
+          club.direttoreTecnico?.toLowerCase().includes(filters.rappresentanti.toLowerCase())
       );
     }
     setFilteredClubs(result);
@@ -87,7 +82,7 @@ const ClubAdmin = () => {
     setIsReadOnlyMode(true);
     setSelectedClub(club);
     setIsModalOpen(true);
-  }
+  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -106,8 +101,8 @@ const ClubAdmin = () => {
       setClubs(clubsData);
       handleCloseModal();
     } catch (error) {
-      console.error("Errore nel salvataggio del club:", error);
-      setError("Errore nel salvataggio del club: " + (error.message));
+      console.error('Errore nel salvataggio del club:', error);
+      setError('Errore nel salvataggio del club: ' + error.message);
     }
   };
 
@@ -122,7 +117,7 @@ const ClubAdmin = () => {
       setClubs(clubsData);
     } catch (error) {
       console.error("Errore nell'eliminazione del club:", error);
-      setError("Errore nell'eliminazione del club: " + (error.message));
+      setError("Errore nell'eliminazione del club: " + error.message);
     }
   };
 
@@ -135,15 +130,9 @@ const ClubAdmin = () => {
   };
 
   return (
-    <div className="page-container" >
-      <PageHeader
-        title="Gestione Club" 
-        icon={FaUniversity}
-      />
-      <MuiButton
-        startIcon={<ArrowForward />}
-        onClick={handleGoUserClub}
-      >
+    <div className="page-container">
+      <PageHeader title="Gestione Club" icon={FaUniversity} />
+      <MuiButton startIcon={<ArrowForward />} onClick={handleGoUserClub}>
         Vai al mio club
       </MuiButton>
 
@@ -161,37 +150,16 @@ const ClubAdmin = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
-                  <TextField
-                    name="denominazione"
-                    label="Filtra per Denominazione"
-                    variant="outlined"
-                    fullWidth
-                    onChange={handleFilterChange}
-                  />
+                  <TextField name="denominazione" label="Filtra per Denominazione" variant="outlined" fullWidth onChange={handleFilterChange} />
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <TextField
-                    name="codiceFiscale"
-                    label="Filtra per Cod. Fiscale o P. IVA"
-                    variant="outlined"
-                    fullWidth
-                    onChange={handleFilterChange}
-                  />
+                  <TextField name="codiceFiscale" label="Filtra per Cod. Fiscale o P. IVA" variant="outlined" fullWidth onChange={handleFilterChange} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="rappresentanti"
-                    label="Filtra per Rappr. o Dir. Tecnico"
-                    variant="outlined"
-                    fullWidth
-                    onChange={handleFilterChange}
-                  />
+                  <TextField name="rappresentanti" label="Filtra per Rappr. o Dir. Tecnico" variant="outlined" fullWidth onChange={handleFilterChange} />
                 </Grid>
               </Grid>
-              <Button
-                icon={Add}
-                onClick={() => handleOpenModal()}
-              >
+              <Button icon={Add} onClick={() => handleOpenModal()}>
                 Aggiungi Club
               </Button>
             </Box>
@@ -200,12 +168,7 @@ const ClubAdmin = () => {
 
         <div className="page-card" style={{ padding: '0', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div className="page-card-body" style={{ flex: 1, overflow: 'auto' }}>
-            <ClubsTable
-              clubs={filteredClubs || []}
-              onEdit={handleOpenModal}
-              onInfo={handleOpenModalInfo}
-              onDelete={handleDeleteClubConfirm}
-            />
+            <ClubsTable clubs={filteredClubs || []} onEdit={handleOpenModal} onInfo={handleOpenModalInfo} onDelete={handleDeleteClubConfirm} />
           </div>
         </div>
       </div>
@@ -232,7 +195,10 @@ const ClubAdmin = () => {
           message="Sei sicuro di voler eliminare questo club? Questa azione non può essere annullata."
           primaryButton={{
             text: 'Elimina',
-            onClick: async () => { await handleDeleteClub(selectedClub.id); setConfirmDeleteModalOpen(false); },
+            onClick: async () => {
+              await handleDeleteClub(selectedClub.id);
+              setConfirmDeleteModalOpen(false);
+            },
           }}
           secondaryButton={{
             text: 'Annulla',

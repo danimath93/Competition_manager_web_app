@@ -60,10 +60,14 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
     return { valid: false, errors: ['La configurazione categorie deve essere un oggetto'], config: null };
   }
   if (!ageGroupConfig || !Array.isArray(ageGroupConfig.groups)) {
-    return { valid: false, errors: ['Seleziona la configurazione delle fasce d\'età prima delle categorie'], config: null };
+    return {
+      valid: false,
+      errors: ["Seleziona la configurazione delle fasce d'età prima delle categorie"],
+      config: null,
+    };
   }
 
-  const unknownKeys = Object.keys(categoryConfig).filter(k => !CONFIG_KEYS.includes(k));
+  const unknownKeys = Object.keys(categoryConfig).filter((k) => !CONFIG_KEYS.includes(k));
   if (unknownKeys.length > 0) {
     errors.push(`Proprietà non ammesse nella configurazione categorie: ${unknownKeys.join(', ')}`);
   }
@@ -71,7 +75,7 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
     errors.push(`Versione configurazione categorie non supportata (attesa ${CATEGORY_CONFIG_VERSION})`);
   }
 
-  const groupKeys = new Set(ageGroupConfig.groups.map(g => g.key));
+  const groupKeys = new Set(ageGroupConfig.groups.map((g) => g.key));
 
   // Categorie
   if (!Array.isArray(categoryConfig.categories) || categoryConfig.categories.length === 0) {
@@ -84,7 +88,7 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
         errors.push(`${position}: deve essere un oggetto`);
         return;
       }
-      const unknown = Object.keys(category).filter(k => !CATEGORY_KEYS.includes(k));
+      const unknown = Object.keys(category).filter((k) => !CATEGORY_KEYS.includes(k));
       if (unknown.length > 0) {
         errors.push(`${position}: proprietà non ammesse ${unknown.join(', ')}`);
       }
@@ -98,7 +102,7 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
       if (!Array.isArray(category.ageGroupKeys) || category.ageGroupKeys.length === 0) {
         errors.push(`${position}: seleziona almeno una fascia d'età`);
       } else {
-        const missing = category.ageGroupKeys.filter(key => !groupKeys.has(key));
+        const missing = category.ageGroupKeys.filter((key) => !groupKeys.has(key));
         if (missing.length > 0) {
           errors.push(`${position}: fasce d'età non presenti nella configurazione (${missing.join(', ')})`);
         }
@@ -121,7 +125,7 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
         errors.push(`${position}: deve essere un oggetto`);
         return;
       }
-      const unknown = Object.keys(level).filter(k => !EXPERIENCE_KEYS.includes(k));
+      const unknown = Object.keys(level).filter((k) => !EXPERIENCE_KEYS.includes(k));
       if (unknown.length > 0) {
         errors.push(`${position}: proprietà non ammesse ${unknown.join(', ')}`);
       }
@@ -150,18 +154,18 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
   const groupOrder = new Map(ageGroupConfig.groups.map((g, i) => [g.key, i]));
   const normalized = {
     version: CATEGORY_CONFIG_VERSION,
-    categories: categoryConfig.categories.map(category => ({
+    categories: categoryConfig.categories.map((category) => ({
       categoryTypeId: category.categoryTypeId,
       ageGroupKeys: [...new Set(category.ageGroupKeys)].sort((a, b) => groupOrder.get(a) - groupOrder.get(b)),
-      belt: category.belt
+      belt: category.belt,
     })),
     experienceLevels: experienceLevels
-      .map(level => ({
+      .map((level) => ({
         competitionTypeId: level.competitionTypeId,
         grouping: level.grouping,
-        experienceIds: [...new Set(level.experienceIds)]
+        experienceIds: [...new Set(level.experienceIds)],
       }))
-      .filter(level => level.experienceIds.length > 0)
+      .filter((level) => level.experienceIds.length > 0),
   };
 
   return { valid: true, errors: [], config: normalized };
@@ -175,26 +179,21 @@ const validateCategoryConfig = (categoryConfig, ageGroupConfig) => {
  */
 const getEligibleCategories = (categoryConfig, ageGroup, isBlackBelt) => {
   if (!categoryConfig || !Array.isArray(categoryConfig.categories) || !ageGroup) return [];
-  return categoryConfig.categories.filter(category =>
-    category.ageGroupKeys.includes(ageGroup.key) && isBeltAllowed(category.belt, isBlackBelt)
-  );
+  return categoryConfig.categories.filter((category) => category.ageGroupKeys.includes(ageGroup.key) && isBeltAllowed(category.belt, isBlackBelt));
 };
 
 /**
  * Restituisce gli ID dei livelli di esperienza configurati per tipo competizione e raggruppamento
  */
 const getExperienceIds = (categoryConfig, competitionTypeId, grouping) => {
-  const level = (categoryConfig?.experienceLevels || []).find(l =>
-    l.competitionTypeId === competitionTypeId && l.grouping === grouping
-  );
+  const level = (categoryConfig?.experienceLevels || []).find((l) => l.competitionTypeId === competitionTypeId && l.grouping === grouping);
   return level ? level.experienceIds : [];
 };
 
 /**
  * ID dei tipi categoria previsti dalla competizione
  */
-const getCompetitionCategoryTypeIds = (competizione) =>
-  (competizione?.categoryConfig?.categories || []).map(c => c.categoryTypeId);
+const getCompetitionCategoryTypeIds = (competizione) => (competizione?.categoryConfig?.categories || []).map((c) => c.categoryTypeId);
 
 module.exports = {
   CATEGORY_CONFIG_VERSION,
@@ -204,5 +203,5 @@ module.exports = {
   validateCategoryConfig,
   getEligibleCategories,
   getExperienceIds,
-  getCompetitionCategoryTypeIds
+  getCompetitionCategoryTypeIds,
 };

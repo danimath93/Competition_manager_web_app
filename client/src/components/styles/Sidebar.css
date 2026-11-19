@@ -347,7 +347,7 @@
   .sidebar {
     position: fixed;
   }
-  
+
   .sidebar-overlay {
     display: none;
   }
@@ -369,23 +369,23 @@
     width: 105px !important; /* Forza sempre 105px */
     transform: translateX(0); /* Sempre visibile */
   }
-  
+
   /* Nascondi il toggle button su tablet */
   .sidebar-toggle-btn .sidebar-header-text {
     display: none;
   }
-  
+
   /* Nascondi le icone che appaiono solo quando aperta */
   .sidebar-info-btn {
     display: none;
   }
-  
+
   /* Nascondi i label del menu e le info utente/club */
   .nav-label,
   .sidebar-club-info {
     display: none !important;
   }
-  
+
   /* Centra tutto come se fosse chiusa */
   .sidebar-toggle-btn,
   .nav-link,
@@ -394,13 +394,13 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
-  
+
   /* Ridimensiona logo su tablet */
   .sidebar-club-logo {
     width: 50px;
     height: 50px;
   }
-  
+
   .sidebar-club {
     padding: 1rem;
   }
@@ -428,17 +428,15 @@
   .sidebar.closed {
     transform: translateX(-100%); /* Nascosta quando chiusa */
   }
-  
+
   /* Nascondi il toggle button su mobile (c'è l'HeaderMenu) */
   .sidebar-header {
     display: none;
   }
-  
+
   /* Mostra le info complete su mobile quando aperta */
   .nav-label,
   .sidebar-club-info {
     display: block !important;
   }
 }
-
-

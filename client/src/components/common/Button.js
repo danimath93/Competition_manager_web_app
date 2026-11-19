@@ -3,7 +3,7 @@ import './Button.css';
 
 /**
  * Componente Button riutilizzabile
- * 
+ *
  * @param {Object} props - Proprietà del componente
  * @param {string} props.variant - Variante del bottone ('primary', 'secondary', 'info', 'success', 'warning', 'danger', 'outline')
  * @param {string} props.size - Dimensione del bottone ('xs', 's', 'm', 'l', 'xl')
@@ -16,7 +16,7 @@ import './Button.css';
  * @param {function} props.onClick - Funzione da chiamare al click
  * @param {string} props.className - Classi CSS aggiuntive
  */
-const Button = ({ 
+const Button = ({
   variant = 'primary',
   size = 'm',
   icon: Icon,
@@ -29,33 +29,18 @@ const Button = ({
   className = '',
   ...rest
 }) => {
-  const buttonClasses = [
-    'btn',
-    `btn-${variant}`,
-    `btn-${size}`,
-    fullWidth ? 'btn-full-width' : '',
-    inline ? 'btn-inline' : '',
-    className
-  ].filter(Boolean).join(' ');
+  const buttonClasses = ['btn', `btn-${variant}`, `btn-${size}`, fullWidth ? 'btn-full-width' : '', inline ? 'btn-inline' : '', className]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <button
-      type={type}
-      className={buttonClasses}
-      disabled={disabled}
-      onClick={onClick}
-      {...rest}
-    >
+    <button type={type} className={buttonClasses} disabled={disabled} onClick={onClick} {...rest}>
       {Icon && (
         <span className="btn-icon">
           <Icon />
         </span>
       )}
-      {children && (
-        <span className="btn-text">
-          {children}
-        </span>
-      )}
+      {children && <span className="btn-text">{children}</span>}
     </button>
   );
 };

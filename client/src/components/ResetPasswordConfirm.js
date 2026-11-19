@@ -60,7 +60,7 @@ const ResetPasswordConfirm = () => {
             <div className="login-card">
               <form onSubmit={handleSubmit} className="login-form">
                 <h5 className="text-primary text-center">Imposta nuova password</h5>
-                
+
                 <PasswordInput
                   id="password"
                   label="Password"
@@ -85,24 +85,12 @@ const ResetPasswordConfirm = () => {
                   autoComplete="new-password"
                 />
 
-                <button
-                  type="submit"
-                  className="reset-password-button"
-                  disabled={loading}
-                >
+                <button type="submit" className="reset-password-button" disabled={loading}>
                   {loading ? 'Reset in corso...' : 'Reset password'}
                 </button>
 
-                {error && (
-                  <div className="error-message">
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="success-message">
-                    {success}
-                  </div>
-                )}
+                {error && <div className="error-message">{error}</div>}
+                {success && <div className="success-message">{success}</div>}
               </form>
 
               <div className="login-footer">
@@ -110,8 +98,10 @@ const ResetPasswordConfirm = () => {
                   <a
                     href="#"
                     className="register-link"
-                    onClick={(e) => { e.preventDefault(); navigate('/login'); }}
-                  >
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('/login');
+                    }}>
                     ← Torna alla pagina di login
                   </a>
                 </span>

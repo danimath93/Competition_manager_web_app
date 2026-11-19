@@ -9,7 +9,7 @@ const ADMIN_PERMISSIONS = ['admin', 'superAdmin'];
 const getCurrentUser = async (req) => {
   const user = await UtentiLogin.findOne({
     where: { username: req.user.username },
-    attributes: ['id', 'username', 'permissions', 'clubId']
+    attributes: ['id', 'username', 'permissions', 'clubId'],
   });
   return user;
 };
@@ -39,7 +39,7 @@ const handleError = (res, error, message) => {
     return res.status(409).json({ error: 'Esiste già una configurazione con questo nome' });
   }
   if (error.name === 'SequelizeValidationError') {
-    return res.status(400).json({ error: 'Dati non validi', details: error.errors.map(e => e.message) });
+    return res.status(400).json({ error: 'Dati non validi', details: error.errors.map((e) => e.message) });
   }
   res.status(500).json({ error: message, details: error.message });
 };
@@ -61,7 +61,10 @@ const getAllConfigurations = async (req, res) => {
 
     const configurations = await AgeGroupConfiguration.findAll({
       where,
-      order: [['clubId', 'ASC NULLS FIRST'], ['name', 'ASC']]
+      order: [
+        ['clubId', 'ASC NULLS FIRST'],
+        ['name', 'ASC'],
+      ],
     });
     res.json(configurations);
   } catch (error) {
@@ -85,7 +88,9 @@ const getConfigurationById = async (req, res) => {
     }
     res.json(configuration);
   } catch (error) {
-    logger.error(`Errore nel recupero della configurazione fasce età ${req.params.id}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel recupero della configurazione fasce età ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
     handleError(res, error, 'Errore nel recupero della configurazione fasce età');
   }
 };
@@ -113,7 +118,7 @@ const createConfiguration = async (req, res) => {
       clubId,
       name: name?.trim(),
       description: description || null,
-      config: validation.config
+      config: validation.config,
     });
     res.status(201).json(configuration);
   } catch (error) {
@@ -144,11 +149,13 @@ const copyConfiguration = async (req, res) => {
       clubId,
       name: (req.body.name || `${source.name} (copia)`).trim(),
       description: req.body.description !== undefined ? req.body.description : source.description,
-      config: source.config
+      config: source.config,
     });
     res.status(201).json(configuration);
   } catch (error) {
-    logger.error(`Errore nella copia della configurazione fasce età ${req.params.id}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella copia della configurazione fasce età ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
     handleError(res, error, 'Errore nella copia della configurazione fasce età');
   }
 };
@@ -184,8 +191,10 @@ const updateConfiguration = async (req, res) => {
     await configuration.update(updates);
     res.json(configuration);
   } catch (error) {
-    logger.error(`Errore nell'aggiornamento della configurazione fasce età ${req.params.id}: ${error.message}`, { stack: error.stack });
-    handleError(res, error, 'Errore nell\'aggiornamento della configurazione fasce età');
+    logger.error(`Errore nell'aggiornamento della configurazione fasce età ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
+    handleError(res, error, "Errore nell'aggiornamento della configurazione fasce età");
   }
 };
 
@@ -208,8 +217,10 @@ const deleteConfiguration = async (req, res) => {
     await configuration.destroy();
     res.json({ message: 'Configurazione eliminata con successo' });
   } catch (error) {
-    logger.error(`Errore nell'eliminazione della configurazione fasce età ${req.params.id}: ${error.message}`, { stack: error.stack });
-    handleError(res, error, 'Errore nell\'eliminazione della configurazione fasce età');
+    logger.error(`Errore nell'eliminazione della configurazione fasce età ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
+    handleError(res, error, "Errore nell'eliminazione della configurazione fasce età");
   }
 };
 
@@ -219,5 +230,5 @@ module.exports = {
   createConfiguration,
   copyConfiguration,
   updateConfiguration,
-  deleteConfiguration
+  deleteConfiguration,
 };

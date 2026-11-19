@@ -9,10 +9,10 @@ const getAllAtleti = async (req, res) => {
         {
           model: Club,
           as: 'club',
-          attributes: { exclude: ['logo'] }
-        }
+          attributes: { exclude: ['logo'] },
+        },
       ],
-      order: [['cognome', 'ASC']]
+      order: [['cognome', 'ASC']],
       // ordinati anche per club
     });
     res.status(200).json(atleti);
@@ -20,7 +20,7 @@ const getAllAtleti = async (req, res) => {
     logger.error(`Errore nel recupero degli atleti: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero degli atleti',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -35,17 +35,22 @@ const getAtletiByClub = async (req, res) => {
         {
           model: Club,
           as: 'club',
-          attributes: { exclude: ['logo'] }
-        }
+          attributes: { exclude: ['logo'] },
+        },
       ],
-      order: [['cognome', 'ASC'], ['nome', 'ASC']]
+      order: [
+        ['cognome', 'ASC'],
+        ['nome', 'ASC'],
+      ],
     });
     res.status(200).json(atleti);
   } catch (error) {
-    logger.error(`Errore nel recupero degli atleti del club ${req.params.clubId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel recupero degli atleti del club ${req.params.clubId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel recupero degli atleti del club',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -58,24 +63,24 @@ const createAtleta = async (req, res) => {
     res.status(201).json(newAtleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nella creazione atleta: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Validazione fallita nella creazione atleta: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati atleta non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     if (error.name === 'SequelizeUniqueConstraintError') {
-      logger.warn(`Vincolo di unicità violato nella creazione atleta: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Vincolo di unicità violato nella creazione atleta: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
-        error: 'Atleta gia\' registrato con questo codice fiscale',
-        details: error.errors.map(e => e.message)
+        error: "Atleta gia' registrato con questo codice fiscale",
+        details: error.errors.map((e) => e.message),
       });
     }
 
     logger.error(`Errore nella creazione dell'atleta: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nella creazione dell\'atleta',
-      details: error.message
+      error: "Errore nella creazione dell'atleta",
+      details: error.message,
     });
   }
 };
@@ -104,16 +109,16 @@ const updateAtleta = async (req, res) => {
     res.json(updatedAtleta);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nell'aggiornamento atleta ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Validazione fallita nell'aggiornamento atleta ${req.params.id}: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     logger.error(`Errore nell'aggiornamento dell'atleta ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'aggiornamento dell\'atleta',
-      details: error.message
+      error: "Errore nell'aggiornamento dell'atleta",
+      details: error.message,
     });
   }
 };
@@ -123,7 +128,7 @@ const deleteAtleta = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedRowsCount = await Atleta.destroy({
-      where: { id }
+      where: { id },
     });
 
     if (deletedRowsCount === 0) {
@@ -136,8 +141,8 @@ const deleteAtleta = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nell'eliminazione dell'atleta ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'eliminazione dell\'atleta',
-      details: error.message
+      error: "Errore nell'eliminazione dell'atleta",
+      details: error.message,
     });
   }
 };

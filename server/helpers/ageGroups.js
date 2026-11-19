@@ -38,7 +38,7 @@ const ymdFormatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: TIMEZONE,
   year: 'numeric',
   month: '2-digit',
-  day: '2-digit'
+  day: '2-digit',
 });
 
 // ---------------------------------------------------------------------------
@@ -60,14 +60,13 @@ const toYmd = (value) => {
   return { y, m, d };
 };
 
-const ymdToString = ({ y, m, d }) =>
-  `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+const ymdToString = ({ y, m, d }) => `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
 const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 
 const daysInMonth = (y, m) => [31, isLeapYear(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
 
-const compareYmd = (a, b) => (a.y - b.y) || (a.m - b.m) || (a.d - b.d);
+const compareYmd = (a, b) => a.y - b.y || a.m - b.m || a.d - b.d;
 
 // Sottrae anni mantenendo mese/giorno (29/02 -> 28/02 negli anni non bisestili)
 const subtractYears = ({ y, m, d }, years) => {
@@ -161,9 +160,7 @@ const resolveAgeGroup = (birthDate, config, referenceDate) => {
   if (!config || !Array.isArray(config.groups)) return null;
   const age = computeConfigAge(birthDate, config, referenceDate);
   if (age === null) return null;
-  return config.groups.find(group =>
-    age >= group.minAge && (group.maxAge === null || group.maxAge === undefined || age <= group.maxAge)
-  ) || null;
+  return config.groups.find((group) => age >= group.minAge && (group.maxAge === null || group.maxAge === undefined || age <= group.maxAge)) || null;
 };
 
 /**
@@ -198,7 +195,7 @@ const validateAgeGroupConfig = (config) => {
     return { valid: false, errors: ['La configurazione deve essere un oggetto'], config: null };
   }
 
-  const unknownKeys = Object.keys(config).filter(k => !CONFIG_KEYS.includes(k));
+  const unknownKeys = Object.keys(config).filter((k) => !CONFIG_KEYS.includes(k));
   if (unknownKeys.length > 0) {
     errors.push(`Proprietà non ammesse nella configurazione: ${unknownKeys.join(', ')}`);
   }
@@ -233,7 +230,7 @@ const validateAgeGroupConfig = (config) => {
       return;
     }
 
-    const unknownGroupKeys = Object.keys(group).filter(k => !GROUP_KEYS.includes(k));
+    const unknownGroupKeys = Object.keys(group).filter((k) => !GROUP_KEYS.includes(k));
     if (unknownGroupKeys.length > 0) {
       errors.push(`${position}: proprietà non ammesse ${unknownGroupKeys.join(', ')}`);
     }
@@ -300,14 +297,14 @@ const validateAgeGroupConfig = (config) => {
     ...(config.mode === 'seasonAge' ? { seasonStart: config.seasonStart } : {}),
     groups: [...config.groups]
       .sort((a, b) => a.order - b.order)
-      .map(group => ({
+      .map((group) => ({
         key: group.key,
         label: group.label.trim(),
         grouping: group.grouping,
         order: group.order,
         minAge: group.minAge,
-        maxAge: group.maxAge === undefined ? null : group.maxAge
-      }))
+        maxAge: group.maxAge === undefined ? null : group.maxAge,
+      })),
   };
 
   return { valid: true, errors: [], config: normalized };
@@ -324,5 +321,5 @@ module.exports = {
   computeConfigAge,
   resolveAgeGroup,
   getBirthDateRange,
-  validateAgeGroupConfig
+  validateAgeGroupConfig,
 };

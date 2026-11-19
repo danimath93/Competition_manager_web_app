@@ -1,5 +1,13 @@
 const { Competizione, Categoria, Club, ConfigTipoCategoria, ConfigTipoCompetizione, Documento } = require('../models');
-const { IscrizioneClub, IscrizioneAtleta, Atleta, DettaglioIscrizioneAtleta, SvolgimentoCategoria, AgeGroupConfiguration, ConfigEsperienza } = require('../models');
+const {
+  IscrizioneClub,
+  IscrizioneAtleta,
+  Atleta,
+  DettaglioIscrizioneAtleta,
+  SvolgimentoCategoria,
+  AgeGroupConfiguration,
+  ConfigEsperienza,
+} = require('../models');
 const { resolveAgeGroup } = require('../helpers/ageGroups');
 const { loadRegistrationBlackBelts, getAthleteCompetitionProfile, getAgeGroupLabels } = require('../helpers/athleteCompetitionProfile');
 const { validateCategoryConfig, getEligibleCategories } = require('../helpers/competitionCategoryConfig');
@@ -28,35 +36,35 @@ const getAllCompetizioni = async (req, res) => {
       include: [
         {
           model: Categoria,
-          as: 'categorie'
+          as: 'categorie',
         },
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logoId'] }
+          attributes: { exclude: ['logoId'] },
         },
         {
           model: Documento,
           as: 'circolareGaraDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'locandinaDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'fileExtra1Documento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'fileExtra2Documento',
-          attributes: { exclude: ['file'] }
-        }
+          attributes: { exclude: ['file'] },
+        },
       ],
-      order: [['dataInizio', 'DESC']]
+      order: [['dataInizio', 'DESC']],
     });
 
     res.json(competizioni);
@@ -64,7 +72,7 @@ const getAllCompetizioni = async (req, res) => {
     logger.error(`Errore nel recupero delle competizioni: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero delle competizioni',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -78,40 +86,40 @@ const getCompetizioneById = async (req, res) => {
         {
           model: Categoria,
           as: 'categorie',
-          include: ['atleti']
+          include: ['atleti'],
         },
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logoId'] }
+          attributes: { exclude: ['logoId'] },
         },
         {
           model: AgeGroupConfiguration,
           as: 'ageGroupConfiguration',
           attributes: ['id', 'name', 'clubId', 'deletedAt'],
-          paranoid: false
+          paranoid: false,
         },
         {
           model: Documento,
           as: 'circolareGaraDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'locandinaDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'fileExtra1Documento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'fileExtra2Documento',
-          attributes: { exclude: ['file'] }
-        }
-      ]
+          attributes: { exclude: ['file'] },
+        },
+      ],
     });
 
     if (!competizione) {
@@ -124,7 +132,7 @@ const getCompetizioneById = async (req, res) => {
     logger.error(`Errore nel recupero della competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nel recupero della competizione',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -151,9 +159,7 @@ const applyCategoryConfig = async (data, competizioneId = null) => {
     return data;
   }
 
-  const existing = competizioneId
-    ? await Competizione.findByPk(competizioneId, { attributes: ['id', 'ageGroupConfig', 'dataInizio'] })
-    : null;
+  const existing = competizioneId ? await Competizione.findByPk(competizioneId, { attributes: ['id', 'ageGroupConfig', 'dataInizio'] }) : null;
   const ageGroupConfig = Object.prototype.hasOwnProperty.call(data, 'ageGroupConfig') ? data.ageGroupConfig : existing?.ageGroupConfig;
 
   const validation = validateCategoryConfig(data.categoryConfig, ageGroupConfig);
@@ -163,27 +169,30 @@ const applyCategoryConfig = async (data, competizioneId = null) => {
   const categoryConfig = validation.config;
 
   // Tipi categoria: devono esistere, da essi si ricavano i tipi competizione
-  const categoryTypeIds = categoryConfig.categories.map(c => c.categoryTypeId);
+  const categoryTypeIds = categoryConfig.categories.map((c) => c.categoryTypeId);
   const categoryTypes = await ConfigTipoCategoria.findAll({
     where: { id: categoryTypeIds },
-    attributes: ['id', 'nome', 'tipoCompetizioneId']
+    attributes: ['id', 'nome', 'tipoCompetizioneId'],
   });
-  const categoryTypeMap = new Map(categoryTypes.map(ct => [ct.id, ct]));
-  const missingTypes = categoryTypeIds.filter(id => !categoryTypeMap.has(id));
+  const categoryTypeMap = new Map(categoryTypes.map((ct) => [ct.id, ct]));
+  const missingTypes = categoryTypeIds.filter((id) => !categoryTypeMap.has(id));
   if (missingTypes.length > 0) {
     throw new HttpError(400, 'Configurazione categorie non valida', [`Tipi categoria inesistenti: ${missingTypes.join(', ')}`]);
   }
-  const competitionTypeIds = [...new Set(categoryTypes.map(ct => ct.tipoCompetizioneId))].sort((a, b) => a - b);
+  const competitionTypeIds = [...new Set(categoryTypes.map((ct) => ct.tipoCompetizioneId))].sort((a, b) => a - b);
 
   // Livelli di esperienza: solo per i tipi competizione presenti, coerenti con il tipo competizione
-  categoryConfig.experienceLevels = categoryConfig.experienceLevels.filter(l => competitionTypeIds.includes(l.competitionTypeId));
-  const experienceIds = [...new Set(categoryConfig.experienceLevels.flatMap(l => l.experienceIds))];
+  categoryConfig.experienceLevels = categoryConfig.experienceLevels.filter((l) => competitionTypeIds.includes(l.competitionTypeId));
+  const experienceIds = [...new Set(categoryConfig.experienceLevels.flatMap((l) => l.experienceIds))];
   if (experienceIds.length > 0) {
-    const experiences = await ConfigEsperienza.findAll({ where: { id: experienceIds }, attributes: ['id', 'nome', 'tipiCompetizione'] });
-    const experienceMap = new Map(experiences.map(e => [e.id, e]));
+    const experiences = await ConfigEsperienza.findAll({
+      where: { id: experienceIds },
+      attributes: ['id', 'nome', 'tipiCompetizione'],
+    });
+    const experienceMap = new Map(experiences.map((e) => [e.id, e]));
     const experienceErrors = [];
-    categoryConfig.experienceLevels.forEach(level => {
-      level.experienceIds.forEach(id => {
+    categoryConfig.experienceLevels.forEach((level) => {
+      level.experienceIds.forEach((id) => {
         const experience = experienceMap.get(id);
         if (!experience) {
           experienceErrors.push(`Livello di esperienza ${id} inesistente`);
@@ -202,23 +211,23 @@ const applyCategoryConfig = async (data, competizioneId = null) => {
     const registrations = await IscrizioneAtleta.findAll({
       where: { competizioneId },
       attributes: ['id', 'atletaId', 'tipoCategoriaId'],
-      include: [{ model: Atleta, as: 'atleta', attributes: ['id', 'nome', 'cognome', 'dataNascita', 'isBlackBelt'] }]
+      include: [{ model: Atleta, as: 'atleta', attributes: ['id', 'nome', 'cognome', 'dataNascita', 'isBlackBelt'] }],
     });
     if (registrations.length > 0) {
       const details = await DettaglioIscrizioneAtleta.findAll({
         where: { competizioneId },
-        attributes: ['atletaId', 'isBlackBelt']
+        attributes: ['atletaId', 'isBlackBelt'],
       });
-      const blackBeltByAthlete = new Map(details.map(d => [d.atletaId, d.isBlackBelt]));
+      const blackBeltByAthlete = new Map(details.map((d) => [d.atletaId, d.isBlackBelt]));
       const referenceDate = data.dataInizio || existing?.dataInizio;
       const conflicts = [];
-      registrations.forEach(registration => {
+      registrations.forEach((registration) => {
         const athlete = registration.atleta;
         const categoryName = categoryTypeMap.get(registration.tipoCategoriaId)?.nome || `categoria ${registration.tipoCategoriaId}`;
         const isBlackBelt = blackBeltByAthlete.get(registration.atletaId) ?? athlete?.isBlackBelt;
         const ageGroup = resolveAgeGroup(athlete?.dataNascita, ageGroupConfig, referenceDate);
         const eligible = getEligibleCategories(categoryConfig, ageGroup, isBlackBelt);
-        if (!eligible.some(c => c.categoryTypeId === registration.tipoCategoriaId)) {
+        if (!eligible.some((c) => c.categoryTypeId === registration.tipoCategoriaId)) {
           conflicts.push(`${athlete?.cognome} ${athlete?.nome}: non più ammesso a ${categoryName}`);
         }
       });
@@ -231,7 +240,7 @@ const applyCategoryConfig = async (data, competizioneId = null) => {
   return {
     ...data,
     categoryConfig,
-    tipiCompetizione: competitionTypeIds
+    tipiCompetizione: competitionTypeIds,
   };
 };
 
@@ -283,7 +292,7 @@ const applyAgeGroupConfiguration = async (body, competizioneId = null) => {
 const createCompetizione = async (req, res) => {
   try {
     const data = await applyCategoryConfig(await applyAgeGroupConfiguration(req.body));
-    const competizione =  await Competizione.create(data);
+    const competizione = await Competizione.create(data);
     logger.info(`Competizione creata - ID: ${competizione.id}, Nome: ${competizione.nome}`);
     res.status(201).json(competizione);
   } catch (error) {
@@ -291,16 +300,16 @@ const createCompetizione = async (req, res) => {
       return res.status(error.status).json({ error: error.message, details: error.details });
     }
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nella creazione competizione: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Validazione fallita nella creazione competizione: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     logger.error(`Errore nella creazione della competizione: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nella creazione della competizione',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -311,7 +320,7 @@ const updateCompetizione = async (req, res) => {
     const { id } = req.params;
     const data = await applyCategoryConfig(await applyAgeGroupConfiguration(req.body, id), id);
     const [updatedRowsCount] = await Competizione.update(data, {
-      where: { id }
+      where: { id },
     });
 
     if (updatedRowsCount === 0) {
@@ -327,16 +336,18 @@ const updateCompetizione = async (req, res) => {
       return res.status(error.status).json({ error: error.message, details: error.details });
     }
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nell'aggiornamento competizione ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Validazione fallita nell'aggiornamento competizione ${req.params.id}: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
-    logger.error(`Errore nell'aggiornamento della competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nell'aggiornamento della competizione ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nell\'aggiornamento della competizione',
-      details: error.message
+      error: "Errore nell'aggiornamento della competizione",
+      details: error.message,
     });
   }
 };
@@ -359,7 +370,7 @@ const deleteCompetizione = async (req, res) => {
       await transaction.rollback();
       logger.warn(`Tentativo eliminazione competizione in stato non consentito - ID: ${id}, stato: ${competizione.stato}`);
       return res.status(400).json({
-        error: `Non è possibile eliminare la competizione in stato "${competizione.stato}". È possibile eliminare solo competizioni in stato Pianificata o Conclusa.`
+        error: `Non è possibile eliminare la competizione in stato "${competizione.stato}". È possibile eliminare solo competizioni in stato Pianificata o Conclusa.`,
       });
     }
 
@@ -378,10 +389,12 @@ const deleteCompetizione = async (req, res) => {
     res.status(204).send();
   } catch (error) {
     await transaction.rollback();
-    logger.error(`Errore nell'eliminazione della competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nell'eliminazione della competizione ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
-      error: 'Errore nell\'eliminazione della competizione',
-      details: error.message
+      error: "Errore nell'eliminazione della competizione",
+      details: error.message,
     });
   }
 };
@@ -395,33 +408,35 @@ const getCompetizioniByStato = async (req, res) => {
       include: [
         {
           model: Categoria,
-          as: 'categorie'
+          as: 'categorie',
         },
         {
           model: Club,
           as: 'organizzatore',
-          attributes: { exclude: ['logoId'] }
+          attributes: { exclude: ['logoId'] },
         },
         {
           model: Documento,
           as: 'circolareGaraDocumento',
-          attributes: { exclude: ['file'] }
+          attributes: { exclude: ['file'] },
         },
         {
           model: Documento,
           as: 'locandinaDocumento',
-          attributes: { exclude: ['file'] }
-        }
+          attributes: { exclude: ['file'] },
+        },
       ],
-      order: [['dataInizio', 'ASC']]
+      order: [['dataInizio', 'ASC']],
     });
 
     res.json(competizioni);
   } catch (error) {
-    logger.error(`Errore nel recupero delle competizioni per stato ${req.params.stato}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel recupero delle competizioni per stato ${req.params.stato}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nel recupero delle competizioni',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -453,12 +468,12 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
           model: Atleta,
           as: 'atleta',
           where: { clubId },
-          required: true
+          required: true,
         },
         {
           model: ConfigTipoCategoria,
-          as: 'tipoCategoria'
-        }
+          as: 'tipoCategoria',
+        },
       ],
     });
 
@@ -484,8 +499,8 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
           const dettagliIscrizione = await DettaglioIscrizioneAtleta.findOne({
             where: {
               atletaId: atleta.id,
-              competizioneId: competizioneId
-            }
+              competizioneId: competizioneId,
+            },
           });
 
           if (dettagliIscrizione && dettagliIscrizione.quota > 0) {
@@ -498,7 +513,7 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
           categoryTypeTotals[tipoCategoria.tipoCompetizioneId] = (categoryTypeTotals[tipoCategoria.tipoCompetizioneId] || 0) + 1;
         }
       }
-    };
+    }
 
     // Calcola breakdown per profilo atleta (Bambini/Adulti, CN/CB) e iscrizioni singole/multiple
     const registrationBlackBelts = await loadRegistrationBlackBelts(competizioneId);
@@ -527,19 +542,21 @@ const getCompetitionClubRegistrationSummary = async (req, res) => {
       versamento: {
         iban,
         intestatario,
-        causale
+        causale,
       },
       totals: {
         totalAthletes,
         totalCategories,
-        totalCost
+        totalCost,
       },
       athleteTypeTotals,
-      categoryTypeTotals
+      categoryTypeTotals,
     };
     res.json(summary);
   } catch (error) {
-    logger.error(`Errore nel riepilogo costi per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nel riepilogo costi per competizione ${req.params.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({ error: 'Errore nel riepilogo costi', details: error.message });
   }
 };
@@ -593,8 +610,8 @@ const deleteFile = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nell'eliminazione del file ${req.params.fileType} per competizione ${req.params.id}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'eliminazione del file',
-      details: error.message
+      error: "Errore nell'eliminazione del file",
+      details: error.message,
     });
   }
 };
@@ -619,21 +636,23 @@ const printCategories = async (req, res) => {
           model: ConfigTipoCategoria,
           as: 'tipoCategoria',
           attributes: ['id', 'nome'],
-          include: [{
-            model: ConfigTipoCompetizione,
-            as: 'tipoCompetizione',
-            attributes: ['id', 'nome']
-          }]
-        }
+          include: [
+            {
+              model: ConfigTipoCompetizione,
+              as: 'tipoCompetizione',
+              attributes: ['id', 'nome'],
+            },
+          ],
+        },
       ],
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
 
     // Ordina le categorie in modo intelligente considerando i numeri
     categorie.sort((a, b) => {
       return a.nome.localeCompare(b.nome, undefined, {
         numeric: true,
-        sensitivity: 'base'
+        sensitivity: 'base',
       });
     });
 
@@ -643,17 +662,21 @@ const printCategories = async (req, res) => {
       const iscrizioni = await IscrizioneAtleta.findAll({
         where: { categoriaId: categoria.id },
         attributes: ['id', 'atletaId', 'peso'],
-        include: [{
-          model: Atleta,
-          as: 'atleta',
-          attributes: ['id', 'nome', 'cognome', 'dataNascita'],
-          include: [{
-            model: Club,
-            as: 'club',
-            attributes: ['id', 'denominazione', 'abbreviazione']
-          }]
-        }],
-        order: [['atleta', 'cognome', 'ASC']]
+        include: [
+          {
+            model: Atleta,
+            as: 'atleta',
+            attributes: ['id', 'nome', 'cognome', 'dataNascita'],
+            include: [
+              {
+                model: Club,
+                as: 'club',
+                attributes: ['id', 'denominazione', 'abbreviazione'],
+              },
+            ],
+          },
+        ],
+        order: [['atleta', 'cognome', 'ASC']],
       });
       categoria.dataValues.iscrizioni = iscrizioni;
       totalAthletes += iscrizioni.length;
@@ -663,7 +686,7 @@ const printCategories = async (req, res) => {
     const doc = new PDFDocument({
       bufferPages: true,
       margin: 40,
-      size: 'A4'
+      size: 'A4',
     });
 
     // Set response headers
@@ -704,7 +727,7 @@ const printCategories = async (req, res) => {
       doc.text(`${categoria.nome} (${iscrizioni.length} atleti)`, 40, doc.y, {
         underline: true,
         width: 515,
-        align: 'left'
+        align: 'left',
       });
       doc.fillColor('black');
       doc.moveDown(0.2);
@@ -715,11 +738,11 @@ const printCategories = async (req, res) => {
       } else {
         // Intestazione tabella
         const tableTop = doc.y;
-        const col1 = 50;  // Progressivo
-        const col2 = 70;  // Cognome
-        const col3 = 150;  // Nome
-        const col4 = 250;  // Club
-        const col5 = 490;  // Nascita / Peso
+        const col1 = 50; // Progressivo
+        const col2 = 70; // Cognome
+        const col3 = 150; // Nome
+        const col4 = 250; // Club
+        const col5 = 490; // Nascita / Peso
         const rowHeight = 14;
         const cellPadding = 2;
 
@@ -791,7 +814,12 @@ const printCategories = async (req, res) => {
         });
 
         // Linea separatrice dopo la tabella
-        doc.strokeColor('#cccccc').lineWidth(0.5).moveTo(40, currentY + 5).lineTo(555, currentY + 2).stroke();
+        doc
+          .strokeColor('#cccccc')
+          .lineWidth(0.5)
+          .moveTo(40, currentY + 5)
+          .lineTo(555, currentY + 2)
+          .stroke();
         doc.y = currentY + 15;
       }
 
@@ -801,7 +829,7 @@ const printCategories = async (req, res) => {
     // Footer
     doc.fontSize(8).font('Helvetica').fillColor('#999999');
     doc.text(`Generato il: ${new Date().toLocaleDateString('it-IT')} - ${new Date().toLocaleTimeString('it-IT')}`, {
-      align: 'center'
+      align: 'center',
     });
 
     // Finalize PDF
@@ -812,7 +840,7 @@ const printCategories = async (req, res) => {
     logger.error(`Errore nella generazione del PDF categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
       error: 'Errore nella generazione del PDF',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -835,16 +863,17 @@ const exportCategories = async (req, res) => {
           model: ConfigTipoCategoria,
           as: 'tipoCategoria',
           attributes: ['id', 'nome'],
-          include: [{
-            model: ConfigTipoCompetizione,
-            as: 'tipoCompetizione',
-            attributes: ['id', 'nome']
-          }]
-        }
+          include: [
+            {
+              model: ConfigTipoCompetizione,
+              as: 'tipoCompetizione',
+              attributes: ['id', 'nome'],
+            },
+          ],
+        },
       ],
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
-
 
     // Crea il workbook Excel
     const workbook = new ExcelJS.Workbook();
@@ -859,11 +888,11 @@ const exportCategories = async (req, res) => {
       { header: 'Gruppo Età', key: 'gruppoEtaNome', width: 20 },
       { header: 'Ori', key: 'ori', width: 10 },
       { header: 'Argenti', key: 'argenti', width: 10 },
-      { header: 'Bronzi', key: 'bronzi', width: 10 }
+      { header: 'Bronzi', key: 'bronzi', width: 10 },
     ];
 
     // Aggiungi i dati delle categorie
-    categorie.forEach(categoria => {
+    categorie.forEach((categoria) => {
       const gruppoEtaList = getAgeGroupLabels(categoria.ageGroupKeys, competizione);
       let countOro = categoria.maxPartecipanti && categoria.maxPartecipanti > 0 ? 1 : 0;
       let countArgento = categoria.maxPartecipanti && categoria.maxPartecipanti > 1 ? 1 : 0;
@@ -890,7 +919,7 @@ const exportCategories = async (req, res) => {
         gruppoEtaNome: gruppoEtaList.length > 0 ? gruppoEtaList.join(', ') : '-',
         ori: countOro,
         argenti: countArgento,
-        bronzi: countBronzo
+        bronzi: countBronzo,
       });
     });
 
@@ -902,8 +931,8 @@ const exportCategories = async (req, res) => {
   } catch (error) {
     logger.error(`Errore nell'esportazione delle categorie per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
     res.status(500).json({
-      error: 'Errore nell\'esportazione delle categorie',
-      details: error.message
+      error: "Errore nell'esportazione delle categorie",
+      details: error.message,
     });
   }
 };
@@ -935,12 +964,16 @@ const exportRegisteredAthletes = async (req, res) => {
             {
               model: Club,
               as: 'club',
-              attributes: ['denominazione', 'tesseramento']
-            }
-          ]
-        }
+              attributes: ['denominazione', 'tesseramento'],
+            },
+          ],
+        },
       ],
-      order: [['atleta', 'numeroTessera', 'ASC'], ['atleta', 'cognome', 'ASC'], ['atleta', 'nome', 'ASC']]
+      order: [
+        ['atleta', 'numeroTessera', 'ASC'],
+        ['atleta', 'cognome', 'ASC'],
+        ['atleta', 'nome', 'ASC'],
+      ],
     });
 
     if (dettagliIscrizioni.length === 0) {
@@ -951,8 +984,8 @@ const exportRegisteredAthletes = async (req, res) => {
     // Variabili per dati aggiuntivi in modalità full
     let categorieUniche = [];
     let iscrizioniPerAtleta = {};
-    let atletiDaEsportare = dettagliIscrizioni.map(d => d.atleta).filter(a => a);
-    const registrationBlackBelts = new Map(dettagliIscrizioni.map(d => [d.atletaId, d.isBlackBelt]));
+    let atletiDaEsportare = dettagliIscrizioni.map((d) => d.atleta).filter((a) => a);
+    const registrationBlackBelts = new Map(dettagliIscrizioni.map((d) => [d.atletaId, d.isBlackBelt]));
 
     if (mode === 'full') {
       // Modalità full: carica categorie e iscrizioni
@@ -963,15 +996,15 @@ const exportRegisteredAthletes = async (req, res) => {
           {
             model: ConfigTipoCategoria,
             as: 'tipoCategoria',
-            attributes: ['id', 'nome']
-          }
+            attributes: ['id', 'nome'],
+          },
         ],
-        order: [['nome', 'ASC']]
+        order: [['nome', 'ASC']],
       });
 
       // Crea una mappa delle tipologie di categoria uniche
       const categorieMap = new Map();
-      categorie.forEach(cat => {
+      categorie.forEach((cat) => {
         if (cat.tipoCategoria) {
           categorieMap.set(cat.tipoCategoria.id, cat.tipoCategoria.nome);
         }
@@ -985,14 +1018,14 @@ const exportRegisteredAthletes = async (req, res) => {
           {
             model: ConfigTipoCategoria,
             as: 'tipoCategoria',
-            attributes: ['id', 'nome']
+            attributes: ['id', 'nome'],
           },
           {
             model: Categoria,
             as: 'categoria',
-            attributes: ['id', 'nome']
-          }
-        ]
+            attributes: ['id', 'nome'],
+          },
+        ],
       });
 
       // Raggruppa le iscrizioni per atleta
@@ -1006,7 +1039,7 @@ const exportRegisteredAthletes = async (req, res) => {
           categoriaId: iscrizione.categoriaId,
           categoriaNome: iscrizione.categoria?.nome,
           peso: iscrizione.peso,
-          dettagli: iscrizione.dettagli
+          dettagli: iscrizione.dettagli,
         });
       }
     }
@@ -1016,30 +1049,33 @@ const exportRegisteredAthletes = async (req, res) => {
     const worksheet = workbook.addWorksheet('Atleti Iscritti');
 
     // Definisci le colonne base in base alla modalità
-    const columns = mode === 'full' ? [
-      { header: 'N. Tessera', key: 'tessera', width: 20 },
-      { header: 'Club', key: 'club', width: 30 },
-      { header: 'Atleta', key: 'atleta', width: 30 },
-      { header: 'Data di Nascita', key: 'dataNascita', width: 15 },
-      { header: 'Cintura', key: 'cintura', width: 10 },
-      { header: 'Fascia Età', key: 'fasciaEta', width: 15 },
-      { header: 'Sesso', key: 'sesso', width: 10 },
-      { header: 'Certificato', key: 'certificato', width: 15 },
-      { header: 'Tesseramento', key: 'tesseramento', width: 15 }
-    ] : [
-      { header: 'N. Tessera', key: 'tessera', width: 20 },
-      { header: 'Nome', key: 'nome', width: 25 },
-      { header: 'Cognome', key: 'cognome', width: 25 },
-      { header: 'Club', key: 'club', width: 40 }
-    ];
+    const columns =
+      mode === 'full'
+        ? [
+            { header: 'N. Tessera', key: 'tessera', width: 20 },
+            { header: 'Club', key: 'club', width: 30 },
+            { header: 'Atleta', key: 'atleta', width: 30 },
+            { header: 'Data di Nascita', key: 'dataNascita', width: 15 },
+            { header: 'Cintura', key: 'cintura', width: 10 },
+            { header: 'Fascia Età', key: 'fasciaEta', width: 15 },
+            { header: 'Sesso', key: 'sesso', width: 10 },
+            { header: 'Certificato', key: 'certificato', width: 15 },
+            { header: 'Tesseramento', key: 'tesseramento', width: 15 },
+          ]
+        : [
+            { header: 'N. Tessera', key: 'tessera', width: 20 },
+            { header: 'Nome', key: 'nome', width: 25 },
+            { header: 'Cognome', key: 'cognome', width: 25 },
+            { header: 'Club', key: 'club', width: 40 },
+          ];
 
     // Aggiungi colonne per le categorie in modalità full
     if (mode === 'full') {
-      categorieUniche.forEach(cat => {
+      categorieUniche.forEach((cat) => {
         columns.push({
           header: cat.nome,
           key: `cat_${cat.id}`,
-          width: 20
+          width: 20,
         });
       });
     }
@@ -1052,7 +1088,7 @@ const exportRegisteredAthletes = async (req, res) => {
     headerRow.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF1976D2' }
+      fgColor: { argb: 'FF1976D2' },
     };
     headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
     headerRow.height = 25;
@@ -1060,28 +1096,31 @@ const exportRegisteredAthletes = async (req, res) => {
     // Aggiungi i dati degli atleti
     atletiDaEsportare.forEach((atleta) => {
       const profile = getAthleteCompetitionProfile(atleta, competizione, registrationBlackBelts.get(atleta.id));
-      const rowData = mode === 'full' ? {
-        tessera: atleta.numeroTessera || 'N/A',
-        club: atleta.club?.denominazione || 'N/A',
-        atleta: `${atleta.cognome} ${atleta.nome}`,
-        dataNascita: atleta.dataNascita ? new Date(atleta.dataNascita).toLocaleDateString('it-IT') : 'N/A',
-        cintura: profile.belt,
-        fasciaEta: profile.ageGroupLabel,
-        sesso: atleta.sesso || 'N/A',
-        certificato: atleta.scadenzaCertificato ? new Date(atleta.scadenzaCertificato).toLocaleDateString('it-IT') : 'N/A',
-        tesseramento: atleta.club?.tesseramento || 'N/A'
-      } : {
-        tessera: atleta.numeroTessera || '',
-        nome: atleta.nome || '',
-        cognome: atleta.cognome || '',
-        club: atleta.club?.denominazione || ''
-      };
+      const rowData =
+        mode === 'full'
+          ? {
+              tessera: atleta.numeroTessera || 'N/A',
+              club: atleta.club?.denominazione || 'N/A',
+              atleta: `${atleta.cognome} ${atleta.nome}`,
+              dataNascita: atleta.dataNascita ? new Date(atleta.dataNascita).toLocaleDateString('it-IT') : 'N/A',
+              cintura: profile.belt,
+              fasciaEta: profile.ageGroupLabel,
+              sesso: atleta.sesso || 'N/A',
+              certificato: atleta.scadenzaCertificato ? new Date(atleta.scadenzaCertificato).toLocaleDateString('it-IT') : 'N/A',
+              tesseramento: atleta.club?.tesseramento || 'N/A',
+            }
+          : {
+              tessera: atleta.numeroTessera || '',
+              nome: atleta.nome || '',
+              cognome: atleta.cognome || '',
+              club: atleta.club?.denominazione || '',
+            };
 
       // Aggiungi i dati delle categorie solo in modalità full
       if (mode === 'full') {
         const iscrizioniAtleta = iscrizioniPerAtleta[atleta.id] || [];
-        categorieUniche.forEach(cat => {
-          const iscrizione = iscrizioniAtleta.find(i => i.tipoCategoriaId === cat.id);
+        categorieUniche.forEach((cat) => {
+          const iscrizione = iscrizioniAtleta.find((i) => i.tipoCategoriaId === cat.id);
           if (iscrizione) {
             if (iscrizione.dettagli?.nome) {
               rowData[`cat_${cat.id}`] = iscrizione.dettagli.nome;
@@ -1101,11 +1140,12 @@ const exportRegisteredAthletes = async (req, res) => {
 
     // Formattazione delle celle dati
     worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber > 1) { // Salta l'intestazione
+      if (rowNumber > 1) {
+        // Salta l'intestazione
         row.alignment = { vertical: 'middle', horizontal: 'left' };
         row.border = {
           top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
-          bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } }
+          bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } },
         };
       }
     });
@@ -1121,10 +1161,12 @@ const exportRegisteredAthletes = async (req, res) => {
     logger.info(`File Excel atleti iscritti generato per competizione ${competizioneId} - ${atletiDaEsportare.length} atleti`);
     res.end();
   } catch (error) {
-    logger.error(`Errore nella generazione del file Excel atleti iscritti per competizione ${req.params.competizioneId}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore nella generazione del file Excel atleti iscritti per competizione ${req.params.competizioneId}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({
       error: 'Errore nella generazione del file Excel',
-      details: error.message
+      details: error.message,
     });
   }
 };
@@ -1139,5 +1181,5 @@ module.exports = {
   getCompetitionClubRegistrationSummary,
   printCategories,
   exportCategories,
-  exportRegisteredAthletes
+  exportRegisteredAthletes,
 };

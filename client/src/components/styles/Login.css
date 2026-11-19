@@ -98,7 +98,12 @@
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-lg);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'Outfit',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   font-weight: var(--font-semibold);
   cursor: pointer;
   transition: all var(--transition-normal);
@@ -126,7 +131,13 @@
   border-radius: var(--radius-md);
   font-size: var(--font-lg);
   font-weight: var(--font-semibold);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;  transition: all var(--transition-normal);
+  font-family:
+    'Outfit',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  transition: all var(--transition-normal);
   cursor: pointer;
   transition: all var(--transition-normal);
   margin-top: var(--spacing-md);
@@ -214,11 +225,11 @@
   .login-card {
     padding: 2rem;
   }
-  
+
   .login-title {
     font-size: 1.3rem;
   }
-  
+
   .login-logo {
     height: 60px;
   }

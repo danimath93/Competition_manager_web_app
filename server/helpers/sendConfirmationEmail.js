@@ -4,7 +4,7 @@ const logger = require('../helpers/logger/logger');
 // Verifica che tutte le credenziali OAuth2 siano configurate
 function validateOAuth2Config() {
   const requiredVars = ['GMAIL_CLIENT_ID', 'GMAIL_CLIENT_SECRET', 'GMAIL_REFRESH_TOKEN', 'GMAIL_USER'];
-  const missing = requiredVars.filter(varName => !process.env[varName]);
+  const missing = requiredVars.filter((varName) => !process.env[varName]);
 
   if (missing.length > 0) {
     throw new Error(`Missing OAuth2 configuration: ${missing.join(', ')}. Please check your .env file.`);
@@ -22,27 +22,23 @@ async function createOAuth2Client() {
 
   validateOAuth2Config();
 
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
-  );
+  const oauth2Client = new google.auth.OAuth2(process.env.GMAIL_CLIENT_ID, process.env.GMAIL_CLIENT_SECRET, 'https://developers.google.com/oauthplayground');
 
   // Se è presente un access token (es. generato da OAuth Playground) lo usa per il primo invio:
   // alla scadenza la libreria lo rinnova automaticamente con il refresh token
   if (process.env.GMAIL_ACCESS_TOKEN) {
     oauth2Client.setCredentials({
       access_token: process.env.GMAIL_ACCESS_TOKEN,
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN
+      refresh_token: process.env.GMAIL_REFRESH_TOKEN,
     });
     oauth2Client.on('tokens', () => logger.info('Access token refreshed successfully'));
-    logger.info('Uso dell\'access token fornito in GMAIL_ACCESS_TOKEN');
+    logger.info("Uso dell'access token fornito in GMAIL_ACCESS_TOKEN");
     cachedOAuth2Client = oauth2Client;
     return oauth2Client;
   }
 
   oauth2Client.setCredentials({
-    refresh_token: process.env.GMAIL_REFRESH_TOKEN
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
   });
 
   // Verifica e aggiorna il token se necessario
@@ -69,16 +65,12 @@ function createEmail(to, subject, htmlBody) {
     'MIME-Version: 1.0',
     'Content-Type: text/html; charset=utf-8',
     '',
-    htmlBody
+    htmlBody,
   ];
   const message = messageParts.join('\n');
 
   // Codifica in base64url
-  const encodedMessage = Buffer.from(message)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  const encodedMessage = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
   return encodedMessage;
 }
@@ -94,15 +86,15 @@ async function sendEmailViaGmailAPI(to, subject, htmlBody) {
     const result = await gmail.users.messages.send({
       userId: 'me',
       requestBody: {
-        raw: raw
-      }
+        raw: raw,
+      },
     });
 
     logger.info(`Email inviata con successo via Gmail API: ${result.data.id}`);
     return result.data;
   } catch (error) {
-    logger.error('Errore nell\'invio email via Gmail API:', error);
-    
+    logger.error("Errore nell'invio email via Gmail API:", error);
+
     // Diagnostica errori comuni
     if (error.message.includes('invalid_grant')) {
       throw new Error('Il refresh token è scaduto o non valido. Genera un nuovo refresh token da OAuth Playground.');
@@ -110,7 +102,7 @@ async function sendEmailViaGmailAPI(to, subject, htmlBody) {
     if (error.message.includes('insufficient authentication scopes')) {
       throw new Error('Permessi insufficienti. Assicurati che il token abbia lo scope https://www.googleapis.com/auth/gmail.send');
     }
-    
+
     throw new Error(`Impossibile inviare l'email: ${error.message}`);
   }
 }
@@ -142,15 +134,11 @@ async function sendConfirmationEmail(to, token) {
       </div>
     `;
 
-    const result = await sendEmailViaGmailAPI(
-      to,
-      'Gestore Gare Viet Vo Dao - Conferma la tua registrazione',
-      htmlBody
-    );
+    const result = await sendEmailViaGmailAPI(to, 'Gestore Gare Viet Vo Dao - Conferma la tua registrazione', htmlBody);
 
     return result;
   } catch (error) {
-    logger.error('Errore nell\'invio dell\'email di conferma:', error);
+    logger.error("Errore nell'invio dell'email di conferma:", error);
     throw new Error(`Impossibile inviare l'email di conferma: ${error.message}`);
   }
 }
@@ -186,15 +174,11 @@ async function sendResetPasswordEmail(to, token) {
       </div>
     `;
 
-    const result = await sendEmailViaGmailAPI(
-      to,
-      'Gestore Gare Viet Vo Dao - Reset Password',
-      htmlBody
-    );
+    const result = await sendEmailViaGmailAPI(to, 'Gestore Gare Viet Vo Dao - Reset Password', htmlBody);
 
     return result;
   } catch (error) {
-    logger.error('Errore nell\'invio dell\'email di reset password:', error);
+    logger.error("Errore nell'invio dell'email di reset password:", error);
     throw new Error(`Impossibile inviare l'email di reset password: ${error.message}`);
   }
 }
@@ -206,26 +190,26 @@ function createConfirmationResponsePage({ title, message, details, status = 'inf
       icon: '✓',
       color: '#4caf50',
       buttonColor: '#4caf50',
-      buttonHover: '#45a049'
+      buttonHover: '#45a049',
     },
     error: {
       icon: '❌',
       color: '#f44336',
       buttonColor: '#667eea',
-      buttonHover: '#5568d3'
+      buttonHover: '#5568d3',
     },
     warning: {
       icon: '⚠️',
       color: '#ff9800',
       buttonColor: '#667eea',
-      buttonHover: '#5568d3'
+      buttonHover: '#5568d3',
     },
     info: {
       icon: 'ℹ️',
       color: '#2196F3',
       buttonColor: '#2196F3',
-      buttonHover: '#1976D2'
-    }
+      buttonHover: '#1976D2',
+    },
   };
 
   const config = statusConfig[status] || statusConfig.info;

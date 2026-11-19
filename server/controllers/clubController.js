@@ -6,14 +6,14 @@ const getAllClubs = async (req, res) => {
   try {
     const clubs = await Club.findAll({
       include: ['atleti', 'giudici'],
-  order: [['denominazione', 'ASC']]
+      order: [['denominazione', 'ASC']],
     });
     res.json(clubs);
   } catch (error) {
     logger.error(`Errore nel recupero dei club: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nel recupero dei club',
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -30,9 +30,9 @@ const getClubById = async (req, res) => {
         {
           model: Documento,
           as: 'logoDocumento',
-          attributes: { exclude: ['file'] }
-        }
-      ]
+          attributes: { exclude: ['file'] },
+        },
+      ],
     });
 
     if (!club) {
@@ -43,9 +43,9 @@ const getClubById = async (req, res) => {
     res.json(club);
   } catch (error) {
     logger.error(`Errore nel recupero del club ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nel recupero del club',
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -58,16 +58,16 @@ const createClub = async (req, res) => {
     res.status(201).json(club);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nella creazione club: ${error.errors.map(e => e.message).join(', ')}`);
-      return res.status(400).json({ 
+      logger.warn(`Validazione fallita nella creazione club: ${error.errors.map((e) => e.message).join(', ')}`);
+      return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     logger.error(`Errore nella creazione del club: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore nella creazione del club',
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -77,44 +77,44 @@ const updateClub = async (req, res) => {
   try {
     const { id } = req.params;
     const [updatedRowsCount] = await Club.update(req.body, {
-      where: { id }
+      where: { id },
     });
-    
+
     if (updatedRowsCount === 0) {
       logger.warn(`Tentativo aggiornamento club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
-    
+
     const updatedClub = await Club.findByPk(id, {
       include: [
         {
           model: Documento,
           as: 'logoDocumento',
-          attributes: { exclude: ['file'] }
-        }
-      ]
+          attributes: { exclude: ['file'] },
+        },
+      ],
     });
     logger.info(`Club aggiornato - ID: ${id}`);
     res.json(updatedClub);
   } catch (error) {
     if (error.name === 'SequelizeValidationError') {
-      logger.warn(`Validazione fallita nell'aggiornamento club ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
-      return res.status(400).json({ 
+      logger.warn(`Validazione fallita nell'aggiornamento club ${req.params.id}: ${error.errors.map((e) => e.message).join(', ')}`);
+      return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     if (error.name === 'SequelizeUniqueConstraintError') {
-      logger.warn(`Vincolo di unicità violato nell'aggiornamento club ${req.params.id}: ${error.errors.map(e => e.message).join(', ')}`);
+      logger.warn(`Vincolo di unicità violato nell'aggiornamento club ${req.params.id}: ${error.errors.map((e) => e.message).join(', ')}`);
       return res.status(400).json({
         error: 'Dati non validi',
-        details: error.errors.map(e => e.message)
+        details: error.errors.map((e) => e.message),
       });
     }
     logger.error(`Errore nell'aggiornamento del club ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nell\'aggiornamento del club',
-      details: error.message 
+    res.status(500).json({
+      error: "Errore nell'aggiornamento del club",
+      details: error.message,
     });
   }
 };
@@ -124,27 +124,27 @@ const deleteClub = async (req, res) => {
   try {
     const { id } = req.params;
     const deletedRowsCount = await Club.destroy({
-      where: { id }
+      where: { id },
     });
-    
+
     if (deletedRowsCount === 0) {
       logger.warn(`Tentativo eliminazione club inesistente - ID: ${id}`);
       return res.status(404).json({ error: 'Club non trovato' });
     }
-    
+
     logger.info(`Club eliminato - ID: ${id}`);
     res.status(204).send();
   } catch (error) {
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       logger.warn(`Tentativo eliminazione club con dipendenze - ID: ${req.params.id}`);
-      return res.status(400).json({ 
-        error: 'Impossibile eliminare il club: esistono atleti o giudici associati'
+      return res.status(400).json({
+        error: 'Impossibile eliminare il club: esistono atleti o giudici associati',
       });
     }
     logger.error(`Errore nell'eliminazione del club ${req.params.id}: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
-      error: 'Errore nell\'eliminazione del club',
-      details: error.message 
+    res.status(500).json({
+      error: "Errore nell'eliminazione del club",
+      details: error.message,
     });
   }
 };
@@ -154,16 +154,16 @@ const checkClubExistsHelper = async ({ codiceFiscale, partitaIva }) => {
   // Controllo se esiste un club con lo stesso codice fiscale
   const club = await Club.findOne({
     where: {
-      codiceFiscale
-    }
+      codiceFiscale,
+    },
   });
 
   // Se il club non esiste, controllo per partita IVA se fornita
   if (!club && partitaIva) {
     return await Club.findOne({
       where: {
-        partitaIva
-      }
+        partitaIva,
+      },
     });
   }
 
@@ -173,14 +173,14 @@ const checkClubExistsHelper = async ({ codiceFiscale, partitaIva }) => {
 // Endpoint API per verificare se un club esiste
 const checkClubExists = async (req, res) => {
   try {
-    const { codiceFiscale, partitaIva } = req.body; 
+    const { codiceFiscale, partitaIva } = req.body;
     const exists = await checkClubExistsHelper({ codiceFiscale, partitaIva });
     res.json({ exists });
   } catch (error) {
     logger.error(`Errore durante la verifica del club: ${error.message}`, { stack: error.stack });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Errore durante la verifica del club',
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -219,7 +219,7 @@ const uploadLogoClub = async (req, res) => {
       file: file.buffer,
       mimeType: file.mimetype,
       dimensione: file.size,
-      tipoDocumento: 'logo_club'
+      tipoDocumento: 'logo_club',
     });
 
     // Aggiorna il riferimento nel club
@@ -230,10 +230,12 @@ const uploadLogoClub = async (req, res) => {
     res.json({
       message: 'Logo caricato con successo',
       logoId: documento.id,
-      nomeFile: documento.nomeFile
+      nomeFile: documento.nomeFile,
     });
   } catch (error) {
-    logger.error(`Errore durante l'upload del logo per il club ${req.params.id}: ${error.message}`, { stack: error.stack });
+    logger.error(`Errore durante l'upload del logo per il club ${req.params.id}: ${error.message}`, {
+      stack: error.stack,
+    });
     res.status(500).json({ error: 'Errore upload logo', details: error.message });
   }
 };

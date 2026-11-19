@@ -1,8 +1,8 @@
-/* 
+/*
  * ========================================
  * ESEMPIO DI UTILIZZO - COMMON PAGE STYLES
  * ========================================
- * 
+ *
  * Questo file mostra come utilizzare gli stili comuni
  * e il componente PageHeader nelle pagine.
  */
@@ -32,7 +32,6 @@ const ExamplePage = () => {
 
       {/* Contenuto della pagina */}
       <div className="page-content">
-        
         {/* ESEMPIO 1: Card semplice */}
         <div className="page-card">
           <div className="page-card-header">
@@ -46,9 +45,7 @@ const ExamplePage = () => {
         {/* ESEMPIO 2: Sezione con titolo */}
         <div className="page-section">
           <h2 className="page-section-title">Sezione Principale</h2>
-          <p className="page-section-subtitle">
-            Sottotitolo della sezione
-          </p>
+          <p className="page-section-subtitle">Sottotitolo della sezione</p>
           <div className="page-card">
             <p>Contenuto della sezione...</p>
           </div>
@@ -65,12 +62,9 @@ const ExamplePage = () => {
         <div className="page-empty-state">
           <div className="page-empty-state-icon">📭</div>
           <h3 className="page-empty-state-title">Nessun dato disponibile</h3>
-          <p className="page-empty-state-text">
-            Non ci sono ancora elementi da visualizzare.
-          </p>
+          <p className="page-empty-state-text">Non ci sono ancora elementi da visualizzare.</p>
           <button className="btn btn-primary">Aggiungi Nuovo</button>
         </div>
-
       </div>
     </div>
   );
@@ -78,33 +72,32 @@ const ExamplePage = () => {
 
 export default ExamplePage;
 
-
-/* 
+/*
  * ========================================
  * CLASSI DISPONIBILI
  * ========================================
- * 
+ *
  * CONTAINER:
  * - page-container       : Container principale della pagina
  * - page-content         : Contenuto con padding appropriato
- * 
+ *
  * CARD:
  * - page-card            : Card generica
  * - page-card-header     : Header della card
  * - page-card-title      : Titolo della card
  * - page-card-body       : Corpo della card
- * 
+ *
  * SEZIONI:
  * - page-section         : Sezione della pagina
  * - page-section-title   : Titolo della sezione
  * - page-section-subtitle: Sottotitolo della sezione
- * 
+ *
  * GRID:
  * - page-grid            : Grid responsive auto
  * - page-grid-2          : Grid a 2 colonne
  * - page-grid-3          : Grid a 3 colonne
  * - page-grid-4          : Grid a 4 colonne
- * 
+ *
  * UTILITY:
  * - page-spacing-sm/md/lg/xl  : Margini bottom
  * - page-flex-center          : Flex centrato
@@ -114,7 +107,7 @@ export default ExamplePage;
  * - page-text-muted           : Testo secondario
  * - page-text-light           : Testo terziario
  * - page-divider              : Linea di separazione
- * 
+ *
  * STATI:
  * - page-empty-state     : Stato vuoto
  * - page-loading         : Stato caricamento

@@ -38,8 +38,7 @@
 
 const REQUEST_MEMBERSHIP = 'RICHIEDI TESSERAMENTO';
 
-const isMembershipRequested = (athleteData) =>
-  athleteData?.tesseramento?.toUpperCase() === REQUEST_MEMBERSHIP;
+const isMembershipRequested = (athleteData) => athleteData?.tesseramento?.toUpperCase() === REQUEST_MEMBERSHIP;
 
 /**
  * Calcola il costo del tesseramento richiesto in fase di iscrizione
@@ -71,7 +70,7 @@ const calculateSpecialCategoriesCost = (specialCategories, categories) => {
   const hasOtherCategories = categories.length > 1;
 
   for (const categoryId of categories) {
-    const specialConfig = specialCategories.find(sc => sc.idConfigTipoCategoria === categoryId);
+    const specialConfig = specialCategories.find((sc) => sc.idConfigTipoCategoria === categoryId);
 
     if (!specialConfig) {
       standardCategories.push(categoryId);
@@ -140,7 +139,7 @@ const calculateAdditionalCost = (config, numCategories) => {
     return firstCost;
   }
 
-  return firstCost + (extraCost * (numCategories - 1));
+  return firstCost + extraCost * (numCategories - 1);
 };
 
 /**
@@ -159,18 +158,13 @@ const calculateAthleteCost = (costiIscrizione, athleteData, categories) => {
   totalCost += calculateMembershipCost(athleteData, costiIscrizione.tesseramento);
 
   // Categorie speciali: hanno un costo dedicato e vengono escluse dal calcolo standard
-  const { cost: specialCategoriesCost, standardCategories } = calculateSpecialCategoriesCost(
-    costiIscrizione.specialCategories,
-    categories
-  );
+  const { cost: specialCategoriesCost, standardCategories } = calculateSpecialCategoriesCost(costiIscrizione.specialCategories, categories);
   totalCost += specialCategoriesCost;
   const numCategories = standardCategories.length;
 
   // Trova la configurazione per il raggruppamento dell'atleta (bambini/adulti)
   if (numCategories > 0 && Array.isArray(costiIscrizione.categories)) {
-    const categoryConfig = costiIscrizione.categories.find(
-      cat => cat.grouping === athleteData.grouping
-    );
+    const categoryConfig = costiIscrizione.categories.find((cat) => cat.grouping === athleteData.grouping);
 
     if (categoryConfig && categoryConfig.config) {
       switch (categoryConfig.type) {

@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  gridPageCountSelector,
-  gridPageSelector,
-  gridPageSizeSelector,
-  gridRowCountSelector,
-  useGridApiContext,
-  useGridSelector,
-} from '@mui/x-data-grid';
+import { gridPageCountSelector, gridPageSelector, gridPageSizeSelector, gridRowCountSelector, useGridApiContext, useGridSelector } from '@mui/x-data-grid';
 import { Box, Button, IconButton, TablePagination } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 
@@ -85,8 +78,7 @@ const CustomDataGridPagination = (props) => {
         py: { xs: 2, md: 2, lg: 0 },
         gap: { xs: 2, md: 2, lg: 0 },
         position: 'relative',
-      }}
-    >
+      }}>
       {/* Parte centrale: Selettore di pagina */}
       {pageCount > 1 && (
         <Box
@@ -96,8 +88,7 @@ const CustomDataGridPagination = (props) => {
             gap: 0.5,
             fontFamily: "'Outfit', sans-serif",
             order: { xs: 2, md: 2, lg: 0 },
-          }}
-        >
+          }}>
           {/* Freccia sinistra */}
           <IconButton
             onClick={handlePrevious}
@@ -105,8 +96,7 @@ const CustomDataGridPagination = (props) => {
             size="small"
             sx={{
               fontFamily: "'Outfit', sans-serif",
-            }}
-          >
+            }}>
             <ChevronLeft />
           </IconButton>
 
@@ -121,8 +111,7 @@ const CustomDataGridPagination = (props) => {
                     color: 'text.secondary',
                     fontFamily: "'Outfit', sans-serif",
                     fontSize: '0.875rem',
-                  }}
-                >
+                  }}>
                   ...
                 </Box>
               );
@@ -150,8 +139,7 @@ const CustomDataGridPagination = (props) => {
                   '&:hover': {
                     backgroundColor: isActive ? 'primary.dark' : 'action.hover',
                   },
-                }}
-              >
+                }}>
                 {displayPage}
               </Button>
             );
@@ -164,23 +152,21 @@ const CustomDataGridPagination = (props) => {
             size="small"
             sx={{
               fontFamily: "'Outfit', sans-serif",
-            }}
-          >
+            }}>
             <ChevronRight />
           </IconButton>
         </Box>
       )}
 
       {/* Parte destra: Righe per pagina e contatore */}
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           position: { xs: 'static', md: 'static', lg: 'absolute' },
           right: { lg: 16 },
-          display: 'flex', 
+          display: 'flex',
           alignItems: 'center',
-          order: { xs: 1, md: 1, lg: 0},
-        }}
-      >
+          order: { xs: 1, md: 1, lg: 0 },
+        }}>
         <TablePagination
           component="div"
           count={rowCount}
@@ -212,5 +198,3 @@ const CustomDataGridPagination = (props) => {
 };
 
 export default CustomDataGridPagination;
-
-

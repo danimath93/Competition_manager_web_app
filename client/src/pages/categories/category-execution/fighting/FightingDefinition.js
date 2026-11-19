@@ -14,7 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
 } from '@mui/material';
 import { CategoryStates } from '../../../../constants/enums/CategoryEnums';
 import MatchComponent from './MatchComponent';
@@ -23,13 +23,7 @@ import MatchComponent from './MatchComponent';
  * Componente per la definizione del tabellone dei combattimenti
  * Gestisce gli stati: IN_DEFINIZIONE e IN_ATTESA_DI_AVVIO
  */
-const FightingDefinition = ({ 
-  atleti, 
-  tabellone,
-  stato,
-  onTabelloneChange,
-  onConfirmDefinition
-}) => {
+const FightingDefinition = ({ atleti, tabellone, stato, onTabelloneChange, onConfirmDefinition }) => {
   const [availableAthletes, setAvailableAthletes] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -51,7 +45,7 @@ const FightingDefinition = ({
 
     // Determina quanti match nel primo round: 2^(ceil(log2(numAtleti)) - 1)
     const numMatchesFirstRound = Math.pow(2, Math.ceil(Math.log2(numAtleti)) - 1);
-    
+
     // Crea primo round con match vuoti
     const firstRoundMatches = [];
     for (let i = 0; i < numMatchesFirstRound; i++) {
@@ -60,7 +54,7 @@ const FightingDefinition = ({
         players: [null, null],
         roundResults: [null, null, null],
         winner: null,
-        from: []
+        from: [],
       });
     }
 
@@ -72,15 +66,12 @@ const FightingDefinition = ({
         players: [null, null],
         roundResults: [null, null, null],
         winner: null,
-        from: [`r0m${i * 2}`, `r0m${i * 2 + 1}`]
+        from: [`r0m${i * 2}`, `r0m${i * 2 + 1}`],
       });
     }
 
     const newTabellone = {
-      rounds: [
-        { matches: firstRoundMatches },
-        { matches: secondRoundMatches }
-      ]
+      rounds: [{ matches: firstRoundMatches }, { matches: secondRoundMatches }],
     };
 
     onTabelloneChange(newTabellone);
@@ -88,24 +79,24 @@ const FightingDefinition = ({
 
   const updateAvailableAthletes = () => {
     if (!tabellone || !atleti) return;
-    
+
     // Trova tutti gli atleti già assegnati
     const assignedIds = new Set();
-    tabellone.rounds.forEach(round => {
-      round.matches.forEach(match => {
+    tabellone.rounds.forEach((round) => {
+      round.matches.forEach((match) => {
         if (match.players[0]) assignedIds.add(match.players[0]);
         if (match.players[1]) assignedIds.add(match.players[1]);
       });
     });
 
     // Filtra atleti disponibili
-    const available = atleti.filter(a => !assignedIds.has(a.id));
+    const available = atleti.filter((a) => !assignedIds.has(a.id));
     setAvailableAthletes(available);
   };
 
   const handleAtletaClick = (matchId, position) => {
     if (stato !== CategoryStates.IN_DEFINIZIONE) return;
-    
+
     setSelectedMatch(matchId);
     setSelectedPosition(position === 'red' ? 0 : 1);
     setDialogOpen(true);
@@ -113,11 +104,11 @@ const FightingDefinition = ({
 
   const handleAtletaSelection = (atletaId) => {
     const copy = JSON.parse(JSON.stringify(tabellone));
-    
+
     // Trova il match
     let targetMatch = null;
     for (const round of copy.rounds) {
-      const match = round.matches.find(m => m.id === selectedMatch);
+      const match = round.matches.find((m) => m.id === selectedMatch);
       if (match) {
         targetMatch = match;
         break;
@@ -136,13 +127,13 @@ const FightingDefinition = ({
 
   const handleRemoveAtleta = (matchId, position) => {
     if (stato !== CategoryStates.IN_DEFINIZIONE) return;
-    
+
     const copy = JSON.parse(JSON.stringify(tabellone));
-    
+
     // Trova il match
     let targetMatch = null;
     for (const round of copy.rounds) {
-      const match = round.matches.find(m => m.id === matchId);
+      const match = round.matches.find((m) => m.id === matchId);
       if (match) {
         targetMatch = match;
         break;
@@ -157,49 +148,49 @@ const FightingDefinition = ({
   };
 
   const getRoundName = (roundIndex, numMatches) => {
-    if (numMatches === 1) return "Finale";
-    if (numMatches === 2) return "Semifinale";
-    if (numMatches === 4) return "Quarti di finale";
-    if (numMatches === 8) return "Ottavi di finale";
+    if (numMatches === 1) return 'Finale';
+    if (numMatches === 2) return 'Semifinale';
+    if (numMatches === 4) return 'Quarti di finale';
+    if (numMatches === 8) return 'Ottavi di finale';
     return `Turno ${roundIndex + 1}`;
   };
 
   const getAthleteById = (id) => {
-    return atleti?.find(a => a.id === id) || null;
+    return atleti?.find((a) => a.id === id) || null;
   };
 
   const isTabelloneComplete = () => {
     if (!tabellone || !tabellone.rounds || !atleti) return false;
-    
+
     // Verifica che tutti gli atleti siano stati assegnati
     const assignedIds = new Set();
-    tabellone.rounds.forEach(round => {
-      round.matches.forEach(match => {
+    tabellone.rounds.forEach((round) => {
+      round.matches.forEach((match) => {
         if (match.players[0]) assignedIds.add(match.players[0]);
         if (match.players[1]) assignedIds.add(match.players[1]);
       });
     });
-    
+
     // Il tabellone è completo se tutti gli atleti sono stati assegnati
     return assignedIds.size === atleti.length;
   };
 
   const propagateByes = (tabelloneData) => {
     const copy = JSON.parse(JSON.stringify(tabelloneData));
-    
+
     // Propagazione solo dal primo round, dove si assegnano i BYE
-    const roundIdx = 0; 
+    const roundIdx = 0;
     {
       const currentRound = copy.rounds[roundIdx];
       const nextRound = copy.rounds[roundIdx + 1];
-      
+
       currentRound.matches.forEach((match) => {
         // Se un match ha solo un giocatore, è un BYE
         if (match.players[0] && !match.players[1]) {
           match.winner = match.players[0];
-          
+
           // Propaga al match successivo
-          nextRound.matches.forEach(nm => {
+          nextRound.matches.forEach((nm) => {
             const pos = nm.from?.indexOf(match.id);
             if (pos !== -1 && pos !== undefined) {
               nm.players[pos] = match.winner;
@@ -207,9 +198,9 @@ const FightingDefinition = ({
           });
         } else if (!match.players[0] && match.players[1]) {
           match.winner = match.players[1];
-          
+
           // Propaga al match successivo
-          nextRound.matches.forEach(nm => {
+          nextRound.matches.forEach((nm) => {
             const pos = nm.from?.indexOf(match.id);
             if (pos !== -1 && pos !== undefined) {
               nm.players[pos] = match.winner;
@@ -218,7 +209,7 @@ const FightingDefinition = ({
         }
       });
     }
-    
+
     return copy;
   };
 
@@ -226,9 +217,8 @@ const FightingDefinition = ({
     <Box>
       {stato === CategoryStates.IN_DEFINIZIONE && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          Clicca sulle caselle del tabellone per assegnare gli atleti agli incontri.
-          Gli atleti senza avversario riceveranno un BYE e avanzeranno automaticamente al turno successivo.
-          Solo i primi due turni sono visualizzati per la definizione.
+          Clicca sulle caselle del tabellone per assegnare gli atleti agli incontri. Gli atleti senza avversario riceveranno un BYE e avanzeranno
+          automaticamente al turno successivo. Solo i primi due turni sono visualizzati per la definizione.
         </Alert>
       )}
 
@@ -253,19 +243,18 @@ const FightingDefinition = ({
 
             <List dense>
               {atleti?.map((atleta) => {
-                const isAssigned = !availableAthletes.some(a => a.id === atleta.id);
+                const isAssigned = !availableAthletes.some((a) => a.id === atleta.id);
                 return (
-                  <ListItem 
+                  <ListItem
                     key={atleta.id}
-                    sx={{ 
+                    sx={{
                       bgcolor: isAssigned ? 'action.disabledBackground' : 'background.paper',
                       borderRadius: 1,
                       mb: 0.5,
                       border: '1px solid',
                       borderColor: 'divider',
-                      opacity: isAssigned ? 0.5 : 1
-                    }}
-                  >
+                      opacity: isAssigned ? 0.5 : 1,
+                    }}>
                     <ListItemText
                       primary={
                         <Typography variant="body2" fontWeight={isAssigned ? 'normal' : 'bold'}>
@@ -285,7 +274,7 @@ const FightingDefinition = ({
             </List>
 
             {stato === CategoryStates.IN_DEFINIZIONE && (
-              <Button 
+              <Button
                 variant="contained"
                 color="success"
                 onClick={() => {
@@ -296,8 +285,7 @@ const FightingDefinition = ({
                 }}
                 fullWidth
                 sx={{ mt: 2 }}
-                disabled={!isTabelloneComplete()}
-              >
+                disabled={!isTabelloneComplete()}>
                 Conferma Tabellone
               </Button>
             )}
@@ -313,60 +301,56 @@ const FightingDefinition = ({
             <Divider sx={{ mb: 3 }} />
 
             {tabellone && tabellone.rounds && tabellone.rounds.length > 0 ? (
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'row', 
-                gap: 8,
-                alignItems: 'flex-start',
-                overflowX: 'auto',
-                pb: 1
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 8,
+                  alignItems: 'flex-start',
+                  overflowX: 'auto',
+                  pb: 1,
+                }}>
                 {tabellone.rounds.slice(0, 2).map((round, roundIndex) => {
                   const MATCH_HEIGHT = 200;
                   const MATCH_SPACING = 50;
-                  
+
                   // Calcola margine per centrare rispetto al turno precedente
                   const calculateMargin = (matchIndex) => {
                     if (roundIndex === 0) return MATCH_SPACING / 2; // Primo round, margine standard
                     // Ogni match del turno corrente deve essere centrato tra due match del turno precedente
                     // Match i si centra tra i match 2*i e 2*i+1 del turno precedente
                     // return matchIndex * 2 * (MATCH_HEIGHT + MATCH_SPACING) + (MATCH_HEIGHT + MATCH_SPACING) / 2;
-                    return ((MATCH_SPACING / 2 + MATCH_HEIGHT + MATCH_SPACING / 2 + MATCH_SPACING / 2 + MATCH_HEIGHT + MATCH_SPACING / 2) - MATCH_HEIGHT)/ 2;
+                    return (MATCH_SPACING / 2 + MATCH_HEIGHT + MATCH_SPACING / 2 + MATCH_SPACING / 2 + MATCH_HEIGHT + MATCH_SPACING / 2 - MATCH_HEIGHT) / 2;
                   };
-                  
+
                   return (
                     <Box key={roundIndex} sx={{ minWidth: 350 }}>
-                      <Typography 
-                        variant="subtitle1" 
-                        fontWeight="bold" 
-                        sx={{ mb: 3, color: 'primary.main', textAlign: 'center' }}
-                      >
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 3, color: 'primary.main', textAlign: 'center' }}>
                         {getRoundName(roundIndex, round.matches.length)}
                       </Typography>
-                      
+
                       <Box sx={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
                         {round.matches.map((match, matchIndex) => {
                           const atleta1 = getAthleteById(match.players[0]);
                           const atleta2 = getAthleteById(match.players[1]);
                           const emptyBoxSize = calculateMargin(matchIndex);
-                          
+
                           return (
                             <>
-                              <Box 
+                              <Box
                                 key={`empty-top-box-match-${match.id}`}
                                 sx={{
                                   height: emptyBoxSize,
                                 }}
                               />
-                              <Box 
+                              <Box
                                 key={match.id}
                                 sx={{
                                   height: MATCH_HEIGHT,
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'space-between',
-                                }}
-                              >
+                                }}>
                                 <MatchComponent
                                   match={match}
                                   atleta1={atleta1}
@@ -377,7 +361,7 @@ const FightingDefinition = ({
                                   onRemoveAtleta={handleRemoveAtleta}
                                 />
                               </Box>
-                              <Box 
+                              <Box
                                 key={`empty-bottom-box-match-${match.id}`}
                                 sx={{
                                   height: emptyBoxSize,
@@ -392,21 +376,14 @@ const FightingDefinition = ({
                 })}
               </Box>
             ) : (
-              <Alert severity="warning">
-                Inizializzazione tabellone in corso...
-              </Alert>
+              <Alert severity="warning">Inizializzazione tabellone in corso...</Alert>
             )}
           </Paper>
         </Grid>
       </Grid>
 
       {/* Dialog per selezione atleta */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={() => setDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Seleziona Atleta</DialogTitle>
         <DialogContent>
           <List>
@@ -415,18 +392,14 @@ const FightingDefinition = ({
                 key={atleta.id}
                 button
                 onClick={() => handleAtletaSelection(atleta.id)}
-                sx={{ 
+                sx={{
                   borderRadius: 1,
                   mb: 1,
                   '&:hover': {
-                    bgcolor: 'action.hover'
-                  }
-                }}
-              >
-                <ListItemText
-                  primary={`${atleta.cognome} ${atleta.nome}`}
-                  secondary={`${atleta.club?.denominazione || '-'} • ${atleta.peso || '-'} kg`}
-                />
+                    bgcolor: 'action.hover',
+                  },
+                }}>
+                <ListItemText primary={`${atleta.cognome} ${atleta.nome}`} secondary={`${atleta.club?.denominazione || '-'} • ${atleta.peso || '-'} kg`} />
               </ListItem>
             ))}
           </List>

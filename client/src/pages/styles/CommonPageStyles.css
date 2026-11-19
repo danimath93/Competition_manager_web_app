@@ -155,12 +155,12 @@
     grid-template-columns: 1fr;
     height: auto;
   }
-  
+
   .page-grid-75-25 {
     grid-template-columns: 1fr;
     height: auto;
   }
-  
+
   .page-grid-full {
     height: auto;
   }
@@ -247,12 +247,12 @@
   .page-card-scrollable {
     max-height: 500px;
   }
-  
+
   /* Componente compatto su mobile (lista atleti) */
   .page-card-compact .page-card-scrollable {
     max-height: 250px;
   }
-  
+
   /* Componente espanso su mobile (tabella iscritti) */
   .page-card-expanded .page-card-scrollable {
     max-height: 1200px;
@@ -337,7 +337,7 @@
   .page-container {
     /* Il margine è già gestito da Layout.css */
   }
-  
+
   .page-content {
     padding: 1.75rem;
   }

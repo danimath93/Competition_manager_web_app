@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const atletaController = require('../controllers/atletaController');
 
-// GET /api/atleti - Ottieni tutti gli atleti 
+// GET /api/atleti - Ottieni tutti gli atleti
 router.get('/', atletaController.getAllAtleti);
 
 // GET /api/atleti/club/:clubId - Ottieni gli atleti di un club specifico

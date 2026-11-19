@@ -1,15 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Chip,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
+import { Alert, Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { loadCompetitionTypes, loadExperiences } from '../../api/config';
 import { describeAgeGroupMode, formatYmd } from '../AgeGroupConfigurationModal';
 import { GROUPING_LABELS, getCategoryBeltLabel } from '../../utils/competitionCategoryConfig';
@@ -21,9 +11,7 @@ const COST_TYPE_LABELS = { fixed: 'Fisso', minimum: 'Scaglioni', additional: 'Ad
 const formatCost = (config) => {
   if (config.type === 'fixed') return `${Number(config.config.amount || 0).toFixed(2)} €`;
   if (config.type === 'minimum') {
-    return (config.config.minCategories || [])
-      .map((min, i) => `${min}+ cat. → ${Number(config.config.costs?.[i] || 0).toFixed(2)} €`)
-      .join(' | ');
+    return (config.config.minCategories || []).map((min, i) => `${min}+ cat. → ${Number(config.config.costs?.[i] || 0).toFixed(2)} €`).join(' | ');
   }
   if (config.type === 'additional') {
     return `Prima: ${Number(config.config.first || 0).toFixed(2)} € + Extra: ${Number(config.config.extra || 0).toFixed(2)} €`;
@@ -33,7 +21,9 @@ const formatCost = (config) => {
 
 const Section = ({ title, children }) => (
   <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>{title}</Typography>
+    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+      {title}
+    </Typography>
     {children}
   </Paper>
 );
@@ -57,10 +47,10 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
         setCompetitionTypes(types);
         setExperiences(experiencesData);
       })
-      .catch(error => console.error('Errore nel caricamento dei dati di riepilogo:', error));
+      .catch((error) => console.error('Errore nel caricamento dei dati di riepilogo:', error));
   }, []);
 
-  const categoryTypes = useMemo(() => competitionTypes.flatMap(t => t.tipiCategoria || []), [competitionTypes]);
+  const categoryTypes = useMemo(() => competitionTypes.flatMap((t) => t.tipiCategoria || []), [competitionTypes]);
   const categoryConfig = formData.categoryConfig;
   const groups = ageGroupConfig?.groups || [];
   const costs = formData.costiIscrizione || {};
@@ -68,22 +58,22 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
   // Descrizione compatta delle fasce: un raggruppamento completo viene indicato per nome
   const describeAgeGroups = (keys) => {
     const parts = [];
-    ['children', 'adults'].forEach(grouping => {
-      const groupingKeys = groups.filter(g => g.grouping === grouping).map(g => g.key);
-      const selected = groupingKeys.filter(k => keys.includes(k));
+    ['children', 'adults'].forEach((grouping) => {
+      const groupingKeys = groups.filter((g) => g.grouping === grouping).map((g) => g.key);
+      const selected = groupingKeys.filter((k) => keys.includes(k));
       if (selected.length === 0) return;
       if (selected.length === groupingKeys.length) {
         parts.push(`${GROUPING_LABELS[grouping]} (tutte)`);
       } else {
-        parts.push(...groups.filter(g => selected.includes(g.key)).map(g => g.label));
+        parts.push(...groups.filter((g) => selected.includes(g.key)).map((g) => g.label));
       }
     });
     return parts.join(', ');
   };
 
-  const getCategoryName = (id) => categoryTypes.find(ct => ct.id === id)?.nome || `Categoria #${id}`;
-  const getCompetitionTypeName = (id) => competitionTypes.find(t => t.id === id)?.nome || `Tipo #${id}`;
-  const getExperienceName = (id) => experiences.find(e => e.id === id)?.nome || `#${id}`;
+  const getCategoryName = (id) => categoryTypes.find((ct) => ct.id === id)?.nome || `Categoria #${id}`;
+  const getCompetitionTypeName = (id) => competitionTypes.find((t) => t.id === id)?.nome || `Tipo #${id}`;
+  const getExperienceName = (id) => experiences.find((e) => e.id === id)?.nome || `#${id}`;
 
   return (
     <div className="register-form" style={{ maxWidth: '1024px' }}>
@@ -103,7 +93,7 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
           <>
             <Chip size="small" color="primary" variant="outlined" label={describeAgeGroupMode(ageGroupConfig)} sx={{ mb: 1 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {groups.map(g => (
+              {groups.map((g) => (
                 <Chip
                   key={g.key}
                   size="small"
@@ -130,7 +120,7 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {categoryConfig.categories.map(category => (
+              {categoryConfig.categories.map((category) => (
                 <TableRow key={category.categoryTypeId}>
                   <TableCell>{getCategoryName(category.categoryTypeId)}</TableCell>
                   <TableCell>{getCategoryBeltLabel(category.belt)}</TableCell>
@@ -144,9 +134,11 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
 
       <Section title="Livelli di esperienza">
         {(categoryConfig?.experienceLevels || []).length === 0 ? (
-          <Typography variant="body2" color="text.secondary">Nessun livello di esperienza richiesto</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Nessun livello di esperienza richiesto
+          </Typography>
         ) : (
-          categoryConfig.experienceLevels.map(level => (
+          categoryConfig.experienceLevels.map((level) => (
             <Field
               key={`${level.competitionTypeId}_${level.grouping}`}
               label={`${getCompetitionTypeName(level.competitionTypeId)} - ${GROUPING_LABELS[level.grouping]}`}
@@ -160,10 +152,7 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
         <Field label="IBAN" value={formData.iban} />
         <Field label="Intestatario" value={formData.intestatario} />
         <Field label="Causale" value={formData.causale} />
-        <Field
-          label="Richiesta tesseramento"
-          value={costs.tesseramento?.enabled ? `${Number(costs.tesseramento.amount || 0).toFixed(2)} €` : 'Non prevista'}
-        />
+        <Field label="Richiesta tesseramento" value={costs.tesseramento?.enabled ? `${Number(costs.tesseramento.amount || 0).toFixed(2)} €` : 'Non prevista'} />
         {(costs.categories || []).map((config, index) => (
           <Field
             key={index}
@@ -171,7 +160,7 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
             value={`${COST_TYPE_LABELS[config.type] || config.type} - ${formatCost(config)}`}
           />
         ))}
-        {(costs.specialCategories || []).map(sc => (
+        {(costs.specialCategories || []).map((sc) => (
           <Field
             key={sc.idConfigTipoCategoria}
             label={`Categoria speciale ${getCategoryName(sc.idConfigTipoCategoria)}`}

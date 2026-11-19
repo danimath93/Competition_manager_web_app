@@ -3,7 +3,7 @@ import './styles/PageHeader.css';
 
 /**
  * Componente per l'intestazione delle pagine
- * 
+ *
  * @param {Object} props - Proprietà del componente
  * @param {React.ReactNode} props.icon - Icona da mostrare a sinistra (componente React Icon)
  * @param {string} props.title - Titolo della pagina
@@ -11,13 +11,7 @@ import './styles/PageHeader.css';
  * @param {React.ReactNode} props.actions - Elementi aggiuntivi da mostrare a destra (es. pulsanti)
  * @param {string} props.className - Classe CSS aggiuntiva
  */
-const PageHeader = ({ 
-  icon: Icon, 
-  title, 
-  subtitle, 
-  actions,
-  className = '' 
-}) => {
+const PageHeader = ({ icon: Icon, title, subtitle, actions, className = '' }) => {
   return (
     <div className={`page-header ${className}`}>
       <div className="page-header-main">
@@ -29,16 +23,10 @@ const PageHeader = ({
           )}
           <div className="page-header-text">
             <h1 className="page-header-title">{title}</h1>
-            {subtitle && (
-              <p className="page-header-subtitle">{subtitle}</p>
-            )}
+            {subtitle && <p className="page-header-subtitle">{subtitle}</p>}
           </div>
         </div>
-        {actions && (
-          <div className="page-header-actions">
-            {actions}
-          </div>
-        )}
+        {actions && <div className="page-header-actions">{actions}</div>}
       </div>
     </div>
   );

@@ -23,16 +23,16 @@ app.use(requestLogger);
 app.get('/api/health', async (req, res) => {
   try {
     await sequelize.authenticate();
-    res.json({ 
-      status: 'OK', 
+    res.json({
+      status: 'OK',
       database: 'Connected',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(500).json({ 
-      status: 'ERROR', 
+    res.status(500).json({
+      status: 'ERROR',
       database: 'Disconnected',
-      error: error.message 
+      error: error.message,
     });
   }
 });
@@ -40,7 +40,7 @@ app.get('/api/health', async (req, res) => {
 // Route di autenticazione (senza middleware auth)
 app.use('/api/auth', require('./routes/auth'));
 
-// Applica il middleware di autenticazione a tutte le altre API routes  
+// Applica il middleware di autenticazione a tutte le altre API routes
 app.use('/api', authenticateToken, apiRoutes);
 
 // Error handler (deve essere l'ultimo middleware)
@@ -57,7 +57,7 @@ app.use(errorHandler);
     await sequelize.sync({ alter: true });
     logger.info('Database synchronized successfully.');
   } catch (error) {
-    logger.error("Errore durante la sincronizzazione del database:", error);
+    logger.error('Errore durante la sincronizzazione del database:', error);
     process.exit(1);
   }
 
@@ -66,7 +66,7 @@ app.use(errorHandler);
     logger.info(`Health check: ${process.env.BACKEND_URL}/health`);
   });
 
-    // Listener globale per errori non catturati
+  // Listener globale per errori non catturati
   process.on('uncaughtException', (err) => {
     logger.error(`Errore non catturato: ${err.message}`, err);
   });
@@ -74,5 +74,4 @@ app.use(errorHandler);
   process.on('unhandledRejection', (reason) => {
     logger.error('Promessa non gestita:', reason);
   });
-
 })();

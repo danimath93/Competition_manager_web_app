@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FaBars,
-  FaSignOutAlt,
-  FaUniversity
-} from 'react-icons/fa';
+import { FaBars, FaSignOutAlt, FaUniversity } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { getBlobDocumento } from '../api/documents';
 import { loadClubByID } from '../api/clubs';
@@ -25,7 +21,7 @@ const HeaderMenu = ({ onMenuClick }) => {
 
     const loadLogo = async () => {
       // Revoca URL precedente
-      setLogoSource(prevUrl => {
+      setLogoSource((prevUrl) => {
         if (prevUrl && prevUrl.startsWith('blob:')) {
           URL.revokeObjectURL(prevUrl);
         }
@@ -36,10 +32,10 @@ const HeaderMenu = ({ onMenuClick }) => {
         setLoadingLogo(true);
         try {
           const club = await loadClubByID(user.clubId);
-          
+
           if (club?.logoId && isMounted) {
             const blob = await getBlobDocumento(club.logoId);
-            
+
             if (blob && isMounted) {
               currentBlobUrl = URL.createObjectURL(blob);
               setLogoSource(currentBlobUrl);
@@ -86,26 +82,20 @@ const HeaderMenu = ({ onMenuClick }) => {
       <header className="header-menu">
         <div className="header-menu-left">
           {/* Logo Club */}
-          <div 
-            className="header-menu-logo"
-            title={`${user?.username || 'Utente'}${user?.clubName ? `\n${user.clubName}` : ''}`}
-          >
+          <div className="header-menu-logo" title={`${user?.username || 'Utente'}${user?.clubName ? `\n${user.clubName}` : ''}`}>
             {!loadingLogo && (
               <>
                 {logoSource ? (
-                  <img 
-                    src={logoSource} 
-                    alt="Club Logo" 
+                  <img
+                    src={logoSource}
+                    alt="Club Logo"
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
                   />
                 ) : null}
-                <div 
-                  className="header-menu-logo-placeholder" 
-                  style={{ display: logoSource ? 'none' : 'flex' }}
-                >
+                <div className="header-menu-logo-placeholder" style={{ display: logoSource ? 'none' : 'flex' }}>
                   <FaUniversity />
                 </div>
               </>
@@ -113,21 +103,13 @@ const HeaderMenu = ({ onMenuClick }) => {
           </div>
 
           {/* Menu Button */}
-          <button 
-            className="header-menu-btn"
-            onClick={onMenuClick}
-            aria-label="Toggle menu"
-          >
+          <button className="header-menu-btn" onClick={onMenuClick} aria-label="Toggle menu">
             <FaBars />
           </button>
         </div>
 
         {/* Logout Button */}
-        <button 
-          className="header-menu-logout-btn"
-          onClick={handleLogoutCheckConfirm}
-          title="Logout"
-        >
+        <button className="header-menu-logout-btn" onClick={handleLogoutCheckConfirm} title="Logout">
           <FaSignOutAlt />
         </button>
       </header>
@@ -140,7 +122,7 @@ const HeaderMenu = ({ onMenuClick }) => {
           message="Sei sicuro di voler effettuare il logout?"
           primaryButton={{
             text: 'Conferma',
-            onClick: handleLogout,  
+            onClick: handleLogout,
           }}
           secondaryButton={{
             text: 'Annulla',

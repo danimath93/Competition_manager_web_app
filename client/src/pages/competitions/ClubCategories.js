@@ -14,16 +14,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import { Button as MuiButton } from '@mui/material';
 import { FaTags } from 'react-icons/fa';
-import {
-  ArrowBack,
-  ExpandMore,
-  ExpandLess,
-  FiberManualRecord
-} from '@mui/icons-material';
+import { ArrowBack, ExpandMore, ExpandLess, FiberManualRecord } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
 import SearchTextField from '../../components/SearchTextField';
 import { useAuth } from '../../context/AuthContext';
@@ -45,7 +40,7 @@ const ClubCategories = () => {
 
   // Filtri
   const [clubCategorySearchFilter, setClubCategorySearchFilter] = useState('');
-  
+
   // Stato per espandere/collassare le card
   const [expandedCards, setExpandedCards] = useState({});
 
@@ -55,12 +50,12 @@ const ClubCategories = () => {
 
   const handleClubCategorySearchFilterChange = (event) => {
     setClubCategorySearchFilter(event.target.value);
-  }
+  };
 
   const toggleCard = (categoryId) => {
-    setExpandedCards(prev => ({
+    setExpandedCards((prev) => ({
       ...prev,
-      [categoryId]: !prev[categoryId]
+      [categoryId]: !prev[categoryId],
     }));
   };
 
@@ -107,15 +102,13 @@ const ClubCategories = () => {
 
       // Filtro per nome categoria
       if (clubCategorySearchFilter) {
-        filtered = filtered.filter(cat =>
-          cat.nome.toLowerCase().includes(clubCategorySearchFilter.toLowerCase())
-        );
+        filtered = filtered.filter((cat) => cat.nome.toLowerCase().includes(clubCategorySearchFilter.toLowerCase()));
       }
 
       // Filtro per nome atleta
       if (clubCategorySearchFilter) {
-        filtered = filtered.filter(cat =>
-          cat.atleti.some(atleta => {
+        filtered = filtered.filter((cat) =>
+          cat.atleti.some((atleta) => {
             const fullName = `${atleta.nome} ${atleta.cognome}`.toLowerCase();
             return fullName.includes(clubCategorySearchFilter.toLowerCase());
           })
@@ -127,7 +120,6 @@ const ClubCategories = () => {
 
     applyFilters();
   }, [categories, clubCategorySearchFilter]);
-
 
   if (loading) {
     return (
@@ -146,13 +138,10 @@ const ClubCategories = () => {
         title="Categorie iscritti del Club"
         subtitle={`${competition.nome} - Luogo: ${competition.luogo} - Organizzatore: ${competition.organizzatore?.denominazione || 'N/A'}`}
       />
-      <MuiButton
-        startIcon={<ArrowBack />}
-        onClick={handleGoBack}
-      >
+      <MuiButton startIcon={<ArrowBack />} onClick={handleGoBack}>
         Torna alle Competizioni
       </MuiButton>
-    
+
       {/* Messaggi di errore e successo */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -168,10 +157,10 @@ const ClubCategories = () => {
           placeholder="Filtra per atleta o per nome categoria"
           sx={{
             width: '100%',
-            maxWidth: "800px",
+            maxWidth: '800px',
             '& .MuiOutlinedInput-root': {
               height: '60px',
-            }
+            },
           }}
         />
       </Box>
@@ -179,9 +168,7 @@ const ClubCategories = () => {
       {/* Lista Categorie */}
       {filteredCategories.length === 0 ? (
         <Alert severity="info">
-          {categories.length === 0
-            ? 'Nessuna categoria con atleti del tuo club'
-            : 'Nessuna categoria trovata con i filtri applicati'}
+          {categories.length === 0 ? 'Nessuna categoria con atleti del tuo club' : 'Nessuna categoria trovata con i filtri applicati'}
         </Alert>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -189,7 +176,15 @@ const ClubCategories = () => {
             <Card key={category.id} sx={{ width: '100%' }}>
               <CardContent>
                 {/* Header Categoria */}
-                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                <Box
+                  sx={{
+                    mb: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                  }}>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="h6" component="div">
                       {category.nome}
@@ -199,8 +194,7 @@ const ClubCategories = () => {
                     variant="outlined"
                     size="small"
                     onClick={() => toggleCard(category.id)}
-                    endIcon={expandedCards[category.id] ? <ExpandLess /> : <ExpandMore />}
-                  >
+                    endIcon={expandedCards[category.id] ? <ExpandLess /> : <ExpandMore />}>
                     {expandedCards[category.id] ? 'Nascondi' : 'Mostra'} Atleti
                   </MuiButton>
                 </Box>
@@ -233,14 +227,13 @@ const ClubCategories = () => {
                           </TableRow>
                         ) : (
                           category.atleti.map((atleta, index) => (
-                            <TableRow 
-                              key={atleta.id} 
+                            <TableRow
+                              key={atleta.id}
                               hover
                               sx={{
                                 bgcolor: atleta.isMyClub ? 'success.50' : 'inherit',
-                                fontWeight: atleta.isMyClub ? 'bold' : 'normal'
-                              }}
-                            >
+                                fontWeight: atleta.isMyClub ? 'bold' : 'normal',
+                              }}>
                               <TableCell>{index + 1}</TableCell>
                               <TableCell align="center">
                                 {atleta.isMyClub && (
@@ -249,12 +242,8 @@ const ClubCategories = () => {
                                   </Tooltip>
                                 )}
                               </TableCell>
-                              <TableCell sx={{ fontWeight: atleta.isMyClub ? 'bold' : 'normal' }}>
-                                {atleta.cognome}
-                              </TableCell>
-                              <TableCell sx={{ fontWeight: atleta.isMyClub ? 'bold' : 'normal' }}>
-                                {atleta.nome}
-                              </TableCell>
+                              <TableCell sx={{ fontWeight: atleta.isMyClub ? 'bold' : 'normal' }}>{atleta.cognome}</TableCell>
+                              <TableCell sx={{ fontWeight: atleta.isMyClub ? 'bold' : 'normal' }}>{atleta.nome}</TableCell>
                               <TableCell>{atleta.sesso}</TableCell>
                               <TableCell>{new Date(atleta.dataNascita).getFullYear()}</TableCell>
                               {category.tipoCategoria?.tipoCompetizione?.id === CompetitionTipology.COMBATTIMENTO && (

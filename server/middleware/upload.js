@@ -11,9 +11,9 @@ const fileFilter = (req, file, cb) => {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'text/plain',
     'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   ];
-  
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -26,32 +26,32 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limite dimensione file
-  }
+    fileSize: 10 * 1024 * 1024, // 10MB limite dimensione file
+  },
 });
 
 // Middleware per upload di file multipli
 const uploadFiles = upload.fields([
   { name: 'circolareGara', maxCount: 1 },
   { name: 'fileExtra1', maxCount: 1 },
-  { name: 'fileExtra2', maxCount: 1 }
+  { name: 'fileExtra2', maxCount: 1 },
 ]);
 
 // Middleware dedicato per upload logo club (solo JPEG/PNG, memoryStorage)
 const uploadLogoMiddleware = multer({
   storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
-    if (["image/jpeg", "image/png"].includes(file.mimetype)) {
+    if (['image/jpeg', 'image/png'].includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Solo file JPEG o PNG ammessi."), false);
+      cb(new Error('Solo file JPEG o PNG ammessi.'), false);
     }
   },
-  limits: { fileSize: 2 * 1024 * 1024 }
+  limits: { fileSize: 2 * 1024 * 1024 },
 });
 
 module.exports = {
   uploadFiles,
   upload,
-  uploadLogoMiddleware
+  uploadLogoMiddleware,
 };

@@ -8,15 +8,15 @@ const PDFDocument = require('pdfkit');
 // GET /results/atleti
 async function getAtletiResults(req, res) {
   try {
-  console.log('[resultsController] getAtletiResults - query:', req.query);
+    console.log('[resultsController] getAtletiResults - query:', req.query);
     const where = {};
     const competitionId = req.query.competitionId || req.query.competizioneId;
-  console.log('[resultsController] getAtletiResults - competitionId resolved:', competitionId || null);
+    console.log('[resultsController] getAtletiResults - competitionId resolved:', competitionId || null);
     if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
-      attributes: ["id", "categoriaId", "classifica", "competizioneId"],
+      attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
       where,
-      raw: true
+      raw: true,
     });
 
     // lista con medaglie
@@ -33,26 +33,25 @@ async function getAtletiResults(req, res) {
 
     res.json({
       atleti: lista,
-      miglioriPerFasce
+      miglioriPerFasce,
     });
-
   } catch (err) {
-    res.status(500).json({ error: "Errore calcolo risultati per fasce", details: err.message });
+    res.status(500).json({ error: 'Errore calcolo risultati per fasce', details: err.message });
   }
-};
+}
 
 // GET /results/club
 async function getClubResults(req, res) {
   try {
-  console.log('[resultsController] getClubResults - query:', req.query);
+    console.log('[resultsController] getClubResults - query:', req.query);
     const where = {};
     const competitionId = req.query.competitionId || req.query.competizioneId;
-  console.log('[resultsController] getClubResults - competitionId resolved:', competitionId || null);
+    console.log('[resultsController] getClubResults - competitionId resolved:', competitionId || null);
     if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
       attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
       where,
-      raw: true
+      raw: true,
     });
 
     // lista atleti già completa di club
@@ -64,16 +63,16 @@ async function getClubResults(req, res) {
     // arricchiamo con:
     // - punti totali
     // - id fittizio (denominazione)
-    const final = classifica.map(c => {
-      const punti = (c.oro * 7) + (c.argento * 4) + (c.bronzo * 2);
+    const final = classifica.map((c) => {
+      const punti = c.oro * 7 + c.argento * 4 + c.bronzo * 2;
       return {
-        clubId: c.club,  // uso la denominazione come ID coerente col frontend
+        clubId: c.club, // uso la denominazione come ID coerente col frontend
         club: c.club,
         ori: c.oro,
         argenti: c.argento,
         bronzi: c.bronzo,
         punti,
-        dettagli: c.dettagli
+        dettagli: c.dettagli,
       };
     });
 
@@ -82,29 +81,28 @@ async function getClubResults(req, res) {
 
     res.json({
       podio,
-      classifica: final
+      classifica: final,
     });
-
   } catch (err) {
-    console.error("ERRORE getClubResults:", err);
-    res.status(500).json({ error: "Errore calcolo classifica club" });
+    console.error('ERRORE getClubResults:', err);
+    res.status(500).json({ error: 'Errore calcolo classifica club' });
   }
-};
+}
 
 // GET /results/club/:id
 // Restituisce il dettaglio delle medaglie per un club
 async function getClubMedalsDetails(req, res) {
   try {
     const clubId = req.params.id;
-  console.log('[resultsController] getClubMedalsDetails - params:', req.params, 'query:', req.query);
+    console.log('[resultsController] getClubMedalsDetails - params:', req.params, 'query:', req.query);
     const where = {};
     const competitionId = req.query.competitionId || req.query.competizioneId;
-  console.log('[resultsController] getClubMedalsDetails - competitionId resolved:', competitionId || null);
+    console.log('[resultsController] getClubMedalsDetails - competitionId resolved:', competitionId || null);
     if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
       attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
       where,
-      raw: true
+      raw: true,
     });
 
     const dettagli = await dettagliMedaglieClub(svolgimenti, clubId);
@@ -112,23 +110,22 @@ async function getClubMedalsDetails(req, res) {
   } catch (err) {
     res.status(500).json({ error: 'Errore dettaglio medaglie club', details: err.message });
   }
-};
+}
 
 async function dettagliMedaglieClub(svolgimenti, clubId) {
-
   const athleteList = await buildGlobalAthleteList(svolgimenti);
 
-  const filtered = athleteList.filter(a => {
+  const filtered = athleteList.filter((a) => {
     return String(a.club).toLowerCase() === String(clubId).toLowerCase();
   });
 
-  const out = filtered.map(a => ({
+  const out = filtered.map((a) => ({
     atletaId: a.atletaId,
     nome: a.nome,
     cognome: a.cognome,
     ori: a.medaglie.oro,
     argenti: a.medaglie.argento,
-    bronzi: a.medaglie.bronzo
+    bronzi: a.medaglie.bronzo,
   }));
 
   return { atleti: out };
@@ -141,17 +138,17 @@ async function printResults(req, res) {
     // Recupera tutte le categorie della competizione
     const categorie = await Categoria.findAll({
       where: { competizioneId },
-      order: [['nome', 'ASC']]
+      order: [['nome', 'ASC']],
     });
 
     // Recupera i dati di svolgimento per tutte le categorie (senza include)
     const svolgimenti = await SvolgimentoCategoria.findAll({
-      where: { categoriaId: { [Op.in]: categorie.map(c => c.id) } }
+      where: { categoriaId: { [Op.in]: categorie.map((c) => c.id) } },
     });
 
     // Mappa categoriaId -> svolgimento
     const svolgimentoMap = {};
-    svolgimenti.forEach(s => {
+    svolgimenti.forEach((s) => {
       svolgimentoMap[s.categoriaId] = s;
     });
 
@@ -191,18 +188,20 @@ async function printResults(req, res) {
         continue;
       }
       // Recupera info atleti in classifica
-      const atletiIds = classifica.map(c => c.atletaId);
+      const atletiIds = classifica.map((c) => c.atletaId);
       const atleti = await Atleta.findAll({
         where: { id: { [Op.in]: atletiIds } },
-        include: [{ model: Club, as: 'club' }]
+        include: [{ model: Club, as: 'club' }],
       });
       const atletaMap = {};
-      atleti.forEach(a => { atletaMap[a.id] = a; });
+      atleti.forEach((a) => {
+        atletaMap[a.id] = a;
+      });
       // Layout tabella
-      const col1 = 60;  // Progressivo
-      const col2 = 110;  // Cognome
-      const col3 = 230;  // Nome
-      const col4 = 350;  // Club
+      const col1 = 60; // Progressivo
+      const col2 = 110; // Cognome
+      const col3 = 230; // Nome
+      const col4 = 350; // Club
       const rowHeight = 14;
       const cellPadding = 2;
       // Header
@@ -260,7 +259,12 @@ async function printResults(req, res) {
         currentY += rowHeight;
       }
       // Linea separatrice dopo la tabella
-      doc.strokeColor('#cccccc').lineWidth(0.5).moveTo(40, currentY + 5).lineTo(555, currentY + 2).stroke();
+      doc
+        .strokeColor('#cccccc')
+        .lineWidth(0.5)
+        .moveTo(40, currentY + 5)
+        .lineTo(555, currentY + 2)
+        .stroke();
       doc.y = currentY + 15;
     }
     doc.end();
@@ -282,14 +286,14 @@ async function printClubResults(req, res) {
     // Calcola la classifica club (usando resultsHelpers)
     const { buildClubRanking, computeAthletePoints, buildGlobalAthleteList } = require('../utils/resultsHelpers');
     const categorie = await Categoria.findAll({ where: { competizioneId } });
-    const svolgimenti = await SvolgimentoCategoria.findAll({ where: { categoriaId: categorie.map(c => c.id) } });
+    const svolgimenti = await SvolgimentoCategoria.findAll({ where: { categoriaId: categorie.map((c) => c.id) } });
     // Ottieni lista atleti con medaglie
     const athleteMedals = await buildGlobalAthleteList(svolgimenti);
     const athleteMedalsWithPoints = computeAthletePoints(athleteMedals);
     // Calcola classifica club
     let classifica = await buildClubRanking(athleteMedalsWithPoints);
     // Calcola punti per ogni club
-    classifica = classifica.map(club => {
+    classifica = classifica.map((club) => {
       // Somma i punti degli atleti del club
       const punti = (club.dettagli || []).reduce((acc, a) => acc + (a.punti || 0), 0);
       return { ...club, punti };
@@ -323,7 +327,10 @@ async function printClubResults(req, res) {
       const ori = club.oro ?? 0;
       const argenti = club.argento ?? 0;
       const bronzi = club.bronzo ?? 0;
-      doc.fontSize(12).font('Helvetica-Bold').text(`${idx + 1}. ${club.club}`, 60, doc.y, { continued: true });
+      doc
+        .fontSize(12)
+        .font('Helvetica-Bold')
+        .text(`${idx + 1}. ${club.club}`, 60, doc.y, { continued: true });
       doc.fontSize(12).font('Helvetica').text(`   Ori ${ori} Argenti ${argenti} Bronzi ${bronzi}`);
     });
     doc.moveDown(1);
@@ -332,7 +339,12 @@ async function printClubResults(req, res) {
     doc.fontSize(13).font('Helvetica-Bold').text('Classifica completa', 40, doc.y);
     doc.moveDown(0.2);
     // Header tabella
-    const col1 = 50, col2 = 80, col3 = 400, col4 = 435, col5 = 480, col6 = 520;
+    const col1 = 50,
+      col2 = 80,
+      col3 = 400,
+      col4 = 435,
+      col5 = 480,
+      col6 = 520;
     const rowHeight = 14;
     const cellPadding = 2;
     let tableY = doc.y;
@@ -389,18 +401,21 @@ async function printClubResults(req, res) {
 
     // --- Migliori assoluti adulti CN e CB ---
     const tipiAssoluti = ['Adulti CN', 'Adulti CB'];
-    tipiAssoluti.forEach(tipo => {
+    tipiAssoluti.forEach((tipo) => {
       if (bestByFascia[tipo]) {
         // Unisci tutti gli atleti di tutte le fasce e sessi
         let allAtleti = [];
-        Object.values(bestByFascia[tipo]).forEach(sesso => {
+        Object.values(bestByFascia[tipo]).forEach((sesso) => {
           allAtleti = allAtleti.concat(sesso.M, sesso.F);
         });
         allAtleti = allAtleti.filter(Boolean);
         if (allAtleti.length > 0) {
           const best = allAtleti.reduce((max, curr) => (curr.punti > max.punti ? curr : max), allAtleti[0]);
           doc.fontSize(13).font('Helvetica-Bold').fillColor('black').text(`${tipo} - Miglior atleta assoluto`, { underline: true });
-          doc.fontSize(11).font('Helvetica').fillColor('black')
+          doc
+            .fontSize(11)
+            .font('Helvetica')
+            .fillColor('black')
             .text(`  ${best.nome} ${best.cognome} - ${best.club}`)
             .text(`    Oro: ${best.medaglie.oro} Argento: ${best.medaglie.argento} Bronzo: ${best.medaglie.bronzo} | Punti: ${best.punti}`);
           doc.moveDown(0.5);
@@ -418,13 +433,13 @@ async function printClubResults(req, res) {
         // Maschi
         doc.fontSize(11).font('Helvetica-Bold').fillColor('blue').text('    Maschile:');
         if (sesso.M.length > 0) {
-          sesso.M.forEach(a => {
-            doc.fontSize(11).font('Helvetica')
-            .fillColor('black')
-            .text(
-              `      ${a.nome} ${a.cognome} - ${a.club}`)
-              .text(`        Oro: ${a.medaglie.oro} Argento: ${a.medaglie.argento} Bronzo: ${a.medaglie.bronzo} | Punti: ${a.punti}`
-            );
+          sesso.M.forEach((a) => {
+            doc
+              .fontSize(11)
+              .font('Helvetica')
+              .fillColor('black')
+              .text(`      ${a.nome} ${a.cognome} - ${a.club}`)
+              .text(`        Oro: ${a.medaglie.oro} Argento: ${a.medaglie.argento} Bronzo: ${a.medaglie.bronzo} | Punti: ${a.punti}`);
           });
         } else {
           doc.fontSize(10).font('Helvetica-Oblique').fillColor('gray').text('      Nessun atleta');
@@ -432,13 +447,13 @@ async function printClubResults(req, res) {
         // Femmine
         doc.fontSize(11).font('Helvetica-Bold').fillColor('red').text('    Femminile:');
         if (sesso.F.length > 0) {
-          sesso.F.forEach(a => {
-            doc.fontSize(11).font('Helvetica')
-            .fillColor('black')
-            .text(
-              `      ${a.nome} ${a.cognome} - ${a.club}`)
-              .text(`        Oro: ${a.medaglie.oro} Argento: ${a.medaglie.argento} Bronzo: ${a.medaglie.bronzo} | Punti: ${a.punti}`
-            );
+          sesso.F.forEach((a) => {
+            doc
+              .fontSize(11)
+              .font('Helvetica')
+              .fillColor('black')
+              .text(`      ${a.nome} ${a.cognome} - ${a.club}`)
+              .text(`        Oro: ${a.medaglie.oro} Argento: ${a.medaglie.argento} Bronzo: ${a.medaglie.bronzo} | Punti: ${a.punti}`);
           });
         } else {
           doc.fontSize(10).font('Helvetica-Oblique').fillColor('gray').text('      Nessuna atleta');
@@ -464,16 +479,20 @@ exports.getCategoriesWithResults = async (req, res) => {
     const categorie = await Categoria.findAll({
       where: { competizioneId },
       attributes: ['id', 'nome', 'ordine'],
-      include: [{
-        model: ConfigTipoCategoria,
-        as: 'tipoCategoria',
-        attributes: ['id', 'nome'],
-        include: [{
-          model: ConfigTipoCompetizione,
-          as: 'tipoCompetizione',
-          attributes: ['id', 'nome']
-        }]
-      }]
+      include: [
+        {
+          model: ConfigTipoCategoria,
+          as: 'tipoCategoria',
+          attributes: ['id', 'nome'],
+          include: [
+            {
+              model: ConfigTipoCompetizione,
+              as: 'tipoCompetizione',
+              attributes: ['id', 'nome'],
+            },
+          ],
+        },
+      ],
     });
 
     categorie.sort((a, b) => {
@@ -483,21 +502,25 @@ exports.getCategoriesWithResults = async (req, res) => {
       return a.nome.localeCompare(b.nome, undefined, { numeric: true, sensitivity: 'base' });
     });
 
-    const categoriaIds = categorie.map(c => c.id);
+    const categoriaIds = categorie.map((c) => c.id);
     if (categoriaIds.length === 0) return res.json([]);
 
     const svolgimenti = await SvolgimentoCategoria.findAll({
       where: { categoriaId: categoriaIds },
-      attributes: ['categoriaId', 'classifica']
+      attributes: ['categoriaId', 'classifica'],
     });
 
     const svolgimentiMap = {};
-    svolgimenti.forEach(s => { svolgimentiMap[s.categoriaId] = s.classifica || []; });
+    svolgimenti.forEach((s) => {
+      svolgimentiMap[s.categoriaId] = s.classifica || [];
+    });
 
     const atletaIdSet = new Set();
-    Object.values(svolgimentiMap).forEach(classifica => {
+    Object.values(svolgimentiMap).forEach((classifica) => {
       if (Array.isArray(classifica)) {
-        classifica.forEach(entry => { if (entry.atletaId) atletaIdSet.add(entry.atletaId); });
+        classifica.forEach((entry) => {
+          if (entry.atletaId) atletaIdSet.add(entry.atletaId);
+        });
       }
     });
 
@@ -506,28 +529,32 @@ exports.getCategoriesWithResults = async (req, res) => {
       const atleti = await Atleta.findAll({
         where: { id: Array.from(atletaIdSet) },
         attributes: ['id', 'nome', 'cognome'],
-        include: [{ model: Club, as: 'club', attributes: ['id', 'denominazione', 'abbreviazione'] }]
+        include: [{ model: Club, as: 'club', attributes: ['id', 'denominazione', 'abbreviazione'] }],
       });
-      atleti.forEach(a => { atletiMap[a.id] = a; });
+      atleti.forEach((a) => {
+        atletiMap[a.id] = a;
+      });
     }
 
-    const result = categorie.map(cat => {
+    const result = categorie.map((cat) => {
       const classifica = svolgimentiMap[cat.id] || [];
-      const classificaArricchita = Array.isArray(classifica) ? classifica.map(entry => {
-        const atleta = atletiMap[entry.atletaId];
-        return {
-          pos: entry.pos,
-          atletaId: entry.atletaId,
-          nomeAtleta: atleta ? `${atleta.nome} ${atleta.cognome}` : null,
-          club: atleta?.club?.abbreviazione || atleta?.club?.denominazione || null
-        };
-      }) : [];
+      const classificaArricchita = Array.isArray(classifica)
+        ? classifica.map((entry) => {
+            const atleta = atletiMap[entry.atletaId];
+            return {
+              pos: entry.pos,
+              atletaId: entry.atletaId,
+              nomeAtleta: atleta ? `${atleta.nome} ${atleta.cognome}` : null,
+              club: atleta?.club?.abbreviazione || atleta?.club?.denominazione || null,
+            };
+          })
+        : [];
       return {
         id: cat.id,
         nome: cat.nome,
         ordine: cat.ordine,
         tipoCategoria: cat.tipoCategoria,
-        classifica: classificaArricchita
+        classifica: classificaArricchita,
       };
     });
 
@@ -541,15 +568,15 @@ exports.getCategoriesWithResults = async (req, res) => {
 // GET /results/atleti
 exports.getAtletiResults = async (req, res) => {
   try {
-  console.log('[resultsController] getAtletiResults - query:', req.query);
+    console.log('[resultsController] getAtletiResults - query:', req.query);
     const where = {};
     const competitionId = req.query.competitionId || req.query.competizioneId;
-  console.log('[resultsController] getAtletiResults - competitionId resolved:', competitionId || null);
+    console.log('[resultsController] getAtletiResults - competitionId resolved:', competitionId || null);
     if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
-      attributes: ["id", "categoriaId", "classifica", "competizioneId"],
+      attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
       where,
-      raw: true
+      raw: true,
     });
     const competizioneInizio = await Competizione.findByPk(competitionId);
     // lista con medaglie
@@ -566,27 +593,25 @@ exports.getAtletiResults = async (req, res) => {
 
     res.json({
       atleti: lista,
-      miglioriPerFasce
+      miglioriPerFasce,
     });
-
   } catch (err) {
-    res.status(500).json({ error: "Errore calcolo risultati per fasce", details: err.message });
+    res.status(500).json({ error: 'Errore calcolo risultati per fasce', details: err.message });
   }
 };
-
 
 // GET /results/club
 exports.getClubResults = async (req, res) => {
   try {
-  console.log('[resultsController] getClubResults - query:', req.query);
+    console.log('[resultsController] getClubResults - query:', req.query);
     const where = {};
     const competitionId = req.query.competitionId || req.query.competizioneId;
-  console.log('[resultsController] getClubResults - competitionId resolved:', competitionId || null);
+    console.log('[resultsController] getClubResults - competitionId resolved:', competitionId || null);
     if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
       attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
       where,
-      raw: true
+      raw: true,
     });
 
     // lista atleti già completa di club
@@ -598,16 +623,16 @@ exports.getClubResults = async (req, res) => {
     // arricchiamo con:
     // - punti totali
     // - id fittizio (denominazione)
-    const final = classifica.map(c => {
-      const punti = (c.oro * 7) + (c.argento * 4) + (c.bronzo * 2);
+    const final = classifica.map((c) => {
+      const punti = c.oro * 7 + c.argento * 4 + c.bronzo * 2;
       return {
-        clubId: c.club,  // uso la denominazione come ID coerente col frontend
+        clubId: c.club, // uso la denominazione come ID coerente col frontend
         club: c.club,
         ori: c.oro,
         argenti: c.argento,
         bronzi: c.bronzo,
         punti,
-        dettagli: c.dettagli
+        dettagli: c.dettagli,
       };
     });
 
@@ -616,30 +641,28 @@ exports.getClubResults = async (req, res) => {
 
     res.json({
       podio,
-      classifica: final
+      classifica: final,
     });
-
   } catch (err) {
-    console.error("ERRORE getClubResults:", err);
-    res.status(500).json({ error: "Errore calcolo classifica club" });
+    console.error('ERRORE getClubResults:', err);
+    res.status(500).json({ error: 'Errore calcolo classifica club' });
   }
 };
-
 
 // GET /results/club/:id
 // Restituisce il dettaglio delle medaglie per un club
 exports.getClubMedalsDetails = async (req, res) => {
   try {
     const clubId = req.params.id;
-  console.log('[resultsController] getClubMedalsDetails - params:', req.params, 'query:', req.query);
+    console.log('[resultsController] getClubMedalsDetails - params:', req.params, 'query:', req.query);
     const where = {};
     const competitionId = req.query.competitionId || req.query.competizioneId;
-  console.log('[resultsController] getClubMedalsDetails - competitionId resolved:', competitionId || null);
+    console.log('[resultsController] getClubMedalsDetails - competitionId resolved:', competitionId || null);
     if (competitionId) where.competizioneId = competitionId;
     const svolgimenti = await SvolgimentoCategoria.findAll({
       attributes: ['id', 'categoriaId', 'classifica', 'competizioneId'],
       where,
-      raw: true
+      raw: true,
     });
 
     const dettagli = await dettagliMedaglieClub(svolgimenti, clubId);
@@ -649,22 +672,20 @@ exports.getClubMedalsDetails = async (req, res) => {
   }
 };
 
-
 async function dettagliMedaglieClub(svolgimenti, clubId) {
-
   const athleteList = await buildGlobalAthleteList(svolgimenti);
 
-  const filtered = athleteList.filter(a => {
+  const filtered = athleteList.filter((a) => {
     return String(a.club).toLowerCase() === String(clubId).toLowerCase();
   });
 
-  const out = filtered.map(a => ({
+  const out = filtered.map((a) => ({
     atletaId: a.atletaId,
     nome: a.nome,
     cognome: a.cognome,
     ori: a.medaglie.oro,
     argenti: a.medaglie.argento,
-    bronzi: a.medaglie.bronzo
+    bronzi: a.medaglie.bronzo,
   }));
 
   return { atleti: out };

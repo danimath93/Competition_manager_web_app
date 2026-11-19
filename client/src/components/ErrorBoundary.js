@@ -4,10 +4,10 @@ import ErrorPage from '../pages/ErrorPage';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { 
-      hasError: false, 
+    this.state = {
+      hasError: false,
       error: null,
-      errorInfo: null 
+      errorInfo: null,
     };
   }
 
@@ -19,11 +19,11 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Log dell'errore per debugging
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Salva i dettagli dell'errore nello stato
     this.setState({
       error: error,
-      errorInfo: errorInfo
+      errorInfo: errorInfo,
     });
 
     // Opzionale: invia l'errore a un servizio di logging
@@ -31,12 +31,12 @@ class ErrorBoundary extends React.Component {
   }
 
   resetError = () => {
-    this.setState({ 
-      hasError: false, 
+    this.setState({
+      hasError: false,
       error: null,
-      errorInfo: null 
+      errorInfo: null,
     });
-  }
+  };
 
   render() {
     if (this.state.hasError) {

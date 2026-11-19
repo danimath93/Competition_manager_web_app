@@ -32,7 +32,7 @@ const checkAuthLevel = async (token) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Errore durante il controllo dell\'autenticazione:', error);
+    console.error("Errore durante il controllo dell'autenticazione:", error);
     throw error;
   }
 };
@@ -43,7 +43,7 @@ const updateUserData = async (userData) => {
     const response = await axios.post('/auth/update-user-data/', userData);
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'aggiornamento dei dati utente:', error);
+    console.error("Errore durante l'aggiornamento dei dati utente:", error);
     throw error;
   }
 };
@@ -86,7 +86,7 @@ const sendConfirmationEmail = async (to, token) => {
     const response = await axios.post('/auth/sendConfirmationEmail/', { to, token });
     return response.data;
   } catch (error) {
-    console.error('Errore durante l\'invio dell\'email di conferma:', error);
+    console.error("Errore durante l'invio dell'email di conferma:", error);
     throw error;
   }
 };

@@ -20,12 +20,14 @@ Backend Node.js per la gestione di gare di arti marziali, sviluppato con Express
 ## 🛠️ Installazione
 
 1. **Installa le dipendenze:**
+
    ```bash
    npm install
    ```
 
 2. **Configura le variabili d'ambiente:**
    Copia e modifica il file `.env` con le tue configurazioni:
+
    ```env
    DB_HOST=localhost
    DB_NAME=martial_arts_db
@@ -44,16 +46,19 @@ Backend Node.js per la gestione di gare di arti marziali, sviluppato con Express
 ## 🏃‍♂️ Avvio del Server
 
 ### Sviluppo
+
 ```bash
 npm run dev
 ```
 
 ### Produzione
+
 ```bash
 npm start
 ```
 
 ### Popola il database con dati di esempio
+
 ```bash
 npm run seed
 ```
@@ -61,37 +66,43 @@ npm run seed
 ## 📊 Modelli del Database
 
 ### Club
+
 - Informazioni del club (nome, referente, città, contatti)
 - Relazioni: atleti, giudici, competizioni organizzate
 
 ### Atleta
+
 - Dati anagrafici e sportivi
 - Peso, categoria, grado
 - Appartenenza al club
 
 ### Giudice
+
 - Dati anagrafici
 - Livello di esperienza (Aspirante, Regionale, Nazionale, Internazionale)
 - Specializzazione e certificazioni
 
 ### Competizione
+
 - Informazioni generali (nome, date, luogo)
 - Tipologia (Kata, Kumite, Mista)
 - Livello (Locale, Regionale, Nazionale, Internazionale)
 - Stato (Pianificata, Aperta, In corso, Conclusa, Annullata)
 
 ### Categoria
+
 - Criteri di partecipazione (età, peso, genere, grado)
 - Tipologia (Kata o Kumite)
 - Limiti di partecipanti
 
 ### Iscrizioni
-- **IscrizioneAtleta**: Relazione many-to-many tra atleti e categorie
 
+- **IscrizioneAtleta**: Relazione many-to-many tra atleti e categorie
 
 ## 🔗 Endpoints API
 
 ### Clubs
+
 - `GET /api/clubs` - Lista tutti i club
 - `GET /api/clubs/:id` - Dettagli di un club
 - `POST /api/clubs` - Crea un nuovo club
@@ -99,6 +110,7 @@ npm run seed
 - `DELETE /api/clubs/:id` - Elimina un club
 
 ### Competizioni
+
 - `GET /api/competizioni` - Lista tutte le competizioni
 - `GET /api/competizioni/:id` - Dettagli di una competizione
 - `GET /api/competizioni/stato/:stato` - Competizioni per stato
@@ -107,16 +119,19 @@ npm run seed
 - `DELETE /api/competizioni/:id` - Elimina una competizione
 
 ### Health Check
+
 - `GET /api/health` - Verifica stato server e database
 
 ## 🔧 Sviluppo
 
 ### Script Disponibili
+
 - `npm run dev` - Avvia il server in modalità sviluppo (con nodemon)
 - `npm start` - Avvia il server in modalità produzione
 - `npm run seed` - Popola il database con dati di esempio
 
 ### Struttura del Progetto
+
 ```
 server/
 ├── config/          # Configurazioni database
@@ -138,6 +153,7 @@ Dopo aver avviato il server, puoi testare l'API utilizzando:
 3. **curl**: Esempi di chiamate
 
 ### Esempio con curl:
+
 ```bash
 # Health check
 curl http://localhost:3050/api/health
@@ -159,7 +175,7 @@ curl -X POST http://localhost:3050/api/clubs \
 ## 🚧 Prossimi Sviluppi
 
 - [ ] Controller e routes per Atleti
-- [ ] Controller e routes per Giudici  
+- [ ] Controller e routes per Giudici
 - [ ] Controller e routes per Categorie
 - [ ] Sistema di autenticazione JWT
 - [ ] Upload file (documenti, foto)

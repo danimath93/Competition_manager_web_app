@@ -12,7 +12,7 @@ const Dashboard = () => {
 
   const handleTestError = () => {
     setShouldThrowError(true);
-  }
+  };
 
   // Lancia l'errore durante il rendering per essere catturato dall'ErrorBoundary
   if (shouldThrowError) {
@@ -30,7 +30,7 @@ const Dashboard = () => {
       <div className="page-content">
         <div className="page-section">
           <h2 className="page-section-title">Riepilogo Attività</h2>
-          
+
           <div className="page-grid-2">
             <div className="page-card">
               <div className="page-card-header">
@@ -67,10 +67,7 @@ const Dashboard = () => {
           <h2 className="page-section-title">Sezione di test</h2>
           <div className="page-card">
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-              <Button
-                size='s'
-                onClick={() => handleTestError()}
-              >
+              <Button size="s" onClick={() => handleTestError()}>
                 Test errore
               </Button>
             </Box>

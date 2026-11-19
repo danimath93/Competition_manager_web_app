@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const giudiceController = require('../controllers/giudiceController');
 
-// GET /api/giudici - Ottieni tutti i giudici 
+// GET /api/giudici - Ottieni tutti i giudici
 router.get('/', giudiceController.getAllJudges);
 
 // GET /api/giudici/:id - Ottieni un giudice per ID

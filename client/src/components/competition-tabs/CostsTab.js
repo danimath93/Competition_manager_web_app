@@ -19,7 +19,7 @@ import {
   Typography,
   Chip,
   Checkbox,
-  MenuItem
+  MenuItem,
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllCategoryTypes } from '../../api/config';
@@ -60,21 +60,21 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
   const [newSpecialCategory, setNewSpecialCategory] = useState(EMPTY_SPECIAL_CATEGORY);
 
   // Categorie selezionabili come speciali: solo quelle configurate per la competizione
-  const competitionCategoryIds = new Set((categoryConfig?.categories || []).map(c => c.categoryTypeId));
-  const competitionCategoryTypes = categoryTypes.filter(ct => competitionCategoryIds.has(ct.id));
+  const competitionCategoryIds = new Set((categoryConfig?.categories || []).map((c) => c.categoryTypeId));
+  const competitionCategoryTypes = categoryTypes.filter((ct) => competitionCategoryIds.has(ct.id));
 
   // Stato per nuova configurazione atleta (nel modale)
   const [newAthleteConfig, setNewAthleteConfig] = useState({
     grouping: null,
     type: 'fixed',
-    config: { amount: 0 }
+    config: { amount: 0 },
   });
 
   // Carica tipi categoria
   useEffect(() => {
     loadAllCategoryTypes()
       .then(setCategoryTypes)
-      .catch(error => console.error('Errore nel caricamento dei tipi categoria:', error));
+      .catch((error) => console.error('Errore nel caricamento dei tipi categoria:', error));
   }, []);
 
   // Propaga i dati al configuratore ad ogni modifica
@@ -100,8 +100,8 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
       {
         idConfigTipoCategoria,
         singleCost: parseFloat(singleCost),
-        withOthersCost: withOthersCost === '' ? null : parseFloat(withOthersCost)
-      }
+        withOthersCost: withOthersCost === '' ? null : parseFloat(withOthersCost),
+      },
     ]);
     handleCloseSpecialCategoryModal();
   };
@@ -111,7 +111,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
   };
 
   const getCategoryTypeName = (id) => {
-    const category = categoryTypes.find(ct => ct.id === id);
+    const category = categoryTypes.find((ct) => ct.id === id);
     return category ? category.nome : `Categoria #${id}`;
   };
 
@@ -183,9 +183,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
   const handleSaveAthleteConfig = () => {
     // Verifica che non esista già una configurazione per questo raggruppamento
-    const existingConfig = athleteCostConfigs.find(
-      config => config.grouping === newAthleteConfig.grouping
-    );
+    const existingConfig = athleteCostConfigs.find((config) => config.grouping === newAthleteConfig.grouping);
 
     if (existingConfig) {
       alert('Esiste già una configurazione per questo raggruppamento');
@@ -197,7 +195,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
       setNewAthleteConfig({
         grouping: null,
         type: 'fixed',
-        config: { amount: 0 }
+        config: { amount: 0 },
       });
       setAthleteConfigModalOpen(false);
     }
@@ -207,10 +205,14 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
   const getConfigTypeLabel = (type) => {
     switch (type) {
-      case 'fixed': return 'Fisso';
-      case 'minimum': return 'Scaglioni';
-      case 'additional': return 'Addizionale';
-      default: return type;
+      case 'fixed':
+        return 'Fisso';
+      case 'minimum':
+        return 'Scaglioni';
+      case 'additional':
+        return 'Addizionale';
+      default:
+        return type;
     }
   };
 
@@ -218,9 +220,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
     if (config.type === 'fixed') {
       return `${config.config.amount?.toFixed(2)} €`;
     } else if (config.type === 'minimum') {
-      return config.config.minCategories?.map((min, i) =>
-        `${min}+ cat. → ${config.config.costs[i]?.toFixed(2)}€`
-      ).join(' | ');
+      return config.config.minCategories?.map((min, i) => `${min}+ cat. → ${config.config.costs[i]?.toFixed(2)}€`).join(' | ');
     } else if (config.type === 'additional') {
       return `Prima: ${config.config.first?.toFixed(2)}€ + Extra: ${config.config.extra?.toFixed(2)}€`;
     }
@@ -231,10 +231,10 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
     return {
       tesseramento: {
         enabled: membershipEnabled,
-        amount: membershipEnabled ? parseFloat(membershipCost) : null
+        amount: membershipEnabled ? parseFloat(membershipCost) : null,
       },
       specialCategories,
-      categories: athleteCostConfigs.filter(config => config.grouping)
+      categories: athleteCostConfigs.filter((config) => config.grouping),
     };
   }
 
@@ -253,54 +253,45 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* IBAN */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
-              <label style={{ fontWeight: 500, color: '#333' }}>
-                Inserisci l'IBAN a cui effettuare il bonifico <span style={{ color: 'red' }}>*</span>
-              </label>
-              <TextInput
-                name="iban"
-                value={iban}
-                onChange={(e) => setIban(e.target.value)}
-                placeholder="IT00X0000000000000000000000"
-                required
-                size="small"
-                fullWidth
-              />
-            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* IBAN */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
+                <label style={{ fontWeight: 500, color: '#333' }}>
+                  Inserisci l'IBAN a cui effettuare il bonifico <span style={{ color: 'red' }}>*</span>
+                </label>
+                <TextInput
+                  name="iban"
+                  value={iban}
+                  onChange={(e) => setIban(e.target.value)}
+                  placeholder="IT00X0000000000000000000000"
+                  required
+                  size="small"
+                  fullWidth
+                />
+              </div>
 
-            {/* Intestatario */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
-              <label style={{ fontWeight: 500, color: '#333' }}>
-                Inserisci l'intestatario del C/C a cui effettuare il bonifico <span style={{ color: 'red' }}>*</span>
-              </label>
-              <TextInput
-                name="intestatario"
-                value={intestatario}
-                onChange={(e) => setIntestatario(e.target.value)}
-                placeholder="Nome intestatario"
-                required
-                size="small"
-                fullWidth
-              />
-            </div>
+              {/* Intestatario */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
+                <label style={{ fontWeight: 500, color: '#333' }}>
+                  Inserisci l'intestatario del C/C a cui effettuare il bonifico <span style={{ color: 'red' }}>*</span>
+                </label>
+                <TextInput
+                  name="intestatario"
+                  value={intestatario}
+                  onChange={(e) => setIntestatario(e.target.value)}
+                  placeholder="Nome intestatario"
+                  required
+                  size="small"
+                  fullWidth
+                />
+              </div>
 
-            {/* Causale */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
-              <label style={{ fontWeight: 500, color: '#333' }}>
-                Inserisci la causale del pagamento
-              </label>
-              <TextInput
-                name="causale"
-                value={causale}
-                onChange={(e) => setCausale(e.target.value)}
-                placeholder="Causale pagamento"
-                size="small"
-                fullWidth
-              />
+              {/* Causale */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center' }}>
+                <label style={{ fontWeight: 500, color: '#333' }}>Inserisci la causale del pagamento</label>
+                <TextInput name="causale" value={causale} onChange={(e) => setCausale(e.target.value)} placeholder="Causale pagamento" size="small" fullWidth />
+              </div>
             </div>
-          </div>
           </div>
         </div>
 
@@ -310,14 +301,16 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
             {/* Richiesta tesseramento */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '1rem',
+                alignItems: 'center',
+                marginBottom: '1.5rem',
+              }}>
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={membershipEnabled}
-                    onChange={(e) => setMembershipEnabled(e.target.checked)}
-                  />
-                }
+                control={<Checkbox checked={membershipEnabled} onChange={(e) => setMembershipEnabled(e.target.checked)} />}
                 label={
                   <span style={{ fontWeight: 500, color: '#333' }}>
                     Richiesta tesseramento
@@ -343,13 +336,8 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
             {/* Categorie speciali */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <label style={{ fontWeight: 500, color: '#333' }}>
-                Costi dedicati per categorie speciali, al posto del calcolo standard
-              </label>
-              <Button
-                size='s'
-                onClick={() => setSpecialCategoryModalOpen(true)}
-              >
+              <label style={{ fontWeight: 500, color: '#333' }}>Costi dedicati per categorie speciali, al posto del calcolo standard</label>
+              <Button size="s" onClick={() => setSpecialCategoryModalOpen(true)}>
                 Aggiungi
               </Button>
             </div>
@@ -357,22 +345,26 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
             {specialCategories.length > 0 ? (
               <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
                 {specialCategories.map((sc, index) => (
-                  <div key={sc.idConfigTipoCategoria} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '0.5rem',
-                    padding: '0.5rem',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '4px'
-                  }}>
+                  <div
+                    key={sc.idConfigTipoCategoria}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.5rem',
+                      padding: '0.5rem',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '4px',
+                    }}>
                     <span>
                       <strong>{getCategoryTypeName(sc.idConfigTipoCategoria)}</strong>
                       {' — '}Singola: <strong>{sc.singleCost.toFixed(2)} €</strong>
                       {' | '}Con altre categorie:{' '}
-                      {sc.withOthersCost !== null && sc.withOthersCost !== undefined
-                        ? <strong>{sc.withOthersCost.toFixed(2)} €</strong>
-                        : <em>calcolo standard</em>}
+                      {sc.withOthersCost !== null && sc.withOthersCost !== undefined ? (
+                        <strong>{sc.withOthersCost.toFixed(2)} €</strong>
+                      ) : (
+                        <em>calcolo standard</em>
+                      )}
                     </span>
                     <IconButton size="small" color="error" onClick={() => handleRemoveSpecialCategory(index)}>
                       <DeleteIcon fontSize="small" />
@@ -393,59 +385,52 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: 500, color: '#333' }}>Inserisci i costi di iscrizione per bambini e adulti (in base alla fascia d'età dell'atleta)</label>
-            <Button
-              size='s'
-              onClick={() => setAthleteConfigModalOpen(true)}
-            >
-              Aggiungi
-            </Button>
-          </div>
-
-          {athleteCostConfigs.length > 0 ? (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '1rem'
-            }}>
-              {athleteCostConfigs.map((config, index) => (
-                <Card key={index} variant="outlined" sx={{ position: 'relative' }}>
-                  <CardContent sx={{ pb: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
-                      <Typography variant="h6" component="div" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                        {getGroupingName(config)}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleRemoveAthleteConfig(index)}
-                        sx={{ mt: -1, mr: -1 }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </div>
-
-                    <Chip
-                      label={getConfigTypeLabel(config.type)}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                      sx={{ mb: 1 }}
-                    />
-
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      {getConfigDescription(config)}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <label style={{ fontWeight: 500, color: '#333' }}>
+                Inserisci i costi di iscrizione per bambini e adulti (in base alla fascia d'età dell'atleta)
+              </label>
+              <Button size="s" onClick={() => setAthleteConfigModalOpen(true)}>
+                Aggiungi
+              </Button>
             </div>
-          ) : (
-            <Alert severity="info">
-              Nessuna configurazione costi per bambini / adulti
-            </Alert>
-          )}
+
+            {athleteCostConfigs.length > 0 ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: '1rem',
+                }}>
+                {athleteCostConfigs.map((config, index) => (
+                  <Card key={index} variant="outlined" sx={{ position: 'relative' }}>
+                    <CardContent sx={{ pb: 1 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'start',
+                          marginBottom: '0.5rem',
+                        }}>
+                        <Typography variant="h6" component="div" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                          {getGroupingName(config)}
+                        </Typography>
+                        <IconButton size="small" color="error" onClick={() => handleRemoveAthleteConfig(index)} sx={{ mt: -1, mr: -1 }}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </div>
+
+                      <Chip label={getConfigTypeLabel(config.type)} size="small" color="primary" variant="outlined" sx={{ mb: 1 }} />
+
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {getConfigDescription(config)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Alert severity="info">Nessuna configurazione costi per bambini / adulti</Alert>
+            )}
           </div>
         </div>
       </form>
@@ -455,15 +440,12 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
         <DialogTitle>Aggiungi Categoria Speciale</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            La categoria viene esclusa dal calcolo standard e ha un costo dedicato.
-            Se non indichi il costo con altre categorie, quando l'atleta è iscritto anche ad altre
-            categorie viene conteggiata come una categoria normale.
+            La categoria viene esclusa dal calcolo standard e ha un costo dedicato. Se non indichi il costo con altre categorie, quando l'atleta è iscritto
+            anche ad altre categorie viene conteggiata come una categoria normale.
           </Typography>
 
           {competitionCategoryTypes.length === 0 ? (
-            <Alert severity="warning">
-              Nessuna categoria configurata per la competizione: configura prima lo step Categorie
-            </Alert>
+            <Alert severity="warning">Nessuna categoria configurata per la competizione: configura prima lo step Categorie</Alert>
           ) : (
             <>
               <TextField
@@ -473,15 +455,11 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
                 onChange={(e) => setNewSpecialCategory({ ...newSpecialCategory, idConfigTipoCategoria: e.target.value })}
                 fullWidth
                 required
-                sx={{ mb: 2, mt: 1 }}
-              >
-                {competitionCategoryTypes.map(ct => (
-                  <MenuItem
-                    key={ct.id}
-                    value={ct.id}
-                    disabled={specialCategories.some(sc => sc.idConfigTipoCategoria === ct.id)}
-                  >
-                    {ct.nome}{ct.tipoCompetizione?.nome ? ` (${ct.tipoCompetizione.nome})` : ''}
+                sx={{ mb: 2, mt: 1 }}>
+                {competitionCategoryTypes.map((ct) => (
+                  <MenuItem key={ct.id} value={ct.id} disabled={specialCategories.some((sc) => sc.idConfigTipoCategoria === ct.id)}>
+                    {ct.nome}
+                    {ct.tipoCompetizione?.nome ? ` (${ct.tipoCompetizione.nome})` : ''}
                   </MenuItem>
                 ))}
               </TextField>
@@ -514,8 +492,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
           <Button
             onClick={handleAddSpecialCategory}
             variant="contained"
-            disabled={!newSpecialCategory.idConfigTipoCategoria || newSpecialCategory.singleCost === ''}
-          >
+            disabled={!newSpecialCategory.idConfigTipoCategoria || newSpecialCategory.singleCost === ''}>
             Aggiungi
           </Button>
         </DialogActions>
@@ -529,17 +506,14 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <FormLabel>Raggruppamento</FormLabel>
-                <RadioGroup
-                  value={newAthleteConfig.grouping || ''}
-                  onChange={(e) => handleNewAthleteConfigChange('grouping', e.target.value)}
-                >
+                <RadioGroup value={newAthleteConfig.grouping || ''} onChange={(e) => handleNewAthleteConfigChange('grouping', e.target.value)}>
                   {GROUPINGS.map((grouping) => (
                     <FormControlLabel
                       key={grouping}
                       value={grouping}
                       control={<Radio />}
                       label={GROUPING_LABELS[grouping]}
-                      disabled={athleteCostConfigs.some(config => config.grouping === grouping)}
+                      disabled={athleteCostConfigs.some((config) => config.grouping === grouping)}
                     />
                   ))}
                 </RadioGroup>
@@ -549,25 +523,10 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <FormLabel>Modalità di Calcolo</FormLabel>
-                <RadioGroup
-                  value={newAthleteConfig.type}
-                  onChange={(e) => handleNewAthleteConfigChange('type', e.target.value)}
-                >
-                  <FormControlLabel
-                    value="fixed"
-                    control={<Radio />}
-                    label="Fisso - Costo unico indipendentemente dalle categorie"
-                  />
-                  <FormControlLabel
-                    value="minimum"
-                    control={<Radio />}
-                    label="Scaglioni - Costo variabile per scaglioni di categorie"
-                  />
-                  <FormControlLabel
-                    value="additional"
-                    control={<Radio />}
-                    label="Addizionale - Costo fisso + extra per ogni categoria aggiuntiva"
-                  />
+                <RadioGroup value={newAthleteConfig.type} onChange={(e) => handleNewAthleteConfigChange('type', e.target.value)}>
+                  <FormControlLabel value="fixed" control={<Radio />} label="Fisso - Costo unico indipendentemente dalle categorie" />
+                  <FormControlLabel value="minimum" control={<Radio />} label="Scaglioni - Costo variabile per scaglioni di categorie" />
+                  <FormControlLabel value="additional" control={<Radio />} label="Addizionale - Costo fisso + extra per ogni categoria aggiuntiva" />
                 </RadioGroup>
               </FormControl>
             </Grid>
@@ -588,12 +547,17 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
             {newAthleteConfig.type === 'minimum' && (
               <Grid item xs={12}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <Typography variant="body2" fontWeight={500}>Scaglioni</Typography>
-                    <Button
-                      size='s'
-                      onClick={handleAddScaglione}
-                    >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '1.5rem',
+                    }}>
+                    <Typography variant="body2" fontWeight={500}>
+                      Scaglioni
+                    </Typography>
+                    <Button size="s" onClick={handleAddScaglione}>
                       Aggiungi
                     </Button>
                   </div>
@@ -618,11 +582,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
                         sx={{ width: '150px' }}
                       />
                       {scagIdx > 0 && (
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleRemoveScaglione(scagIdx)}
-                        >
+                        <IconButton size="small" color="error" onClick={() => handleRemoveScaglione(scagIdx)}>
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       )}
@@ -660,11 +620,7 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAthleteConfigModalOpen(false)}>Annulla</Button>
-          <Button
-            onClick={handleSaveAthleteConfig}
-            variant="contained"
-            disabled={newAthleteConfig.grouping === null}
-          >
+          <Button onClick={handleSaveAthleteConfig} variant="contained" disabled={newAthleteConfig.grouping === null}>
             Salva Configurazione
           </Button>
         </DialogActions>

@@ -2,14 +2,7 @@ import React from 'react';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
 
-const SearchTextField = ({ 
-  value, 
-  onChange, 
-  placeholder = 'Cerca...', 
-  onClear,
-  sx = {},
-  ...props 
-}) => {
+const SearchTextField = ({ value, onChange, placeholder = 'Cerca...', onClear, sx = {}, ...props }) => {
   const handleClear = () => {
     if (onClear) {
       onClear();
@@ -34,11 +27,7 @@ const SearchTextField = ({
         ),
         endAdornment: value && (
           <InputAdornment position="end">
-            <IconButton
-              size="small"
-              onClick={handleClear}
-              sx={{ padding: '4px' }}
-            >
+            <IconButton size="small" onClick={handleClear} sx={{ padding: '4px' }}>
               <ClearIcon sx={{ fontSize: '18px' }} />
             </IconButton>
           </InputAdornment>

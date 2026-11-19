@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import {
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Button,
-  Typography,
-  Box,
-  Dialog,
-  DialogContent,
-  Tooltip
-} from '@mui/material';
+import { List, ListItem, ListItemText, ListItemSecondaryAction, Button, Typography, Box, Dialog, DialogContent, Tooltip } from '@mui/material';
 import { PersonAdd } from '@mui/icons-material';
 import SearchTextField from './SearchTextField';
 import AthleteRegistration from './AthleteRegistration';
@@ -59,33 +48,21 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
 
   return (
     <>
-      <SearchTextField
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        placeholder="Cerca atleta..."
-      />
+      <SearchTextField value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Cerca atleta..." />
       <List>
         {filteredAthletes.map((athlete) => (
-          <ListItem key={athlete.id} divider sx={{ alignItems: "flex-start", py: 2 }}>
-            <ListItemText
-              primary={`${athlete.cognome} ${athlete.nome}`}
-            />
+          <ListItem key={athlete.id} divider sx={{ alignItems: 'flex-start', py: 2 }}>
+            <ListItemText primary={`${athlete.cognome} ${athlete.nome}`} />
             <ListItemSecondaryAction>
-            {!isClubRegistered && (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Tooltip title="Iscrivi Atleta" arrow>                    
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    sx={{ p: 0.5, minWidth: 20 }}
-                    onClick={() => handleRegisterAthlete(athlete)}
-                  >
-                    <PersonAdd />
-                  </Button>
-                </Tooltip>
-                
-              </Box>
-            )}
+              {!isClubRegistered && (
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Tooltip title="Iscrivi Atleta" arrow>
+                    <Button size="small" variant="outlined" sx={{ p: 0.5, minWidth: 20 }} onClick={() => handleRegisterAthlete(athlete)}>
+                      <PersonAdd />
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )}
             </ListItemSecondaryAction>
           </ListItem>
         ))}
@@ -99,10 +76,9 @@ const ClubAthletesList = ({ athletes, competition, isClubRegistered, onRegistrat
         PaperProps={{
           sx: {
             height: '90vh',
-            maxHeight: '90vh'
-          }
-        }}
-      >
+            maxHeight: '90vh',
+          },
+        }}>
         <DialogContent sx={{ p: '10px', height: '100%', overflow: 'auto' }}>
           <AthleteRegistration
             athlete={selectedAthlete}

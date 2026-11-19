@@ -63,11 +63,11 @@ const Settings = () => {
       await updateUserData({ clubId: selectedClubId });
       setSuccess('Impostazioni aggiornate con successo. Rieffettua il login per vedere le modifiche.');
     } catch (error) {
-      console.error('Errore nell\'aggiornamento del club:', error);
-      setError(error.response?.data?.message || 'Errore nell\'aggiornamento del club');
+      console.error("Errore nell'aggiornamento del club:", error);
+      setError(error.response?.data?.message || "Errore nell'aggiornamento del club");
     }
   };
-  
+
   return (
     <div className="page-container">
       <PageHeader
@@ -82,7 +82,7 @@ const Settings = () => {
           {error.message || error}
         </Alert>
       )}
-      
+
       {success && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
           {success}
@@ -90,7 +90,6 @@ const Settings = () => {
       )}
 
       <div className="page-content">
-
         <div className="page-section">
           <h2 className="page-section-title">Generali</h2>
           <div className="page-card">
@@ -106,9 +105,7 @@ const Settings = () => {
             <div className="page-card">
               <Box display="flex" flexDirection="column" gap={2}>
                 <Box>
-                  <p style={{ marginBottom: '8px', fontWeight: 500 }}>
-                    Utente: {user?.username || 'N/A'}
-                  </p>
+                  <p style={{ marginBottom: '8px', fontWeight: 500 }}>Utente: {user?.username || 'N/A'}</p>
                 </Box>
 
                 <Autocomplete
@@ -118,23 +115,12 @@ const Settings = () => {
                   getOptionLabel={(club) => club}
                   onChange={(event, value) => handleClubSelectChange(value)}
                   isOptionEqualToValue={(option, value) => option === value}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Club"
-                      size="small"
-                      required
-                    />
-                  )}
+                  renderInput={(params) => <TextField {...params} label="Club" size="small" required />}
                   options={clubNames ? [...clubNames].sort((a, b) => a.localeCompare(b)) : []}
                 />
 
                 <Box display="flex" justifyContent="flex-end">
-                  <Button 
-                    onClick={handleUpdateClub} 
-                    variant="contained"
-                    disabled={!selectedClubId}
-                  >
+                  <Button onClick={handleUpdateClub} variant="contained" disabled={!selectedClubId}>
                     Conferma Modifica
                   </Button>
                 </Box>

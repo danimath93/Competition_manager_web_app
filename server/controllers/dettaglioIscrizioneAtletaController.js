@@ -21,7 +21,7 @@ exports.getAllDettagli = async (req, res) => {
     const dettagli = await DettaglioIscrizioneAtleta.findAll({
       where,
       include: [{ model: Atleta, as: 'atleta' }],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
     });
     res.json(dettagli);
   } catch (err) {
@@ -33,7 +33,7 @@ exports.getAllDettagli = async (req, res) => {
 exports.getDettaglioById = async (req, res) => {
   try {
     const dettaglio = await DettaglioIscrizioneAtleta.findByPk(req.params.id, {
-      include: [{ model: Atleta, as: 'atleta' }]
+      include: [{ model: Atleta, as: 'atleta' }],
     });
     if (!dettaglio) return res.status(404).json({ error: 'Dettaglio non trovato' });
     res.json(dettaglio);

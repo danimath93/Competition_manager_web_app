@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const authController = require('../controllers/authController');  
+const authController = require('../controllers/authController');
 
 // POST /api/loginUsers - Login user
 router.post('/login', authController.loginUser);
@@ -15,7 +15,7 @@ router.get('/check-auth', authController.checkAuthLevel);
 // POST /api/registerUsers - Register user
 router.post('/register', authController.registerUser);
 
-// POST /api/update-user-data - Update user data (e.g., clubId, more to be added) 
+// POST /api/update-user-data - Update user data (e.g., clubId, more to be added)
 router.post('/update-user-data', authController.updateUserData);
 
 // GET /api/confirm - Confirm user registration

@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Box,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  ListSubheader,
-  TextField,
-} from '@mui/material';
+import { Box, Grid, FormControl, InputLabel, Select, MenuItem, ListSubheader, TextField } from '@mui/material';
 import { FaUsers } from 'react-icons/fa';
 import { Add } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
@@ -39,7 +30,7 @@ const Athletes = () => {
     gender: '',
     ageGroupConfigurationId: '',
     ageGroupKey: '',
-    referenceDate: todayYmd()
+    referenceDate: todayYmd(),
   });
   const isAdmin = user && (user.permissions === 'admin' || user.permissions === 'superAdmin');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,13 +63,13 @@ const Athletes = () => {
   // Configurazioni fasce d'età disponibili (di default e del club; per l'admin quelle del club filtrato)
   useEffect(() => {
     if (!user) return;
-    loadAgeGroupConfigurations(isAdmin ? (filters.club || null) : null)
+    loadAgeGroupConfigurations(isAdmin ? filters.club || null : null)
       .then(setAgeGroupConfigurations)
-      .catch(error => console.error('Errore nel caricamento delle configurazioni fasce età:', error));
+      .catch((error) => console.error('Errore nel caricamento delle configurazioni fasce età:', error));
   }, [user, isAdmin, filters.club]);
 
   const selectedAgeGroupConfig = useMemo(
-    () => ageGroupConfigurations.find(c => c.id === filters.ageGroupConfigurationId)?.config || null,
+    () => ageGroupConfigurations.find((c) => c.id === filters.ageGroupConfigurationId)?.config || null,
     [ageGroupConfigurations, filters.ageGroupConfigurationId]
   );
 
@@ -86,12 +77,7 @@ const Athletes = () => {
     let result = athletes;
 
     if (filters.name) {
-      result = result.filter(
-        (athlete) =>
-          `${athlete.nome} ${athlete.cognome}`
-            .toLowerCase()
-            .includes(filters.name.toLowerCase())
-      );
+      result = result.filter((athlete) => `${athlete.nome} ${athlete.cognome}`.toLowerCase().includes(filters.name.toLowerCase()));
     }
 
     if (filters.belt) {
@@ -108,9 +94,7 @@ const Athletes = () => {
 
     // Fascia d'età calcolata con la configurazione scelta alla data di riferimento
     if (selectedAgeGroupConfig && filters.ageGroupKey) {
-      result = result.filter((athlete) =>
-        resolveAgeGroup(athlete.dataNascita, selectedAgeGroupConfig, filters.referenceDate)?.key === filters.ageGroupKey
-      );
+      result = result.filter((athlete) => resolveAgeGroup(athlete.dataNascita, selectedAgeGroupConfig, filters.referenceDate)?.key === filters.ageGroupKey);
     }
 
     setFilteredAthletes(result);
@@ -126,7 +110,7 @@ const Athletes = () => {
 
   const handleFilterNameChange = (e) => {
     setFilters({ ...filters, name: e.target.value });
-  }
+  };
 
   const handleOpenModal = (athlete = null) => {
     setIsEditMode(!!athlete);
@@ -197,10 +181,7 @@ const Athletes = () => {
 
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <PageHeader
-        icon={FaUsers}
-        title="Gestione Atleti"
-      />
+      <PageHeader icon={FaUsers} title="Gestione Atleti" />
 
       {/* Contenuto della pagina */}
       <div className="page-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -213,16 +194,13 @@ const Athletes = () => {
                 placeholder="Filtra per Nome/Cognome"
                 sx={{
                   width: '100%',
-                  maxWidth: "800px",
+                  maxWidth: '800px',
                   '& .MuiOutlinedInput-root': {
                     height: '60px',
-                  }
+                  },
                 }}
               />
-              <Button
-                icon={Add}
-                onClick={() => handleOpenModal()}
-              >
+              <Button icon={Add} onClick={() => handleOpenModal()}>
                 Aggiungi Atleta
               </Button>
             </Box>
@@ -233,12 +211,7 @@ const Athletes = () => {
                   <Grid item xs={12} sm={6} md={3}>
                     <FormControl fullWidth variant="outlined">
                       <InputLabel>Filtra per Club</InputLabel>
-                      <Select
-                        name="club"
-                        label="Filtra per Club"
-                        value={filters.club}
-                        onChange={handleFilterChange}
-                      >
+                      <Select name="club" label="Filtra per Club" value={filters.club} onChange={handleFilterChange}>
                         <MenuItem value="">
                           <em>Tutti</em>
                         </MenuItem>
@@ -254,13 +227,10 @@ const Athletes = () => {
                 <Grid item xs={12} sm={6} md={2}>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel>Cintura</InputLabel>
-                    <Select
-                      name="belt"
-                      label="Cintura"
-                      value={filters.belt}
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value=""><em>Tutte</em></MenuItem>
+                    <Select name="belt" label="Cintura" value={filters.belt} onChange={handleFilterChange}>
+                      <MenuItem value="">
+                        <em>Tutte</em>
+                      </MenuItem>
                       <MenuItem value="CN">CN</MenuItem>
                       <MenuItem value="CB">CB</MenuItem>
                     </Select>
@@ -273,17 +243,26 @@ const Athletes = () => {
                       name="ageGroupConfigurationId"
                       label="Configurazione fasce d'età"
                       value={filters.ageGroupConfigurationId}
-                      onChange={handleAgeGroupConfigurationChange}
-                    >
-                      <MenuItem value=""><em>Nessuna</em></MenuItem>
-                      {ageGroupConfigurations.some(c => c.clubId !== null) && <ListSubheader>Configurazioni del club</ListSubheader>}
-                      {ageGroupConfigurations.filter(c => c.clubId !== null).map((configuration) => (
-                        <MenuItem key={configuration.id} value={configuration.id}>{configuration.name}</MenuItem>
-                      ))}
+                      onChange={handleAgeGroupConfigurationChange}>
+                      <MenuItem value="">
+                        <em>Nessuna</em>
+                      </MenuItem>
+                      {ageGroupConfigurations.some((c) => c.clubId !== null) && <ListSubheader>Configurazioni del club</ListSubheader>}
+                      {ageGroupConfigurations
+                        .filter((c) => c.clubId !== null)
+                        .map((configuration) => (
+                          <MenuItem key={configuration.id} value={configuration.id}>
+                            {configuration.name}
+                          </MenuItem>
+                        ))}
                       <ListSubheader>Configurazioni di default</ListSubheader>
-                      {ageGroupConfigurations.filter(c => c.clubId === null).map((configuration) => (
-                        <MenuItem key={configuration.id} value={configuration.id}>{configuration.name}</MenuItem>
-                      ))}
+                      {ageGroupConfigurations
+                        .filter((c) => c.clubId === null)
+                        .map((configuration) => (
+                          <MenuItem key={configuration.id} value={configuration.id}>
+                            {configuration.name}
+                          </MenuItem>
+                        ))}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -292,15 +271,14 @@ const Athletes = () => {
                     <Grid item xs={12} sm={6} md={2}>
                       <FormControl fullWidth variant="outlined">
                         <InputLabel>Fascia d'età</InputLabel>
-                        <Select
-                          name="ageGroupKey"
-                          label="Fascia d'età"
-                          value={filters.ageGroupKey}
-                          onChange={handleFilterChange}
-                        >
-                          <MenuItem value=""><em>Tutte</em></MenuItem>
+                        <Select name="ageGroupKey" label="Fascia d'età" value={filters.ageGroupKey} onChange={handleFilterChange}>
+                          <MenuItem value="">
+                            <em>Tutte</em>
+                          </MenuItem>
                           {selectedAgeGroupConfig.groups.map((group) => (
-                            <MenuItem key={group.key} value={group.key}>{group.label}</MenuItem>
+                            <MenuItem key={group.key} value={group.key}>
+                              {group.label}
+                            </MenuItem>
                           ))}
                         </Select>
                       </FormControl>
@@ -320,7 +298,6 @@ const Athletes = () => {
                 )}
               </Grid>
             </Box>
-
           </div>
         </div>
 
@@ -330,10 +307,10 @@ const Athletes = () => {
           </div> */}
           <div className="page-card-body" style={{ flex: 1, overflow: 'auto' }}>
             <AthletesTable
-              athletes={filteredAthletes.map(athlete => ({
+              athletes={filteredAthletes.map((athlete) => ({
                 ...athlete,
                 onUploadCertificato: handleOpenCertificatoModal,
-                onDownloadCertificato: handleOpenCertificatoModal
+                onDownloadCertificato: handleOpenCertificatoModal,
               }))}
               onEdit={handleOpenModal}
               onDelete={handleDeleteAthleteConfirm}
@@ -369,7 +346,10 @@ const Athletes = () => {
                 message="Sei sicuro di voler eliminare l'atleta selezionato?"
                 primaryButton={{
                   text: 'Elimina',
-                  onClick: async () => { await handleDeleteAthlete(selectedAthlete); setIsDeleteAthleteConfirmModalOpen(false); },
+                  onClick: async () => {
+                    await handleDeleteAthlete(selectedAthlete);
+                    setIsDeleteAthleteConfirmModalOpen(false);
+                  },
                 }}
                 secondaryButton={{
                   text: 'Annulla',
@@ -379,8 +359,6 @@ const Athletes = () => {
             )}
           </div>
         </div>
-
-
       </div>
     </div>
   );
