@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Grid, FormControl, InputLabel, Select, MenuItem, ListSubheader, TextField } from '@mui/material';
+import { Box, FormControl, InputLabel, Select, MenuItem, ListSubheader, TextField } from '@mui/material';
 import { FaUsers } from 'react-icons/fa';
 import { Add } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
@@ -179,6 +179,8 @@ const Athletes = () => {
     }
   };
 
+  const filterSx = { minWidth: 200, maxWidth: 400 };
+
   return (
     <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <PageHeader icon={FaUsers} title="Gestione Atleti" />
@@ -206,97 +208,88 @@ const Athletes = () => {
             </Box>
 
             <Box sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
+              <Box display="flex" flexWrap="wrap" gap={2}>
                 {isAdmin && (
-                  <Grid item xs={12} sm={6} md={3}>
-                    <FormControl fullWidth variant="outlined">
-                      <InputLabel>Filtra per Club</InputLabel>
-                      <Select name="club" label="Filtra per Club" value={filters.club} onChange={handleFilterChange}>
-                        <MenuItem value="">
-                          <em>Tutti</em>
+                  <FormControl fullWidth variant="outlined" sx={filterSx}>
+                    <InputLabel>Filtra per Club</InputLabel>
+                    <Select name="club" label="Filtra per Club" value={filters.club} onChange={handleFilterChange}>
+                      <MenuItem value="">
+                        <em>Tutti</em>
+                      </MenuItem>
+                      {clubs.map((club) => (
+                        <MenuItem key={club.id} value={club.id}>
+                          {club.denominazione}
                         </MenuItem>
-                        {clubs.map((club) => (
-                          <MenuItem key={club.id} value={club.id}>
-                            {club.denominazione}
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+                <FormControl fullWidth variant="outlined" sx={filterSx}>
+                  <InputLabel>Cintura</InputLabel>
+                  <Select name="belt" label="Cintura" value={filters.belt} onChange={handleFilterChange}>
+                    <MenuItem value="">
+                      <em>Tutte</em>
+                    </MenuItem>
+                    <MenuItem value="CN">CN</MenuItem>
+                    <MenuItem value="CB">CB</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth variant="outlined" sx={filterSx}>
+                  <InputLabel>Configurazione fasce d'età</InputLabel>
+                  <Select
+                    name="ageGroupConfigurationId"
+                    label="Configurazione fasce d'età"
+                    value={filters.ageGroupConfigurationId}
+                    onChange={handleAgeGroupConfigurationChange}>
+                    <MenuItem value="">
+                      <em>Nessuna</em>
+                    </MenuItem>
+                    {ageGroupConfigurations.some((c) => c.clubId !== null) && <ListSubheader>Configurazioni del club</ListSubheader>}
+                    {ageGroupConfigurations
+                      .filter((c) => c.clubId !== null)
+                      .map((configuration) => (
+                        <MenuItem key={configuration.id} value={configuration.id}>
+                          {configuration.name}
+                        </MenuItem>
+                      ))}
+                    <ListSubheader>Configurazioni di default</ListSubheader>
+                    {ageGroupConfigurations
+                      .filter((c) => c.clubId === null)
+                      .map((configuration) => (
+                        <MenuItem key={configuration.id} value={configuration.id}>
+                          {configuration.name}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+                {selectedAgeGroupConfig && (
+                  <>
+                    <FormControl fullWidth variant="outlined" sx={filterSx}>
+                      <InputLabel>Fascia d'età</InputLabel>
+                      <Select name="ageGroupKey" label="Fascia d'età" value={filters.ageGroupKey} onChange={handleFilterChange}>
+                        <MenuItem value="">
+                          <em>Tutte</em>
+                        </MenuItem>
+                        {selectedAgeGroupConfig.groups.map((group) => (
+                          <MenuItem key={group.key} value={group.key}>
+                            {group.label}
                           </MenuItem>
                         ))}
                       </Select>
                     </FormControl>
-                  </Grid>
-                )}
-                <Grid item xs={12} sm={6} md={2}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Cintura</InputLabel>
-                    <Select name="belt" label="Cintura" value={filters.belt} onChange={handleFilterChange}>
-                      <MenuItem value="">
-                        <em>Tutte</em>
-                      </MenuItem>
-                      <MenuItem value="CN">CN</MenuItem>
-                      <MenuItem value="CB">CB</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Configurazione fasce d'età</InputLabel>
-                    <Select
-                      name="ageGroupConfigurationId"
-                      label="Configurazione fasce d'età"
-                      value={filters.ageGroupConfigurationId}
-                      onChange={handleAgeGroupConfigurationChange}>
-                      <MenuItem value="">
-                        <em>Nessuna</em>
-                      </MenuItem>
-                      {ageGroupConfigurations.some((c) => c.clubId !== null) && <ListSubheader>Configurazioni del club</ListSubheader>}
-                      {ageGroupConfigurations
-                        .filter((c) => c.clubId !== null)
-                        .map((configuration) => (
-                          <MenuItem key={configuration.id} value={configuration.id}>
-                            {configuration.name}
-                          </MenuItem>
-                        ))}
-                      <ListSubheader>Configurazioni di default</ListSubheader>
-                      {ageGroupConfigurations
-                        .filter((c) => c.clubId === null)
-                        .map((configuration) => (
-                          <MenuItem key={configuration.id} value={configuration.id}>
-                            {configuration.name}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                {selectedAgeGroupConfig && (
-                  <>
-                    <Grid item xs={12} sm={6} md={2}>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel>Fascia d'età</InputLabel>
-                        <Select name="ageGroupKey" label="Fascia d'età" value={filters.ageGroupKey} onChange={handleFilterChange}>
-                          <MenuItem value="">
-                            <em>Tutte</em>
-                          </MenuItem>
-                          {selectedAgeGroupConfig.groups.map((group) => (
-                            <MenuItem key={group.key} value={group.key}>
-                              {group.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2}>
-                      <TextField
-                        type="date"
-                        name="referenceDate"
-                        label="Data di riferimento"
-                        value={filters.referenceDate}
-                        onChange={(e) => setFilters({ ...filters, referenceDate: e.target.value || todayYmd() })}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    </Grid>
+                    <TextField
+                      type="date"
+                      name="referenceDate"
+                      label="Data di riferimento"
+                      value={filters.referenceDate}
+                      onChange={(e) => setFilters({ ...filters, referenceDate: e.target.value || todayYmd() })}
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                      sx={filterSx}
+                    />
                   </>
                 )}
-              </Grid>
+              </Box>
             </Box>
           </div>
         </div>

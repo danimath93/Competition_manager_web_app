@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { FaTachometerAlt, FaTrophy, FaUsers, FaUniversity, FaGavel, FaTags, FaCog, FaChevronRight, FaChevronLeft, FaSignOutAlt } from 'react-icons/fa';
+import { FaTachometerAlt, FaTrophy, FaUsers, FaUniversity, FaGavel, FaTags, FaCog, FaBars, FaSignOutAlt } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import { hasPermission } from '../utils/permissions';
 import './styles/Sidebar.css';
@@ -107,11 +107,10 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
       <div className={`sidebar-overlay ${isOpen ? 'active' : ''}`} onClick={toggleSidebar} />
 
       <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
-        {/* Header Account */}
+        {/* Header con pulsante apertura/chiusura */}
         <div className="sidebar-header">
-          <button className="sidebar-toggle-btn" onClick={toggleSidebar} aria-label="Toggle sidebar">
-            {isOpen ? <FaChevronLeft /> : <FaChevronRight />}
-            {isOpen && <span className="sidebar-header-text">Account</span>}
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} aria-label="Toggle sidebar" title={isOpen ? 'Chiudi menu' : 'Apri menu'}>
+            <FaBars />
           </button>
         </div>
 
@@ -140,7 +139,11 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
           {isOpen && (
             <div className="sidebar-club-info">
               <div className="sidebar-user-name">{user?.username || 'Utente'}</div>
-              {user?.clubName && <div className="sidebar-club-name">{user.clubName}</div>}
+              {user?.clubName && (
+                <div className="sidebar-club-name" title={user.clubName}>
+                  {user.clubName}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -162,12 +165,10 @@ const Sidebar = ({ isOpen, toggleSidebar, isMobile, onNavigate }) => {
             ))}
           </ul>
 
-          {/* Separatore */}
-          <div className="sidebar-separator"></div>
-
-          {/* Impostazioni */}
+          {/* Impostazioni: sempre per ultime, separate dagli altri pulsanti */}
           {hasPermission(userPermissions, 'settings') && (
             <ul className="nav-list">
+              <li className="sidebar-separator" role="separator"></li>
               <li className="nav-item">
                 <NavLink
                   to="/settings"

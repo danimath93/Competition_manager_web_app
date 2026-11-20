@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './styles/AthleteRegistration.css';
-import { TextField, Autocomplete, Typography, Tooltip, Checkbox, FormControlLabel } from '@mui/material';
+import { TextField, Autocomplete, Typography, Tooltip } from '@mui/material';
 import MuiButton from '@mui/material/Button';
 import HorizontalStepper from './common/HorizontalStepper';
 import ConfirmActionModal from './common/ConfirmActionModal';
@@ -8,10 +8,18 @@ import Button from './common/Button';
 import { createRegistration } from '../api/registrations';
 import { uploadCertificato, downloadCertificato } from '../api/certificati';
 import { updateAthlete } from '../api/athletes';
-import { FiAlertCircle, FiUser, FiCheckCircle, FiDownload, FiUpload } from 'react-icons/fi';
+import { FiAlertCircle, FiUser, FiCheckCircle, FiDownload, FiUpload, FiEdit2, FiSave, FiX } from 'react-icons/fi';
 import { MembershipType } from '../constants/enums/CompetitionEnums';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
 import { checkCategoryConstraints, getCategoryLimitErrors, getAthleteRegistrationConfig, loadRegistrationConfig } from '../utils/helperRegistration';
+
+// Verifica se una data (formato YYYY-MM-DD) è precedente alla data odierna
+const isDateExpired = (date) => {
+  if (!date) return false;
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return String(date).slice(0, 10) < today;
+};
 
 /**
  * Componente per la gestione delle iscrizioni degli atleti alle competizioni
@@ -28,8 +36,10 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
   const [activeStep, setActiveStep] = useState(0);
 
   // Stato fase 1 - Dati atleta
-  const [endDateCertificate, setEndDateCertificate] = useState(athlete?.scadenzaCertificato || '');
-  const [certificatoId, setCertificatoId] = useState(athlete?.certificatoId ? 'Certificato presente' : null);
+  // Se il certificato è scaduto, scadenza e file vengono svuotati per obbligare l'utente a reinserirli
+  const isCertificateExpired = isDateExpired(athlete?.scadenzaCertificato);
+  const [endDateCertificate, setEndDateCertificate] = useState(isCertificateExpired ? '' : athlete?.scadenzaCertificato || '');
+  const [certificatoId, setCertificatoId] = useState(athlete?.certificatoId && !isCertificateExpired ? 'Certificato presente' : null);
   // Grado CN: va confermato ad ogni iscrizione, il valore viene salvato sull'atleta
   const [isBlackBelt, setIsBlackBelt] = useState(!!athlete?.isBlackBelt);
   useEffect(() => {
@@ -76,12 +86,49 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
     setEndDateCertificate(value);
   };
 
-  // Gestione modifica grado CN: cambiano categorie e livelli disponibili
-  const handleBlackBeltChange = (event) => {
-    setIsBlackBelt(event.target.checked);
-    setSelectedCategories([]);
-    setCategoryDetailSelections({});
-    setSelectedExperiences({});
+  // Gestione modifica livello (cintura bianca / nera)
+  const levelOptions = [
+    { id: 'white', nome: 'Cintura bianca' },
+    { id: 'black', nome: 'Cintura nera' },
+  ];
+  const [isEditingLevel, setIsEditingLevel] = useState(false);
+  const [pendingLevel, setPendingLevel] = useState(null);
+
+  const handleEditLevel = () => {
+    setPendingLevel(levelOptions.find((opt) => opt.id === (isBlackBelt ? 'black' : 'white')));
+    setIsEditingLevel(true);
+  };
+
+  const handleCancelLevel = () => {
+    setPendingLevel(null);
+    setIsEditingLevel(false);
+  };
+
+  // Salva il flag CN sull'atleta: cambiano categorie e livelli disponibili
+  const handleSaveLevel = async () => {
+    if (!pendingLevel) return;
+    const newIsBlackBelt = pendingLevel.id === 'black';
+    if (newIsBlackBelt === isBlackBelt) {
+      handleCancelLevel();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await updateAthlete(athlete.id, { ...athlete, isBlackBelt: newIsBlackBelt });
+      setIsBlackBelt(newIsBlackBelt);
+      setSelectedCategories([]);
+      setCategoryDetailSelections({});
+      setSelectedExperiences({});
+      setErrors([]);
+      setIsEditingLevel(false);
+      setPendingLevel(null);
+      if (onUpdateAthlete) onUpdateAthlete();
+    } catch (err) {
+      setErrors(['Errore durante il salvataggio del livello', err.response?.data?.message || err.message]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Gestione modifica tesseramento
@@ -203,11 +250,16 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
         if (athleteConfig && athleteConfig.ageGroup === null) {
           newErrors.push("L'atleta non rientra in nessuna fascia d'età prevista dalla competizione");
         }
+        if (isEditingLevel) {
+          newErrors.push("Salva o annulla la modifica del livello dell'atleta");
+        }
         if (!tesseramento) {
           newErrors.push("Seleziona il tesseramento dell'atleta");
         }
         if (!endDateCertificate) {
           newErrors.push('Inserisci la scadenza del certificato medico');
+        } else if (isDateExpired(endDateCertificate)) {
+          newErrors.push('Il certificato medico è scaduto: inserisci la scadenza e carica il nuovo certificato');
         }
         if (certificatoId === null) {
           newErrors.push("Carica il certificato medico dell'atleta");
@@ -416,27 +468,57 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
       <p className="phase-description">Controlla che i dati dell'atleta siano corretti prima di procedere con l'iscrizione.</p>
 
       <div className="data-section">
-        <h4 className="section-title">Info: Atleta</h4>
+        <h4 className="section-title" style={{ justifyContent: 'space-between' }}>
+          Info: Atleta
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {isEditingLevel ? (
+              <>
+                <MuiButton size="small" variant="contained" startIcon={<FiSave />} onClick={handleSaveLevel} disabled={loading}>
+                  Salva
+                </MuiButton>
+                <MuiButton size="small" variant="outlined" startIcon={<FiX />} onClick={handleCancelLevel} disabled={loading}>
+                  Annulla
+                </MuiButton>
+              </>
+            ) : (
+              <MuiButton size="small" variant="outlined" startIcon={<FiEdit2 />} onClick={handleEditLevel} disabled={loading}>
+                Modifica
+              </MuiButton>
+            )}
+          </div>
+        </h4>
         <div className="data-row">
           <div className="data-field">
-            <FormControlLabel control={<Checkbox checked={isBlackBelt} onChange={handleBlackBeltChange} size="small" />} label="L'atleta è cintura nera (CN)" />
+            {athleteConfig?.ageGroup === null ? (
+              <Typography color="error">L'atleta non rientra in nessuna fascia d'età prevista dalla competizione</Typography>
+            ) : (
+              <Typography>
+                <strong>Fascia d'età:</strong>{' '}
+                {athleteConfig?.ageGroup ? `${athleteConfig.ageGroup.label} (${athleteConfig.ageGroup.grouping === 'children' ? 'Bambini' : 'Adulti'})` : '-'}
+              </Typography>
+            )}
           </div>
         </div>
-        {athleteConfig?.ageGroup !== undefined && (
-          <div className="data-row">
-            <div className="data-field">
-              {athleteConfig.ageGroup ? (
-                <Typography variant="body2">
-                  Fascia d'età: <strong>{athleteConfig.ageGroup.label}</strong> ({athleteConfig.ageGroup.grouping === 'children' ? 'Bambini' : 'Adulti'})
-                </Typography>
-              ) : (
-                <Typography variant="body2" color="error">
-                  L'atleta non rientra in nessuna fascia d'età prevista dalla competizione
-                </Typography>
-              )}
-            </div>
+        <div className="data-row">
+          <div className="data-field">
+            {isEditingLevel ? (
+              <Autocomplete
+                id="livelloAtleta"
+                value={pendingLevel}
+                options={levelOptions}
+                getOptionLabel={(option) => option.nome || ''}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                onChange={(event, newValue) => setPendingLevel(newValue)}
+                disableClearable
+                renderInput={(params) => <TextField {...params} label="Livello" variant="outlined" size="small" />}
+              />
+            ) : (
+              <Typography>
+                <strong>Livello:</strong> {isBlackBelt ? 'Cintura nera' : 'Cintura bianca'}
+              </Typography>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <div className="data-section">
