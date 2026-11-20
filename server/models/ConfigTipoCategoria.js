@@ -29,10 +29,19 @@ const ConfigTipoCategoria = sequelize.define(
       },
       field: 'tipo_competizione_id',
     },
-    idConfigTipiAtleti: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      allowNull: true,
-      field: 'id_config_tipi_atleti',
+    defaultGroupings: {
+      type: DataTypes.ARRAY(DataTypes.STRING(20)),
+      allowNull: false,
+      defaultValue: ['children', 'adults'],
+      field: 'default_groupings',
+      validate: {
+        isValidGroupings(value) {
+          if (!Array.isArray(value) || value.some((g) => !['children', 'adults'].includes(g))) {
+            throw new Error('defaultGroupings ammette solo "children" e "adults"');
+          }
+        },
+      },
+      comment: 'Raggruppamenti (children/adults) proposti di default nella matrice categorie x fasce età',
     },
     obbligoPeso: {
       type: DataTypes.BOOLEAN,

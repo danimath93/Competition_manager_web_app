@@ -28,15 +28,10 @@ export const emptyCategoryConfig = () => ({
   experienceLevels: [],
 });
 
-// Raggruppamenti proposti di default per un tipo categoria, ricavati dai tipi atleta ammessi
-// (1 = CB Bambini -> children, 2/3 = CB Adulti/CN -> adults)
+// Raggruppamenti proposti di default per un tipo categoria
 export const getDefaultGroupings = (categoryType) => {
-  const athleteTypes = categoryType?.idConfigTipiAtleti || [];
-  if (athleteTypes.length === 0) return ['children', 'adults'];
-  const groupings = [];
-  if (athleteTypes.includes(1)) groupings.push('children');
-  if (athleteTypes.includes(2) || athleteTypes.includes(3)) groupings.push('adults');
-  return groupings;
+  const groupings = categoryType?.defaultGroupings || [];
+  return groupings.length > 0 ? groupings : ['children', 'adults'];
 };
 
 // Chiavi delle fasce della configurazione età appartenenti ai raggruppamenti indicati

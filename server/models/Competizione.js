@@ -55,24 +55,12 @@ const Competizione = sequelize.define(
       defaultValue: [],
       field: 'tipi_competizione',
     },
-    categorieAtleti: {
-      type: DataTypes.ARRAY(DataTypes.JSONB),
-      allowNull: false,
-      defaultValue: [],
-      field: 'categorie_atleti',
-      comment: 'DEPRECATO: sostituito da categoryConfig. Categorie/esperienze ammesse per tipologia di atleta',
-    },
     categoryConfig: {
       type: DataTypes.JSONB,
       allowNull: true,
       field: 'category_config',
       comment:
         'Struttura JSON: { version: 1, categories: [{ categoryTypeId, ageGroupKeys, belt }], experienceLevels: [{ competitionTypeId, grouping, experienceIds }] } - vedi helpers/competitionCategoryConfig.js. Validata nel controller rispetto ad ageGroupConfig',
-    },
-    gestioneLivelloAtleti: {
-      type: DataTypes.ARRAY(DataTypes.JSONB),
-      allowNull: true,
-      field: 'gestione_livello_atleti',
     },
     livello: {
       type: DataTypes.ENUM('Locale', 'Regionale', 'Nazionale', 'Internazionale'),
@@ -97,7 +85,7 @@ const Competizione = sequelize.define(
       allowNull: true,
       field: 'costi_iscrizione',
       comment:
-        'Struttura JSON: { tesseramento: { enabled, amount }, specialCategories: [{ idConfigTipoCategoria, singleCost, withOthersCost }], categories: [{ idConfigTipoAtleta: 1, type: "fixed|minimum|additional", config: {...} }] } - vedi helpers/costCalculator.js',
+        'Struttura JSON: { tesseramento: { enabled, amount }, specialCategories: [{ idConfigTipoCategoria, singleCost, withOthersCost }], categories: [{ grouping: "children|adults", type: "fixed|minimum|additional", config: {...} }] } - vedi helpers/costCalculator.js',
     },
     iban: {
       type: DataTypes.STRING,

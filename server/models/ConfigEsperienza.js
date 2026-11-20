@@ -16,21 +16,6 @@ const ConfigEsperienza = sequelize.define(
         notEmpty: true,
       },
     },
-    idConfigTipoAtleta: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'DEPRECATO: sostituito da belt. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati',
-      field: 'id_config_tipo_atleta',
-      references: {
-        model: 'config_tipo_atleta',
-        key: 'id',
-      },
-    },
-    idConfigGruppoEsperienza: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      field: 'id_config_gruppo_esperienza',
-    },
     belt: {
       type: DataTypes.STRING(20),
       allowNull: false,

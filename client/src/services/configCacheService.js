@@ -6,8 +6,8 @@ import { loadCategoryTypeById, loadExperienceById, loadNomiQuyenByCategoryType }
  * per la stessa chiave condividono la stessa promise per evitare chiamate duplicate.
  */
 
-// v2: le esperienze includono il campo belt
-const CACHE_PREFIX = 'configCache:v2:';
+// v3: i tipi categoria espongono defaultGroupings al posto di idConfigTipiAtleti
+const CACHE_PREFIX = 'configCache:v3:';
 const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000; // 12 ore
 
 // Richieste in corso, condivise tra componenti

@@ -45,15 +45,6 @@ const Atleta = sequelize.define(
       },
       field: 'codice_fiscale',
     },
-    tipoAtletaId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'config_tipo_atleta',
-        key: 'id',
-      },
-      comment: 'DEPRECATO: sostituito da isBlackBelt. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati',
-    },
     isBlackBelt: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

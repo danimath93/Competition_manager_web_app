@@ -39,12 +39,6 @@ const Categoria = sequelize.define(
       allowNull: false,
       defaultValue: 'U',
     },
-    gruppiEtaId: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      allowNull: true,
-      field: 'gruppi_eta_id',
-      comment: 'DEPRECATO: sostituito da ageGroupKeys. Mantenuto per lo storico, da rimuovere dopo la conversione dei dati',
-    },
     ageGroupKeys: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
