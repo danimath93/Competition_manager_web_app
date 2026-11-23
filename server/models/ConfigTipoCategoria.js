@@ -49,10 +49,11 @@ const ConfigTipoCategoria = sequelize.define(
       defaultValue: false,
       field: 'obbligo_peso',
     },
-    ordine: {
+    setupOrder: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+      field: 'setup_order',
     },
     attivo: {
       type: DataTypes.BOOLEAN,

@@ -1053,12 +1053,12 @@ const downloadClubCompetitionSummary = async (req, res) => {
       experienceMap[exp.id] = exp;
     });
 
-    // Ordino le categorie per proprieta' 'ordine'
+    // Ordino le categorie per proprieta' 'setupOrder'
     const categories = Array.from(categorySet);
     categories.sort((a, b) => {
       const catA = categoryDetailsMap[a];
       const catB = categoryDetailsMap[b];
-      return (catA.ordine || 0) - (catB.ordine || 0);
+      return (catA.setupOrder || 0) - (catB.setupOrder || 0);
     });
 
     // Prepara dati per la tabella PRIMA di iniziare lo stream

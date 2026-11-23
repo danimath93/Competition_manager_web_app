@@ -12,10 +12,13 @@ const getAllTipiCompetizione = async (req, res) => {
           as: 'tipiCategoria',
           where: { attivo: true },
           required: false, // LEFT JOIN per includere anche tipi senza categorie
-          order: [['nome', 'ASC']],
         },
       ],
-      order: [['id', 'ASC']],
+      order: [
+        ['id', 'ASC'],
+        [{ model: ConfigTipoCategoria, as: 'tipiCategoria' }, 'setupOrder', 'ASC'],
+        [{ model: ConfigTipoCategoria, as: 'tipiCategoria' }, 'nome', 'ASC'],
+      ],
     });
     res.json(tipiCompetizione);
   } catch (error) {
@@ -38,8 +41,11 @@ const getTipoCompetizioneById = async (req, res) => {
           as: 'tipiCategoria',
           where: { attivo: true },
           required: false,
-          order: [['nome', 'ASC']],
         },
+      ],
+      order: [
+        [{ model: ConfigTipoCategoria, as: 'tipiCategoria' }, 'setupOrder', 'ASC'],
+        [{ model: ConfigTipoCategoria, as: 'tipiCategoria' }, 'nome', 'ASC'],
       ],
     });
 
@@ -75,7 +81,10 @@ const getCategorieByTipoCompetizione = async (req, res) => {
           as: 'tipoCompetizione',
         },
       ],
-      order: [['nome', 'ASC']],
+      order: [
+        ['setupOrder', 'ASC'],
+        ['nome', 'ASC'],
+      ],
     });
 
     res.json(categorie);
@@ -101,6 +110,7 @@ const getAllTipiCategoria = async (req, res) => {
       ],
       order: [
         ['tipoCompetizioneId', 'ASC'],
+        ['setupOrder', 'ASC'],
         ['nome', 'ASC'],
       ],
     });
