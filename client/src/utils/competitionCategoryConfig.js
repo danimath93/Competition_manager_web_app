@@ -15,6 +15,10 @@ export const EXPERIENCE_BELT_LABELS = {
   blackBelt: 'Solo CN',
 };
 
+// Gruppi sportivi dei livelli di esperienza (config_esperienza.sport_group), nell'ordine di visualizzazione
+export const EXPERIENCE_SPORT_GROUPS = ['Viet Vo Dao', 'Viet Vo Dao Junior', 'Viet Tai Chi', 'Mixed Style', 'Viet Vo Dao CN'];
+export const EXPERIENCE_NO_GROUP_LABEL = 'Altro';
+
 export const GROUPING_LABELS = {
   children: 'Bambini',
   adults: 'Adulti',

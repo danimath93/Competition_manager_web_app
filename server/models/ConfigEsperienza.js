@@ -25,6 +25,15 @@ const ConfigEsperienza = sequelize.define(
       },
       comment: 'Cintura a cui si applica il livello: all | whiteBelt (solo CB) | blackBelt (solo CN). Filtro in fase di iscrizione',
     },
+    sportGroup: {
+      type: DataTypes.STRING(30),
+      allowNull: true,
+      field: 'sport_group',
+      validate: {
+        isIn: [['Viet Vo Dao', 'Viet Vo Dao Junior', 'Viet Tai Chi', 'Mixed Style', 'Viet Vo Dao CN']],
+      },
+      comment: 'Gruppo sportivo del livello, usato per raggrupparli in configurazione (null = nessun gruppo)',
+    },
     descrizione: {
       type: DataTypes.TEXT,
       allowNull: true,

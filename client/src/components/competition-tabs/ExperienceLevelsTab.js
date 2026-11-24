@@ -1,11 +1,31 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Checkbox, Chip, CircularProgress, FormControlLabel, Paper, Typography } from '@mui/material';
 import { loadCompetitionTypes, loadExperiences } from '../../api/config';
-import { EXPERIENCE_BELT_LABELS, GROUPING_LABELS, getUsedGroupingsByCompetitionType } from '../../utils/competitionCategoryConfig';
+import {
+  EXPERIENCE_BELT_LABELS,
+  EXPERIENCE_NO_GROUP_LABEL,
+  EXPERIENCE_SPORT_GROUPS,
+  GROUPING_LABELS,
+  getUsedGroupingsByCompetitionType,
+} from '../../utils/competitionCategoryConfig';
 import '../styles/Layout.css';
 import '../styles/Register.css';
 
 const GROUPINGS = ['children', 'adults'];
+
+/**
+ * Raggruppa i livelli per sportGroup, nell'ordine di EXPERIENCE_SPORT_GROUPS.
+ * I livelli senza gruppo (o con un gruppo non previsto) finiscono in coda sotto "Altro".
+ */
+const groupBySportGroup = (experiences) => {
+  const groups = EXPERIENCE_SPORT_GROUPS.map((name) => ({ key: name, label: name, items: [] }));
+  const noGroup = { key: '__none__', label: EXPERIENCE_NO_GROUP_LABEL, items: [] };
+  experiences.forEach((experience) => {
+    const group = groups.find((g) => g.key === experience.sportGroup) || noGroup;
+    group.items.push(experience);
+  });
+  return [...groups, noGroup].filter((g) => g.items.length > 0);
+};
 
 /**
  * Step di selezione dei livelli di esperienza, per tipo competizione e raggruppamento (bambini/adulti).
@@ -51,6 +71,17 @@ const ExperienceLevelsTab = ({ value, onChange, ageGroupConfig }) => {
     setSelectedIds(competitionTypeId, grouping, selected.includes(experienceId) ? selected.filter((id) => id !== experienceId) : [...selected, experienceId]);
   };
 
+  // Seleziona/deseleziona tutti i livelli di un gruppo sportivo
+  const handleToggleGroup = (competitionTypeId, grouping, groupIds) => {
+    const selected = getSelectedIds(competitionTypeId, grouping);
+    const allSelected = groupIds.every((id) => selected.includes(id));
+    setSelectedIds(
+      competitionTypeId,
+      grouping,
+      allSelected ? selected.filter((id) => !groupIds.includes(id)) : [...selected, ...groupIds.filter((id) => !selected.includes(id))]
+    );
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
@@ -62,7 +93,7 @@ const ExperienceLevelsTab = ({ value, onChange, ageGroupConfig }) => {
   const usedTypes = competitionTypes.filter((type) => usedGroupings[type.id]?.size > 0);
 
   return (
-    <div className="register-form" style={{ maxWidth: '1024px' }}>
+    <div className="register-form" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
       <h6 className="text-primary text-center register-section-title">Livelli di esperienza</h6>
 
       {error && (
@@ -80,6 +111,7 @@ const ExperienceLevelsTab = ({ value, onChange, ageGroupConfig }) => {
 
       {usedTypes.map((type) => {
         const available = experiences.filter((e) => (e.tipiCompetizione || []).includes(type.id));
+        const sportGroups = groupBySportGroup(available);
         return (
           <Paper key={type.id} variant="outlined" sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
@@ -97,23 +129,52 @@ const ExperienceLevelsTab = ({ value, onChange, ageGroupConfig }) => {
                     <Typography variant="body2" fontWeight={600}>
                       {GROUPING_LABELS[grouping]}
                     </Typography>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', columnGap: '1rem' }}>
-                      {available.map((experience) => (
-                        <FormControlLabel
-                          key={experience.id}
-                          control={
-                            <Checkbox size="small" checked={selected.includes(experience.id)} onChange={() => handleToggle(type.id, grouping, experience.id)} />
-                          }
-                          label={
-                            <span>
-                              {experience.nome}
-                              {experience.belt && experience.belt !== 'all' && (
-                                <Chip size="small" variant="outlined" label={EXPERIENCE_BELT_LABELS[experience.belt]} sx={{ ml: 0.5, height: 20 }} />
-                              )}
-                            </span>
-                          }
-                        />
-                      ))}
+                    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                      {sportGroups.map((group) => {
+                        const groupIds = group.items.map((e) => e.id);
+                        const selectedCount = groupIds.filter((id) => selected.includes(id)).length;
+                        return (
+                          <Paper key={group.key} variant="outlined" sx={{ flex: '1 0 auto', minWidth: 200, p: 1, display: 'flex', flexDirection: 'column' }}>
+                            <FormControlLabel
+                              sx={{ borderBottom: 1, borderColor: 'divider', mb: 0.5, mr: 0 }}
+                              control={
+                                <Checkbox
+                                  size="small"
+                                  checked={selectedCount === groupIds.length}
+                                  indeterminate={selectedCount > 0 && selectedCount < groupIds.length}
+                                  onChange={() => handleToggleGroup(type.id, grouping, groupIds)}
+                                />
+                              }
+                              label={
+                                <Typography variant="body2" fontWeight={600}>
+                                  {group.label}
+                                </Typography>
+                              }
+                            />
+                            {group.items.map((experience) => (
+                              <FormControlLabel
+                                key={experience.id}
+                                sx={{ mr: 0, whiteSpace: 'nowrap' }}
+                                control={
+                                  <Checkbox
+                                    size="small"
+                                    checked={selected.includes(experience.id)}
+                                    onChange={() => handleToggle(type.id, grouping, experience.id)}
+                                  />
+                                }
+                                label={
+                                  <span>
+                                    {experience.nome}
+                                    {experience.belt && experience.belt !== 'all' && (
+                                      <Chip size="small" variant="outlined" label={EXPERIENCE_BELT_LABELS[experience.belt]} sx={{ ml: 0.5, height: 20 }} />
+                                    )}
+                                  </span>
+                                }
+                              />
+                            ))}
+                          </Paper>
+                        );
+                      })}
                     </div>
                   </div>
                 );
