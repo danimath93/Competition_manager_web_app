@@ -30,5 +30,6 @@ export const CompetitionStatus = Object.freeze({
 export const MembershipType = Object.freeze({
   FIWUK: 'FIWUK',
   ASI: 'ASI',
+  ACLI: 'ACLI',
   REQUEST: 'Richiedi tesseramento',
 });
