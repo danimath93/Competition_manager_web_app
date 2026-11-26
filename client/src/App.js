@@ -109,10 +109,11 @@ const AppContent = () => {
           }
         />
 
+        {/* Modifica Competizione - superAdmin, admin, club organizzatore */}
         <Route
           path="/competitions/edit/:id"
           element={
-            <AuthGate requiredPermissions={['superAdmin', 'admin']}>
+            <AuthGate requiredPermissions={['superAdmin', 'admin', 'club']}>
               <CompetitionConfigurator />
             </AuthGate>
           }

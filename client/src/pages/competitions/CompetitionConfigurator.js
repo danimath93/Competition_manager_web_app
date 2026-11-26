@@ -4,7 +4,8 @@ import { Container, Box, Alert, CircularProgress } from '@mui/material';
 import { Button as MuiButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { FaTrophy } from 'react-icons/fa';
-import { createCompetition, updateCompetition, getCompetitionDetails } from '../../api/competitions';
+import { useAuth } from '../../context/AuthContext';
+import { createCompetition,updateCompetition, getCompetitionDetails } from '../../api/competitions';
 import { CompetitionStatus, CompetitionLevel } from '../../constants/enums/CompetitionEnums';
 import PageHeader from '../../components/PageHeader';
 import ConfirmActionModal from '../../components/common/ConfirmActionModal';
@@ -32,6 +33,7 @@ const STEPS = [
 
 const CompetitionConfigurator = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
   const isEditMode = !!id;
 
@@ -77,6 +79,11 @@ const CompetitionConfigurator = () => {
         setLoading(true);
         try {
           const competition = await getCompetitionDetails(id);
+          // Un utente club può modificare solo le competizioni organizzate dal proprio club
+          if (user?.permissions === 'club' && competition.organizzatoreClubId !== user?.clubId) {
+            navigate('/competitions', { replace: true });
+            return;
+          }
           setFormData({
             id: competition.id,
             nome: competition.nome || '',
@@ -115,7 +122,7 @@ const CompetitionConfigurator = () => {
       }
     };
     loadCompetition();
-  }, [id, isEditMode]);
+  }, [id, isEditMode, user, navigate]);
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
