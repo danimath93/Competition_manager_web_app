@@ -215,7 +215,7 @@ const ClubModal = ({ open, onClose, onSubmit, onDelete, club, isEditMode, isRead
             onChange={(event, value) => handleTesseramentoChange(value)}
             isOptionEqualToValue={(option, value) => option === value}
             readOnly={isReadOnlyMode}
-            options={['FIWUK', 'ASI', 'Altro Ente']}
+            options={['FIWUK', 'ASI', 'ACLI', 'Altro Ente']}
             renderInput={(params) => (
               <TextField
                 {...params}

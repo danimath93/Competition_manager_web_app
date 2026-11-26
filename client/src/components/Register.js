@@ -321,7 +321,7 @@ const Register = () => {
                           id="tesseramento"
                           value={tesseramento}
                           onChange={(event, value) => setTesseramento(value)}
-                          options={['FIWUK', 'ASI', 'Altro Ente']}
+                          options={['FIWUK', 'ASI', 'ACLI', 'Altro Ente']}
                           renderInput={(params) => <TextField {...params} placeholder="Seleziona affiliazione" size="small" required />}
                           disabled={loading}
                         />

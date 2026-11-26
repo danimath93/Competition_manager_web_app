@@ -49,6 +49,7 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
   const tesseramentoTypes = [
     { id: MembershipType.FIWUK, nome: 'FIWUK' },
     { id: MembershipType.ASI, nome: 'ASI' },
+    { id: MembershipType.ACLI, nome: 'ACLI' },
     { id: MembershipType.REQUEST, nome: 'Richiedi tesseramento' },
   ];
 
