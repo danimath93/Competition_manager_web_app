@@ -1,25 +1,25 @@
 const sequelize = require('../config/database');
 
 // Importa tutti i modelli
+const AgeGroupConfiguration = require('./AgeGroupConfiguration');
+const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
+const ConfigTipoCategoria = require('./ConfigTipoCategoria');
+const ConfigEsperienza = require('./ConfigEsperienza');
+const ConfigTipoCosti = require('./ConfigTipoCosti');
+const ConfigNomiQuyen = require('./ConfigNomiQuyen');
+const MembershipType = require('./MembershipType');
 const Club = require('./Club');
 const Atleta = require('./Atleta');
 const Giudice = require('./Giudice');
-const AgeGroupConfiguration = require('./AgeGroupConfiguration');
 const Competizione = require('./Competizione');
 const Categoria = require('./Categoria');
 const IscrizioneAtleta = require('./IscrizioneAtleta');
 const IscrizioneClub = require('./IscrizioneClub');
 const UtentiLogin = require('./UtentiLogin');
-const ConfigTipoCompetizione = require('./ConfigTipoCompetizione');
-const ConfigTipoCategoria = require('./ConfigTipoCategoria');
-const ConfigEsperienza = require('./ConfigEsperienza');
 const SvolgimentoCategoria = require('./SvolgimentoCategoria');
 const CertificatoMedico = require('./CertificatoMedico');
 const DettaglioIscrizioneAtleta = require('./DettaglioIscrizioneAtleta');
 const Documento = require('./Documento');
-const ConfigTipoCosti = require('./ConfigTipoCosti');
-const ConfigNomiQuyen = require('./ConfigNomiQuyen');
-const MembershipType = require('./MembershipType');
 
 // Definisci le associazioni
 
