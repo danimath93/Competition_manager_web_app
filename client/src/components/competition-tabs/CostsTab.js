@@ -32,6 +32,8 @@ import '../styles/Register.css';
 
 const EMPTY_SPECIAL_CATEGORY = { idConfigTipoCategoria: '', singleCost: '', withOthersCost: '' };
 const GROUPINGS = ['children', 'adults'];
+// Nuova configurazione costi atleta: nessuna modalità di default, si sceglie dopo il raggruppamento
+const createEmptyAthleteConfig = () => ({ grouping: null, type: null, config: null });
 
 /**
  * Step costi e dati di pagamento della competizione
@@ -67,11 +69,9 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
   const competitionCategoryTypes = categoryTypes.filter((ct) => competitionCategoryIds.has(ct.id));
 
   // Stato per nuova configurazione atleta (nel modale)
-  const [newAthleteConfig, setNewAthleteConfig] = useState({
-    grouping: null,
-    type: 'fixed',
-    config: { amount: 0 },
-  });
+  const [newAthleteConfig, setNewAthleteConfig] = useState(createEmptyAthleteConfig);
+  // Raggruppamenti non ancora configurati: se vuoto il modale mostra un avviso
+  const availableGroupings = GROUPINGS.filter((grouping) => !athleteCostConfigs.some((config) => config.grouping === grouping));
 
   // Carica tipi categoria
   useEffect(() => {
@@ -208,15 +208,15 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
       return;
     }
 
-    if (newAthleteConfig.grouping !== null) {
+    if (newAthleteConfig.grouping !== null && newAthleteConfig.type !== null) {
       setAthleteCostConfigs([...athleteCostConfigs, { ...newAthleteConfig }]);
-      setNewAthleteConfig({
-        grouping: null,
-        type: 'fixed',
-        config: { amount: 0 },
-      });
-      setAthleteConfigModalOpen(false);
+      handleCloseAthleteConfigModal();
     }
+  };
+
+  const handleCloseAthleteConfigModal = () => {
+    setNewAthleteConfig(createEmptyAthleteConfig());
+    setAthleteConfigModalOpen(false);
   };
 
   const getGroupingName = (config) => GROUPING_LABELS[config.grouping] || config.grouping;
@@ -556,9 +556,14 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
       </Dialog>
 
       {/* Modale Aggiungi Configurazione Atleta */}
-      <Dialog open={athleteConfigModalOpen} onClose={() => setAthleteConfigModalOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={athleteConfigModalOpen} onClose={handleCloseAthleteConfigModal} maxWidth="md" fullWidth>
         <DialogTitle>Aggiungi Configurazione Costi</DialogTitle>
         <DialogContent>
+          {availableGroupings.length === 0 && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              Tutti i raggruppamenti hanno già una configurazione costi. Per modificarne una, eliminala e aggiungila di nuovo.
+            </Alert>
+          )}
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <FormControl fullWidth>
@@ -579,11 +584,12 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <FormLabel>Modalità di Calcolo</FormLabel>
-                <RadioGroup value={newAthleteConfig.type} onChange={(e) => handleNewAthleteConfigChange('type', e.target.value)}>
-                  <FormControlLabel value="fixed" control={<Radio />} label="Fisso - Costo unico indipendentemente dalle categorie" />
-                  <FormControlLabel value="minimum" control={<Radio />} label="Scaglioni - Costo variabile per scaglioni di categorie" />
-                  <FormControlLabel value="additional" control={<Radio />} label="Addizionale - Costo fisso + extra per ogni categoria aggiuntiva" />
+                {/* Abilitata solo dopo la scelta del raggruppamento */}
+                <FormLabel disabled={!newAthleteConfig.grouping}>Modalità di Calcolo</FormLabel>
+                <RadioGroup value={newAthleteConfig.type || ''} onChange={(e) => handleNewAthleteConfigChange('type', e.target.value)}>
+                  <FormControlLabel value="fixed" control={<Radio />} disabled={!newAthleteConfig.grouping} label="Fisso - Costo unico indipendentemente dalle categorie" />
+                  <FormControlLabel value="minimum" control={<Radio />} disabled={!newAthleteConfig.grouping} label="Scaglioni - Costo variabile per scaglioni di categorie" />
+                  <FormControlLabel value="additional" control={<Radio />} disabled={!newAthleteConfig.grouping} label="Addizionale - Costo fisso + extra per ogni categoria aggiuntiva" />
                 </RadioGroup>
               </FormControl>
             </Grid>
@@ -676,8 +682,8 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAthleteConfigModalOpen(false)}>Annulla</Button>
-          <Button onClick={handleSaveAthleteConfig} variant="contained" disabled={newAthleteConfig.grouping === null}>
+          <Button onClick={handleCloseAthleteConfigModal}>Annulla</Button>
+          <Button onClick={handleSaveAthleteConfig} variant="contained" disabled={newAthleteConfig.grouping === null || newAthleteConfig.type === null}>
             Salva Configurazione
           </Button>
         </DialogActions>

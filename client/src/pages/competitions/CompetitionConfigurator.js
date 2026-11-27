@@ -5,7 +5,7 @@ import { Button as MuiButton } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { FaTrophy } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
-import { createCompetition,updateCompetition, getCompetitionDetails } from '../../api/competitions';
+import { createCompetition, updateCompetition, getCompetitionDetails } from '../../api/competitions';
 import { CompetitionStatus, CompetitionLevel } from '../../constants/enums/CompetitionEnums';
 import PageHeader from '../../components/PageHeader';
 import ConfirmActionModal from '../../components/common/ConfirmActionModal';
@@ -71,6 +71,7 @@ const CompetitionConfigurator = () => {
     locked: false,
   });
   const [editConfirmModalOpen, setEditConfirmModalOpen] = useState(false);
+  const [exitConfirmModalOpen, setExitConfirmModalOpen] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -144,6 +145,9 @@ const CompetitionConfigurator = () => {
   // Validazione degli step senza form; restituisce il messaggio di errore o null
   const validateStep = (stepKey) => {
     switch (stepKey) {
+      // Lo step usa la validazione del form, ma in modifica si può arrivare al salvataggio dallo stepper senza passarci
+      case 'general':
+        return formData.dataScadenzaIscrizioni ? null : 'Inserisci la data di scadenza iscrizioni';
       case 'ageGroups':
         return formData.ageGroupConfigurationId ? null : "Seleziona la configurazione delle fasce d'età";
       case 'categories':
@@ -317,7 +321,7 @@ const CompetitionConfigurator = () => {
         title="Configurazione Competizione"
         subtitle={isEditMode ? `Modifica competizione: ${formData.nome || ''}` : `Nuova competizione`}
       />
-      <MuiButton startIcon={<ArrowBack />} onClick={() => navigate('/competitions')}>
+      <MuiButton startIcon={<ArrowBack />} onClick={() => setExitConfirmModalOpen(true)}>
         Torna alle Competizioni
       </MuiButton>
 
@@ -353,6 +357,7 @@ const CompetitionConfigurator = () => {
             width: '100%',
             padding: '0 1rem',
             display: 'flex',
+            gap: '1rem',
             justifyContent: 'space-between',
           }}>
           <Button variant="outline-primary" size="m" onClick={() => goToStep(activeStep - 1)} disabled={activeStep === 0}>
@@ -363,11 +368,11 @@ const CompetitionConfigurator = () => {
               {isEditMode ? 'Salva modifiche' : 'Crea competizione'}
             </Button>
           ) : currentStep.usesForm ? (
-            <Button variant="primary" size="m" type="submit" form={STEP_FORM_ID}>
+            <Button key="next-submit" variant="primary" size="m" type="submit" form={STEP_FORM_ID}>
               Avanti
             </Button>
           ) : (
-            <Button variant="primary" size="m" onClick={handleNext}>
+            <Button key="next-click" variant="primary" size="m" onClick={handleNext}>
               Avanti
             </Button>
           )}
@@ -386,6 +391,27 @@ const CompetitionConfigurator = () => {
           secondaryButton={{
             text: 'Annulla',
             onClick: () => setEditConfirmModalOpen(false),
+          }}
+        />
+      )}
+
+      {exitConfirmModalOpen && (
+        <ConfirmActionModal
+          open={exitConfirmModalOpen}
+          onClose={() => setExitConfirmModalOpen(false)}
+          title="Esci dalla configurazione"
+          message={
+            isEditMode
+              ? 'Le modifiche non salvate alla competizione andranno perse. Vuoi tornare alle competizioni?'
+              : 'La competizione non è ancora stata creata e i dati inseriti andranno persi. Vuoi tornare alle competizioni?'
+          }
+          primaryButton={{
+            text: 'Esci',
+            onClick: () => navigate('/competitions'),
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setExitConfirmModalOpen(false),
           }}
         />
       )}

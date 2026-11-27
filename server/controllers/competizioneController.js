@@ -150,6 +150,18 @@ class HttpError extends Error {
 const MAX_DETAILS = 20;
 
 /**
+ * Campi obbligatori non vincolati a DB (NOT NULL romperebbe la sync con competizioni precedenti senza valore).
+ * In aggiornamento il campo è verificato solo se presente nel payload
+ */
+const validateRequiredFields = (data, isUpdate = false) => {
+  const hasDeadline = Object.prototype.hasOwnProperty.call(data, 'dataScadenzaIscrizioni');
+  if ((!isUpdate || hasDeadline) && !data.dataScadenzaIscrizioni) {
+    throw new HttpError(400, 'La data di scadenza iscrizioni è obbligatoria');
+  }
+  return data;
+};
+
+/**
  * Valida i tipi di tesseramento selezionati per la competizione (solo se presenti nel payload):
  * devono essere tipi attivi del gruppo "competition", esclusa l'opzione "Richiedi tesseramento"
  */
@@ -314,7 +326,7 @@ const applyAgeGroupConfiguration = async (body, competizioneId = null) => {
 // Crea una nuova competizione
 const createCompetizione = async (req, res) => {
   try {
-    const data = await applyMembershipTypes(await applyCategoryConfig(await applyAgeGroupConfiguration(req.body)));
+    const data = await applyMembershipTypes(await applyCategoryConfig(await applyAgeGroupConfiguration(validateRequiredFields(req.body))));
     const competizione = await Competizione.create(data);
     logger.info(`Competizione creata - ID: ${competizione.id}, Nome: ${competizione.nome}`);
     res.status(201).json(competizione);
@@ -341,7 +353,7 @@ const createCompetizione = async (req, res) => {
 const updateCompetizione = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = await applyMembershipTypes(await applyCategoryConfig(await applyAgeGroupConfiguration(req.body, id), id));
+    const data = await applyMembershipTypes(await applyCategoryConfig(await applyAgeGroupConfiguration(validateRequiredFields(req.body, true), id), id));
     const [updatedRowsCount] = await Competizione.update(data, {
       where: { id },
     });

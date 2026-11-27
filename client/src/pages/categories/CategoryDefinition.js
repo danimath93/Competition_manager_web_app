@@ -46,14 +46,7 @@ import { FaTags } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getCompetitionDetails } from '../../api/competitions';
-import {
-  getCategoriesByCompetizione,
-  deleteCategoria,
-  deleteCategoriesByCompetition,
-  generateCategories,
-  saveCategories,
-  updateCategoria,
-} from '../../api/categories';
+import { getCategoriesByCompetizione, deleteCategoria, generateCategories, saveCategories, updateCategoria } from '../../api/categories';
 import { loadAllCategoryTypes } from '../../api/config';
 import CategorySplit from './CategorySplit';
 import CategorySummaryModal from '../../components/CategorySummaryModal';
@@ -61,6 +54,9 @@ import PageHeader from '../../components/PageHeader';
 import { CompetitionTipology } from '../../constants/enums/CompetitionEnums';
 import Button from '../../components/common/Button';
 import ConfirmActionModal from '../../components/common/ConfirmActionModal';
+
+// Contenitore card categoria: larghezza 500px che si riduce quando lo spazio non basta, senza sforare la pagina
+const CATEGORY_CARD_WRAPPER_SX = { flex: '0 1 500px', minWidth: 0, maxWidth: '100%' };
 
 const CategoryDefinition = () => {
   const { t } = useLanguage();
@@ -590,7 +586,7 @@ const CategoryDefinition = () => {
       <Card
         key={index}
         sx={{
-          width: 500,
+          width: '100%',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -1033,7 +1029,7 @@ const CategoryDefinition = () => {
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
               {getPaginatedCategories(generatedCategories).items.map((categoria, index) => (
-                <Box key={`gen_${(page - 1) * rowsPerPage + index}`}>{renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}</Box>
+                <Box key={`gen_${(page - 1) * rowsPerPage + index}`} sx={CATEGORY_CARD_WRAPPER_SX}>{renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, true)}</Box>
               ))}
             </Box>
 
@@ -1163,7 +1159,7 @@ const CategoryDefinition = () => {
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2, minHeight: 800 }}>
             {getPaginatedCategories(categories).items.map((categoria, index) => (
-              <Box key={`saved_${(page - 1) * rowsPerPage + index}`}>{renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, false)}</Box>
+              <Box key={`saved_${(page - 1) * rowsPerPage + index}`} sx={CATEGORY_CARD_WRAPPER_SX}>{renderCategoriaCard(categoria, (page - 1) * rowsPerPage + index, false)}</Box>
             ))}
           </Box>
 

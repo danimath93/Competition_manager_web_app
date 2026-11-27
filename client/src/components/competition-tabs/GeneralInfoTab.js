@@ -100,6 +100,7 @@ const GeneralInfoTab = ({ formData, onChange, onSubmit, formId }) => {
           value={formData.dataScadenzaIscrizioni}
           onChange={handleChange}
           fullWidth
+          required
           InputLabelProps={{ shrink: true }}
         />
 

@@ -13,6 +13,7 @@ import CompetitionDocumentsModal from '../../components/CompetitionDocumentsModa
 import AuthComponent from '../../components/AuthComponent';
 import PageHeader from '../../components/PageHeader';
 import Button from '../../components/common/Button';
+import ConfirmActionModal from '../../components/common/ConfirmActionModal';
 
 const Competitions = () => {
   const { t } = useLanguage();
@@ -25,6 +26,8 @@ const Competitions = () => {
   const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
   const [competitionDetails, setCompetitionDetails] = useState(null);
+  const [competitionToDelete, setCompetitionToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchCompetitions = async () => {
     try {
@@ -103,15 +106,24 @@ const Competitions = () => {
     setCompetitionDetails(null);
   };
 
-  const handleDeleteCompetition = async (id) => {
-    if (window.confirm('Sei sicuro di voler eliminare questa competizione?')) {
-      try {
-        await deleteCompetition(id);
-        fetchCompetitions();
-      } catch (error) {
-        console.error("Errore nell'eliminazione della competizione:", error);
-        window.alert(error.response?.data?.error || "Errore nell'eliminazione della competizione");
-      }
+  // La card passa l'id: si recupera la competizione per mostrarne il nome nella conferma
+  const handleDeleteCompetition = (id) => {
+    setCompetitionToDelete(competitions.find((comp) => comp.id === id) || { id });
+  };
+
+  const handleConfirmDeleteCompetition = async () => {
+    if (!competitionToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteCompetition(competitionToDelete.id);
+      setCompetitionToDelete(null);
+      fetchCompetitions();
+    } catch (error) {
+      console.error("Errore nell'eliminazione della competizione:", error);
+      setCompetitionToDelete(null);
+      window.alert(error.response?.data?.error || "Errore nell'eliminazione della competizione");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -188,6 +200,24 @@ const Competitions = () => {
           onSubmit={handleClubOrganizerSelected}
           organizerId={selectedCompetition?.organizzatoreClubId}
           competition={selectedCompetition}
+        />
+      )}
+
+      {competitionToDelete && (
+        <ConfirmActionModal
+          open={!!competitionToDelete}
+          onClose={() => setCompetitionToDelete(null)}
+          title="Elimina competizione"
+          message={`Sei sicuro di voler eliminare la competizione${competitionToDelete.nome ? ` "${competitionToDelete.nome}"` : ''}? L'operazione cancellerà anche tutte le iscrizioni e categorie generate e non può essere annullata.`}
+          loading={deleting}
+          primaryButton={{
+            text: 'Elimina',
+            onClick: handleConfirmDeleteCompetition,
+          }}
+          secondaryButton={{
+            text: 'Annulla',
+            onClick: () => setCompetitionToDelete(null),
+          }}
         />
       )}
 
