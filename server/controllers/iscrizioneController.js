@@ -11,6 +11,7 @@ const {
   Documento,
   DettaglioIscrizioneAtleta,
 } = require('../models');
+const { getCompetitionMembershipTypes, isMembershipRequestId } = require('../helpers/membershipTypes');
 const { calculateAthleteCost } = require('../helpers/costCalculator');
 const { checkCategoryLimits } = require('../helpers/categoryLimits');
 const { resolveAgeGroup } = require('../helpers/ageGroups');
@@ -212,6 +213,15 @@ const createIscrizione = async (req, res) => {
       return res.status(404).json({ error: 'Competizione non trovata' });
     }
 
+    // Il tesseramento deve essere tra quelli ammessi dalla competizione; si salvano id e nome (copia testuale)
+    const allowedMembershipTypes = await getCompetitionMembershipTypes(competizione);
+    const membershipType = allowedMembershipTypes.find((type) => type.id === parseInt(tesseramento.id, 10));
+    if (!membershipType) {
+      logger.warn(`Tesseramento non ammesso - Atleta: ${atletaId}, Competizione: ${competizioneId}, Tesseramento: ${tesseramento.id}`);
+      return res.status(400).json({ error: 'Tesseramento non ammesso per questa competizione' });
+    }
+    const membershipData = { membershipTypeId: membershipType.id, tesseramento: membershipType.name };
+
     // Verifica i limiti di categorie considerando le iscrizioni già presenti per l'atleta
     const existingRegistrations = await IscrizioneAtleta.findAll({
       where: { atletaId, competizioneId },
@@ -248,7 +258,7 @@ const createIscrizione = async (req, res) => {
         competizioneId,
       },
       defaults: {
-        tesseramento: tesseramento.nome,
+        ...membershipData,
         quota: 0,
         isBlackBelt: atleta.isBlackBelt,
       },
@@ -285,8 +295,8 @@ const createIscrizione = async (req, res) => {
     const newIscrizione = await IscrizioneAtleta.create(iscrizioneData);
 
     // Il tesseramento va salvato prima del calcolo: la quota dipende dal tesseramento richiesto
-    if (dettagliIscrizione.tesseramento !== tesseramento.nome) {
-      await dettagliIscrizione.update({ tesseramento: tesseramento.nome });
+    if (dettagliIscrizione.membershipTypeId !== membershipData.membershipTypeId || dettagliIscrizione.tesseramento !== membershipData.tesseramento) {
+      await dettagliIscrizione.update(membershipData);
     }
 
     // Calcola e aggiorna la quota dell'iscrizione dell'atleta
@@ -1333,6 +1343,7 @@ const calculateSingleAthleteCosts = async (atletaId, competizioneId) => {
       atletaId,
       grouping: ageGroup?.grouping || null,
       tesseramento: dettagliIscrizione.tesseramento,
+      membershipRequested: isMembershipRequestId(dettagliIscrizione.membershipTypeId),
       iscrizioni,
     };
 

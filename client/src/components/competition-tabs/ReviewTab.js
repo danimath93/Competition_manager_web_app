@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { loadCompetitionTypes, loadExperiences } from '../../api/config';
+import { useCompetitionMembershipTypes } from '../../api/membershipTypes';
 import { describeAgeGroupMode, formatYmd } from '../AgeGroupConfigurationModal';
 import { GROUPING_LABELS, getCategoryBeltLabel } from '../../utils/competitionCategoryConfig';
 import '../styles/Layout.css';
@@ -40,6 +41,7 @@ const Field = ({ label, value }) => (
 const ReviewTab = ({ formData, ageGroupConfig }) => {
   const [competitionTypes, setCompetitionTypes] = useState([]);
   const [experiences, setExperiences] = useState([]);
+  const competitionMembershipTypes = useCompetitionMembershipTypes();
 
   useEffect(() => {
     Promise.all([loadCompetitionTypes(), loadExperiences()])
@@ -152,6 +154,13 @@ const ReviewTab = ({ formData, ageGroupConfig }) => {
         <Field label="IBAN" value={formData.iban} />
         <Field label="Intestatario" value={formData.intestatario} />
         <Field label="Causale" value={formData.causale} />
+        <Field
+          label="Tesseramenti ammessi"
+          value={competitionMembershipTypes
+            .filter((type) => (formData.membershipTypeIds || []).includes(type.id))
+            .map((type) => type.name)
+            .join(', ')}
+        />
         <Field label="Richiesta tesseramento" value={costs.tesseramento?.enabled ? `${Number(costs.tesseramento.amount || 0).toFixed(2)} €` : 'Non prevista'} />
         {(costs.categories || []).map((config, index) => (
           <Field

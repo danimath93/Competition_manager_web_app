@@ -13,6 +13,7 @@ const { loadRegistrationBlackBelts, getAthleteCompetitionProfile, getAgeGroupLab
 const { validateCategoryConfig, getEligibleCategories } = require('../helpers/competitionCategoryConfig');
 
 const logger = require('../helpers/logger/logger');
+const { normalizeCompetitionMembershipTypeIds } = require('../helpers/membershipTypes');
 const PDFDocument = require('pdfkit');
 const ExcelJS = require('exceljs');
 
@@ -147,6 +148,28 @@ class HttpError extends Error {
 }
 
 const MAX_DETAILS = 20;
+
+/**
+ * Valida i tipi di tesseramento selezionati per la competizione (solo se presenti nel payload):
+ * devono essere tipi attivi del gruppo "competition", esclusa l'opzione "Richiedi tesseramento"
+ */
+const applyMembershipTypes = async (data) => {
+  if (!Object.prototype.hasOwnProperty.call(data, 'membershipTypeIds') || data.membershipTypeIds === null) {
+    return data;
+  }
+  if (!Array.isArray(data.membershipTypeIds)) {
+    throw new HttpError(400, 'Tipi di tesseramento non validi');
+  }
+  if (data.membershipTypeIds.length === 0 && !data.costiIscrizione?.tesseramento?.enabled) {
+    throw new HttpError(400, 'Seleziona almeno un tipo di tesseramento o abilita la richiesta tesseramento');
+  }
+  // Id non validi o di tipi disattivati vengono scartati (es. tipo disattivato dopo la configurazione)
+  const { ids, invalid } = await normalizeCompetitionMembershipTypeIds(data.membershipTypeIds);
+  if (invalid.length > 0) {
+    logger.warn(`Tipi di tesseramento scartati in salvataggio competizione: ${invalid.join(', ')}`);
+  }
+  return { ...data, membershipTypeIds: ids };
+};
 
 /**
  * Valida la configurazione categorie (Competizione.categoryConfig) e ricava i tipi competizione:
@@ -291,7 +314,7 @@ const applyAgeGroupConfiguration = async (body, competizioneId = null) => {
 // Crea una nuova competizione
 const createCompetizione = async (req, res) => {
   try {
-    const data = await applyCategoryConfig(await applyAgeGroupConfiguration(req.body));
+    const data = await applyMembershipTypes(await applyCategoryConfig(await applyAgeGroupConfiguration(req.body)));
     const competizione = await Competizione.create(data);
     logger.info(`Competizione creata - ID: ${competizione.id}, Nome: ${competizione.nome}`);
     res.status(201).json(competizione);
@@ -318,7 +341,7 @@ const createCompetizione = async (req, res) => {
 const updateCompetizione = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = await applyCategoryConfig(await applyAgeGroupConfiguration(req.body, id), id);
+    const data = await applyMembershipTypes(await applyCategoryConfig(await applyAgeGroupConfiguration(req.body, id), id));
     const [updatedRowsCount] = await Competizione.update(data, {
       where: { id },
     });

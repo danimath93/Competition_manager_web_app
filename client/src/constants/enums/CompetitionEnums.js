@@ -27,9 +27,3 @@ export const CompetitionStatus = Object.freeze({
   CANCELLED: 'Annullata',
 });
 
-export const MembershipType = Object.freeze({
-  FIWUK: 'FIWUK',
-  ASI: 'ASI',
-  ACLI: 'ACLI',
-  REQUEST: 'Richiedi tesseramento',
-});

@@ -4,12 +4,19 @@ import { Delete as DeleteIcon } from '@mui/icons-material';
 import DrawerModal from './common/DrawerModal';
 import ConfirmActionModal from './common/ConfirmActionModal';
 import AuthComponent from './AuthComponent';
+import { useAssociationMembershipTypes } from '../api/membershipTypes';
 import './common/DrawerModal.css';
 
 const ClubModal = ({ open, onClose, onSubmit, onDelete, club, isEditMode, isReadOnlyMode }) => {
   const [formData, setFormData] = React.useState({});
   const [displayError, setDisplayError] = React.useState('');
   const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
+  const associationMembershipTypes = useAssociationMembershipTypes();
+  // L'affiliazione già salvata resta selezionabile anche se il tipo è stato disattivato
+  const membershipOptions = React.useMemo(() => {
+    const names = associationMembershipTypes.map((type) => type.name);
+    return club?.tesseramento && !names.includes(club.tesseramento) ? [...names, club.tesseramento] : names;
+  }, [associationMembershipTypes, club?.tesseramento]);
 
   React.useEffect(() => {
     if (club && (isEditMode || isReadOnlyMode)) {
@@ -215,7 +222,7 @@ const ClubModal = ({ open, onClose, onSubmit, onDelete, club, isEditMode, isRead
             onChange={(event, value) => handleTesseramentoChange(value)}
             isOptionEqualToValue={(option, value) => option === value}
             readOnly={isReadOnlyMode}
-            options={['FIWUK', 'ASI', 'ACLI', 'Altro Ente']}
+            options={membershipOptions}
             renderInput={(params) => (
               <TextField
                 {...params}

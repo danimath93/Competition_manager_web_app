@@ -16,6 +16,7 @@ const certificatiRoutes = require('./certificati');
 const dettagliIscrizioneAtletiRoutes = require('./dettagliIscrizioneAtleti');
 const documentiRoutes = require('./documenti');
 const ageGroupConfigurationsRoutes = require('./ageGroupConfigurations');
+const membershipTypesRoutes = require('./membershipTypes').router;
 // Configura le routes
 router.use('/clubs', clubRoutes);
 router.use('/competizioni', competizioniRoutes);
@@ -31,6 +32,7 @@ router.use('/certificati', certificatiRoutes);
 router.use('/dettagli-iscrizione-atleti', dettagliIscrizioneAtletiRoutes);
 router.use('/documenti', documentiRoutes);
 router.use('/age-group-configurations', ageGroupConfigurationsRoutes);
+router.use('/membership-types', membershipTypesRoutes);
 // Route di test per verificare che l'API funzioni
 router.get('/', (req, res) => {
   res.json({

@@ -54,6 +54,7 @@ const CompetitionConfigurator = () => {
     indirizzo: '',
     descrizione: '',
     costiIscrizione: null,
+    membershipTypeIds: null,
     iban: '',
     intestatario: '',
     causale: '',
@@ -99,6 +100,7 @@ const CompetitionConfigurator = () => {
             maxCategorieTipoCompetizione: competition.maxCategorieTipoCompetizione || {},
             maxPartecipanti: competition.maxPartecipanti || null,
             costiIscrizione: competition.costiIscrizione || null,
+            membershipTypeIds: Array.isArray(competition.membershipTypeIds) ? competition.membershipTypeIds : null,
             iban: competition.iban || '',
             intestatario: competition.intestatario || '',
             causale: competition.causale || '',
@@ -146,6 +148,10 @@ const CompetitionConfigurator = () => {
         return formData.ageGroupConfigurationId ? null : "Seleziona la configurazione delle fasce d'età";
       case 'categories':
         return (formData.categoryConfig?.categories || []).length > 0 ? null : 'Seleziona almeno una categoria';
+      case 'costs':
+        return Array.isArray(formData.membershipTypeIds) && formData.membershipTypeIds.length === 0 && !formData.costiIscrizione?.tesseramento?.enabled
+          ? 'Seleziona almeno un tipo di tesseramento o abilita la richiesta tesseramento'
+          : null;
       default:
         return null;
     }
@@ -273,6 +279,7 @@ const CompetitionConfigurator = () => {
           <CostsTab
             value={{
               costiIscrizione: formData.costiIscrizione,
+              membershipTypeIds: formData.membershipTypeIds,
               iban: formData.iban,
               intestatario: formData.intestatario,
               causale: formData.causale,

@@ -87,6 +87,11 @@ const Competizione = sequelize.define(
       comment:
         'Struttura JSON: { tesseramento: { enabled, amount }, specialCategories: [{ idConfigTipoCategoria, singleCost, withOthersCost }], categories: [{ grouping: "children|adults", type: "fixed|minimum|additional", config: {...} }] } - vedi helpers/costCalculator.js',
     },
+    membershipTypeIds: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      field: 'membership_type_ids',
+    },
     iban: {
       type: DataTypes.STRING,
       allowNull: true,

@@ -24,6 +24,17 @@ const DettaglioIscrizioneAtleta = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    membershipTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'membership_types',
+        key: 'id',
+      },
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE',
+      field: 'membership_type_id',
+    },
     competizioneId: {
       type: DataTypes.INTEGER,
       allowNull: false,

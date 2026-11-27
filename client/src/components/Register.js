@@ -5,6 +5,7 @@ import { TextInput, PasswordInput, Tabs } from './common';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { registerUser } from '../api/auth';
+import { useAssociationMembershipTypes } from '../api/membershipTypes';
 import './styles/Layout.css';
 import './styles/Register.css';
 
@@ -38,6 +39,7 @@ const Register = () => {
   const [recapitoTelefonico, setRecapitoTelefonico] = useState('');
   const [clubEmail, setClubEmail] = useState('');
   const [tesseramento, setTesseramento] = useState(null);
+  const associationMembershipTypes = useAssociationMembershipTypes();
 
   // Stato per privacy policy
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -321,7 +323,7 @@ const Register = () => {
                           id="tesseramento"
                           value={tesseramento}
                           onChange={(event, value) => setTesseramento(value)}
-                          options={['FIWUK', 'ASI', 'ACLI', 'Altro Ente']}
+                          options={associationMembershipTypes.map((type) => type.name)}
                           renderInput={(params) => <TextField {...params} placeholder="Seleziona affiliazione" size="small" required />}
                           disabled={loading}
                         />

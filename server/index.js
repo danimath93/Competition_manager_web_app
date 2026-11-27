@@ -8,6 +8,7 @@ const { errorHandler } = require('./middleware/errorHandler');
 const packageJson = require('./package.json');
 const apiRoutes = require('./routes');
 const logger = require('./helpers/logger/logger');
+const { seedMembershipTypes } = require('./helpers/membershipTypes');
 const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
@@ -37,6 +38,9 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Tipi di affiliazione club (pubblica: usata dalla registrazione club)
+app.use('/api/membership-types', require('./routes/membershipTypes').publicRouter);
+
 // Route di autenticazione (senza middleware auth)
 app.use('/api/auth', require('./routes/auth'));
 
@@ -56,6 +60,9 @@ app.use(errorHandler);
     logger.info('Database connection established successfully.');
     await sequelize.sync({ alter: true });
     logger.info('Database synchronized successfully.');
+    const membershipSeed = await seedMembershipTypes();
+    if (membershipSeed.created > 0) logger.info(`Tipi di tesseramento di default inseriti: ${membershipSeed.created}`);
+    if (membershipSeed.linked > 0) logger.info(`Dettagli iscrizione collegati al tipo di tesseramento: ${membershipSeed.linked}`);
   } catch (error) {
     logger.error('Errore durante la sincronizzazione del database:', error);
     process.exit(1);

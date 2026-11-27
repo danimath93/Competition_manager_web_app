@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const competizioneController = require('../controllers/competizioneController');
+const membershipTypeController = require('../controllers/membershipTypeController');
 const { uploadFiles } = require('../middleware/upload');
 
 // GET /api/competizioni - Ottieni tutte le competizioni
@@ -20,6 +21,9 @@ router.put('/:id', competizioneController.updateCompetizione);
 
 // DELETE /api/competizioni/:id - Elimina una competizione
 router.delete('/:id', competizioneController.deleteCompetizione);
+
+// GET /api/competizioni/:competizioneId/membership-types - Tesseramenti ammessi in iscrizione (incluso "Richiedi tesseramento" se abilitato)
+router.get('/:competizioneId/membership-types', membershipTypeController.getCompetitionRegistrationTypes);
 
 // GET /api/competizioni/:competizioneId/riepilogo-iscrizione - Riepilogo costi e atleti dettagliato per club
 router.get('/:competizioneId/riepilogo-iscrizione', competizioneController.getCompetitionClubRegistrationSummary);

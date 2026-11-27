@@ -36,9 +36,9 @@
  * }
  */
 
-const REQUEST_MEMBERSHIP = 'RICHIEDI TESSERAMENTO';
-
-const isMembershipRequested = (athleteData) => athleteData?.tesseramento?.toUpperCase() === REQUEST_MEMBERSHIP;
+// Il tesseramento richiesto corrisponde al tipo MEMBERSHIP_REQUEST_ID (helpers/membershipTypes.js),
+// risolto dal chiamante in athleteData.membershipRequested
+const isMembershipRequested = (athleteData) => !!athleteData?.membershipRequested;
 
 /**
  * Calcola il costo del tesseramento richiesto in fase di iscrizione
@@ -145,7 +145,7 @@ const calculateAdditionalCost = (config, numCategories) => {
 /**
  * Calcola il costo totale per un atleta
  * @param {Object} costiIscrizione - Configurazione costi della competizione
- * @param {Object} athleteData - Dati atleta ({ grouping, tesseramento })
+ * @param {Object} athleteData - Dati atleta ({ grouping, tesseramento, membershipRequested })
  * @param {Array} categories - ID tipo categoria a cui l'atleta è iscritto
  * @returns {Number} - Costo totale per l'atleta
  */

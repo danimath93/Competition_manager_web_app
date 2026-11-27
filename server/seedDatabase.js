@@ -1,6 +1,7 @@
 // Carica .env prima dei modelli (config/database legge le variabili al require)
 require('dotenv').config({ quiet: true });
 
+const { seedMembershipTypes } = require('./helpers/membershipTypes');
 const { Club, Atleta, Giudice, Competizione, Categoria, IscrizioneAtleta, UtentiLogin, AgeGroupConfiguration, sequelize } = require('./models');
 
 // Fasce d'età standard usate dalle configurazioni di default
@@ -154,6 +155,7 @@ const seedData = async () => {
     ]);
 
     await seedAgeGroupConfigurations();
+    console.log(`✅ Tipi di tesseramento di default: ${(await seedMembershipTypes()).created} creati`);
 
     const configEsperienze = await sequelize.models.ConfigEsperienza.bulkCreate([
       {
@@ -420,6 +422,7 @@ const seedData = async () => {
 
 const seedConfigurations = async () => {
   await seedAgeGroupConfigurations();
+  console.log(`✅ Tipi di tesseramento di default: ${(await seedMembershipTypes()).created} creati`);
 
   console.log('✅ Configurazioni create');
 };

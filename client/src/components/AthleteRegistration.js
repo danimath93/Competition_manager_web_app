@@ -9,7 +9,7 @@ import { createRegistration } from '../api/registrations';
 import { uploadCertificato, downloadCertificato } from '../api/certificati';
 import { updateAthlete } from '../api/athletes';
 import { FiAlertCircle, FiUser, FiCheckCircle, FiDownload, FiUpload, FiEdit2, FiSave, FiX } from 'react-icons/fi';
-import { MembershipType } from '../constants/enums/CompetitionEnums';
+import { useCompetitionRegistrationMembershipTypes } from '../api/membershipTypes';
 import { CompetitionTipology } from '../constants/enums/CompetitionEnums';
 import { checkCategoryConstraints, getCategoryLimitErrors, getAthleteRegistrationConfig, loadRegistrationConfig } from '../utils/helperRegistration';
 
@@ -46,12 +46,8 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
     setIsBlackBelt(!!athlete?.isBlackBelt);
   }, [athlete?.id, athlete?.isBlackBelt]);
   const [tesseramento, setTesseramento] = useState(null);
-  const tesseramentoTypes = [
-    { id: MembershipType.FIWUK, nome: 'FIWUK' },
-    { id: MembershipType.ASI, nome: 'ASI' },
-    { id: MembershipType.ACLI, nome: 'ACLI' },
-    { id: MembershipType.REQUEST, nome: 'Richiedi tesseramento' },
-  ];
+  // Tesseramenti ammessi dalla competizione, calcolati dal backend (incluso "Richiedi tesseramento" se abilitato)
+  const tesseramentoTypes = useCompetitionRegistrationMembershipTypes(competition?.id);
 
   // Stato fase 2 - Categorie
   // Categorie e livelli dipendono dalla fascia d'età dell'atleta e dal grado CN confermato nella fase 1
@@ -581,7 +577,8 @@ const AthleteRegistration = ({ athlete, competition, onUpdateAthlete, onRegistra
             <Autocomplete
               id="tesseramentoAtleta"
               value={tesseramento}
-              getOptionLabel={(option) => option.nome || ''}
+              getOptionLabel={(option) => option.name || ''}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={handleTesseramentoChange}
               renderInput={(params) => <TextField {...params} label="Tesseramento Atleta" variant="outlined" required size="small" />}
               options={tesseramentoTypes}

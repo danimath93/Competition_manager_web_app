@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { loadAllCategoryTypes } from '../../api/config';
+import { useCompetitionMembershipTypes } from '../../api/membershipTypes';
 import { GROUPING_LABELS } from '../../utils/competitionCategoryConfig';
 import { TextInput } from '../common';
 import Button from '../common/Button';
@@ -35,17 +36,19 @@ const GROUPINGS = ['children', 'adults'];
 /**
  * Step costi e dati di pagamento della competizione
  *
- * @param {Object} props.value - { costiIscrizione, iban, intestatario, causale }
+ * @param {Object} props.value - { costiIscrizione, membershipTypeIds, iban, intestatario, causale }
  * @param {Object} props.categoryConfig - configurazione categorie (per le categorie speciali selezionabili)
- * @param {function} props.onChange - riceve { costiIscrizione, iban, intestatario, causale } ad ogni modifica
+ * @param {function} props.onChange - riceve { costiIscrizione, membershipTypeIds, iban, intestatario, causale } ad ogni modifica
  * @param {function} props.onSubmit - submit del form (validazione campi obbligatori)
  * @param {string} props.formId - id del form, usato dal pulsante di navigazione del configuratore
  */
 const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
   const [categoryTypes, setCategoryTypes] = useState([]);
-  // Stato locale inizializzato una sola volta dal prop value (il tab viene rimontato a ogni apertura)
   const [membershipEnabled, setMembershipEnabled] = useState(!!value?.costiIscrizione?.tesseramento?.enabled);
   const [membershipCost, setMembershipCost] = useState(value?.costiIscrizione?.tesseramento?.amount ?? '');
+  const [membershipTypeIds, setMembershipTypeIds] = useState(() => (Array.isArray(value?.membershipTypeIds) ? value.membershipTypeIds : null));
+  const [membershipError, setMembershipError] = useState(null);
+  const selectableMembershipTypes = useCompetitionMembershipTypes();
   const [specialCategories, setSpecialCategories] = useState(() => value?.costiIscrizione?.specialCategories || []);
   const [athleteCostConfigs, setAthleteCostConfigs] = useState(() => value?.costiIscrizione?.categories || []);
   const [iban, setIban] = useState(value?.iban || '');
@@ -77,13 +80,28 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
       .catch((error) => console.error('Errore nel caricamento dei tipi categoria:', error));
   }, []);
 
+  // Senza selezione salvata vengono preselezionati tutti i tipi disponibili
+  useEffect(() => {
+    if (membershipTypeIds === null && selectableMembershipTypes.length > 0) {
+      setMembershipTypeIds(selectableMembershipTypes.map((type) => type.id));
+    }
+  }, [selectableMembershipTypes, membershipTypeIds]);
+
   // Propaga i dati al configuratore ad ogni modifica
   useEffect(() => {
     if (onChange) {
-      onChange({ costiIscrizione: buildCostiIscrizione(), iban, intestatario, causale });
+      onChange({ costiIscrizione: buildCostiIscrizione(), membershipTypeIds, iban, intestatario, causale });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [membershipEnabled, membershipCost, specialCategories, athleteCostConfigs, iban, intestatario, causale]);
+  }, [membershipEnabled, membershipCost, membershipTypeIds, specialCategories, athleteCostConfigs, iban, intestatario, causale]);
+
+  const handleMembershipTypeToggle = (typeId, checked) => {
+    setMembershipError(null);
+    setMembershipTypeIds((prev) => {
+      const current = prev || [];
+      return checked ? [...current, typeId] : current.filter((id) => id !== typeId);
+    });
+  };
 
   // Handler per categorie speciali
   const handleCloseSpecialCategoryModal = () => {
@@ -240,6 +258,10 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
 
   const handleSaveChanges = (e) => {
     e.preventDefault();
+    if (Array.isArray(membershipTypeIds) && membershipTypeIds.length === 0 && !membershipEnabled) {
+      setMembershipError('Seleziona almeno un tipo di tesseramento o abilita la richiesta tesseramento');
+      return;
+    }
     if (onSubmit) {
       onSubmit();
     }
@@ -295,12 +317,32 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
           </div>
         </div>
 
-        {/* Sezione 2: Costi Speciali */}
-        <h6 className="text-primary text-center register-section-title">Costi speciali</h6>
+        {/* Sezione 2: Tesseramenti ammessi */}
+        <h6 className="text-primary text-center register-section-title">Tesseramenti ammessi</h6>
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
-            {/* Richiesta tesseramento */}
+            <label style={{ fontWeight: 500, color: '#333', display: 'block', marginBottom: '0.5rem' }}>
+              Tipi di tesseramento selezionabili dagli atleti in fase di iscrizione
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0 1.5rem', marginBottom: '1rem' }}>
+              {selectableMembershipTypes.map((type) => (
+                <FormControlLabel
+                  key={type.id}
+                  control={
+                    <Checkbox checked={(membershipTypeIds || []).includes(type.id)} onChange={(e) => handleMembershipTypeToggle(type.id, e.target.checked)} />
+                  }
+                  label={type.name}
+                />
+              ))}
+            </div>
+            {membershipError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {membershipError}
+              </Alert>
+            )}
+
+            {/* Richiesta tesseramento: opzione speciale aggiunta in iscrizione solo se abilitata */}
             <div
               style={{
                 display: 'grid',
@@ -310,12 +352,20 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
                 marginBottom: '1.5rem',
               }}>
               <FormControlLabel
-                control={<Checkbox checked={membershipEnabled} onChange={(e) => setMembershipEnabled(e.target.checked)} />}
+                control={
+                  <Checkbox
+                    checked={membershipEnabled}
+                    onChange={(e) => {
+                      setMembershipError(null);
+                      setMembershipEnabled(e.target.checked);
+                    }}
+                  />
+                }
                 label={
                   <span style={{ fontWeight: 500, color: '#333' }}>
                     Richiesta tesseramento
                     <Typography variant="body2" color="text.secondary" component="span" display="block">
-                      Costo applicato agli atleti per cui viene richiesto il tesseramento in fase di iscrizione
+                      Aggiunge l'opzione "Richiedi tesseramento" in iscrizione, con il costo applicato agli atleti che la scelgono
                     </Typography>
                   </span>
                 }
@@ -333,7 +383,14 @@ const CostsTab = ({ value, categoryConfig, onChange, onSubmit, formId }) => {
                 />
               )}
             </div>
+          </div>
+        </div>
 
+        {/* Sezione 3: Costi Speciali */}
+        <h6 className="text-primary text-center register-section-title">Costi speciali</h6>
+
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ maxWidth: '1024px', width: '100%', padding: '0 1rem' }}>
             {/* Categorie speciali */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <label style={{ fontWeight: 500, color: '#333' }}>Costi dedicati per categorie speciali, al posto del calcolo standard</label>

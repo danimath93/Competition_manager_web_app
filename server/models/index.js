@@ -19,6 +19,7 @@ const DettaglioIscrizioneAtleta = require('./DettaglioIscrizioneAtleta');
 const Documento = require('./Documento');
 const ConfigTipoCosti = require('./ConfigTipoCosti');
 const ConfigNomiQuyen = require('./ConfigNomiQuyen');
+const MembershipType = require('./MembershipType');
 
 // Definisci le associazioni
 
@@ -330,6 +331,17 @@ Competizione.belongsTo(AgeGroupConfiguration, {
   as: 'ageGroupConfiguration',
 });
 
+// MembershipType -> DettaglioIscrizioneAtleta (One-to-Many): tesseramento scelto in iscrizione
+MembershipType.hasMany(DettaglioIscrizioneAtleta, {
+  foreignKey: 'membershipTypeId',
+  as: 'dettagliIscrizione',
+  onDelete: 'SET NULL',
+});
+DettaglioIscrizioneAtleta.belongsTo(MembershipType, {
+  foreignKey: 'membershipTypeId',
+  as: 'membershipType',
+});
+
 // Esporta tutti i modelli e la connessione
 module.exports = {
   sequelize,
@@ -351,4 +363,5 @@ module.exports = {
   ConfigTipoCosti,
   ConfigNomiQuyen,
   AgeGroupConfiguration,
+  MembershipType,
 };
